@@ -1,9 +1,67 @@
+#include <string>
 #include <iostream>
 #include <cstdlib>
 #include <netcdf>
 #include <vector>
 #include <algorithm>
 #include <complex>
+#include "constants.hpp"
+
+class CSpecies {
+		public:
+				double m, q;
+				int amu, Z;
+				std::string name;
+
+				CSpecies () {};
+				CSpecies ( const int amu, const int Z);
+				CSpecies ( const int amu, const int Z, const char *_s);
+};
+
+CSpecies::CSpecies ( const int _amu, const int _Z ) {
+		amu = _amu;
+		Z = _Z;
+		m = amu * _mi;
+		q = Z * _e;
+		name = " ";
+}
+
+CSpecies::CSpecies ( const int _amu, const int _Z, const char *_s ) {
+		amu = _amu;
+		Z = _Z;
+		m = amu * _mi;
+		q = Z * _e;
+		name = std::string(_s);
+}
+
+class CParticle: public CSpecies {
+		public:
+				float r, p, z, v_r, v_p, v_z;
+
+				CParticle ();
+				CParticle ( int, int );
+				CParticle (float r, float p, float z, float v_r, float v_p, float v_z, int _amu, int _Z );
+};
+
+CParticle::CParticle () {
+}
+
+CParticle::CParticle ( int _amu, int _Z ): CSpecies(_amu,_Z) {
+}
+
+CParticle::CParticle 
+	(float _r, float _p, float _z, float _v_r, float _v_p, float _v_z, int _amu, int _Z ) :
+	CSpecies (_amu, _Z) {
+
+	r = _r;
+	p = _p;
+	z = _z;
+
+	v_r = _v_r;
+	v_p = _v_p;
+	v_z = _v_z;
+
+}
 
 // Calculate the jP given some know E and f(v)
 
@@ -17,6 +75,12 @@ int main ( int argc, char **argv )
 		// Here we are using the cxx-4 netcdf interface by Lynton Appel
 		// This needs netCDF 4.1.1 or later build with
 		// ./configure --enable-cxx-4 [plus other options]
+
+		std::vector<float> r, b0_r, b0_p, b0_z,
+				e_r_re, e_p_re, e_z_re,
+				e_r_im, e_p_im, e_z_im;
+		
+		float wrf;
 
 		try {
 				netCDF::NcFile dataFile ( rsfwc_fName.c_str(), netCDF::NcFile::read );
@@ -42,11 +106,18 @@ int main ( int argc, char **argv )
 				netCDF::NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
 				netCDF::NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
 
-				std::vector<float> r(nR), b0_r(nR), b0_p(nR), b0_z(nR),
-						e_r_re(nR), e_p_re(nR), e_z_re(nR),
-						e_r_im(nR), e_p_im(nR), e_z_im(nR);
+				r.resize(nR);
 
-				float wrf;
+				b0_r.resize(nR);
+				b0_p.resize(nR);
+				b0_z.resize(nR);
+
+				e_r_re.resize(nR);
+				e_p_re.resize(nR);
+				e_z_re.resize(nR);
+				e_r_im.resize(nR);
+				e_p_im.resize(nR);
+				e_z_im.resize(nR);
 
 				nc_r.getVar(&r[0]);
 				nc_wrf.getVar(&wrf);
@@ -85,6 +156,8 @@ int main ( int argc, char **argv )
 		}
 
 		// Create f0(v)
+
+		std::vector<CParticle> particles (r.size());
 
 		// Generate linear orbits
 
