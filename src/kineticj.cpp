@@ -38,11 +38,11 @@ CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
 
 class CParticle: public CSpecies {
 		public:
-				float r, p, z, v_r, v_p, v_z;
+				float c1, c2, c3, v_c1, v_c2, v_c3;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
-				CParticle (float r, float p, float z, float v_r, float v_p, float v_z, double _amu, int _Z );
+				CParticle (float c1, float c2, float c3, float v_c1, float v_c2, float v_c3, double _amu, int _Z );
 				CParticle (CSpecies _species);
 };
 
@@ -53,64 +53,160 @@ CParticle::CParticle ( double _amu, int _Z ): CSpecies(_amu,_Z) {
 }
 
 CParticle::CParticle 
-	(float _r, float _p, float _z, float _v_r, float _v_p, float _v_z, double _amu, int _Z ) :
+	(float _c1, float _c2, float _c3, float _v_c1, float _v_c2, float _v_c3, double _amu, int _Z ) :
 	CSpecies (_amu, _Z) {
 
-	r = _r;
-	p = _p;
-	z = _z;
+	c1 = _c1;
+	c2 = _c2;
+	c3 = _c3;
 
-	v_r = _v_r;
-	v_p = _v_p;
-	v_z = _v_z;
+	v_c1 = _v_c1;
+	v_c2 = _v_c2;
+	v_c3 = _v_c3;
 }
 
 CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
 }
 
-class C3Vec {
+class C3VecI {
 		public:
-				float r, p, z;
+				std::complex<float> c1, c2, c3;
 
-				C3Vec () {r=0;p=0;z=0;};
-				C3Vec ( float _r, float _p, float _z ) {r=_r;p=_p;z=_z;};
-				C3Vec operator + (C3Vec);
-				C3Vec operator + (float addMe);
-				C3Vec operator * (float factor);
-				C3Vec operator / (float factor);
+				C3VecI () {c1=std::complex<float>(0.0f,0.0f);c2=std::complex<float>(0.0f,0.0f);c3=std::complex<float>(0.0f,0.0f);};
+				C3VecI ( std::complex<float> _c1, std::complex<float> _c2, std::complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 };
 
-C3Vec C3Vec::operator+ (C3Vec addMe) {
-		C3Vec tmp;
-		tmp.r = r + addMe.r;
-		tmp.p = p + addMe.p;
-		tmp.z = z + addMe.z;
-		return (tmp);
+class C3Vec {
+		public:
+				float c1, c2, c3;
+
+				C3Vec () {c1=0;c2=0;c3=0;};
+				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+
+				C3Vec& operator = (const C3Vec &rhs);
+				C3Vec& operator += (const C3Vec &rhs);
+				C3Vec& operator += (const float &rhs);
+				C3Vec& operator *= (const C3Vec &rhs);
+				C3Vec& operator *= (const float &rhs);
+				C3Vec& operator /= (const C3Vec &rhs);
+				C3Vec& operator /= (const float &rhs);
+
+				C3Vec operator + (const C3Vec &other);
+				C3Vec operator + (const float &other);
+				C3Vec operator * (const C3Vec &other);
+				C3Vec operator * (const float &other);
+				friend C3Vec operator * (const float &other, const C3Vec &rhs);
+				C3Vec operator / (const C3Vec &other);
+				C3Vec operator / (const float &other);
+};
+
+C3Vec& C3Vec::operator= (const C3Vec &rhs ) {
+		if (this != &rhs) {
+				c1 = rhs.c1;
+				c2 = rhs.c2;
+				c3 = rhs.c3;
+		}
+		return *this;
 }
 
-C3Vec C3Vec::operator+ (float addMe) {
-		C3Vec tmp;
-		tmp.r = r + addMe;
-		tmp.p = p + addMe;
-		tmp.z = z + addMe;
-		return (tmp);
+C3Vec& C3Vec::operator+= (const C3Vec &rhs ) {
+		c1 += rhs.c1;
+		c2 += rhs.c2;
+		c3 += rhs.c3;
+		return *this;
 }
 
-C3Vec C3Vec::operator* (float factor) {
-		C3Vec tmp;
-		tmp.r = r * factor;
-		tmp.p = p * factor;
-		tmp.z = z * factor;
-		return (tmp);
+C3Vec& C3Vec::operator+= (const float &rhs ) {
+		c1 += rhs;
+		c2 += rhs;
+		c3 += rhs;
+		return *this;
 }
 
-C3Vec C3Vec::operator/ (float factor) {
-		C3Vec tmp;
-		tmp.r = r / factor;
-		tmp.p = p / factor;
-		tmp.z = z / factor;
-		return (tmp);
+C3Vec& C3Vec::operator*= (const C3Vec &rhs ) {
+		c1 *= rhs.c1;
+		c2 *= rhs.c2;
+		c3 *= rhs.c3;
+		return *this;
 }
+
+C3Vec& C3Vec::operator*= (const float &rhs ) {
+		c1 *= rhs;
+		c2 *= rhs;
+		c3 *= rhs;
+		return *this;
+}
+
+C3Vec& C3Vec::operator/= (const C3Vec &rhs ) {
+		c1 /= rhs.c1;
+		c2 /= rhs.c2;
+		c3 /= rhs.c3;
+		return *this;
+}
+
+C3Vec& C3Vec::operator/= (const float &rhs ) {
+		c1 /= rhs;
+		c2 /= rhs;
+		c3 /= rhs;
+		return *this;
+}
+
+C3Vec C3Vec::operator+ (const C3Vec &other) {
+		return C3Vec(*this)+=other;
+}
+
+C3Vec C3Vec::operator+ (const float &other) {
+		return C3Vec(*this)+=other;
+}
+
+C3Vec C3Vec::operator* (const C3Vec &other) {
+		return C3Vec(*this)*=other;
+}
+
+C3Vec C3Vec::operator* (const float &other) {
+		return C3Vec(*this)*=other;
+}
+
+C3Vec C3Vec::operator/ (const C3Vec &other) {
+		return C3Vec(*this)/=other;
+}
+
+C3Vec C3Vec::operator/ (const float &other) {
+		return C3Vec(*this)/=other;
+}
+
+// Global (not member) functions for lhs operators
+
+C3Vec operator* ( const float &other, const C3Vec &rhs ) {
+		return C3Vec(rhs)*=other;
+}
+
+C3Vec rk4_evalf ( CParticle &p, float t, const C3Vec &k, const C3Vec &b0, const C3VecI &e1, const float wrf ) {
+
+	C3Vec f;
+
+	C3Vec v_x_b0 ( p.v_c2*b0.c3-p.v_c3*b0.c2, -1.0*(p.v_c1*b0.c3-p.v_c3*b0.c1), p.v_c1*b0.c2-p.v_c2*b0.c1); 
+	C3Vec ( std::real(e1.c1) * cos ( wrf * t ) + std::imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
+		  	std::real(e1.c2) * cos ( wrf * t ) + std::imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
+		  	std::real(e1.c3) * cos ( wrf * t ) + std::imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
+
+	return f*(p.q/p.m);	
+}
+
+void rk4_move ( CParticle &p, float dt, float t0, 
+				const C3Vec &b0, const C3VecI &e1, const float wrf ) {
+
+		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), k1, k2, k3, k4, yn1; 
+
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, b0, e1, wrf ) * dt;	
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, b0, e1, wrf ) * dt;	
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, b0, e1, wrf ) * dt;	
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, b0, e1, wrf ) * dt;	
+
+		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
+
+}
+
 // Calculate the jP given some know E and f(v)
 
 int main ( int argc, char **argv )
@@ -206,24 +302,82 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		double amu = _me_mi;
-		int Z = -1;
-		CSpecies species(amu,Z);
-		std::cout << species.m << "  " << species.q << "  " << std:: endl;
-		CParticle particle(species);
-		std::vector<CParticle> particles (r.size(),particle);
+		std::string particleList_fName ( "data/f_0.02keV_electrons.nc" );	
+		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
-		for(int i=0;i<particles.size();i++){
+		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu;
+		std::vector<int> p_Z;
+		
+		try {
+				netCDF::NcFile dataFile ( particleList_fName.c_str(), netCDF::NcFile::read );
+	
+				netCDF::NcDim nc_nP(dataFile.getDim("nP"));
+	
+				int nP = nc_nP.getSize();
+	
+				std::cout << "\tnP: " << nP << std::endl;
 
-				particles[i].r = r[i];
-				particles[i].p = 0;
-				particles[i].z = 0;
+				netCDF::NcVar nc_p_amu(dataFile.getVar("amu"));
+				netCDF::NcVar nc_p_Z(dataFile.getVar("Z"));
 
-				particles[i].v_r = 0;
-				particles[i].v_p = 0;
-				particles[i].v_z = 0;
+				netCDF::NcVar nc_p_x(dataFile.getVar("x"));
+				netCDF::NcVar nc_p_y(dataFile.getVar("y"));
+				netCDF::NcVar nc_p_z(dataFile.getVar("z"));
+				
+				netCDF::NcVar nc_p_vx(dataFile.getVar("vx"));
+				netCDF::NcVar nc_p_vy(dataFile.getVar("vy"));
+				netCDF::NcVar nc_p_vz(dataFile.getVar("vz"));
+
+				p_x.resize(nP);
+				p_y.resize(nP);
+				p_z.resize(nP);
+
+				p_vx.resize(nP);
+				p_vy.resize(nP);
+				p_vz.resize(nP);
+
+				p_amu.resize(nP);
+				p_Z.resize(nP);
+
+				nc_p_x.getVar(&p_x[0]);
+				nc_p_y.getVar(&p_y[0]);
+				nc_p_z.getVar(&p_z[0]);
+
+				nc_p_vx.getVar(&p_vx[0]);
+				nc_p_vy.getVar(&p_vy[0]);
+				nc_p_vz.getVar(&p_vz[0]);
+
+				nc_p_amu.getVar(&p_amu[0]);
+				nc_p_Z.getVar(&p_Z[0]);
 
 		}
+		catch(netCDF::exceptions::NcException &e) {
+				std::cout << "NetCDF: unknown error" << std::endl;
+				e.what();
+		}
+
+		std::vector<CParticle> particles_XYZ;
+		particles_XYZ.resize(p_x.size());
+
+		for(int i=0;i<particles_XYZ.size();i++){
+
+				CParticle thisParticle (p_x[i],p_y[i],p_z[i],p_vx[i],p_vy[i],p_vz[i],p_amu[i],p_Z[i]);
+				particles_XYZ[i] = thisParticle;
+
+				//std::cout << "\tamu: " << p_amu[i] << std::endl;
+
+				//std::cout << "\tParticle[" << i << "]: " 
+				//		<< particles_XYZ[i].c1 << "  " 
+				//		<< particles_XYZ[i].c2 << "  " 
+				//		<< particles_XYZ[i].c3 << "  " 
+				//		<< particles_XYZ[i].v_c1 << "  " 
+				//		<< particles_XYZ[i].v_c2 << "  " 
+				//		<< particles_XYZ[i].v_c3 << "  " 
+				//		<< particles_XYZ[i].q << "  " 
+				//		<< particles_XYZ[i].m << "  " 
+				//		<< std::endl;
+		}
+
 
 		// Generate linear orbits
 
@@ -240,7 +394,7 @@ int main ( int argc, char **argv )
 		int nSteps = 0;
 		int iP = 10;
 		while(t<tEnd) {
-				orbit.push_back(particles[iP]);
+				orbit.push_back(particles_XYZ[iP]);
 				t+=dtMin;
 				nSteps++;
 		}
@@ -261,8 +415,8 @@ int main ( int argc, char **argv )
 				e_t[i] = C3Vec(er,ep,ez);	
 
 				if(i>0) {
-					dv[i] = dv[i-1]+(e_t[i]+e_t[i-1])/2*dtMin*(particles[iP].q/particles[iP].m);
-					std::cout << dv[i].r << "  " << dv[i].p << "  " << dv[i].z << std::endl ;
+					dv[i] = dv[i-1]+(e_t[i]+e_t[i-1])/2*dtMin*(particles_XYZ[iP].q/particles_XYZ[iP].m);
+					std::cout << dv[i].c1 << "  " << dv[i].c2 << "  " << dv[i].c3 << std::endl ;
 				}
 		}
 
@@ -272,7 +426,7 @@ int main ( int argc, char **argv )
 		std::vector<C3Vec> jP1(dv.size());
 		for(int i=0;i<dv.size();i++) {
 				jP1[i] = dv[i]*1.0e18*dvGuess;
-				std::cout << jP1[i].r << "  " << jP1[i].p << "  " << jP1[i].z << std::endl ;
+				std::cout << jP1[i].c1 << "  " << jP1[i].c2 << "  " << jP1[i].c3 << std::endl ;
 		}
 
 		return EXIT_SUCCESS;
