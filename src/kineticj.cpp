@@ -86,6 +86,8 @@ class C3Vec {
 				C3Vec& operator = (const C3Vec &rhs);
 				C3Vec& operator += (const C3Vec &rhs);
 				C3Vec& operator += (const float &rhs);
+				C3Vec& operator -= (const C3Vec &rhs);
+				C3Vec& operator -= (const float &rhs);
 				C3Vec& operator *= (const C3Vec &rhs);
 				C3Vec& operator *= (const float &rhs);
 				C3Vec& operator /= (const C3Vec &rhs);
@@ -93,6 +95,8 @@ class C3Vec {
 
 				C3Vec operator + (const C3Vec &other);
 				C3Vec operator + (const float &other);
+				C3Vec operator - (const C3Vec &other);
+				C3Vec operator - (const float &other);
 				C3Vec operator * (const C3Vec &other);
 				C3Vec operator * (const float &other);
 				friend C3Vec operator * (const float &other, const C3Vec &rhs);
@@ -120,6 +124,20 @@ C3Vec& C3Vec::operator+= (const float &rhs ) {
 		c1 += rhs;
 		c2 += rhs;
 		c3 += rhs;
+		return *this;
+}
+
+C3Vec& C3Vec::operator-= (const C3Vec &rhs ) {
+		c1 -= rhs.c1;
+		c2 -= rhs.c2;
+		c3 -= rhs.c3;
+		return *this;
+}
+
+C3Vec& C3Vec::operator-= (const float &rhs ) {
+		c1 -= rhs;
+		c2 -= rhs;
+		c3 -= rhs;
 		return *this;
 }
 
@@ -159,6 +177,14 @@ C3Vec C3Vec::operator+ (const float &other) {
 		return C3Vec(*this)+=other;
 }
 
+C3Vec C3Vec::operator- (const C3Vec &other) {
+		return C3Vec(*this)-=other;
+}
+
+C3Vec C3Vec::operator- (const float &other) {
+		return C3Vec(*this)-=other;
+}
+
 C3Vec C3Vec::operator* (const C3Vec &other) {
 		return C3Vec(*this)*=other;
 }
@@ -181,30 +207,129 @@ C3Vec operator* ( const float &other, const C3Vec &rhs ) {
 		return C3Vec(rhs)*=other;
 }
 
-C3Vec rk4_evalf ( CParticle &p, float t, const C3Vec &k, const C3Vec &b0, const C3VecI &e1, const float wrf ) {
+// First-order orbits
+C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
+				const std::vector<C3Vec> &b0Vec, const std::vector<C3VecI> &e1, const float wrf ) {
 
-	C3Vec f;
+	C3Vec b0(0,0,0), F;
 
-	C3Vec v_x_b0 ( p.v_c2*b0.c3-p.v_c3*b0.c2, -1.0*(p.v_c1*b0.c3-p.v_c3*b0.c1), p.v_c1*b0.c2-p.v_c2*b0.c1); 
-	C3Vec ( std::real(e1.c1) * cos ( wrf * t ) + std::imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-		  	std::real(e1.c2) * cos ( wrf * t ) + std::imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-		  	std::real(e1.c3) * cos ( wrf * t ) + std::imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
+	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
+	//C3Vec F ( std::real(e1.c1) * cos ( wrf * t ) + std::imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
+	//	  	std::real(e1.c2) * cos ( wrf * t ) + std::imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
+	//	  	std::real(e1.c3) * cos ( wrf * t ) + std::imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
 
-	return f*(p.q/p.m);	
+	return F*(p.q/p.m);	
 }
 
-void rk4_move ( CParticle &p, float dt, float t0, 
-				const C3Vec &b0, const C3VecI &e1, const float wrf ) {
+// Zero-order orbits
+C3Vec rk4_evalf ( CParticle &p, const float &t, 
+				const C3Vec &v_XYZ, const C3Vec &x, const std::vector<C3Vec> &b0Vec_CYL,
+			  	const std::vector<float> &rVec ) {
 
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), k1, k2, k3, k4, yn1; 
+	// Interpolate b0 at location in CYL
+	
+	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
+	float _p = atan2 ( x.c2, x.c1 );
 
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, b0, e1, wrf ) * dt;	
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, b0, e1, wrf ) * dt;	
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, b0, e1, wrf ) * dt;	
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, b0, e1, wrf ) * dt;	
+	//std::cout << "\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
+	//std::cout << "\tr: " << _r << " p: " << _p << std::endl;
+	//std::cout << "\trVec.front(): " << rVec.front() << std::endl;
+	//std::cout << "\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
+
+	float _x = (_r-rVec.front())/(rVec.back()-rVec.front())*(rVec.size()-1);
+	float x0 = floor(_x);
+	float x1 = ceil(_x);
+
+	//std::cout << "\t_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
+
+	C3Vec b0_CYL, b0_XYZ;
+
+	if(x0>=0 && x1<=b0Vec_CYL.size()-1) {
+
+		C3Vec y0 = b0Vec_CYL[x0];
+		C3Vec y1 = b0Vec_CYL[x1];
+
+		// Linear interpolation
+		b0_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
+		b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
+						sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
+						0+0+1*b0_CYL.c3 );
+
+		//std::cout << "\tb0_XYZ: " << b0_XYZ.c1 << "  " << b0_XYZ.c2 << "  " << b0_XYZ.c3 << std::endl;
+	}
+	else {
+		std::cout << "\tERROR: off grid." << std::endl;
+	}
+
+	C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
+					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
+					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
+
+	//std::cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << std::endl;
+
+	//std::cout << "\tp.q/p.m: " << p.q/p.m << std::endl;
+
+	return v_x_b0*(p.q/p.m);	
+}
+
+// Zero-order orbits
+void rk4_move ( CParticle &p, const float &dt, const float &t0, 
+				const std::vector<C3Vec> &b0, const std::vector<float> &r ) {
+
+		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
+		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
+
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
+		x1 = yn0 * dt;
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
+		x2 = (yn0 + 0.5*k1) * dt;
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r ) * dt;	
+		x3 = (yn0 + 0.5*k2) * dt;
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r ) * dt;	
+		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
+		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
 
+		p.c1 = xn1.c1;
+		p.c2 = xn1.c2;
+		p.c3 = xn1.c3;
+		p.v_c1 = yn1.c1;
+		p.v_c2 = yn1.c2;
+		p.v_c3 = yn1.c3;
+
+		//std::cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << std::endl;
+		//std::cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << std::endl;
+		//std::cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << std::endl;
+		//std::cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << std::endl;
+		//std::cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << std::endl;
+}
+
+// First-order orbits
+void rk4_move ( CParticle &p, float dt, float t0, 
+				const std::vector<C3Vec> &b0, const std::vector<C3VecI> &e1, const float wrf ) {
+
+		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
+		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
+
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, e1, wrf ) * dt;	
+		x1 = k1 * dt;                                               
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, e1, wrf ) * dt;	
+		x2 = k2 * dt;                                               
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, e1, wrf ) * dt;	
+		x3 = k3 * dt;                                               
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
+		x4 = k4 * dt;
+
+		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
+		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+
+		p.c1 = xn1.c1;
+		p.c2 = xn1.c2;
+		p.c3 = xn1.c3;
+		p.v_c1 = yn1.c1;
+		p.v_c2 = yn1.c2;
+		p.v_c3 = yn1.c3;
 }
 
 // Calculate the jP given some know E and f(v)
@@ -223,6 +348,7 @@ int main ( int argc, char **argv )
 		std::vector<float> r, b0_r, b0_p, b0_z,
 				e_r_re, e_p_re, e_z_re,
 				e_r_im, e_p_im, e_z_im;
+		std::vector<C3Vec> b0_CYL, b0_XYZ;
 		
 		float wrf;
 
@@ -272,6 +398,15 @@ int main ( int argc, char **argv )
 				nc_b0_p.getVar(&b0_p[0]);
 				nc_b0_z.getVar(&b0_z[0]);
 
+				b0_CYL.resize(nR);
+				b0_XYZ.resize(nR);
+				for(int i=0; i<nR; i++) {
+						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
+						b0_XYZ[i] = C3Vec(cos(0.0)*b0_CYL[i].c1-sin(0.0)*b0_CYL[i].c2+0,
+										sin(0.0)*b0_CYL[i].c1+cos(0.0)*b0_CYL[i].c2+0,
+										0+0+1*b0_CYL[i].c3);
+				}
+
 				nc_e_r_re.getVar(&e_r_re[0]);
 				nc_e_p_re.getVar(&e_p_re[0]);
 				nc_e_z_re.getVar(&e_z_re[0]);
@@ -302,7 +437,7 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_0.02keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f_20keV_electrons.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
 		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu;
@@ -378,25 +513,36 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-
 		// Generate linear orbits
 
-		std::cout << "Generating linear orbit" << std::endl;
+		std::cout << "Generating linear orbit with RK4" << std::endl;
 
 		int nRFCycles = 10;
+		int nStepsPerCycle = 100;
 		float tRF = (2*_pi)/wrf;
-		float dtMin = tRF/10.0;
+		float dtMin = tRF/nStepsPerCycle;
 		float tEnd = tRF * nRFCycles;
 
-		std::vector<CParticle> orbit;
+		std::vector<C3Vec> orbit;
+		std::vector<float> t;
 
-		float t=0;
-		int nSteps = 0;
-		int iP = 10;
-		while(t<tEnd) {
-				orbit.push_back(particles_XYZ[iP]);
-				t+=dtMin;
-				nSteps++;
+		int nSteps = nRFCycles*nStepsPerCycle;
+		orbit.resize(nSteps);
+		t.resize(nSteps);
+
+		for(int iP=0;iP<1;iP++) {
+	 		for(int i=0;i<nSteps;i++) {	
+
+					//std::cout << "\tE: " << 
+					//		0.5 * particles_XYZ[iP].m * 
+					//		sqrt (pow(particles_XYZ[iP].v_c1,2)
+					//						+pow(particles_XYZ[iP].v_c2,2)
+					//						+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
+					
+					t[i]=i*dtMin;
+					orbit[i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
+					rk4_move ( particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
+			}
 		}
 
 		std::cout << "\tnSteps: " << nSteps << std::endl;
@@ -404,21 +550,86 @@ int main ( int argc, char **argv )
 		// Create f1(v) by integrating F to give dv
 
 		std::vector<C3Vec> dv(orbit.size());	
-		std::vector<C3Vec> e_t(orbit.size());
+		std::vector<C3Vec> e1(orbit.size());
 
-		for(int i=0;i<dv.size();i++) {
+		for(int i=0;i<e1.size();i++) {
 
-				float er = std::real(e_r[i])*cos(wrf*t)+std::imag(e_r[i])*sin(wrf*t);
-				float ep = std::real(e_p[i])*cos(wrf*t)+std::imag(e_p[i])*sin(wrf*t);
-				float ez = std::real(e_z[i])*cos(wrf*t)+std::imag(e_z[i])*sin(wrf*t);
-
-				e_t[i] = C3Vec(er,ep,ez);	
-
-				if(i>0) {
-					dv[i] = dv[i-1]+(e_t[i]+e_t[i-1])/2*dtMin*(particles_XYZ[iP].q/particles_XYZ[iP].m);
-					std::cout << dv[i].c1 << "  " << dv[i].c2 << "  " << dv[i].c3 << std::endl ;
+				std::vector<C3Vec> e1Now_CYL;
+			   	e1Now_CYL.resize(e_r.size());
+				for(int j=0;j<e1Now_CYL.size();j++) {
+					e1Now_CYL[j] = C3Vec ( 
+								std::real(e_r[j])*cos(wrf*t[i])+std::imag(e_r[j])*sin(wrf*t[i]),
+								std::real(e_p[j])*cos(wrf*t[i])+std::imag(e_p[j])*sin(wrf*t[i]),
+								std::real(e_z[j])*cos(wrf*t[i])+std::imag(e_z[j])*sin(wrf*t[i]) );
 				}
+
+				// Interpolate e1Now to here, done in CYL
+				
+				float _r = sqrt ( pow(orbit[i].c1,2) + pow(orbit[i].c2,2) );
+				float _p = atan2 ( orbit[i].c2, orbit[i].c1 );
+
+				float _x = (_r-r.front())/(r.back()-r.front())*(r.size()-1);
+				float x0 = floor(_x);
+				float x1 = ceil(_x);
+
+				C3Vec e1NowAndHere_CYL, e1NowAndHere_XYZ;
+
+				if(x0>=0 && x1<=e1Now_CYL.size()-1) {
+
+				 	// Linear interpolation
+					C3Vec y0 = e1Now_CYL[x0];
+					C3Vec y1 = e1Now_CYL[x1];
+					e1NowAndHere_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
+
+					// Rotation CYL -> XYZ
+					e1NowAndHere_XYZ = C3Vec( cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
+									sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
+									0+0+1*e1NowAndHere_CYL.c3 );
+				}
+				else {
+					std::cout << "\tERROR: off grid." << std::endl;
+				}
+
+				e1[i] = e1NowAndHere_XYZ;
+
+				//if(i>0) {
+				//	dv[i] = dv[i-1]+(e_t[i]+e_t[i-1])/2*dtMin*(particles_XYZ[iP].q/particles_XYZ[iP].m);
+				//	//std::cout << dv[i].c1 << "  " << dv[i].c2 << "  " << dv[i].c3 << std::endl ;
+				//}
 		}
+
+		// Write orbits to file
+	
+		std::cout << "Writing orbits to file ... ";
+
+		netCDF::NcFile ncOrbitsFile ("output/orbits.nc", netCDF::NcFile::replace);
+
+		netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ.size());
+		netCDF::NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
+
+		netCDF::NcVar nc_x = ncOrbitsFile.addVar("x",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_y = ncOrbitsFile.addVar("y",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_z = ncOrbitsFile.addVar("z",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_t = ncOrbitsFile.addVar("t",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_e1_x = ncOrbitsFile.addVar("e1_x",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",netCDF::ncFloat,nc_nSteps);
+		netCDF::NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",netCDF::ncFloat,nc_nSteps);
+
+		for(int i=0;i<orbit.size();i++) {
+			std::vector<size_t> index;
+			index.resize(1);
+			index[0]=i;
+			nc_x.putVar(index,orbit[i].c1);
+			nc_y.putVar(index,orbit[i].c2);
+			nc_z.putVar(index,orbit[i].c3);
+			nc_t.putVar(index,t[i]);
+			nc_e1_x.putVar(index,e1[i].c1);
+			nc_e1_y.putVar(index,e1[i].c2);
+			nc_e1_z.putVar(index,e1[i].c3);
+		}
+
+		std::cout << "DONE" << std::endl;
+
 
 		// Calculate jP1
 
@@ -426,7 +637,7 @@ int main ( int argc, char **argv )
 		std::vector<C3Vec> jP1(dv.size());
 		for(int i=0;i<dv.size();i++) {
 				jP1[i] = dv[i]*1.0e18*dvGuess;
-				std::cout << jP1[i].c1 << "  " << jP1[i].c2 << "  " << jP1[i].c3 << std::endl ;
+				//std::cout << jP1[i].c1 << "  " << jP1[i].c2 << "  " << jP1[i].c3 << std::endl ;
 		}
 
 		return EXIT_SUCCESS;
