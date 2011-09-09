@@ -23,6 +23,19 @@ CUDA_ARCH := sm_11
 CUDA_SDK_DIR := /Developer/GPU\ Computing
 endif
 
+# Catch for xbmc.* (my tv)
+MACHINE:=$(shell hostname)
+ifeq ($(MACHINE),xbmc-desktop)
+GCCDIR := /usr/bin
+ALGLIBDIR := 
+NETCDFDIR := /home/xbmc/code/netcdf# must be an --enable-cxx-4 dist
+CUDADIR := 
+CUDALIBDIR = ${CUDADIR}/lib64
+CUDA_ARCH := sm_13
+CUDA_SDK_DIR := 
+LIBCONFIGDIR := 
+endif
+
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
 CC := $(GCCDIR)/gcc
@@ -31,12 +44,12 @@ NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(ALGLIBDIR) -I$(CUDA_SDK_DIR) -I$(NETCDFDIR)/include -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
+INCLUDEFLAGS := -I$(NETCDFDIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
 CFLAGS := 
 CPPFLAGS := -g -pg 
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L$(NETCDFDIR)/lib -L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
-LIBS := $(ALGLIBDIR)/*.o -lcuda -lcudart -lnetcdf_c++4 -lnetcdf -lconfig++
+LFLAGS := -L$(NETCDFDIR)/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
+LIBS := -lnetcdf_c++4 -lnetcdf #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
 DEBUG:=3
