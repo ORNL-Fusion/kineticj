@@ -332,6 +332,17 @@ void rk4_move ( CParticle &p, float dt, float t0,
 		p.v_c3 = yn1.c3;
 }
 
+
+float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
+
+	std::vector<float> inputAbs(input.size());
+	for(int i=0;i<input.size();i++) {
+		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
+	}
+	return *max_element(inputAbs.begin(),inputAbs.end());
+}
+
+
 // Calculate the jP given some know E and f(v)
 
 int main ( int argc, char **argv )
@@ -523,14 +534,16 @@ int main ( int argc, char **argv )
 		float dtMin = tRF/nStepsPerCycle;
 		float tEnd = tRF * nRFCycles;
 
-		std::vector<C3Vec> orbit;
+		std::vector<std::vector<C3Vec> > orbit(particles_XYZ.size());
 		std::vector<float> t;
 
 		int nSteps = nRFCycles*nStepsPerCycle;
-		orbit.resize(nSteps);
 		t.resize(nSteps);
 
-		for(int iP=0;iP<1;iP++) {
+		for(int iP=0;iP<10;iP++) {
+
+			orbit[iP].resize(nSteps);
+
 	 		for(int i=0;i<nSteps;i++) {	
 
 					//std::cout << "\tE: " << 
@@ -540,17 +553,20 @@ int main ( int argc, char **argv )
 					//						+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
 					
 					t[i]=i*dtMin;
-					orbit[i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
+					orbit[iP][i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
 					rk4_move ( particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
 			}
 		}
 
 		std::cout << "\tnSteps: " << nSteps << std::endl;
 
-		// Create f1(v) by integrating F to give dv
+	std::vector<C3Vec> dv(nSteps);	
+	std::vector<C3Vec> e1(nSteps);
+	std::vector<C3Vec> v1(nSteps);
 
-		std::vector<C3Vec> dv(orbit.size());	
-		std::vector<C3Vec> e1(orbit.size());
+	for(int iP=0;iP<10;iP++) {
+
+		// Create f1(v) by integrating F to give dv
 
 		for(int i=0;i<e1.size();i++) {
 
@@ -565,8 +581,8 @@ int main ( int argc, char **argv )
 
 				// Interpolate e1Now to here, done in CYL
 				
-				float _r = sqrt ( pow(orbit[i].c1,2) + pow(orbit[i].c2,2) );
-				float _p = atan2 ( orbit[i].c2, orbit[i].c1 );
+				float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
+				float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
 
 				float _x = (_r-r.front())/(r.back()-r.front())*(r.size()-1);
 				float x0 = floor(_x);
@@ -592,11 +608,23 @@ int main ( int argc, char **argv )
 
 				e1[i] = e1NowAndHere_XYZ;
 
-				//if(i>0) {
-				//	dv[i] = dv[i-1]+(e_t[i]+e_t[i-1])/2*dtMin*(particles_XYZ[iP].q/particles_XYZ[iP].m);
-				//	//std::cout << dv[i].c1 << "  " << dv[i].c2 << "  " << dv[i].c3 << std::endl ;
-				//}
 		}
+
+		// Integrate acceleration along zero-order orbit to get a velocity delta
+
+		v1[0].c1=0;v1[0].c2=0;v1[0].c3=0;
+
+		for(int i=1;i<e1.size();i++) {
+
+			v1[i] = v1[i-1] + particles_XYZ[iP].q/particles_XYZ[iP].m *
+				(t[i]-t[i-1])/6.0	* (e1[i-1]+4*(e1[i-1]+e1[i])/2.0+e1[i]);
+
+			//std::cout << "v1: " << v1[i].c1 << "  " << v1[i].c2 << "  " << v1[i].c3 << std::endl;
+		}	
+
+		std::cout << "\tmax dV: " << maxC3VecAbs(v1) << std::endl;
+
+	}
 
 		// Write orbits to file
 	
@@ -615,18 +643,20 @@ int main ( int argc, char **argv )
 		netCDF::NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",netCDF::ncFloat,nc_nSteps);
 		netCDF::NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",netCDF::ncFloat,nc_nSteps);
 
-		for(int i=0;i<orbit.size();i++) {
+	for(int iP=0;iP<1;iP++) {
+		for(int i=0;i<orbit[iP].size();i++) {
 			std::vector<size_t> index;
 			index.resize(1);
 			index[0]=i;
-			nc_x.putVar(index,orbit[i].c1);
-			nc_y.putVar(index,orbit[i].c2);
-			nc_z.putVar(index,orbit[i].c3);
+			nc_x.putVar(index,orbit[iP][i].c1);
+			nc_y.putVar(index,orbit[iP][i].c2);
+			nc_z.putVar(index,orbit[iP][i].c3);
 			nc_t.putVar(index,t[i]);
 			nc_e1_x.putVar(index,e1[i].c1);
 			nc_e1_y.putVar(index,e1[i].c2);
 			nc_e1_z.putVar(index,e1[i].c3);
 		}
+	}
 
 		std::cout << "DONE" << std::endl;
 
