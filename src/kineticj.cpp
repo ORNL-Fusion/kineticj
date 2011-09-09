@@ -39,6 +39,7 @@ CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
 class CParticle: public CSpecies {
 		public:
 				float c1, c2, c3, v_c1, v_c2, v_c3;
+				int number;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -231,43 +232,51 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
 
-	//std::cout << "\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
-	//std::cout << "\tr: " << _r << " p: " << _p << std::endl;
-	//std::cout << "\trVec.front(): " << rVec.front() << std::endl;
-	//std::cout << "\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
+	std::cout << "\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
+	std::cout << "\tr: " << _r << " p: " << _p << std::endl;
+	std::cout << "\trVec.front(): " << rVec.front() << std::endl;
+	std::cout << "\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
 
 	float _x = (_r-rVec.front())/(rVec.back()-rVec.front())*(rVec.size()-1);
 	float x0 = floor(_x);
 	float x1 = ceil(_x);
 
-	//std::cout << "\t_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
-
 	C3Vec b0_CYL, b0_XYZ;
 
-	if(x0>=0 && x1<=b0Vec_CYL.size()-1) {
-
-		C3Vec y0 = b0Vec_CYL[x0];
-		C3Vec y1 = b0Vec_CYL[x1];
-
-		// Linear interpolation
-		b0_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
-		b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
-						sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
-						0+0+1*b0_CYL.c3 );
-
-		//std::cout << "\tb0_XYZ: " << b0_XYZ.c1 << "  " << b0_XYZ.c2 << "  " << b0_XYZ.c3 << std::endl;
+	// Catch for particle at point
+	if(abs(x0-x1)<1e-4) {
+			b0_CYL = b0Vec_CYL[x0];	
 	}
 	else {
-		std::cout << "\tERROR: off grid." << std::endl;
+
+		std::cout << "\t_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
+
+		if(x0>=0 && x1<=b0Vec_CYL.size()-1) {
+
+			C3Vec y0 = b0Vec_CYL[x0];
+			C3Vec y1 = b0Vec_CYL[x1];
+
+			// Linear interpolation
+			b0_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
+			std::cout << "\tb0_XYZ: " << b0_XYZ.c1 << "  " << b0_XYZ.c2 << "  " << b0_XYZ.c3 << std::endl;
+		}
+		else {
+			std::cout << "\tERROR: off grid." << std::endl;
+			std::cout << "\tparticle: " << p.number << "  " << "_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
+		}
 	}
+
+	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
+					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
+					0+0+1*b0_CYL.c3 );
 
 	C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
 					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
 					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
 
-	//std::cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << std::endl;
+	std::cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << std::endl;
 
-	//std::cout << "\tp.q/p.m: " << p.q/p.m << std::endl;
+	std::cout << "\tp.q/p.m: " << p.q/p.m << std::endl;
 
 	return v_x_b0*(p.q/p.m);	
 }
@@ -298,11 +307,11 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
 
-		//std::cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << std::endl;
-		//std::cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << std::endl;
-		//std::cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << std::endl;
-		//std::cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << std::endl;
-		//std::cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << std::endl;
+		std::cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << std::endl;
+		std::cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << std::endl;
+		std::cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << std::endl;
+		std::cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << std::endl;
+		std::cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << std::endl;
 }
 
 // First-order orbits
@@ -448,7 +457,7 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_20keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f_5keV_electrons.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
 		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu;
@@ -509,6 +518,7 @@ int main ( int argc, char **argv )
 
 				CParticle thisParticle (p_x[i],p_y[i],p_z[i],p_vx[i],p_vy[i],p_vz[i],p_amu[i],p_Z[i]);
 				particles_XYZ[i] = thisParticle;
+				particles_XYZ[i].number = i;
 
 				//std::cout << "\tamu: " << p_amu[i] << std::endl;
 
@@ -540,20 +550,21 @@ int main ( int argc, char **argv )
 		int nSteps = nRFCycles*nStepsPerCycle;
 		t.resize(nSteps);
 
-		for(int iP=0;iP<10;iP++) {
+		for(int iP=12;iP<13;iP++) {
 
 			orbit[iP].resize(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 
-					//std::cout << "\tE: " << 
-					//		0.5 * particles_XYZ[iP].m * 
-					//		sqrt (pow(particles_XYZ[iP].v_c1,2)
-					//						+pow(particles_XYZ[iP].v_c2,2)
-					//						+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
+					std::cout << "\tE: " << 
+							0.5 * particles_XYZ[iP].m * 
+							sqrt (pow(particles_XYZ[iP].v_c1,2)
+											+pow(particles_XYZ[iP].v_c2,2)
+											+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
 					
 					t[i]=i*dtMin;
 					orbit[iP][i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
+					std::cout << particles_XYZ[iP].v_c1 << std::endl;
 					rk4_move ( particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
 			}
 		}
@@ -564,7 +575,7 @@ int main ( int argc, char **argv )
 	std::vector<C3Vec> e1(nSteps);
 	std::vector<C3Vec> v1(nSteps);
 
-	for(int iP=0;iP<10;iP++) {
+	for(int iP=12;iP<13;iP++) {
 
 		// Create f1(v) by integrating F to give dv
 
@@ -604,6 +615,7 @@ int main ( int argc, char **argv )
 				}
 				else {
 					std::cout << "\tERROR: off grid." << std::endl;
+					std::cout << "\tERROR: " << _x << "  " << x0 << "  " << x1 << std::endl;
 				}
 
 				e1[i] = e1NowAndHere_XYZ;
