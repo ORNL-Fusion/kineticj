@@ -52,7 +52,7 @@ LFLAGS := -L$(NETCDFDIR)/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
 LIBS := -lnetcdf_c++4 -lnetcdf #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
-DEBUG:=1
+DEBUG:=2
 PITCH_SCATTERING:=1
 ENERGY_SCATTERING:=1
 GOOSE:=0

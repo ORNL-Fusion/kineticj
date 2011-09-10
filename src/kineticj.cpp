@@ -46,10 +46,13 @@ class CParticle: public CSpecies {
 		public:
 				float c1, c2, c3, v_c1, v_c2, v_c3;
 				int number;
+				float weight;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
-				CParticle (float c1, float c2, float c3, float v_c1, float v_c2, float v_c3, double _amu, int _Z );
+				CParticle (float c1, float c2, float c3, 
+								float v_c1, float v_c2, float v_c3, 
+								double _amu, int _Z, float _weight );
 				CParticle (CSpecies _species);
 };
 
@@ -60,7 +63,9 @@ CParticle::CParticle ( double _amu, int _Z ): CSpecies(_amu,_Z) {
 }
 
 CParticle::CParticle 
-	(float _c1, float _c2, float _c3, float _v_c1, float _v_c2, float _v_c3, double _amu, int _Z ) :
+	(float _c1, float _c2, float _c3, 
+	 float _v_c1, float _v_c2, float _v_c3, 
+	 double _amu, int _Z, float _weight ) :
 	CSpecies (_amu, _Z) {
 
 	c1 = _c1;
@@ -70,6 +75,8 @@ CParticle::CParticle
 	v_c1 = _v_c1;
 	v_c2 = _v_c2;
 	v_c3 = _v_c3;
+
+	weight = _weight;
 }
 
 CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
@@ -474,11 +481,13 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_5keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f_0.01keV_electrons.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
-		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu;
+		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
 		std::vector<int> p_Z;
+		float vTh;
+		int nThermal;
 		
 		try {
 				netCDF::NcFile dataFile ( particleList_fName.c_str(), netCDF::NcFile::read );
@@ -500,6 +509,11 @@ int main ( int argc, char **argv )
 				netCDF::NcVar nc_p_vy(dataFile.getVar("vy"));
 				netCDF::NcVar nc_p_vz(dataFile.getVar("vz"));
 
+				netCDF::NcVar nc_p_weight(dataFile.getVar("weight"));
+
+				netCDF::NcVar nc_nThermal(dataFile.getVar("nThermal"));
+				netCDF::NcVar nc_vTh(dataFile.getVar("vTh"));
+
 				p_x.resize(nP);
 				p_y.resize(nP);
 				p_z.resize(nP);
@@ -507,6 +521,8 @@ int main ( int argc, char **argv )
 				p_vx.resize(nP);
 				p_vy.resize(nP);
 				p_vz.resize(nP);
+
+				p_weight.resize(nP);
 
 				p_amu.resize(nP);
 				p_Z.resize(nP);
@@ -519,8 +535,13 @@ int main ( int argc, char **argv )
 				nc_p_vy.getVar(&p_vy[0]);
 				nc_p_vz.getVar(&p_vz[0]);
 
+				nc_p_weight.getVar(&p_weight[0]);
+
 				nc_p_amu.getVar(&p_amu[0]);
 				nc_p_Z.getVar(&p_Z[0]);
+
+				nc_nThermal.getVar(&nThermal);
+				nc_vTh.getVar(&vTh);
 
 		}
 		catch(netCDF::exceptions::NcException &e) {
@@ -533,7 +554,9 @@ int main ( int argc, char **argv )
 
 		for(int i=0;i<particles_XYZ.size();i++){
 
-				CParticle thisParticle (p_x[i],p_y[i],p_z[i],p_vx[i],p_vy[i],p_vz[i],p_amu[i],p_Z[i]);
+				CParticle thisParticle (p_x[i],p_y[i],p_z[i],
+								p_vx[i],p_vy[i],p_vz[i],
+								p_amu[i],p_Z[i],p_weight[i]);
 				particles_XYZ[i] = thisParticle;
 				particles_XYZ[i].number = i;
 
@@ -551,11 +574,13 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
+		std::vector<CParticle> particles_XYZ_0(particles_XYZ);
+
 		// Generate linear orbits
 
 		std::cout << "Generating linear orbit with RK4" << std::endl;
 
-		int nRFCycles = 10;
+		int nRFCycles = 1;
 		int nStepsPerCycle = 100;
 		float tRF = (2*_pi)/wrf;
 		float dtMin = tRF/nStepsPerCycle;
@@ -567,7 +592,7 @@ int main ( int argc, char **argv )
 		int nSteps = nRFCycles*nStepsPerCycle;
 		t.resize(nSteps);
 
-		for(int iP=0;iP<13;iP++) {
+		for(int iP=0;iP<particles_XYZ.size();iP++) {
 
 			orbit[iP].resize(nSteps);
 
@@ -592,7 +617,7 @@ int main ( int argc, char **argv )
 	std::vector<C3Vec> e1(nSteps);
 	std::vector<C3Vec> v1(nSteps);
 
-	for(int iP=0;iP<13;iP++) {
+	for(int iP=0;iP<particles_XYZ.size();iP++) {
 
 		// Create f1(v) by integrating F to give dv
 
@@ -691,6 +716,106 @@ int main ( int argc, char **argv )
 
 
 		// Calculate jP1
+
+		std::vector<std::vector<std::vector<float> > > f_XYZ, f_XYZ_0;
+		std::vector<float> vxGrid, vyGrid, vzGrid;
+
+#if DEBUGLEVEL >= 1
+		std::cout << "\tnThermal: " << nThermal << std::endl;
+		std::cout << "\tvTh: " << vTh << std::endl;
+#endif
+
+		int nx=10, ny=10, nz=10;
+		vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
+
+		float vMin = -nThermal*vTh;
+		float vMax = nThermal*vTh;
+		float vRange = (vMax-vMin);
+		float dVx = vRange / (vxGrid.size()-1);
+		float dVy = vRange / (vyGrid.size()-1);
+		float dVz = vRange / (vzGrid.size()-1);
+
+		std::cout << "\tdVx: " << dVx << std::endl;
+		for(int i=0;i<vxGrid.size();i++) {
+				vxGrid[i] = vMin + i*dVx;
+		}
+		for(int j=0;j<vyGrid.size();j++) {
+				vyGrid[j] = vMin + j*dVy;
+		}
+		for(int k=0;k<vzGrid.size();k++) {
+				vzGrid[k] = vMin + k*dVz;
+		}
+
+		f_XYZ.resize(nx);
+		f_XYZ_0.resize(nx);
+		for(int i=0;i<nx;i++) {
+				f_XYZ[i].resize(ny);
+				f_XYZ_0[i].resize(ny);
+				for(int j=0;j<ny;j++) {
+						f_XYZ[i][j].resize(nz);
+						f_XYZ_0[i][j].resize(nz);
+				}
+		}
+
+		for(int i=0;i<nx;i++){
+				for(int j=0;j<ny;j++){
+						for(int k=0;k<nz;k++){
+							f_XYZ[i][j][k]=0;
+							f_XYZ_0[i][j][k]=0;
+						}
+				}
+		}
+
+
+		// Create the initial f
+		for(int iP=0;iP<particles_XYZ_0.size();iP++) {
+				float iix = (particles_XYZ_0[iP].v_c1-vMin)/vRange*(vxGrid.size()-1);
+				if(iix<0 || iix>(nx-1)){
+						std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c1<<std::endl;
+						std::cout<<"max v: "<<vMax<<std::endl;
+				}
+				float iiy = (particles_XYZ_0[iP].v_c2-vMin)/vRange*(vyGrid.size()-1);
+				if(iiy<0 || iiy>(ny-1)){
+						std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c2<<std::endl;
+						std::cout<<"max v: "<<vMax<<std::endl;
+				}
+				float iiz = (particles_XYZ_0[iP].v_c3-vMin)/vRange*(vzGrid.size()-1);
+				std::cout << "\t\t particle f index: " << iix << "  " << iiy << "  " << iiz << std::endl;
+				f_XYZ_0[iix][iiy][iiz] += particles_XYZ_0[iP].weight;
+		}	
+
+
+		for(int iP=0;iP<particles_XYZ.size();iP++) {
+				float iix = (particles_XYZ[iP].v_c1-vMin)/vRange*(vxGrid.size()-1);
+				if(iix<0 || iix>(nx-1)){
+						std::cout<<"Outside v grid: "<<particles_XYZ[iP].v_c1<<std::endl;
+						std::cout<<"max v: "<<vMax<<std::endl;
+				}
+				float iiy = (particles_XYZ[iP].v_c2-vMin)/vRange*(vyGrid.size()-1);
+				if(iiy<0 || iiy>(ny-1)){
+						std::cout<<"Outside v grid: "<<particles_XYZ[iP].v_c2<<std::endl;
+						std::cout<<"max v: "<<vMax<<std::endl;
+				}
+				float iiz = (particles_XYZ[iP].v_c3-vMin)/vRange*(vzGrid.size()-1);
+				std::cout << "\t\t particle f index: " << iix << "  " << iiy << "  " << iiz << std::endl;
+				f_XYZ[iix][iiy][iiz] += particles_XYZ[iP].weight;
+		}	
+
+		float j1x=0,j1y=0, j1z=0;
+		for(int i=0;i<nx;i++){
+				for(int j=0;j<ny;j++){
+						for(int k=0;k<nz;k++){
+							j1x += particles_XYZ[0].q*vxGrid[i]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dVx*dVy*dVz;
+							j1y += particles_XYZ[0].q*vyGrid[i]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dVx*dVy*dVz;
+							j1z += particles_XYZ[0].q*vzGrid[i]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dVx*dVy*dVz;
+							std::cout << "f(0)-f(t): " << f_XYZ_0[i][j][k]-f_XYZ[i][j][k] << std::endl;
+							std::cout << "f(0): " << f_XYZ_0[i][j][k] << std::endl;
+							std::cout << "f(t): " << f_XYZ[i][j][k] << std::endl;
+						}
+				}
+		}
+
+		std::cout << "\tj1: " << j1x << "  " << j1y << "  " << j1z << std::endl;
 
 		float dvGuess = 3e8*0.01/50.0;
 		std::vector<C3Vec> jP1(dv.size());
