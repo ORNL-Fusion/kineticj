@@ -7,6 +7,12 @@
 #include <complex>
 #include "constants.hpp"
 
+#ifdef __CUDA_ARCH__
+#define PRINT cuPrintf 
+#else
+#define PRINT printf
+#endif
+
 class CSpecies {
 		public:
 				double m, q;
@@ -232,10 +238,12 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
 
-	std::cout << "\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
-	std::cout << "\tr: " << _r << " p: " << _p << std::endl;
-	std::cout << "\trVec.front(): " << rVec.front() << std::endl;
-	std::cout << "\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
+#if DEBUGLEVEL >= 3
+	std::cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
+	std::cout << "\t\t\tr: " << _r << " p: " << _p << std::endl;
+	std::cout << "\t\t\trVec.front(): " << rVec.front() << std::endl;
+	std::cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
+#endif
 
 	float _x = (_r-rVec.front())/(rVec.back()-rVec.front())*(rVec.size()-1);
 	float x0 = floor(_x);
@@ -249,7 +257,9 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	}
 	else {
 
+#if DEBUGLEVEL >= 3
 		std::cout << "\t_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
+#endif
 
 		if(x0>=0 && x1<=b0Vec_CYL.size()-1) {
 
@@ -258,7 +268,10 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 			// Linear interpolation
 			b0_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
+
+#if DEBUGLEVEL >= 3
 			std::cout << "\tb0_XYZ: " << b0_XYZ.c1 << "  " << b0_XYZ.c2 << "  " << b0_XYZ.c3 << std::endl;
+#endif
 		}
 		else {
 			std::cout << "\tERROR: off grid." << std::endl;
@@ -274,9 +287,10 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
 					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
 
+#if DEBUGLEVEL >= 3
 	std::cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << std::endl;
-
 	std::cout << "\tp.q/p.m: " << p.q/p.m << std::endl;
+#endif
 
 	return v_x_b0*(p.q/p.m);	
 }
@@ -307,11 +321,14 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
 
+#if DEBUGLEVEL >= 3
 		std::cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << std::endl;
 		std::cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << std::endl;
 		std::cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << std::endl;
 		std::cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << std::endl;
 		std::cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << std::endl;
+#endif
+
 }
 
 // First-order orbits
@@ -550,21 +567,21 @@ int main ( int argc, char **argv )
 		int nSteps = nRFCycles*nStepsPerCycle;
 		t.resize(nSteps);
 
-		for(int iP=12;iP<13;iP++) {
+		for(int iP=0;iP<13;iP++) {
 
 			orbit[iP].resize(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 
+#if DEBUGLEVEL >= 3
 					std::cout << "\tE: " << 
 							0.5 * particles_XYZ[iP].m * 
 							sqrt (pow(particles_XYZ[iP].v_c1,2)
 											+pow(particles_XYZ[iP].v_c2,2)
 											+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
-					
+#endif	
 					t[i]=i*dtMin;
 					orbit[iP][i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
-					std::cout << particles_XYZ[iP].v_c1 << std::endl;
 					rk4_move ( particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
 			}
 		}
@@ -575,7 +592,7 @@ int main ( int argc, char **argv )
 	std::vector<C3Vec> e1(nSteps);
 	std::vector<C3Vec> v1(nSteps);
 
-	for(int iP=12;iP<13;iP++) {
+	for(int iP=0;iP<13;iP++) {
 
 		// Create f1(v) by integrating F to give dv
 
