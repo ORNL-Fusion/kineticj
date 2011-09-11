@@ -281,6 +281,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 #endif
 		}
 		else {
+			printf("\t%s line: %i\n",__FILE__,__LINE__);
 			std::cout << "\tERROR: off grid." << std::endl;
 			std::cout << "\tparticle: " << p.number << "  " << "_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
 		}
@@ -611,20 +612,21 @@ int main ( int argc, char **argv )
 			}
 		}
 
-		std::cout << "\tnSteps: " << nSteps << std::endl;
+	std::cout << "\tnSteps: " << nSteps << std::endl;
 
 	std::vector<C3Vec> dv(nSteps);	
-	std::vector<C3Vec> e1(nSteps);
+	std::vector<std::vector<C3Vec> >e1(particles_XYZ.size());
 	std::vector<std::vector<C3Vec> >v1(particles_XYZ.size());
 	
 
 	for(int iP=0;iP<particles_XYZ.size();iP++) {
 
 		v1[iP].resize(nSteps);
+		e1[iP].resize(nSteps);
 
 		// Create f1(v) by integrating F to give dv
 
-		for(int i=0;i<e1.size();i++) {
+		for(int i=0;i<e1[iP].size();i++) {
 
 				std::vector<C3Vec> e1Now_CYL;
 			   	e1Now_CYL.resize(e_r.size());
@@ -659,11 +661,15 @@ int main ( int argc, char **argv )
 									0+0+1*e1NowAndHere_CYL.c3 );
 				}
 				else {
+					printf("\t%s line: %i\n",__FILE__,__LINE__);
 					std::cout << "\tERROR: off grid." << std::endl;
 					std::cout << "\tERROR: " << _x << "  " << x0 << "  " << x1 << std::endl;
+					std::cout << "\tERROR: " << _r << "  " << _p << std::endl;
+
+					exit (1);
 				}
 
-				e1[i] = e1NowAndHere_XYZ;
+				e1[iP][i] = e1NowAndHere_XYZ;
 
 		}
 
@@ -671,10 +677,10 @@ int main ( int argc, char **argv )
 
 		v1[iP][0].c1=0;v1[iP][0].c2=0;v1[iP][0].c3=0;
 
-		for(int i=1;i<e1.size();i++) {
+		for(int i=1;i<e1[iP].size();i++) {
 
 			v1[iP][i] = v1[iP][i-1] + particles_XYZ[iP].q/particles_XYZ[iP].m *
-				(t[i]-t[i-1])/6.0	* (e1[i-1]+4*(e1[i-1]+e1[i])/2.0+e1[i]);
+				(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
 
 			//std::cout << "v1: " << v1[i].c1 << "  " << v1[i].c2 << "  " << v1[i].c3 << std::endl;
 		}	
@@ -694,10 +700,10 @@ int main ( int argc, char **argv )
 		std::cout << "\tvTh: " << vTh << std::endl;
 #endif
 
-		int nx=80, ny=20, nz=20;
+		int nx=400, ny=20, nz=20;
 		vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
 
-		float vxMin = -nThermal*vTh*12;
+		float vxMin = -nThermal*vTh*50;
 		float vxMax = -vxMin;
 		float vxRange = (vxMax-vxMin);
 		float dVx = vxRange / (vxGrid.size()-1);
@@ -843,38 +849,38 @@ int main ( int argc, char **argv )
 		netCDF::NcVar nc_j1y = ncOrbitsFile.addVar("j1y",netCDF::ncFloat,nc_nSteps);
 		netCDF::NcVar nc_j1z = ncOrbitsFile.addVar("j1z",netCDF::ncFloat,nc_nSteps);
 
-		std::vector<size_t> indexA(1);
-		std::vector<size_t> indexB(2);
+		std::vector<size_t> startpA(2);
+		std::vector<size_t> countpA(2);
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
-			for(int i=0;i<orbit[iP].size();i++) {
+			//for(int i=0;i<orbit[iP].size();i++) {
 
-				indexA[0]=i;
-				indexB[0]=iP;
-				indexB[1]=i;
+				startpA[0]=iP;
+				startpA[1]=0;
+				countpA[0]=1;
+				countpA[1]=nSteps;
 
-				nc_x.putVar(indexB,orbit[iP][i].c1);
-				nc_y.putVar(indexB,orbit[iP][i].c2);
-				nc_z.putVar(indexB,orbit[iP][i].c3);
+				nc_x.putVar(startpA,countpA,&orbit[iP][0].c1);
+				nc_y.putVar(startpA,countpA,&orbit[iP][0].c2);
+				nc_z.putVar(startpA,countpA,&orbit[iP][0].c3);
 
-				nc_t.putVar(indexA,t[i]);
+				nc_e1_x.putVar(startpA,countpA,&e1[iP][0].c1);
+				nc_e1_y.putVar(startpA,countpA,&e1[iP][0].c2);
+				nc_e1_z.putVar(startpA,countpA,&e1[iP][0].c3);
 
-				nc_e1_x.putVar(indexB,e1[i].c1);
-				nc_e1_y.putVar(indexB,e1[i].c2);
-				nc_e1_z.putVar(indexB,e1[i].c3);
-
-				nc_v1x.putVar(indexB,v1[iP][i].c1);
-				nc_v1y.putVar(indexB,v1[iP][i].c2);
-				nc_v1z.putVar(indexB,v1[iP][i].c3);
-			}
+				nc_v1x.putVar(startpA,countpA,&v1[iP][0].c1);
+				nc_v1y.putVar(startpA,countpA,&v1[iP][0].c2);
+				nc_v1z.putVar(startpA,countpA,&v1[iP][0].c3);
+			//}
 		}
 
-		for(int s=0;s<nSteps;s++) {
+		std::vector<size_t> startp (1,0);
+		std::vector<size_t> countp (1,nSteps);
 
-				indexA[0]=s;
-				nc_j1x.putVar(indexA,j1x[s]);
-				nc_j1y.putVar(indexA,j1y[s]);
-				nc_j1z.putVar(indexA,j1z[s]);
-		}	
+		nc_t.putVar(startp,countp,&t[0]);
+
+		nc_j1x.putVar(startp,countp,&j1x[0]);
+		nc_j1y.putVar(startp,countp,&j1y[0]);
+		nc_j1z.putVar(startp,countp,&j1z[0]);
 
 		std::cout << "DONE" << std::endl;
 
