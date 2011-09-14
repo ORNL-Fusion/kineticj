@@ -47,6 +47,7 @@ class CParticle: public CSpecies {
 				float c1, c2, c3, v_c1, v_c2, v_c3;
 				int number;
 				float weight;
+				int status;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -57,9 +58,11 @@ class CParticle: public CSpecies {
 };
 
 CParticle::CParticle () {
+		status = 0;
 }
 
 CParticle::CParticle ( double _amu, int _Z ): CSpecies(_amu,_Z) {
+		status = 0;
 }
 
 CParticle::CParticle 
@@ -77,6 +80,8 @@ CParticle::CParticle
 	v_c3 = _v_c3;
 
 	weight = _weight;
+	
+	status = 0;
 }
 
 CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
@@ -284,6 +289,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 			printf("\t%s line: %i\n",__FILE__,__LINE__);
 			std::cout << "\tERROR: off grid." << std::endl;
 			std::cout << "\tparticle: " << p.number << "  " << "_x: " << _x << " x0: " << x0 << " x1: " << x1 << std::endl;
+			p.status = 1;
 		}
 	}
 
@@ -575,25 +581,46 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-		std::vector<CParticle> particles_XYZ_0(particles_XYZ);
+	float xGridMin = 9.9;
+	float xGridMax = 10.1;
+	float xGridRng = xGridMax-xGridMin;
+	int nXGrid = 10;
+	float xGridStep = xGridRng/(nXGrid-1);
+	std::vector<float> xGrid(nXGrid);
+
+	for(int iX=0;iX<xGrid.size();iX++) {
+			xGrid[iX] = xGridMin+iX*xGridStep;
+			std::cout << "\t\txGrid[iX]: " << xGrid[iX] << std::endl;
+	}
+
+	std::vector<CParticle> particles_XYZ_0(particles_XYZ);
+
+	for(int iX=0;xGrid.size();iX++) {
+
+		std::vector<CParticle> particles_XYZ_thisX(particles_XYZ);
+
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+			particles_XYZ_thisX[iP].c1 = xGrid[iX];
+		}
 
 		// Generate linear orbits
 
-		std::cout << "Generating linear orbit with RK4" << std::endl;
+		std::cout << "Generating linear orbit with RK4 for xGrid " << iX << std::endl;
 
 		int nRFCycles = 5;
 		int nStepsPerCycle = 100;
 		float tRF = (2*_pi)/wrf;
-		float dtMin = tRF/nStepsPerCycle;
+		float dtMin = -tRF/nStepsPerCycle;
 		float tEnd = tRF * nRFCycles;
 
-		std::vector<std::vector<C3Vec> > orbit(particles_XYZ.size());
+		std::vector<std::vector<C3Vec> > orbit(particles_XYZ_thisX.size());
+		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
 		std::vector<float> t;
 
 		int nSteps = nRFCycles*nStepsPerCycle;
 		t.resize(nSteps);
 
-		for(int iP=0;iP<particles_XYZ.size();iP++) {
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
 			orbit[iP].resize(nSteps);
 
@@ -601,25 +628,27 @@ int main ( int argc, char **argv )
 
 #if DEBUGLEVEL >= 3
 					std::cout << "\tE: " << 
-							0.5 * particles_XYZ[iP].m * 
-							sqrt (pow(particles_XYZ[iP].v_c1,2)
-											+pow(particles_XYZ[iP].v_c2,2)
-											+pow(particles_XYZ[iP].v_c3,2))/_e << std::endl;
+							0.5 * particles_XYZ_thisX[iP].m * 
+							sqrt (pow(particles_XYZ_thisX[iP].v_c1,2)
+											+pow(particles_XYZ_thisX[iP].v_c2,2)
+											+pow(particles_XYZ_thisX[iP].v_c3,2))/_e << std::endl;
 #endif	
 					t[i]=i*dtMin;
-					orbit[iP][i] = C3Vec(particles_XYZ[iP].c1,particles_XYZ[iP].c2,particles_XYZ[iP].c3);
-					rk4_move ( particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
+					if(particles_XYZ_thisX[iP].status==0) {
+						orbit[iP][i] = C3Vec(particles_XYZ_thisX[iP].c1,particles_XYZ_thisX[iP].c2,particles_XYZ_thisX[iP].c3);
+						nStepsTaken[iP]++;
+						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
+					}
 			}
 		}
 
 	std::cout << "\tnSteps: " << nSteps << std::endl;
 
 	std::vector<C3Vec> dv(nSteps);	
-	std::vector<std::vector<C3Vec> >e1(particles_XYZ.size());
-	std::vector<std::vector<C3Vec> >v1(particles_XYZ.size());
-	
+	std::vector<std::vector<C3Vec> >e1(particles_XYZ_thisX.size());
+	std::vector<std::vector<C3Vec> >v1(particles_XYZ_thisX.size());
 
-	for(int iP=0;iP<particles_XYZ.size();iP++) {
+	for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
 		v1[iP].resize(nSteps);
 		e1[iP].resize(nSteps);
@@ -637,39 +666,44 @@ int main ( int argc, char **argv )
 								std::real(e_z[j])*cos(wrf*t[i])+std::imag(e_z[j])*sin(wrf*t[i]) );
 				}
 
-				// Interpolate e1Now to here, done in CYL
-				
-				float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
-				float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
+				if(i<=nStepsTaken[iP]) {
+					// Interpolate e1Now to here, done in CYL
+					
+					float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
+					float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
 
-				float _x = (_r-r.front())/(r.back()-r.front())*(r.size()-1);
-				float x0 = floor(_x);
-				float x1 = ceil(_x);
+					float _x = (_r-r.front())/(r.back()-r.front())*(r.size()-1);
+					float x0 = floor(_x);
+					float x1 = ceil(_x);
 
-				C3Vec e1NowAndHere_CYL, e1NowAndHere_XYZ;
+					C3Vec e1NowAndHere_CYL, e1NowAndHere_XYZ;
 
-				if(x0>=0 && x1<=e1Now_CYL.size()-1) {
+					if(x0>=0 && x1<=e1Now_CYL.size()-1) {
 
-				 	// Linear interpolation
-					C3Vec y0 = e1Now_CYL[x0];
-					C3Vec y1 = e1Now_CYL[x1];
-					e1NowAndHere_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
+					 	// Linear interpolation
+						C3Vec y0 = e1Now_CYL[x0];
+						C3Vec y1 = e1Now_CYL[x1];
+						e1NowAndHere_CYL = y0+(_x-x0)*(y1-y0)/(x1-x0);
 
-					// Rotation CYL -> XYZ
-					e1NowAndHere_XYZ = C3Vec( cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
-									sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
-									0+0+1*e1NowAndHere_CYL.c3 );
+						// Rotation CYL -> XYZ
+						e1NowAndHere_XYZ = C3Vec( cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
+										sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
+										0+0+1*e1NowAndHere_CYL.c3 );
+					}
+					else {
+						printf("\t%s line: %i\n",__FILE__,__LINE__);
+						std::cout << "\tERROR: off grid. CODE SHOULD NEVER GET HERE :(" << std::endl;
+						std::cout << "\tERROR: " << _x << "  " << x0 << "  " << x1 << std::endl;
+						std::cout << "\tERROR: " << _r << "  " << _p << std::endl;
+
+						exit (1);
+					}
+
+					e1[iP][i] = e1NowAndHere_XYZ;
 				}
 				else {
-					printf("\t%s line: %i\n",__FILE__,__LINE__);
-					std::cout << "\tERROR: off grid." << std::endl;
-					std::cout << "\tERROR: " << _x << "  " << x0 << "  " << x1 << std::endl;
-					std::cout << "\tERROR: " << _r << "  " << _p << std::endl;
-
-					exit (1);
+					e1[iP][i] = C3Vec(0,0,0);
 				}
-
-				e1[iP][i] = e1NowAndHere_XYZ;
 
 		}
 
@@ -679,7 +713,7 @@ int main ( int argc, char **argv )
 
 		for(int i=1;i<e1[iP].size();i++) {
 
-			v1[iP][i] = v1[iP][i-1] + particles_XYZ[iP].q/particles_XYZ[iP].m *
+			v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
 				(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
 
 			//std::cout << "v1: " << v1[i].c1 << "  " << v1[i].c2 << "  " << v1[i].c3 << std::endl;
@@ -781,34 +815,36 @@ int main ( int argc, char **argv )
 					}
 			}
 
-			for(int iP=0;iP<particles_XYZ.size();iP++) {
+			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 					float iix = (particles_XYZ_0[iP].v_c1+v1[iP][s].c1-vxMin)/vxRange*(vxGrid.size()-1);
 					if(iix<0 || iix>(nx-1)){
-							std::cout<<"\t\tError - v: "<<particles_XYZ[iP].v_c1<<std::endl;
+							std::cout<<"\t\tError - v: "<<particles_XYZ_thisX[iP].v_c1<<std::endl;
 							std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
 							std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][s].c1-vxMin<<std::endl;
 							std::cout<<"\t\tError - iix: "<<iix<<std::endl;
 					}
 					float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][s].c2-vyMin)/vyRange*(vyGrid.size()-1);
 					if(iiy<0 || iiy>(ny-1)){
-							std::cout<<"Outside v grid: "<<particles_XYZ[iP].v_c2<<std::endl;
+							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vyMax<<std::endl;
 					}
 					float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][s].c3-vzMin)/vzRange*(vzGrid.size()-1);
 					if(iiz<0 || iiy>(nz-1)){
-							std::cout<<"Outside v grid: "<<particles_XYZ[iP].v_c2<<std::endl;
+							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vzMax<<std::endl;
 					}
-					f_XYZ[iix][iiy][iiz] += particles_XYZ[iP].weight/dV;
+					f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
 			}	
 
 			// The f_0 is the approximate of the f_ions, which is assumed stationary here.
+			float qi = -particles_XYZ_thisX[0].q;
+			float qe =  particles_XYZ_thisX[0].q;
 			for(int i=0;i<nx;i++){
 					for(int j=0;j<ny;j++){
 							for(int k=0;k<nz;k++){
-								j1x[s] += particles_XYZ[0].q*vxGrid[i]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dV;
-								j1y[s] += particles_XYZ[0].q*vyGrid[j]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dV;
-								j1z[s] += particles_XYZ[0].q*vzGrid[k]*(f_XYZ_0[i][j][k]-f_XYZ[i][j][k])*dV;
+								j1x[s] += vxGrid[i]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
+								j1y[s] += vyGrid[j]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
+								j1z[s] += vzGrid[k]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
 							}
 					}
 			}
@@ -820,11 +856,13 @@ int main ( int argc, char **argv )
 	
 		std::cout << "Writing orbits to file ... ";
 
-		sleep(1);
+		std::stringstream ncOrbitsFileName;
+		ncOrbitsFileName << "output/orbits_";
+		ncOrbitsFileName << iX;
+	   	ncOrbitsFileName << ".nc"; 	
+		netCDF::NcFile ncOrbitsFile (ncOrbitsFileName.str().c_str(), netCDF::NcFile::replace);
 
-		netCDF::NcFile ncOrbitsFile ("output/orbits.nc", netCDF::NcFile::replace);
-
-		netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ.size());
+		netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ_thisX.size());
 		netCDF::NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
 
 		std::vector<netCDF::NcDim> nc_nPxnSteps(2);
@@ -851,7 +889,7 @@ int main ( int argc, char **argv )
 
 		std::vector<size_t> startpA(2);
 		std::vector<size_t> countpA(2);
-		for(int iP=0;iP<particles_XYZ.size();iP++) {
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 			//for(int i=0;i<orbit[iP].size();i++) {
 
 				startpA[0]=iP;
@@ -882,7 +920,9 @@ int main ( int argc, char **argv )
 		nc_j1y.putVar(startp,countp,&j1y[0]);
 		nc_j1z.putVar(startp,countp,&j1z[0]);
 
-		std::cout << "DONE" << std::endl;
+	} // End of xGrid loop
 
-		return EXIT_SUCCESS;
+	std::cout << "DONE" << std::endl;
+
+	return EXIT_SUCCESS;
 }
