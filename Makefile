@@ -1,7 +1,6 @@
 NAME := bin/kineticj
 
 # Defaults for dlg-hp.ornl.gov
-
 GCCDIR := /home/dg6/code/gcc/gcc-4.4.5/bin
 ALGLIBDIR := /home/dg6/code/alglib/cpp/src
 NETCDFDIR := /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64# must be an --enable-cxx-4 dist
@@ -10,9 +9,9 @@ CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
 CUDA_SDK_DIR := /home/dg6/code/cuda/NVIDIA_GPU_Computing_SDK
 LIBCONFIGDIR := /home/dg6/code/libconfig
+GOOGLE_PERF_DIR := /home/dg6/code/google-perftools
 
 # Catch for greendl.* (my laptop)
-
 ifeq ($(findstring greendl,$(HOSTNAME_OSX)),greendl)
 GCCDIR := /opt/local/bin
 ALGLIBDIR := /home/dg6/code/alglib/cpp/src
@@ -44,12 +43,12 @@ NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(NETCDFDIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
+INCLUDEFLAGS := -I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
 CFLAGS := 
 CPPFLAGS := -g -pg 
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L$(NETCDFDIR)/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
-LIBS := -lnetcdf_c++4 -lnetcdf #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
+LFLAGS := -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
+LIBS := -lnetcdf_c++4 -lnetcdf -lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
 DEBUG:=1
@@ -58,7 +57,7 @@ ENERGY_SCATTERING:=1
 GOOSE:=0
 SAVE_ORBITS:=1
 
-LINK := $(CPP) -pg
+LINK := $(CPP) -g -pg
 
 # You shouldn't have to go below here
 #
