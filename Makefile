@@ -48,7 +48,7 @@ CFLAGS :=
 CPPFLAGS := -g -pg 
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
 LFLAGS := -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
-LIBS := -lnetcdf_c++4 -lnetcdf -lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
+LIBS := -lnetcdf_c++4 #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
 DEBUG:=1
