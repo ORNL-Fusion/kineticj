@@ -1,19 +1,37 @@
 pro kj_plot_orbit
 
-	cdfId = ncdf_open('output/orbits.nc')
+	fileList = file_search ( 'output/orbits*' )
 
-		ncdf_varget, cdfId, 'x', x
-		ncdf_varget, cdfId, 'y', y
-		ncdf_varget, cdfId, 'z', z
-		ncdf_varget, cdfId, 't', t
-		ncdf_varget, cdfId, 'e1_x', e1_x 
-		ncdf_varget, cdfId, 'e1_y', e1_y 
-		ncdf_varget, cdfId, 'e1_z', e1_z 
+	cdfId = ncdf_open(fileList[0])
+	ncdf_varget, cdfId, 't', t
+	nCdf_close, cdfId
+	
+	nT = n_elements(t)
+	nF = n_elements(fileList)
 
-	nCdf_close,	cdfId 
+	for f=0,nF-1 do begin
 
-	p1 = plot3d ( x, y, z )
-	p2 = plot3d ( x, y, z, aspect_ratio = 1.0, aspect_z = 1.0 )
+		cdfId = ncdf_open(fileList[f])
+
+			ncdf_varget, cdfId, 'x', x_0
+			ncdf_varget, cdfId, 'y', y_0
+			ncdf_varget, cdfId, 'z', z_0
+
+			ncdf_varget, cdfId, 't', t_0
+
+			ncdf_varget, cdfId, 'v1x', v1x_0 
+			ncdf_varget, cdfId, 'v1y', v1y_0 
+			ncdf_varget, cdfId, 'v1z', v1z_0 
+
+			ncdf_varget, cdfId, 'e1_x', e1x_0 
+			ncdf_varget, cdfId, 'e1_y', e1y_0 
+			ncdf_varget, cdfId, 'e1_z', e1z_0 
+
+		nCdf_close,	cdfId 
+
+		stop
+
+	endfor
 
 stop
 end

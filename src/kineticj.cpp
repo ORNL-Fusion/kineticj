@@ -255,7 +255,9 @@ C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::v
 	float x1 = ceil(_x);
 
 	// Catch for particle at point
-	if(abs(1-x0/x1)<1e-4) {
+	if(x0==x1) {
+		//std::cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << std::endl;
+		//std::cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << std::endl;
 		return yVec[x0];
 	}
 	else {
@@ -576,10 +578,10 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-	float xGridMin = 9.9;
-	float xGridMax = 10.1;
+	float xGridMin = 9.8;
+	float xGridMax = 10.2;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 10;
+	int nXGrid = 16;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -605,9 +607,9 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 10;
+		int nRFCycles = 2;
 		int nStepsPerCycle = 100;
-		int nStepsPerJp = 10;
+		int nStepsPerJp = 5;
 		int nJp = nRFCycles*nStepsPerCycle/nStepsPerJp;
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
@@ -621,6 +623,7 @@ int main ( int argc, char **argv )
 		t.resize(nSteps);
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+		//for(int iP=0;iP<1;iP++) {
 
 			orbit[iP].resize(nSteps);
 
@@ -639,8 +642,11 @@ int main ( int argc, char **argv )
 						nStepsTaken[iP]++;
 						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
 					}
+					//std::cout << "p.c1: " << particles_XYZ_thisX[iP].c1 << std::endl;
 			}
 		}
+
+		//exit (1);
 
 	std::cout << "\tnSteps: " << nSteps << std::endl;
 	std::cout << "DONE" << std::endl;
@@ -707,8 +713,10 @@ int main ( int argc, char **argv )
 
 		for(int i=1;i<e1[iP].size();i++) {
 
+			//v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
+			//	(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
 			v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
-				(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
+				(t[i]-t[i-1]) * (e1[iP][i]-e1[iP][i-1]);
 
 		}	
 
@@ -771,6 +779,7 @@ int main ( int argc, char **argv )
 		for(int i=0;i<nx;i++){
 				for(int j=0;j<ny;j++){
 						for(int k=0;k<nz;k++){
+							f_XYZ[i][j][k]=0;
 							f_XYZ_0[i][j][k]=0;
 						}
 				}
@@ -843,6 +852,9 @@ int main ( int argc, char **argv )
 								j1x[sJ] += vxGrid[i]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
 								j1y[sJ] += vyGrid[j]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
 								j1z[sJ] += vzGrid[k]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
+								//j1x[sJ] += vxGrid[i]*(qe*f_XYZ[i][j][k])*dV;
+								//j1y[sJ] += vyGrid[j]*(qe*f_XYZ[i][j][k])*dV;
+								//j1z[sJ] += vzGrid[k]*(qe*f_XYZ[i][j][k])*dV;
 							}
 					}
 			}
@@ -863,7 +875,9 @@ int main ( int argc, char **argv )
 	   	ncOrbitsFileName << ".nc"; 	
 
 		try {
-					
+				// Really need to fix this but I don't know how to 
+				// write a vector of structures using netCDF yet.
+
 				netCDF::NcFile ncOrbitsFile (ncOrbitsFileName.str().c_str(), netCDF::NcFile::replace);
 		
 				netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ_thisX.size());
@@ -896,21 +910,31 @@ int main ( int argc, char **argv )
 						countpA[0]=1;
 						countpA[1]=nSteps;
 		
-						nc_x.putVar(startpA,countpA,&orbit[iP][0].c1);
-						nc_y.putVar(startpA,countpA,&orbit[iP][0].c2);
-						nc_z.putVar(startpA,countpA,&orbit[iP][0].c3);
-		
-						nc_e1_x.putVar(startpA,countpA,&e1[iP][0].c1);
-						nc_e1_y.putVar(startpA,countpA,&e1[iP][0].c2);
-						nc_e1_z.putVar(startpA,countpA,&e1[iP][0].c3);
-		
-						nc_v1x.putVar(startpA,countpA,&v1[iP][0].c1);
-						nc_v1y.putVar(startpA,countpA,&v1[iP][0].c2);
-						nc_v1z.putVar(startpA,countpA,&v1[iP][0].c3);
+						std::vector<float> tmpData (nSteps,0);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c1;}
+						nc_x.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c2;}
+						nc_y.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c3;}
+						nc_z.putVar(startpA,countpA,&tmpData[0]);
+
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c1;}
+						nc_e1_x.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c2;}
+						nc_e1_y.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c3;}
+						nc_e1_z.putVar(startpA,countpA,&tmpData[0]);
+
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c1;}
+						nc_v1x.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c2;}
+						nc_v1y.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c3;}
+						nc_v1z.putVar(startpA,countpA,&tmpData[0]);
 				}
 		
 				std::vector<size_t> startp (1,0);
-				std::vector<size_t> countp (1,nRFCycles);
+				std::vector<size_t> countp (1,nSteps);
 		
 				nc_t.putVar(startp,countp,&t[0]);
 		
