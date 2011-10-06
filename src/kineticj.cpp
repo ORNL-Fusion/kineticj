@@ -707,18 +707,21 @@ int main ( int argc, char **argv )
 
 		}
 
+	}
+
+	for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+
 		// Integrate acceleration along zero-order orbit to get a velocity delta
 
-		v1[iP][0].c1=0;v1[iP][0].c2=0;v1[iP][0].c3=0;
+		v1[iP][nSteps-1].c1=0;v1[iP][nSteps-1].c2=0;v1[iP][nSteps-1].c3=0;
 
-		for(int i=1;i<e1[iP].size();i++) {
+		for(int i=e1[iP].size()-2;i=0;i--) {
 
 			//v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
 			//	(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
-			v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
-				(t[i]-t[i-1]) * (e1[iP][i]-e1[iP][i-1]);
-
-		}	
+			v1[iP][i] = v1[iP][i+1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
+				(t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
+		}
 
 	}
 
