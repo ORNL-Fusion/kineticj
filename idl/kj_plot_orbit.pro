@@ -5,7 +5,9 @@ pro kj_plot_orbit
 	cdfId = ncdf_open(fileList[0])
 	ncdf_varget, cdfId, 't', t
 	nCdf_close, cdfId
-	
+
+	p=plot(t,t*0)
+
 	nT = n_elements(t)
 	nF = n_elements(fileList)
 
@@ -29,7 +31,10 @@ pro kj_plot_orbit
 
 		nCdf_close,	cdfId 
 
-		stop
+		p=plot(t_0, v1x_0[*,0,50], /noData)
+		for i=0,n_elements(v1x_0[0,*,0])-1 do begin
+				p=plot(t_0, v1x_0[*,i,50], /over)
+		endfor
 
 	endfor
 

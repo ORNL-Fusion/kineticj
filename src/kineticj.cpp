@@ -578,10 +578,10 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-	float xGridMin = 9.8;
-	float xGridMax = 10.2;
+	float xGridMin = 9.9;
+	float xGridMax = 10.1;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 16;
+	int nXGrid = 20;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -607,13 +607,12 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 2;
+		int nRFCycles = 5;
 		int nStepsPerCycle = 100;
-		int nStepsPerJp = 5;
-		int nJp = nRFCycles*nStepsPerCycle/nStepsPerJp;
+
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
-		float tEnd = tRF * nRFCycles;
+		float tEnd = dtMin*nStepsPerCycle*nRFCycles;
 
 		std::vector<std::vector<C3Vec> > orbit(particles_XYZ_thisX.size());
 		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
@@ -648,93 +647,82 @@ int main ( int argc, char **argv )
 
 		//exit (1);
 
-	std::cout << "\tnSteps: " << nSteps << std::endl;
-	std::cout << "DONE" << std::endl;
+		std::cout << "\tnSteps: " << nSteps << std::endl;
+		std::cout << "DONE" << std::endl;
 
-	std::cout << "Interpolating E field along all trajectories for xGrid " << iX << std::endl;
+		std::cout << "Interpolating complex E field along trajectories for xGrid " << iX << std::endl;
 
-	std::vector<C3Vec> dv(nSteps);	
-	std::vector<std::vector<C3Vec> >e1(particles_XYZ_thisX.size());
-	std::vector<std::vector<C3Vec> >v1(particles_XYZ_thisX.size());
+		std::vector<C3Vec> dv(nSteps);	
+		std::vector<std::vector<C3Vec> >e1(particles_XYZ_thisX.size());
+		std::vector<std::vector<std::vector<C3Vec> > >v1(particles_XYZ_thisX.size());
 
-	std::vector<C3Vec> e1Re_CYL, e1Im_CYL;
-	e1Re_CYL.resize(e_r.size());
-	e1Im_CYL.resize(e_r.size());
-	for(int i=0;i<e_r.size();i++) {
-		e1Re_CYL[i].c1 = std::real(e_r[i]);
-		e1Re_CYL[i].c2 = std::real(e_p[i]);
-		e1Re_CYL[i].c3 = std::real(e_z[i]);
-		e1Im_CYL[i].c1 = std::imag(e_r[i]);
-		e1Im_CYL[i].c2 = std::imag(e_p[i]);
-		e1Im_CYL[i].c3 = std::imag(e_z[i]);
-	}
+		std::vector<std::vector<C3Vec> >e1ReHere_CYL(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> >e1ImHere_CYL(particles_XYZ_thisX.size());
 
-	for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+		std::vector<C3Vec> e1Re_CYL, e1Im_CYL;
+		e1Re_CYL.resize(e_r.size());
+		e1Im_CYL.resize(e_r.size());
 
-		v1[iP].resize(nSteps);
-		e1[iP].resize(nSteps);
-
-		// Create f1(v) by integrating F to give dv
-
-		for(int i=0;i<e1[iP].size();i++) {
-
-				if(i<=nStepsTaken[iP]) {
-
-					// Interpolate e1Now to here, done in CYL
-				
-					float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
-					float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
-
-					C3Vec e1ReHere_CYL = kj_interp1D ( _r, r, e1Re_CYL );
-					C3Vec e1ImHere_CYL = kj_interp1D ( _r, r, e1Im_CYL );
-
-					C3Vec e1NowAndHere_CYL;
-
-					e1NowAndHere_CYL = e1ReHere_CYL*cos(wrf*t[i])+e1ImHere_CYL*sin(wrf*t[i]); 
-
-					C3Vec e1NowAndHere_XYZ;
-
-					e1NowAndHere_XYZ = C3Vec( 
-									cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
-									sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
-									0+0+1*e1NowAndHere_CYL.c3 );
-
-					e1[iP][i] = e1NowAndHere_XYZ;
-				}
-				else {
-					e1[iP][i] = C3Vec(0,0,0);
-				}
-
+		for(int i=0;i<e_r.size();i++) {
+			e1Re_CYL[i].c1 = std::real(e_r[i]);
+			e1Re_CYL[i].c2 = std::real(e_p[i]);
+			e1Re_CYL[i].c3 = std::real(e_z[i]);
+			e1Im_CYL[i].c1 = std::imag(e_r[i]);
+			e1Im_CYL[i].c2 = std::imag(e_p[i]);
+			e1Im_CYL[i].c3 = std::imag(e_z[i]);
 		}
 
-	}
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
-	for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+			e1ReHere_CYL[iP].resize(nSteps);
+			e1ImHere_CYL[iP].resize(nSteps);
 
-		// Integrate acceleration along zero-order orbit to get a velocity delta
+			for(int i=0;i<nSteps;i++) {
 
-		v1[iP][nSteps-1].c1=0;v1[iP][nSteps-1].c2=0;v1[iP][nSteps-1].c3=0;
+					if(i<=nStepsTaken[iP]) {
 
-		for(int i=e1[iP].size()-2;i=0;i--) {
+						// Interpolate e1Now to here, done in CYL
+					
+						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
+						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
 
-			//v1[iP][i] = v1[iP][i-1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
-			//	(t[i]-t[i-1])/6.0	* (e1[iP][i-1]+4*(e1[iP][i-1]+e1[iP][i])/2.0+e1[iP][i]);
-			v1[iP][i] = v1[iP][i+1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
-				(t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
+						C3Vec e1ReTmp_CYL = kj_interp1D ( _r, r, e1Re_CYL );
+						C3Vec e1ImTmp_CYL = kj_interp1D ( _r, r, e1Im_CYL );
+
+						e1ReHere_CYL[iP][i] = e1ReTmp_CYL;
+						e1ImHere_CYL[iP][i] = e1ImTmp_CYL;
+
+						//std::cout 	<< "e1ReTmp.c1: "<<e1ReTmp_CYL.c1
+						//			<<" e1ReTmp.c2: "<<e1ReTmp_CYL.c2
+						//			<<" e1ReTmp.c3: "<<e1ReTmp_CYL.c3<< std::endl;
+	
+					}
+					else {
+						std::cout<<"i < nStepsTaken[iP]"<<std::endl;
+						e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
+						e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
+					}
+
+			}
+
 		}
+		//exit(1);
+		std::cout << "DONE" << std::endl;
 
-	}
+		// Calculate jP1 for each time at the spatial point
 
-	std::cout << "DONE" << std::endl;
+		int nJpCycles = 1;
+		int nJpPerCycle = 20;
+		int nJp = nJpCycles * nJpPerCycle;
+		float dtJp = tRF / nJpPerCycle;
+		std::vector<float> tJp(nJp,0);
 
-	// Calculate jP1
-
-	std::vector<std::vector<std::vector<float> > > f_XYZ, f_XYZ_0;
-	std::vector<float> vxGrid, vyGrid, vzGrid;
+		std::vector<std::vector<std::vector<float> > > f_XYZ, f_XYZ_0;
+		std::vector<float> vxGrid, vyGrid, vzGrid;
 
 #if DEBUGLEVEL >= 1
-	std::cout << "\tnThermal: " << nThermal << std::endl;
-	std::cout << "\tvTh: " << vTh << std::endl;
+		std::cout << "\tnThermal: " << nThermal << std::endl;
+		std::cout << "\tvTh: " << vTh << std::endl;
 #endif
 
 		int nx=400, ny=20, nz=20;
@@ -779,16 +767,7 @@ int main ( int argc, char **argv )
 				}
 		}
 
-		for(int i=0;i<nx;i++){
-				for(int j=0;j<ny;j++){
-						for(int k=0;k<nz;k++){
-							f_XYZ[i][j][k]=0;
-							f_XYZ_0[i][j][k]=0;
-						}
-				}
-		}
-
-		std::cout << "Create stationary ion f" << std::endl;
+		std::cout << "Create f0 ..." << std::endl;
 
 		// Create the initial f
 		for(int iP=0;iP<particles_XYZ_0.size();iP++) {
@@ -806,16 +785,109 @@ int main ( int argc, char **argv )
 				f_XYZ_0[iix][iiy][iiz] += particles_XYZ_0[iP].weight/dV;
 		}	
 
-		std::cout << "DONE" << std::endl;
+		// Check density against expected
+		float densityCheck = 0;
+		for(int i=0;i<nx;i++){
+				for(int j=0;j<ny;j++){
+						for(int k=0;k<nz;k++){
+							densityCheck += f_XYZ_0[i][j][k]*dV;
+						}
+				}
+		}
 
-		std::cout << "Create f1 for selected(all) times" << std::endl;
+		std::cout << "Density on f0: " << densityCheck << std::endl;
+
+		std::cout << "DONE" << std::endl;
 
 		std::vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0), tJ(nJp,0);
 
-		int s = nStepsPerJp-1;
-		for(int sJ=0;sJ<nJp;sJ++) {
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
-			tJ[sJ] = t[s];
+				e1[iP].resize(nSteps);
+				v1[iP].resize(nJp);
+
+				for(int iJ=0;iJ<nJp;iJ++) {
+
+					v1[iP][iJ].resize(nSteps);
+
+				}
+		}
+
+		for(int jt=0;jt<nJp;jt++) {
+
+			tJp[jt] = jt*dtJp;
+			std::cout << "Create f1 for this tJp: " << tJp[jt] << std::endl;
+
+			// Get e1 magnitude along orbit
+			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+
+				for(int i=0;i<nSteps;i++) {
+					v1[iP][jt][i] = C3Vec(0,0,0);
+				}
+
+				float minT = 0;
+				int nInt = 0;
+				for(int i=0;i<nSteps;i++) {	
+
+					if(i<=nStepsTaken[iP]&&t[i]>tEnd+tRF-tJp[jt]) {
+
+						// Integrate acceleration along zero-order orbit to get a velocity delta
+						C3Vec e1NowAndHere_CYL;
+
+						float tTmp = tJp[jt]+t[i];
+						if(tTmp<minT) { minT = tTmp; }
+						nInt++;
+						//std::cout << "tTmp: "<<tTmp<<std::endl;
+
+						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
+						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
+						//std::cout<<"_r: "<<_r<<" _p: "<<_p<<std::endl;
+
+						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp+3*_pi/2)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp+3*_pi/2); 
+
+						//std::cout 	<< "e1Re.c1: "<<e1ReHere_CYL[iP][i].c1
+						//			<<" e1Re.c2: "<<e1ReHere_CYL[iP][i].c2
+						//			<<" e1Re.c3: "<<e1ReHere_CYL[iP][i].c3<< std::endl;
+						//std::cout 	<< "e1Im.c1: "<<e1ImHere_CYL[iP][i].c1
+						//			<<" e1Im.c2: "<<e1ImHere_CYL[iP][i].c2
+						//			<<" e1Im.c3: "<<e1ImHere_CYL[iP][i].c3<< std::endl;
+
+						//std::cout 	<< "e1NH.c1: "<<e1NowAndHere_CYL.c1
+						//			<<" e1NH.c2: "<<e1NowAndHere_CYL.c2
+						//			<<" e1NH.c3: "<<e1NowAndHere_CYL.c3<< std::endl;
+
+						C3Vec e1NowAndHere_XYZ;
+
+						e1NowAndHere_XYZ = C3Vec( 
+										cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
+										sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
+										0+0+1*e1NowAndHere_CYL.c3 );
+
+						e1[iP][i] = e1NowAndHere_XYZ;
+
+						//std::cout << "e1.c1: "<<e1[iP][i].c1<<" e1.c2: "<<e1[iP][i].c2<<" e1.c3: "<<e1[iP][i].c3<< std::endl;
+
+					}
+					else {
+						//std::cout << "i > nStepsTaken" << std::endl;
+						e1[iP][i] = C3Vec(0,0,0);
+					}
+				}
+	
+				//std::cout<<"minT: "<<minT<<" -tRF: "<<-tRF<<" tJp[jt]: "<<tJp[jt]<<" nInt: "<<nInt<<std::endl;
+
+				// Intergrate e1 from t=-inf to 0 to get v1
+				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
+
+				for(int i=nSteps-2;i>-1;i--) {
+
+					v1[iP][jt][i] = v1[iP][jt][i+1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
+						(t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
+				}
+
+				//std::cout << "v1.c1: "<<v1[iP].c1<<" v1.c2: "<<v1[iP].c2<<" v1.c3: "<<v1[iP].c3<< std::endl;
+			}
+
 
 			for(int i=0;i<nx;i++){
 					for(int j=0;j<ny;j++){
@@ -826,19 +898,19 @@ int main ( int argc, char **argv )
 			}
 
 			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-					float iix = (particles_XYZ_0[iP].v_c1+v1[iP][s].c1-vxMin)/vxRange*(vxGrid.size()-1);
+					float iix = (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin)/vxRange*(vxGrid.size()-1);
 					if(iix<0 || iix>(nx-1)){
 							std::cout<<"\t\tError - v: "<<particles_XYZ_thisX[iP].v_c1<<std::endl;
 							std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
-							std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][s].c1-vxMin<<std::endl;
+							std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin<<std::endl;
 							std::cout<<"\t\tError - iix: "<<iix<<std::endl;
 					}
-					float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][s].c2-vyMin)/vyRange*(vyGrid.size()-1);
+					float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][jt][0].c2-vyMin)/vyRange*(vyGrid.size()-1);
 					if(iiy<0 || iiy>(ny-1)){
 							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vyMax<<std::endl;
 					}
-					float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][s].c3-vzMin)/vzRange*(vzGrid.size()-1);
+					float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][jt][0].c3-vzMin)/vzRange*(vzGrid.size()-1);
 					if(iiz<0 || iiy>(nz-1)){
 							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vzMax<<std::endl;
@@ -846,28 +918,28 @@ int main ( int argc, char **argv )
 					f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
 			}	
 
-			// The f_0 is the approximate of the f_ions, which is assumed stationary here.
-			float qi = -particles_XYZ_thisX[0].q;
+			j1x[jt] = 0;
+			j1y[jt] = 0;
+			j1z[jt] = 0;
+
 			float qe =  particles_XYZ_thisX[0].q;
+			densityCheck = 0;
 			for(int i=0;i<nx;i++){
 					for(int j=0;j<ny;j++){
 							for(int k=0;k<nz;k++){
-								j1x[sJ] += vxGrid[i]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
-								j1y[sJ] += vyGrid[j]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
-								j1z[sJ] += vzGrid[k]*(qi*f_XYZ_0[i][j][k]+qe*f_XYZ[i][j][k])*dV;
-								//j1x[sJ] += vxGrid[i]*(qe*f_XYZ[i][j][k])*dV;
-								//j1y[sJ] += vyGrid[j]*(qe*f_XYZ[i][j][k])*dV;
-								//j1z[sJ] += vzGrid[k]*(qe*f_XYZ[i][j][k])*dV;
+								j1x[jt] += qe*vxGrid[i]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+								j1y[jt] += qe*vyGrid[j]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+								j1z[jt] += qe*vzGrid[k]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+								densityCheck += f_XYZ[i][j][k]*dV;
 							}
 					}
 			}
 
-			//std::cout << "\tj1: " << j1x[s] << "  " << j1y[s] << "  " << j1z[s] << std::endl;
-			s+=nStepsPerJp;
+			std::cout << "Density on f1: " << densityCheck << std::endl;
+
 		}
 
 #if __SAVE_ORBITS__>=1
-
 		// Write orbits to file
 	
 		std::cout << "Writing orbits to file ... " << std::endl;
@@ -885,10 +957,16 @@ int main ( int argc, char **argv )
 		
 				netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ_thisX.size());
 				netCDF::NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
-		
+				netCDF::NcDim nc_nJp = ncOrbitsFile.addDim("nJp", nJp);
+	
 				std::vector<netCDF::NcDim> nc_nPxnSteps(2);
 				nc_nPxnSteps[0]=nc_nP;
 				nc_nPxnSteps[1]=nc_nSteps;
+
+				std::vector<netCDF::NcDim> nc_nPxnJpxnSteps(3);
+				nc_nPxnJpxnSteps[0]=nc_nP;
+				nc_nPxnJpxnSteps[1]=nc_nJp;
+				nc_nPxnJpxnSteps[2]=nc_nSteps;
 		
 				netCDF::NcVar nc_t = ncOrbitsFile.addVar("t",netCDF::ncFloat,nc_nSteps);
 		
@@ -900,9 +978,9 @@ int main ( int argc, char **argv )
 				netCDF::NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",netCDF::ncFloat,nc_nPxnSteps);
 				netCDF::NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",netCDF::ncFloat,nc_nPxnSteps);
 		
-				netCDF::NcVar nc_v1x = ncOrbitsFile.addVar("v1x",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_v1y = ncOrbitsFile.addVar("v1y",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_v1z = ncOrbitsFile.addVar("v1z",netCDF::ncFloat,nc_nPxnSteps);
+				netCDF::NcVar nc_v1_x = ncOrbitsFile.addVar("v1x",netCDF::ncFloat,nc_nPxnJpxnSteps);
+				netCDF::NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",netCDF::ncFloat,nc_nPxnJpxnSteps);
+				netCDF::NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",netCDF::ncFloat,nc_nPxnJpxnSteps);
 		
 				std::vector<size_t> startpA(2);
 				std::vector<size_t> countpA(2);
@@ -928,12 +1006,30 @@ int main ( int argc, char **argv )
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c3;}
 						nc_e1_z.putVar(startpA,countpA,&tmpData[0]);
 
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c1;}
-						nc_v1x.putVar(startpA,countpA,&tmpData[0]);
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c2;}
-						nc_v1y.putVar(startpA,countpA,&tmpData[0]);
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iS].c3;}
-						nc_v1z.putVar(startpA,countpA,&tmpData[0]);
+				}
+
+				std::vector<size_t> startpB(3);
+				std::vector<size_t> countpB(3);
+				for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+						for(int iJ=0;iJ<nJp;iJ++) {
+		
+							startpB[0]=iP;
+							startpB[1]=iJ;
+							startpB[2]=0;
+							countpB[0]=1;
+							countpB[1]=1;
+							countpB[2]=nSteps;
+		
+							std::vector<float> tmpData (nSteps,0);
+
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iJ][iS].c1;}
+							nc_v1_x.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iJ][iS].c2;}
+							nc_v1_y.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iJ][iS].c3;}
+							nc_v1_z.putVar(startpB,countpB,&tmpData[0]);
+
+						}
 				}
 		
 				std::vector<size_t> startp (1,0);
@@ -949,8 +1045,6 @@ int main ( int argc, char **argv )
 		}
 
 		std::cout << "DONE" << std::endl;
-
-
 #endif
 
 		// Write current to file
@@ -979,7 +1073,7 @@ int main ( int argc, char **argv )
 		std::vector<size_t> startp (1,0);
 		std::vector<size_t> countp (1,nJp);
 
-		nc_t.putVar(startp,countp,&tJ[0]);
+		nc_t.putVar(startp,countp,&tJp[0]);
 
 		nc_j1x.putVar(startp,countp,&j1x[0]);
 		nc_j1y.putVar(startp,countp,&j1y[0]);
