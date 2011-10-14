@@ -578,10 +578,10 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-	float xGridMin = 9.9;
-	float xGridMax = 10.1;
+	float xGridMin = 9.95;
+	float xGridMax = 10.05;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 20;
+	int nXGrid = 6;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -607,7 +607,7 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 5;
+		int nRFCycles = 1;
 		int nStepsPerCycle = 100;
 
 		float tRF = (2*_pi)/wrf;
@@ -733,12 +733,12 @@ int main ( int argc, char **argv )
 		float vxRange = (vxMax-vxMin);
 		float dVx = vxRange / (vxGrid.size()-1);
 
-		float vyMin = -nThermal*vTh*3;
+		float vyMin = -nThermal*vTh*5;
 		float vyMax = -vyMin;
 		float vyRange = (vyMax-vyMin);
 		float dVy = vyRange / (vyGrid.size()-1);
 
-		float vzMin = -nThermal*vTh*3;
+		float vzMin = -nThermal*vTh*5;
 		float vzMax = -vzMin;
 		float vzRange = (vzMax-vzMin);
 		float dVz = vzRange / (vzGrid.size()-1);
@@ -829,7 +829,7 @@ int main ( int argc, char **argv )
 				int nInt = 0;
 				for(int i=0;i<nSteps;i++) {	
 
-					if(i<=nStepsTaken[iP]&&t[i]>tEnd+tRF-tJp[jt]) {
+					if(i<=nStepsTaken[iP]) { //&&t[i]>tEnd+tRF-tJp[jt]) {
 
 						// Integrate acceleration along zero-order orbit to get a velocity delta
 						C3Vec e1NowAndHere_CYL;
@@ -843,7 +843,7 @@ int main ( int argc, char **argv )
 						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
 						//std::cout<<"_r: "<<_r<<" _p: "<<_p<<std::endl;
 
-						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp+3*_pi/2)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp+3*_pi/2); 
+						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp); 
 
 						//std::cout 	<< "e1Re.c1: "<<e1ReHere_CYL[iP][i].c1
 						//			<<" e1Re.c2: "<<e1ReHere_CYL[iP][i].c2
@@ -879,11 +879,26 @@ int main ( int argc, char **argv )
 				// Intergrate e1 from t=-inf to 0 to get v1
 				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
 
+				float trapInt1=0, trapInt2=0, trapInt3=0;
+				float simpInt1=0, simpInt2=0, simpInt3=0;
+				double qOverm =  particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m;
 				for(int i=nSteps-2;i>-1;i--) {
 
-					v1[iP][jt][i] = v1[iP][jt][i+1] + particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m *
-						(t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
+					v1[iP][jt][i] = v1[iP][jt][i+1] + qOverm * (t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
+					trapInt1 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
+					trapInt2 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
+					trapInt3 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
+					if(i<nSteps-2) {
+						simpInt1 += qOverm * (t[i]-t[i+1])/3.0 * (e1[iP][i].c1+4*e1[iP][i+1].c1+e1[iP][i+2].c1);
+						simpInt2 += qOverm * (t[i]-t[i+1])/3.0 * (e1[iP][i].c2+4*e1[iP][i+1].c2+e1[iP][i+2].c2);
+						simpInt3 += qOverm * (t[i]-t[i+1])/3.0 * (e1[iP][i].c3+4*e1[iP][i+1].c3+e1[iP][i+2].c3);
+					}
 				}
+				v1[iP][jt][0].c1 = trapInt1;
+				v1[iP][jt][0].c2 = trapInt2;
+				v1[iP][jt][0].c3 = trapInt3;
+
+				//std::cout << "Box: "<<v1[iP][jt][0].c1<<" Trap: "<<trapInt1<<" Simp: "<<simpInt1<<std::endl;
 
 				//std::cout << "v1.c1: "<<v1[iP].c1<<" v1.c2: "<<v1[iP].c2<<" v1.c3: "<<v1[iP].c3<< std::endl;
 			}

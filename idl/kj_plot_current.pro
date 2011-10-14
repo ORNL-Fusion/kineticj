@@ -62,7 +62,7 @@ pro kj_plot_current
 
 
 	for i=0,n_elements(t)-1 do begin	
-		plot, r,(jr_re*cos(wrf*t[i])+jr_im*sin(wrf*t[i])),yRange=[-40,40], xRange=[9.5,10.5]
+		plot, r,(jr_re*cos(wrf*t[i])+jr_im*sin(wrf*t[i])),yRange=[-100,100], xRange=[9.5,10.5]
 		;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
 		for f=0,nF-1 do begin
 			plots, xF[f], j1x[i,f], psym=4

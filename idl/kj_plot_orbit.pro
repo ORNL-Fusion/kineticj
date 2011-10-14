@@ -6,11 +6,12 @@ pro kj_plot_orbit
 	ncdf_varget, cdfId, 't', t
 	nCdf_close, cdfId
 
-	p=plot(t,t*0)
+	;p=plot(t,t*0)
 
 	nT = n_elements(t)
 	nF = n_elements(fileList)
 
+	maxE = 0
 	for f=0,nF-1 do begin
 
 		cdfId = ncdf_open(fileList[f])
@@ -31,10 +32,11 @@ pro kj_plot_orbit
 
 		nCdf_close,	cdfId 
 
-		p=plot(t_0, v1x_0[*,0,50], /noData)
-		for i=0,n_elements(v1x_0[0,*,0])-1 do begin
-				p=plot(t_0, v1x_0[*,i,50], /over)
-		endfor
+		if(max(e1x_0) gt maxE) then maxE = max(e1x_0)
+		;p=plot(t_0, v1x_0[*,0,50], /noData)
+		;for i=0,n_elements(v1x_0[0,*,0])-1 do begin
+		;		p=plot(t_0, v1x_0[*,i,50], /over)
+		;endfor
 
 	endfor
 
