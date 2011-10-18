@@ -28,9 +28,8 @@ pro kj_plot_current
 		j1x[*,f] = j1x_0
 		xF[f] = x
 
-		p=plot(t,j1x_0)
-
 	endfor
+
 
 	cdfId = ncdf_open('data/rsfwc_1d.nc')
 
@@ -60,13 +59,31 @@ pro kj_plot_current
 
 	ncdf_close, cdfId
 
+	phaseOffSet = -!pi/2.0 
+
+	yr = max(j1x)*1.5
+	p=plot(t,j1x[*,0],/noData,yRange=[-yr,yr])
+	for f=0,n_elements(xF)-1 do begin
+		p=plot(t,j1x[*,f],/over)
+		iiHere = where(abs(r-xF[f]) eq min(abs(r-xF[f])))
+		tmp = (jr_re[iiHere])[0]*cos(wrf*t+phaseOffSet)+(jr_im[iiHere])[0]*sin(wrf*t+phaseOffSet)
+		p=plot(t,tmp, /over,color='blue')
+	endfor
+
+	p=plot(t,j1x[*,0],/noData,yRange=[0,3])
+	for f=0,n_elements(xF)-1 do begin
+		iiHere = where(abs(r-xF[f]) eq min(abs(r-xF[f])))
+		tmp = (jr_re[iiHere])[0]*cos(wrf*t+phaseOffSet)+(jr_im[iiHere])[0]*sin(wrf*t+phaseOffSet)
+		p=plot(t,tmp/j1x[*,f],/over,lineStyle='none',symbol='Plus')
+	endfor
 
 	for i=0,n_elements(t)-1 do begin	
-		plot, r,(jr_re*cos(wrf*t[i])+jr_im*sin(wrf*t[i])),yRange=[-100,100], xRange=[9.5,10.5]
+		plot, r,(jr_re*cos(wrf*t[i]+phaseOffSet)+jr_im*sin(wrf*t[i]+phaseOffSet)),$
+				yRange=[-100,100], xRange=[9.5,10.5]
 		;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
-		for f=0,nF-1 do begin
-			plots, xF[f], j1x[i,f], psym=4
-		endfor
+		;for f=0,nF-1 do begin
+			plots, xF, j1x[i,*],psym=-4
+		;endfor
 		wait, 0.2
 	endfor
 
