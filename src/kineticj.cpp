@@ -486,7 +486,7 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_0.0001keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f_0.005keV_electrons.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
 		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
@@ -609,17 +609,20 @@ int main ( int argc, char **argv )
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
 		int nRFCycles = 2;
-		int nStepsPerCycle = 100;
+		int nStepsPerCycle = 100.0;
 
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
-		float tEnd = dtMin*nStepsPerCycle*nRFCycles;
+		//float tEnd = dtMin*nStepsPerCycle*nRFCycles;
 
 		std::vector<std::vector<C3Vec> > orbit(particles_XYZ_thisX.size());
 		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
 		std::vector<float> t;
 
-		int nSteps = nRFCycles*nStepsPerCycle;
+		int nSteps = nRFCycles*nStepsPerCycle+1;
+		//std::cout.precision(15);
+		//std::cout << std::fixed << nSteps*dtMin/tRF << std::endl;
+		//exit(1);
 		t.resize(nSteps);
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
@@ -642,11 +645,17 @@ int main ( int argc, char **argv )
 						nStepsTaken[iP]++;
 						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
 					}
-					//std::cout << "p.c1: " << particles_XYZ_thisX[iP].c1 << std::endl;
+					else {
+						printf("\t%s line: %i\n",__FILE__,__LINE__);
+						std::cout << "Status != 0" << std::endl;
+						exit(1);
+					}
 			}
 		}
 
-		//exit (1);
+		//std::cout.precision(15);
+		//std::cout << std::fixed << t[nSteps-1]/tRF << std::endl;
+		//exit(1);
 
 		std::cout << "\tnSteps: " << nSteps << std::endl;
 		std::cout << "DONE" << std::endl;
@@ -699,7 +708,9 @@ int main ( int argc, char **argv )
 	
 					}
 					else {
+						printf("\t%s line: %i\n",__FILE__,__LINE__);
 						std::cout<<"i < nStepsTaken[iP]"<<std::endl;
+						exit (1);
 						e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
 						e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
 					}
@@ -712,7 +723,7 @@ int main ( int argc, char **argv )
 
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = 2;
+		int nJpCycles = 3;
 		int nJpPerCycle = 20;
 		int nJp = nJpCycles * nJpPerCycle;
 		float dtJp = tRF / nJpPerCycle;
@@ -726,10 +737,10 @@ int main ( int argc, char **argv )
 		std::cout << "\tvTh: " << vTh << std::endl;
 #endif
 
-		int nx=200, ny=20, nz=20;
+		int nx=500, ny=20, nz=20;
 		vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
 
-		float vxMin = -nThermal*vTh*10;
+		float vxMin = -nThermal*vTh*20;
 		float vxMax = -vxMin;
 		float vxRange = (vxMax-vxMin);
 		float dVx = vxRange / (vxGrid.size()-1);
@@ -826,23 +837,17 @@ int main ( int argc, char **argv )
 					v1[iP][jt][i] = C3Vec(0,0,0);
 				}
 
-				float minT = 0;
-				int nInt = 0;
 				for(int i=0;i<nSteps;i++) {	
 
-					if(i<=nStepsTaken[iP]) { //&&t[i]>tEnd+tRF-tJp[jt]) {
+					if(tJp[jt]+t[i]>=-tRF*(nRFCycles-1)) { //i<=nStepsTaken[iP]) { 
 
-						// Integrate acceleration along zero-order orbit to get a velocity delta
+						// Get E(t) along orbit 
 						C3Vec e1NowAndHere_CYL;
 
 						float tTmp = tJp[jt]+t[i];
-						if(tTmp<minT) { minT = tTmp; }
-						nInt++;
-						//std::cout << "tTmp: "<<tTmp<<std::endl;
 
 						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
 						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
-						//std::cout<<"_r: "<<_r<<" _p: "<<_p<<std::endl;
 
 						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp); 
 
@@ -866,17 +871,15 @@ int main ( int argc, char **argv )
 
 						e1[iP][i] = e1NowAndHere_XYZ;
 
-						//std::cout << "e1.c1: "<<e1[iP][i].c1<<" e1.c2: "<<e1[iP][i].c2<<" e1.c3: "<<e1[iP][i].c3<< std::endl;
-
 					}
 					else {
+						//printf("\t%s line: %i\n",__FILE__,__LINE__);
 						//std::cout << "i > nStepsTaken" << std::endl;
+						//exit (1);
 						e1[iP][i] = C3Vec(0,0,0);
 					}
 				}
 	
-				//std::cout<<"minT: "<<minT<<" -tRF: "<<-tRF<<" tJp[jt]: "<<tJp[jt]<<" nInt: "<<nInt<<std::endl;
-
 				// Intergrate e1 from t=-inf to 0 to get v1
 				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
 
@@ -884,19 +887,16 @@ int main ( int argc, char **argv )
 				double qOverm =  particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m;
 				for(int i=nSteps-2;i>-1;i--) {
 
-					//v1[iP][jt][i] = v1[iP][jt][i+1] + qOverm * (t[i]-t[i+1]) * (e1[iP][i]-e1[iP][i+1]);
-					trapInt1 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
-					trapInt2 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
-					trapInt3 += qOverm * (t[i]-t[i+1])/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
+					trapInt1 += qOverm * dtMin/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
+					trapInt2 += qOverm * dtMin/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
+					trapInt3 += qOverm * dtMin/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
+					//std::cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << std::endl;
 
 					v1[iP][jt][i].c1 = trapInt1;
 					v1[iP][jt][i].c2 = trapInt2;
 					v1[iP][jt][i].c3 = trapInt3;
 
 				}
-				//std::cout << "Box: "<<v1[iP][jt][0].c1<<" Trap: "<<trapInt1<<" Simp: "<<simpInt1<<std::endl;
-
-				//std::cout << "v1.c1: "<<v1[iP].c1<<" v1.c2: "<<v1[iP].c2<<" v1.c3: "<<v1[iP].c3<< std::endl;
 			}
 
 
@@ -915,16 +915,19 @@ int main ( int argc, char **argv )
 							std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
 							std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin<<std::endl;
 							std::cout<<"\t\tError - iix: "<<iix<<std::endl;
+							exit(1);
 					}
 					float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][jt][0].c2-vyMin)/vyRange*(vyGrid.size()-1);
 					if(iiy<0 || iiy>(ny-1)){
 							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vyMax<<std::endl;
+							exit(1);
 					}
 					float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][jt][0].c3-vzMin)/vzRange*(vzGrid.size()-1);
 					if(iiz<0 || iiy>(nz-1)){
 							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
 							std::cout<<"max v: "<<vzMax<<std::endl;
+							exit(1);
 					}
 					f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
 			}	

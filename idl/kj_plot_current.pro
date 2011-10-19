@@ -59,7 +59,7 @@ pro kj_plot_current
 
 	ncdf_close, cdfId
 
-	phaseOffSet = -!pi/2.0 
+	phaseOffSet = !pi/2
 
 	yr = max(j1x)*1.5
 	p=plot(t,j1x[*,0],/noData,yRange=[-yr,yr])
@@ -82,7 +82,7 @@ pro kj_plot_current
 				yRange=[-100,100], xRange=[9.5,10.5]
 		;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
 		;for f=0,nF-1 do begin
-			plots, xF, j1x[i,*],psym=-4
+			plots, xF, j1x[i,*]*1e-1,psym=-4
 		;endfor
 		wait, 0.2
 	endfor
