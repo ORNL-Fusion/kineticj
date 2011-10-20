@@ -486,7 +486,7 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_0.005keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f_1keV_electrons.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
 		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
@@ -579,10 +579,10 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-	float xGridMin = 9.80;
-	float xGridMax = 10.2;
+	float xGridMin = 9.60;
+	float xGridMax = 10.4;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 20;
+	int nXGrid = 40;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -608,7 +608,7 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 2;
+		int nRFCycles = 4;
 		int nStepsPerCycle = 100.0;
 
 		float tRF = (2*_pi)/wrf;
@@ -723,9 +723,9 @@ int main ( int argc, char **argv )
 
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = 3;
+		int nJpCycles = 2;
 		int nJpPerCycle = 20;
-		int nJp = nJpCycles * nJpPerCycle;
+		int nJp = nJpCycles * nJpPerCycle + 1;
 		float dtJp = tRF / nJpPerCycle;
 		std::vector<float> tJp(nJp,0);
 
@@ -737,77 +737,84 @@ int main ( int argc, char **argv )
 		std::cout << "\tvTh: " << vTh << std::endl;
 #endif
 
-		int nx=500, ny=20, nz=20;
-		vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
+		//int nx=1000, ny=20, nz=20;
+		//vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
 
-		float vxMin = -nThermal*vTh*20;
-		float vxMax = -vxMin;
-		float vxRange = (vxMax-vxMin);
-		float dVx = vxRange / (vxGrid.size()-1);
+		//float vxMin = -nThermal*vTh*7000;
+		//float vxMax = -vxMin;
+		//float vxRange = (vxMax-vxMin);
+		//float dVx = vxRange / (vxGrid.size()-1);
 
-		float vyMin = -nThermal*vTh*5;
-		float vyMax = -vyMin;
-		float vyRange = (vyMax-vyMin);
-		float dVy = vyRange / (vyGrid.size()-1);
+		//float vyMin = -nThermal*vTh*5;
+		//float vyMax = -vyMin;
+		//float vyRange = (vyMax-vyMin);
+		//float dVy = vyRange / (vyGrid.size()-1);
 
-		float vzMin = -nThermal*vTh*5;
-		float vzMax = -vzMin;
-		float vzRange = (vzMax-vzMin);
-		float dVz = vzRange / (vzGrid.size()-1);
-		
-		float dV = dVx * dVy * dVz;
+		//float vzMin = -nThermal*vTh*5;
+		//float vzMax = -vzMin;
+		//float vzRange = (vzMax-vzMin);
+		//float dVz = vzRange / (vzGrid.size()-1);
+		//
+		//float dV = dVx * dVy * dVz;
 
-		std::cout << "\tdVx: " << dVx << std::endl;
-		for(int i=0;i<vxGrid.size();i++) {
-				vxGrid[i] = vxMin + i*dVx;
-		}
-		for(int j=0;j<vyGrid.size();j++) {
-				vyGrid[j] = vyMin + j*dVy;
-		}
-		for(int k=0;k<vzGrid.size();k++) {
-				vzGrid[k] = vzMin + k*dVz;
-		}
+		//std::cout << "\tdVx: " << dVx << std::endl;
+		//for(int i=0;i<vxGrid.size();i++) {
+		//		vxGrid[i] = vxMin + i*dVx;
+		//}
+		//for(int j=0;j<vyGrid.size();j++) {
+		//		vyGrid[j] = vyMin + j*dVy;
+		//}
+		//for(int k=0;k<vzGrid.size();k++) {
+		//		vzGrid[k] = vzMin + k*dVz;
+		//}
 
-		f_XYZ.resize(nx);
-		f_XYZ_0.resize(nx);
-		for(int i=0;i<nx;i++) {
-				f_XYZ[i].resize(ny);
-				f_XYZ_0[i].resize(ny);
-				for(int j=0;j<ny;j++) {
-						f_XYZ[i][j].resize(nz);
-						f_XYZ_0[i][j].resize(nz);
-				}
-		}
+		//f_XYZ.resize(nx);
+		//f_XYZ_0.resize(nx);
+		//for(int i=0;i<nx;i++) {
+		//		f_XYZ[i].resize(ny);
+		//		f_XYZ_0[i].resize(ny);
+		//		for(int j=0;j<ny;j++) {
+		//				f_XYZ[i][j].resize(nz);
+		//				f_XYZ_0[i][j].resize(nz);
+		//		}
+		//}
 
-		std::cout << "Create f0 ..." << std::endl;
+		//std::cout << "Create f0 ..." << std::endl;
 
-		// Create the initial f
-		for(int iP=0;iP<particles_XYZ_0.size();iP++) {
-				float iix = (particles_XYZ_0[iP].v_c1-vxMin)/vxRange*(vxGrid.size()-1);
-				if(iix<0 || iix>(nx-1)){
-						std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c1<<std::endl;
-						std::cout<<"max v: "<<vxMax<<std::endl;
-				}
-				float iiy = (particles_XYZ_0[iP].v_c2-vyMin)/vyRange*(vyGrid.size()-1);
-				if(iiy<0 || iiy>(ny-1)){
-						std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c2<<std::endl;
-						std::cout<<"max v: "<<vyMax<<std::endl;
-				}
-				float iiz = (particles_XYZ_0[iP].v_c3-vzMin)/vzRange*(vzGrid.size()-1);
-				f_XYZ_0[iix][iiy][iiz] += particles_XYZ_0[iP].weight/dV;
-		}	
+		//// Create the initial f
+		//for(int iP=0;iP<particles_XYZ_0.size();iP++) {
+		//		float iix = (particles_XYZ_0[iP].v_c1-vxMin)/vxRange*(vxGrid.size()-1);
+		//		if(iix<0 || iix>(nx-1)){
+		//				std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c1<<std::endl;
+		//				std::cout<<"max v: "<<vxMax<<std::endl;
+		//		}
+		//		float iiy = (particles_XYZ_0[iP].v_c2-vyMin)/vyRange*(vyGrid.size()-1);
+		//		if(iiy<0 || iiy>(ny-1)){
+		//				std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c2<<std::endl;
+		//				std::cout<<"max v: "<<vyMax<<std::endl;
+		//		}
+		//		float iiz = (particles_XYZ_0[iP].v_c3-vzMin)/vzRange*(vzGrid.size()-1);
+		//		f_XYZ_0[iix][iiy][iiz] += particles_XYZ_0[iP].weight/dV;
+		//}	
 
-		// Check density against expected
+		//// Check density against expected
+		//float densityCheck = 0;
+		//for(int i=0;i<nx;i++){
+		//		for(int j=0;j<ny;j++){
+		//				for(int k=0;k<nz;k++){
+		//					densityCheck += f_XYZ_0[i][j][k]*dV;
+		//				}
+		//		}
+		//}
+		//std::cout << "Density on f0: " << densityCheck << std::endl;
+
+		// Check density using non-grid method
 		float densityCheck = 0;
-		for(int i=0;i<nx;i++){
-				for(int j=0;j<ny;j++){
-						for(int k=0;k<nz;k++){
-							densityCheck += f_XYZ_0[i][j][k]*dV;
-						}
-				}
+		for(int iP=0;iP<particles_XYZ_0.size();iP++){
+				densityCheck += particles_XYZ_0[iP].weight;
 		}
 
-		std::cout << "Density on f0: " << densityCheck << std::endl;
+		std::cout << "Density on f0 using non-grid method: " << densityCheck << std::endl;
 
 		std::cout << "DONE" << std::endl;
 
@@ -839,28 +846,16 @@ int main ( int argc, char **argv )
 
 				for(int i=0;i<nSteps;i++) {	
 
-					if(tJp[jt]+t[i]>=-tRF*(nRFCycles-1)) { //i<=nStepsTaken[iP]) { 
+					float tTmp = tJp[jt]+t[i];
+					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 
 						// Get E(t) along orbit 
 						C3Vec e1NowAndHere_CYL;
 
-						float tTmp = tJp[jt]+t[i];
-
 						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
 						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
 
-						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp); 
-
-						//std::cout 	<< "e1Re.c1: "<<e1ReHere_CYL[iP][i].c1
-						//			<<" e1Re.c2: "<<e1ReHere_CYL[iP][i].c2
-						//			<<" e1Re.c3: "<<e1ReHere_CYL[iP][i].c3<< std::endl;
-						//std::cout 	<< "e1Im.c1: "<<e1ImHere_CYL[iP][i].c1
-						//			<<" e1Im.c2: "<<e1ImHere_CYL[iP][i].c2
-						//			<<" e1Im.c3: "<<e1ImHere_CYL[iP][i].c3<< std::endl;
-
-						//std::cout 	<< "e1NH.c1: "<<e1NowAndHere_CYL.c1
-						//			<<" e1NH.c2: "<<e1NowAndHere_CYL.c2
-						//			<<" e1NH.c3: "<<e1NowAndHere_CYL.c3<< std::endl;
+						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp-_pi/2)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp-_pi/2); 
 
 						C3Vec e1NowAndHere_XYZ;
 
@@ -900,56 +895,65 @@ int main ( int argc, char **argv )
 			}
 
 
-			for(int i=0;i<nx;i++){
-					for(int j=0;j<ny;j++){
-							for(int k=0;k<nz;k++){
-								f_XYZ[i][j][k]=0;
-							}
-					}
-			}
+			//for(int i=0;i<nx;i++){
+			//		for(int j=0;j<ny;j++){
+			//				for(int k=0;k<nz;k++){
+			//					f_XYZ[i][j][k]=0;
+			//				}
+			//		}
+			//}
 
-			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-					float iix = (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin)/vxRange*(vxGrid.size()-1);
-					if(iix<0 || iix>(nx-1)){
-							std::cout<<"\t\tError - v: "<<particles_XYZ_thisX[iP].v_c1<<std::endl;
-							std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
-							std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin<<std::endl;
-							std::cout<<"\t\tError - iix: "<<iix<<std::endl;
-							exit(1);
-					}
-					float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][jt][0].c2-vyMin)/vyRange*(vyGrid.size()-1);
-					if(iiy<0 || iiy>(ny-1)){
-							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
-							std::cout<<"max v: "<<vyMax<<std::endl;
-							exit(1);
-					}
-					float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][jt][0].c3-vzMin)/vzRange*(vzGrid.size()-1);
-					if(iiz<0 || iiy>(nz-1)){
-							std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
-							std::cout<<"max v: "<<vzMax<<std::endl;
-							exit(1);
-					}
-					f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
-			}	
+			//for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+			//		float iix = (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin)/vxRange*(vxGrid.size()-1);
+			//		if(iix<0 || iix>(nx-1)){
+			//				std::cout<<"\t\tError - v: "<<particles_XYZ_thisX[iP].v_c1<<std::endl;
+			//				std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
+			//				std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin<<std::endl;
+			//				std::cout<<"\t\tError - iix: "<<iix<<std::endl;
+			//				exit(1);
+			//		}
+			//		float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][jt][0].c2-vyMin)/vyRange*(vyGrid.size()-1);
+			//		if(iiy<0 || iiy>(ny-1)){
+			//				std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
+			//				std::cout<<"max v: "<<vyMax<<std::endl;
+			//				exit(1);
+			//		}
+			//		float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][jt][0].c3-vzMin)/vzRange*(vzGrid.size()-1);
+			//		if(iiz<0 || iiy>(nz-1)){
+			//				std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
+			//				std::cout<<"max v: "<<vzMax<<std::endl;
+			//				exit(1);
+			//		}
+			//		f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
+			//}	
 
-			j1x[jt] = 0;
-			j1y[jt] = 0;
-			j1z[jt] = 0;
+			//j1x[jt] = 0;
+			//j1y[jt] = 0;
+			//j1z[jt] = 0;
 
 			float qe =  particles_XYZ_thisX[0].q;
-			densityCheck = 0;
-			for(int i=0;i<nx;i++){
-					for(int j=0;j<ny;j++){
-							for(int k=0;k<nz;k++){
-								j1x[jt] += qe*vxGrid[i]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-								j1y[jt] += qe*vyGrid[j]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-								j1z[jt] += qe*vzGrid[k]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-								densityCheck += f_XYZ[i][j][k]*dV;
-							}
-					}
-			}
+			//densityCheck = 0;
+			//for(int i=0;i<nx;i++){
+			//		for(int j=0;j<ny;j++){
+			//				for(int k=0;k<nz;k++){
+			//					j1x[jt] += qe*vxGrid[i]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+			//					j1y[jt] += qe*vyGrid[j]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+			//					j1z[jt] += qe*vzGrid[k]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
+			//					densityCheck += f_XYZ[i][j][k]*dV;
+			//				}
+			//		}
+			//}
 
-			std::cout << "Density on f1: " << densityCheck << std::endl;
+			//std::cout << "Density on f1: " << densityCheck << std::endl;
+			//std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
+
+			j1x[jt] = 0;
+			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
+					//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
+			}
+			j1x[jt] = j1x[jt] * qe;
+			std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
 
 		}
 
