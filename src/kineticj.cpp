@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <complex>
 #include "constants.hpp"
+#include <papi.h>
 //#include <google/profiler.h>
 
 #ifdef __CUDA_ARCH__
@@ -385,6 +386,16 @@ float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
 
 int main ( int argc, char **argv )
 {
+
+		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops;
+		long_long flpIns0, flpIns=0;
+		int papiReturn;
+
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+
 		// Read E
 	
 		std::string rsfwc_fName ( "data/rsfwc_1d.nc" );	
@@ -486,7 +497,7 @@ int main ( int argc, char **argv )
 
 		// Create f0(v)
 
-		std::string particleList_fName ( "data/f_1keV_electrons.nc" );	
+		std::string particleList_fName ( "data/f.nc" );	
 		std::cout << "Reading particle list " << particleList_fName << std::endl;
 
 		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
@@ -579,10 +590,21 @@ int main ( int argc, char **argv )
 				//		<< std::endl;
 		}
 
-	float xGridMin = 9.60;
-	float xGridMax = 10.4;
+	// Langmuir wave dispersion relation
+
+	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
+	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
+	double kPar = sqrt ( kParSq );
+	double lambdaPar = 2*_pi/kPar;
+	
+	std::cout << "kParSq [m^-2]: " << kParSq << std::endl;
+	std::cout << "kPar [m^-1]: " << kPar << std::endl;
+	std::cout << "lambdaPar [m]: " << lambdaPar << std::endl;
+
+	float xGridMin = 9.40;
+	float xGridMax = 10.6;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 40;
+	int nXGrid = 2;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -595,9 +617,19 @@ int main ( int argc, char **argv )
 
 	//std::string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
+	//
+	cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+	papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+	printf("\nStartup performance:\n");
+	printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+
 
 	for(int iX=0;iX<nXGrid;iX++) {
 
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+	
 		std::vector<CParticle> particles_XYZ_thisX(particles_XYZ);
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
@@ -608,14 +640,16 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 4;
-		int nStepsPerCycle = 100.0;
+		int nRFCycles = 6;
+		int nStepsPerCycle = 400.0;
 
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
 		//float tEnd = dtMin*nStepsPerCycle*nRFCycles;
 
-		std::vector<std::vector<C3Vec> > orbit(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> > orbits_XYZ(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> > orbits_CYL(particles_XYZ_thisX.size());
+
 		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
 		std::vector<float> t;
 
@@ -628,7 +662,7 @@ int main ( int argc, char **argv )
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 		//for(int iP=0;iP<1;iP++) {
 
-			orbit[iP].resize(nSteps);
+			orbits_XYZ[iP].resize(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -641,7 +675,7 @@ int main ( int argc, char **argv )
 #endif	
 					t[i]=i*dtMin;
 					if(particles_XYZ_thisX[iP].status==0) {
-						orbit[iP][i] = C3Vec(particles_XYZ_thisX[iP].c1,particles_XYZ_thisX[iP].c2,particles_XYZ_thisX[iP].c3);
+						orbits_XYZ[iP][i] = C3Vec(particles_XYZ_thisX[iP].c1,particles_XYZ_thisX[iP].c2,particles_XYZ_thisX[iP].c3);
 						nStepsTaken[iP]++;
 						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
 					}
@@ -660,32 +694,77 @@ int main ( int argc, char **argv )
 		std::cout << "\tnSteps: " << nSteps << std::endl;
 		std::cout << "DONE" << std::endl;
 
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+		printf("\nOribit calculation performance ...\n");
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+
 		std::cout << "Interpolating complex E field along trajectories for xGrid " << iX << std::endl;
 
 		std::vector<C3Vec> dv(nSteps);	
 		std::vector<std::vector<C3Vec> >e1(particles_XYZ_thisX.size());
 		std::vector<std::vector<std::vector<C3Vec> > >v1(particles_XYZ_thisX.size());
 
-		std::vector<std::vector<C3Vec> >e1ReHere_CYL(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> >e1ImHere_CYL(particles_XYZ_thisX.size());
+		//std::vector<std::vector<C3Vec> >e1ReHere_CYL(particles_XYZ_thisX.size());
+		//std::vector<std::vector<C3Vec> >e1ImHere_CYL(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> >e1ReHere_XYZ(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> >e1ImHere_XYZ(particles_XYZ_thisX.size());
 
 		std::vector<C3Vec> e1Re_CYL, e1Im_CYL;
 		e1Re_CYL.resize(e_r.size());
 		e1Im_CYL.resize(e_r.size());
 
+		std::vector<C3Vec> e1Re_XYZ, e1Im_XYZ;
+		e1Re_XYZ.resize(e_r.size());
+		e1Im_XYZ.resize(e_r.size());
+
 		for(int i=0;i<e_r.size();i++) {
+
 			e1Re_CYL[i].c1 = std::real(e_r[i]);
 			e1Re_CYL[i].c2 = std::real(e_p[i]);
 			e1Re_CYL[i].c3 = std::real(e_z[i]);
 			e1Im_CYL[i].c1 = std::imag(e_r[i]);
 			e1Im_CYL[i].c2 = std::imag(e_p[i]);
 			e1Im_CYL[i].c3 = std::imag(e_z[i]);
+
+			float _p = 0.0;
+
+			e1Re_XYZ[i] = C3Vec( 
+				cos(_p)*e1Re_CYL[i].c1-sin(_p)*e1Re_CYL[i].c2+0,
+				sin(_p)*e1Re_CYL[i].c1+cos(_p)*e1Re_CYL[i].c2+0,
+				0+0+1*e1Re_CYL[i].c3 );
+
+			e1Im_XYZ[i] = C3Vec( 
+				cos(_p)*e1Im_CYL[i].c1-sin(_p)*e1Im_CYL[i].c2+0,
+				sin(_p)*e1Im_CYL[i].c1+cos(_p)*e1Im_CYL[i].c2+0,
+				0+0+1*e1Im_CYL[i].c3 );
+		}
+
+		// Calculate orbit CYL coords for interpolation in CYL 
+		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+
+			orbits_CYL[iP].resize(nSteps);
+
+			for(int i=0;i<nSteps;i++) {
+				if(i<=nStepsTaken[iP]) {
+
+					float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
+					float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
+
+					orbits_CYL[iP][i].c1 = _r;
+					orbits_CYL[iP][i].c2 = _p;
+					orbits_CYL[iP][i].c3 = orbits_XYZ[iP][i].c3;
+				}
+			}
 		}
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
-			e1ReHere_CYL[iP].resize(nSteps);
-			e1ImHere_CYL[iP].resize(nSteps);
+			//e1ReHere_CYL[iP].resize(nSteps);
+			//e1ImHere_CYL[iP].resize(nSteps);
+			e1ReHere_XYZ[iP].resize(nSteps);
+			e1ImHere_XYZ[iP].resize(nSteps);
 
 			for(int i=0;i<nSteps;i++) {
 
@@ -693,14 +772,23 @@ int main ( int argc, char **argv )
 
 						// Interpolate e1Now to here, done in CYL
 					
-						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
-						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
+						//float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
+						//float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
 
-						C3Vec e1ReTmp_CYL = kj_interp1D ( _r, r, e1Re_CYL );
-						C3Vec e1ImTmp_CYL = kj_interp1D ( _r, r, e1Im_CYL );
+						//C3Vec e1ReTmp_CYL = kj_interp1D ( _r, r, e1Re_CYL );
+						//C3Vec e1ImTmp_CYL = kj_interp1D ( _r, r, e1Im_CYL );
 
-						e1ReHere_CYL[iP][i] = e1ReTmp_CYL;
-						e1ImHere_CYL[iP][i] = e1ImTmp_CYL;
+						//C3Vec e1ReTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Re_CYL );
+						//C3Vec e1ImTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Im_CYL );
+
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ );
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ );
+
+						//e1ReHere_CYL[iP][i] = e1ReTmp_CYL;
+						//e1ImHere_CYL[iP][i] = e1ImTmp_CYL;
+
+						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
+						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
 
 						//std::cout 	<< "e1ReTmp.c1: "<<e1ReTmp_CYL.c1
 						//			<<" e1ReTmp.c2: "<<e1ReTmp_CYL.c2
@@ -711,8 +799,10 @@ int main ( int argc, char **argv )
 						printf("\t%s line: %i\n",__FILE__,__LINE__);
 						std::cout<<"i < nStepsTaken[iP]"<<std::endl;
 						exit (1);
-						e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
-						e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
+						//e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
+						//e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
+						e1ReHere_XYZ[iP][i] = C3Vec(0,0,0);
+						e1ImHere_XYZ[iP][i] = C3Vec(0,0,0);
 					}
 
 			}
@@ -721,9 +811,15 @@ int main ( int argc, char **argv )
 		//exit(1);
 		std::cout << "DONE" << std::endl;
 
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+		printf("\nOribit E interpolation performance ...\n");
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = 2;
+		int nJpCycles = 3;
 		int nJpPerCycle = 20;
 		int nJp = nJpCycles * nJpPerCycle + 1;
 		float dtJp = tRF / nJpPerCycle;
@@ -832,49 +928,71 @@ int main ( int argc, char **argv )
 				}
 		}
 
+		float eT_cpuTime=0, eT_realTime=0, eT_flpIns=0, eT_mFlops=0;
+		float vT_cpuTime=0, vT_realTime=0, vT_flpIns=0, vT_mFlops=0;
+
 		for(int jt=0;jt<nJp;jt++) {
 
 			tJp[jt] = jt*dtJp;
-			std::cout << "Create f1 for this tJp: " << tJp[jt] << std::endl;
+			//std::cout << "Create f1 for this tJp: " << tJp[jt] << std::endl;
+			
 
 			// Get e1 magnitude along orbit
 			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
+
 				for(int i=0;i<nSteps;i++) {
 					v1[iP][jt][i] = C3Vec(0,0,0);
 				}
-
+				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+	
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+t[i];
 					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 
 						// Get E(t) along orbit 
-						C3Vec e1NowAndHere_CYL;
+						//C3Vec e1NowAndHere_CYL;
 
-						float _r = sqrt ( pow(orbit[iP][i].c1,2) + pow(orbit[iP][i].c2,2) );
-						float _p = atan2 ( orbit[iP][i].c2, orbit[iP][i].c1 );
+						//float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
+						//float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
 
-						e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp-_pi/2)+e1ImHere_CYL[iP][i]*sin(wrf*tTmp-_pi/2); 
+						//float _r = orbits_CYL[iP][i].c1;
+						//float _p = orbits_CYL[iP][i].c2;
 
-						C3Vec e1NowAndHere_XYZ;
+						//e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp-_pi/2)
+						//		+e1ImHere_CYL[iP][i]*sin(wrf*tTmp-_pi/2); 
+						
+						//C3Vec e1NowAndHere_XYZ = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp-_pi/2)
+						//		+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp-_pi/2); 
 
-						e1NowAndHere_XYZ = C3Vec( 
-										cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
-										sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
-										0+0+1*e1NowAndHere_CYL.c3 );
+						//C3Vec e1NowAndHere_XYZ;
 
-						e1[iP][i] = e1NowAndHere_XYZ;
+						//e1NowAndHere_XYZ = C3Vec( 
+						//				cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
+						//				sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
+						//				0+0+1*e1NowAndHere_CYL.c3 );
 
+						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp-_pi/2)
+								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp-_pi/2);//e1NowAndHere_XYZ;
 					}
 					else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
 						//std::cout << "i > nStepsTaken" << std::endl;
 						//exit (1);
 						e1[iP][i] = C3Vec(0,0,0);
-					}
+					}	
 				}
-	
+
+				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+
+				eT_realTime += (realTime-realTime0);
+				eT_cpuTime += (cpuTime-cpuTime0);
+				eT_flpIns += (flpIns-flpIns0);
+				eT_mFlops += mFlops;
+
 				// Intergrate e1 from t=-inf to 0 to get v1
 				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
 
@@ -892,8 +1010,19 @@ int main ( int argc, char **argv )
 					v1[iP][jt][i].c3 = trapInt3;
 
 				}
+
+				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+
+				vT_realTime += (realTime-realTime0);
+				vT_cpuTime += (cpuTime-cpuTime0);
+				vT_flpIns += (flpIns-flpIns0);
+				vT_mFlops += mFlops;
+
 			}
 
+			cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 
 			//for(int i=0;i<nx;i++){
 			//		for(int j=0;j<ny;j++){
@@ -953,9 +1082,24 @@ int main ( int argc, char **argv )
 					//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
 			j1x[jt] = j1x[jt] * qe;
-			std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
-
+			//std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
+			
 		}
+
+		printf("\nGet e(t) and integrate performance ...\n");
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   eT_realTime, eT_cpuTime, eT_flpIns, eT_mFlops/(nJp-1));
+		printf("\nGet v(t) and integrate performance ...\n");
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   vT_realTime, vT_cpuTime, vT_flpIns, vT_mFlops/(nJp-1));
+
+
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+		printf("\nj(t) performance ...\n");
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+
 
 #if __SAVE_ORBITS__>=1
 		// Write orbits to file
@@ -1010,11 +1154,11 @@ int main ( int argc, char **argv )
 						countpA[1]=nSteps;
 		
 						std::vector<float> tmpData (nSteps,0);
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c1;}
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c1;}
 						nc_x.putVar(startpA,countpA,&tmpData[0]);
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c2;}
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c2;}
 						nc_y.putVar(startpA,countpA,&tmpData[0]);
-						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbit[iP][iS].c3;}
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c3;}
 						nc_z.putVar(startpA,countpA,&tmpData[0]);
 
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c1;}

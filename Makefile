@@ -1,15 +1,16 @@
 NAME := bin/kineticj
 
 # Defaults for dlg-hp.ornl.gov
-GCCDIR := /home/dg6/code/gcc/gcc-4.4.5/bin
+GCCDIR := /home/dg6/code/gcc/gcc-${GNUVER}/bin
 ALGLIBDIR := /home/dg6/code/alglib/cpp/src
-NETCDFDIR := /home/dg6/code/netcdf/netcdf_4.1.3_gnu_64# must be an --enable-cxx-4 dist
-CUDADIR := /home/dg6/code/cuda/4.0/cuda
+NETCDFDIR := /home/dg6/code/netcdf/gnu_${GNUVER}# must be an --enable-cxx-4 dist
+CUDADIR := /home/dg6/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
 CUDA_SDK_DIR := /home/dg6/code/cuda/NVIDIA_GPU_Computing_SDK
 LIBCONFIGDIR := /home/dg6/code/libconfig
 GOOGLE_PERF_DIR := /home/dg6/code/google-perftools
+PAPI_DIR :=/home/dg6/code/papi/gnu_${GNUVER}
 
 # Catch for greendl.* (my laptop)
 ifeq ($(findstring greendl,$(HOSTNAME_OSX)),greendl)
@@ -43,21 +44,21 @@ NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
+INCLUDEFLAGS := -I${PAPI_DIR}/include -I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
 CFLAGS := 
-CPPFLAGS := -g -pg 
+CPPFLAGS := -g -pg -O3
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
-LIBS := -lnetcdf_c++4 #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
+LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
+LIBS := -lnetcdf_c++4 -lpapi #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
-DEBUG:=1
-PITCH_SCATTERING:=1
-ENERGY_SCATTERING:=1
+DEBUG:=0
+PITCH_SCATTERING:=0
+ENERGY_SCATTERING:=0
 GOOSE:=0
-SAVE_ORBITS:=1
+SAVE_ORBITS:=0
 
-LINK := $(CPP) -g -pg
+LINK := $(CPP) ${CPPFLAGS} 
 
 # You shouldn't have to go below here
 #

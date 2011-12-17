@@ -62,31 +62,26 @@ pro kj_plot_current
 	phaseOffSet = !pi/2
 
 	yr = max(j1x)*1.5
-	p=plot(t,j1x[*,0],/noData,yRange=[-yr,yr])
-	for f=0,n_elements(xF)-1 do begin
-		p=plot(t,j1x[*,f],/over)
-		iiHere = where(abs(r-xF[f]) eq min(abs(r-xF[f])))
-		tmp = (jr_re[iiHere])[0]*cos(wrf*t+phaseOffSet)+(jr_im[iiHere])[0]*sin(wrf*t+phaseOffSet)
-		p=plot(t,tmp, /over,color='blue')
-	endfor
 
-	p=plot(t,j1x[*,0],/noData,yRange=[0,3])
-	for f=0,n_elements(xF)-1 do begin
-		iiHere = where(abs(r-xF[f]) eq min(abs(r-xF[f])))
-		tmp = (jr_re[iiHere])[0]*cos(wrf*t+phaseOffSet)+(jr_im[iiHere])[0]*sin(wrf*t+phaseOffSet)
-		p=plot(t,tmp/j1x[*,f],/over,lineStyle='none',symbol='Plus')
-	endfor
+	;for i=0,n_elements(t)-1 do begin	
+	;	plot, r,(jr_re*cos(wrf*t[i]+phaseOffSet)+jr_im*sin(wrf*t[i]+phaseOffSet)),$
+	;			yRange=[-50,50], xRange=[9.5,10.5]
+	;	;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
+	;	;for f=0,nF-1 do begin
+	;		plots, xF, j1x[i,*]/(2*!pi),psym=-4
+	;	;endfor
+	;	wait, 0.2
+	;endfor
 
-	for i=0,n_elements(t)-1 do begin	
-		plot, r,(jr_re*cos(wrf*t[i]+phaseOffSet)+jr_im*sin(wrf*t[i]+phaseOffSet)),$
-				yRange=[-100,100], xRange=[9.5,10.5]
-		;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
-		;for f=0,nF-1 do begin
-			plots, xF, j1x[i,*]/(2*!pi),psym=-4
-		;endfor
-		wait, 0.2
-	endfor
+	
+	p=plot(r,(jr_re*cos(wrf*t[1]+phaseOffSet)+jr_im*sin(wrf*t[1]+phaseOffSet)),yRange=[-50,50],$
+		   	xRange=[9.5,10.5],thick=2,xtitle="r [m]",ytitle="j1 [arb. units]")
+	p=plot(r,(jr_re*cos(wrf*t[3]+phaseOffSet)+jr_im*sin(wrf*t[3]+phaseOffSet)),/over,thick=2)
+	p=plot(r,(jr_re*cos(wrf*t[5]+phaseOffSet)+jr_im*sin(wrf*t[5]+phaseOffSet)),/over,thick=2)
 
+	p=plot(xF,j1x[1,*]/(2*!pi*1.06), /over, thick = 3, transp = 50, color="blue");,symbol="p",sym_size=1,sym_thick=2)
+	p=plot(xF,j1x[3,*]/(2*!pi*1.06), /over, thick = 3, transp = 60, color="blue");,symbol="p",sym_size=1,sym_thick=2)
+	p=plot(xF,j1x[5,*]/(2*!pi*1.06), /over, thick = 3, transp = 70, color="blue");,symbol="p",sym_size=1,sym_thick=2)
 
 stop
 end
