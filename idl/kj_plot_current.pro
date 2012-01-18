@@ -1,5 +1,33 @@
 pro kj_plot_current
 
+	@constants
+
+	;cdfId = ncdf_open('data/rsfwc_1d.nc')
+	cdfId = ncdf_open('data/kj_aorsa_1d.nc')
+
+		ncdf_varget, cdfId, 'freq', freq 
+		ncdf_varget, cdfId, 'r', r 
+
+		ncdf_varget, cdfId, 'e_r_re', er_re
+		ncdf_varget, cdfId, 'e_r_im', er_im
+		ncdf_varget, cdfId, 'e_p_re', ep_re
+		ncdf_varget, cdfId, 'e_p_im', ep_im
+		ncdf_varget, cdfId, 'e_z_re', ez_re
+		ncdf_varget, cdfId, 'e_z_im', ez_im
+
+		ncdf_varget, cdfId, 'j_r_re', jr_re
+		ncdf_varget, cdfId, 'j_r_im', jr_im
+		ncdf_varget, cdfId, 'j_p_re', jp_re
+		ncdf_varget, cdfId, 'j_p_im', jp_im
+		ncdf_varget, cdfId, 'j_z_re', jz_re
+		ncdf_varget, cdfId, 'j_z_im', jz_im
+
+	ncdf_close, cdfId
+
+	wrf = freq * 2 * !pi
+
+	j1_cold = complex ( jr_re, jr_im ) 
+
 	fileList = file_search ( 'output/jP*' )
 
 	cdfId = ncdf_open(fileList[0])
@@ -10,7 +38,10 @@ pro kj_plot_current
 	nF = n_elements(fileList)
 
 	j1x = fltArr ( nT, nF )
+	j1 = complexArr ( nF )
 	xF = fltArr ( nF )
+
+	hanWindow = hanning (nT, alpha=0.5 )
 
 	for f=0,nF-1 do begin
 
@@ -28,60 +59,32 @@ pro kj_plot_current
 		j1x[*,f] = j1x_0
 		xF[f] = x
 
+		dt = t[1]-t[0]
+		jrFFT = fft ( hanWindow * j1x_0 )
+		freq = fIndGen(nT) / (nT*dt)
+		antFreq = wrf / (2*!pi)
+		freqNorm = freq / antFreq
+
+		;p=plot(freqNorm,abs(jrFFT)^2,xRange=[0,5])
+		;p=plot(freqNorm,imaginary(jrFFT),color='blue',xRange=[0,5])
+
+		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
+		rp = real_part ( jrFFT[iiAntFreq[0]] )
+		ip = imaginary ( jrFFT[iiAntFreq[0]] )
+
+		j1[f] = complex ( rp, ip )
+
 	endfor
 
+	fudgeFac = 4.0 
+	xrange = [min(r),max(r)]
+	pb_re=plot(r,j1_cold,thick=3.0,xrange=xRange,name='base_re',transp=50)
+	pb_im=plot(r,imaginary(j1_cold),thick=3.0,xrange=xRange,/over,name='base_im',color='r',transp=50)
+	pk_re=plot(xF,-j1*fudgeFac,/over,thick=1.0,name='kj_re')
+	pk_im=plot(xF,imaginary(j1)*fudgeFac,/over,color='r',thick=1.0,name='kj_im')
 
-	cdfId = ncdf_open('data/rsfwc_1d.nc')
+	l=legend(target=[pb_re,pb_im,pk_re,pk_im],position=[0.98,0.9],/norm,font_size=10,horizontal_align='RIGHT')
 
-		ncdf_varget, cdfId, 'wrf', wrf
-		ncdf_varget, cdfId, 'r', r 
-
-		ncdf_varget, cdfId, 'e_r_re', er_re
-		ncdf_varget, cdfId, 'e_r_im', er_im
-		ncdf_varget, cdfId, 'e_p_re', ep_re
-		ncdf_varget, cdfId, 'e_p_im', ep_im
-		ncdf_varget, cdfId, 'e_z_re', ez_re
-		ncdf_varget, cdfId, 'e_z_im', ez_im
-
-		ncdf_varget, cdfId, 'j_r_re', jr_re
-		ncdf_varget, cdfId, 'j_r_im', jr_im
-		ncdf_varget, cdfId, 'j_p_re', jp_re
-		ncdf_varget, cdfId, 'j_p_im', jp_im
-		ncdf_varget, cdfId, 'j_z_re', jz_re
-		ncdf_varget, cdfId, 'j_z_im', jz_im
-
-		ncdf_varget, cdfId, 'jA_r_re', jAr_re
-		ncdf_varget, cdfId, 'jA_r_im', jAr_im
-		ncdf_varget, cdfId, 'jA_p_re', jAp_re
-		ncdf_varget, cdfId, 'jA_p_im', jAp_im
-		ncdf_varget, cdfId, 'jA_z_re', jAz_re
-		ncdf_varget, cdfId, 'jA_z_im', jAz_im
-
-	ncdf_close, cdfId
-
-	phaseOffSet = !pi/2
-
-	yr = max(j1x)*1.5
-
-	;for i=0,n_elements(t)-1 do begin	
-	;	plot, r,(jr_re*cos(wrf*t[i]+phaseOffSet)+jr_im*sin(wrf*t[i]+phaseOffSet)),$
-	;			yRange=[-50,50], xRange=[9.5,10.5]
-	;	;plots, r,(jAr_re*cos(wrf*t[i])+jAr_im*sin(wrf*t[i]))/10
-	;	;for f=0,nF-1 do begin
-	;		plots, xF, j1x[i,*]/(2*!pi),psym=-4
-	;	;endfor
-	;	wait, 0.2
-	;endfor
-
-	
-	p=plot(r,(jr_re*cos(wrf*t[1]+phaseOffSet)+jr_im*sin(wrf*t[1]+phaseOffSet)),yRange=[-50,50],$
-		   	xRange=[9.5,10.5],thick=2,xtitle="r [m]",ytitle="j1 [arb. units]")
-	p=plot(r,(jr_re*cos(wrf*t[3]+phaseOffSet)+jr_im*sin(wrf*t[3]+phaseOffSet)),/over,thick=2)
-	p=plot(r,(jr_re*cos(wrf*t[5]+phaseOffSet)+jr_im*sin(wrf*t[5]+phaseOffSet)),/over,thick=2)
-
-	p=plot(xF,j1x[1,*]/(2*!pi*1.06), /over, thick = 3, transp = 50, color="blue");,symbol="p",sym_size=1,sym_thick=2)
-	p=plot(xF,j1x[3,*]/(2*!pi*1.06), /over, thick = 3, transp = 60, color="blue");,symbol="p",sym_size=1,sym_thick=2)
-	p=plot(xF,j1x[5,*]/(2*!pi*1.06), /over, thick = 3, transp = 70, color="blue");,symbol="p",sym_size=1,sym_thick=2)
 
 stop
 end

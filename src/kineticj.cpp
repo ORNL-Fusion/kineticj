@@ -7,7 +7,11 @@
 #include <algorithm>
 #include <complex>
 #include "constants.hpp"
+
+#if USEPAPI >= 1
 #include <papi.h>
+#endif
+
 //#include <google/profiler.h>
 
 #ifdef __CUDA_ARCH__
@@ -243,13 +247,14 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 	return F*(p.q/p.m);	
 }
 
-C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::vector<C3Vec> &yVec ) {
+C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::vector<C3Vec> &yVec, int &stat ) {
 
-	if(x<xVec.front()||x>xVec.back()) {
-			printf("\t%s line: %i\n",__FILE__,__LINE__);
-			std::cout << "\tERROR: Interpolation pt off grid." << std::endl;
-			std::cout << "\tx: " << x << " x.front(): " << xVec.front() << " x.back(): " << xVec.back() << std::endl;
-			exit (1);
+	if(x<xVec.front()||x>xVec.back()||stat>0) {
+			//printf("\t%s line: %i\n",__FILE__,__LINE__);
+			//std::cout << "\tERROR: Interpolation pt off grid." << std::endl;
+			//std::cout << "\tx: " << x << " x.front(): " << xVec.front() << " x.back(): " << xVec.back() << std::endl;
+			++stat;
+			return C3Vec(0,0,0);
 	}
 
 	float _x = (x-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
@@ -290,7 +295,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL );
+	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p.status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -387,6 +392,7 @@ float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
 int main ( int argc, char **argv )
 {
 
+#if USEPAPI >= 1
 		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops;
 		long_long flpIns0, flpIns=0;
 		int papiReturn;
@@ -395,10 +401,12 @@ int main ( int argc, char **argv )
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+#endif
 
 		// Read E
 	
-		std::string rsfwc_fName ( "data/rsfwc_1d.nc" );	
+		//std::string rsfwc_fName ( "data/rsfwc_1d.nc" );	
+		std::string rsfwc_fName ( "data/kj_aorsa_1d.nc" );	
 		std::cout << "Reading rsfwc data file" << rsfwc_fName << std::endl;
 
 		// Here we are using the cxx-4 netcdf interface by Lynton Appel
@@ -410,7 +418,7 @@ int main ( int argc, char **argv )
 				e_r_im, e_p_im, e_z_im;
 		std::vector<C3Vec> b0_CYL, b0_XYZ;
 		
-		float wrf;
+		float freq;
 
 		std::vector<std::complex<float> > e_r, e_p, e_z;	
 
@@ -425,7 +433,7 @@ int main ( int argc, char **argv )
 				std::cout << "\tnR: " << nR << std::endl;
 	
 				netCDF::NcVar nc_r(dataFile.getVar("r"));
-				netCDF::NcVar nc_wrf(dataFile.getVar("wrf"));
+				netCDF::NcVar nc_freq(dataFile.getVar("freq"));
 
 				netCDF::NcVar nc_b0_r(dataFile.getVar("B0_r"));
 				netCDF::NcVar nc_b0_p(dataFile.getVar("B0_p"));
@@ -452,7 +460,7 @@ int main ( int argc, char **argv )
 				e_z_im.resize(nR);
 
 				nc_r.getVar(&r[0]);
-				nc_wrf.getVar(&wrf);
+				nc_freq.getVar(&freq);
 
 				nc_b0_r.getVar(&b0_r[0]);
 				nc_b0_p.getVar(&b0_p[0]);
@@ -481,7 +489,7 @@ int main ( int argc, char **argv )
 				}
 
 				std::cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << std::endl;
-				std::cout << "\twrf: " << wrf << std::endl;
+				std::cout << "\tfreq: " << freq << std::endl;
 				std::vector<float>::iterator min = std::min_element(b0_p.begin(),b0_p.end());
 				std::vector<float>::iterator max = std::max_element(b0_p.begin(),b0_p.end());
 				std::cout << "\tmin(b0_p): " << *min << std::endl;
@@ -592,6 +600,7 @@ int main ( int argc, char **argv )
 
 	// Langmuir wave dispersion relation
 
+	double wrf = freq * 2 * _pi;
 	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
 	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
 	double kPar = sqrt ( kParSq );
@@ -601,10 +610,10 @@ int main ( int argc, char **argv )
 	std::cout << "kPar [m^-1]: " << kPar << std::endl;
 	std::cout << "lambdaPar [m]: " << lambdaPar << std::endl;
 
-	float xGridMin = 9.40;
-	float xGridMax = 10.6;
+	float xGridMin = 98.0;
+	float xGridMax = 100.0;
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 2;
+	int nXGrid = 80;
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -618,18 +627,20 @@ int main ( int argc, char **argv )
 	//std::string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
 	//
+#if USEPAPI >= 1
 	cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 	papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 	printf("\nStartup performance:\n");
 	printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-
+#endif
 
 	for(int iX=0;iX<nXGrid;iX++) {
 
+#if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-	
+#endif	
 		std::vector<CParticle> particles_XYZ_thisX(particles_XYZ);
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
@@ -640,8 +651,8 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 6;
-		int nStepsPerCycle = 400.0;
+		int nRFCycles = 10;
+		int nStepsPerCycle = 100.0;
 
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
@@ -649,6 +660,7 @@ int main ( int argc, char **argv )
 
 		std::vector<std::vector<C3Vec> > orbits_XYZ(particles_XYZ_thisX.size());
 		std::vector<std::vector<C3Vec> > orbits_CYL(particles_XYZ_thisX.size());
+		std::vector<std::vector<int> > status(particles_XYZ_thisX.size());
 
 		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
 		std::vector<float> t;
@@ -660,9 +672,9 @@ int main ( int argc, char **argv )
 		t.resize(nSteps);
 
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-		//for(int iP=0;iP<1;iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
+			status[iP].resize(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -676,30 +688,30 @@ int main ( int argc, char **argv )
 					t[i]=i*dtMin;
 					if(particles_XYZ_thisX[iP].status==0) {
 						orbits_XYZ[iP][i] = C3Vec(particles_XYZ_thisX[iP].c1,particles_XYZ_thisX[iP].c2,particles_XYZ_thisX[iP].c3);
-						nStepsTaken[iP]++;
 						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
+						if(particles_XYZ_thisX[iP].status==0) {
+							status[iP][i] = 0;
+							nStepsTaken[iP]++;
+						}
+						else {
+							status[iP][i] = 1;
+						}
 					}
 					else {
-						printf("\t%s line: %i\n",__FILE__,__LINE__);
-						std::cout << "Status != 0" << std::endl;
-						exit(1);
+						status[iP][i] = 1;
 					}
 			}
 		}
 
-		//std::cout.precision(15);
-		//std::cout << std::fixed << t[nSteps-1]/tRF << std::endl;
-		//exit(1);
-
 		std::cout << "\tnSteps: " << nSteps << std::endl;
 		std::cout << "DONE" << std::endl;
-
+#if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 		printf("\nOribit calculation performance ...\n");
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-
+#endif
 		std::cout << "Interpolating complex E field along trajectories for xGrid " << iX << std::endl;
 
 		std::vector<C3Vec> dv(nSteps);	
@@ -710,6 +722,8 @@ int main ( int argc, char **argv )
 		//std::vector<std::vector<C3Vec> >e1ImHere_CYL(particles_XYZ_thisX.size());
 		std::vector<std::vector<C3Vec> >e1ReHere_XYZ(particles_XYZ_thisX.size());
 		std::vector<std::vector<C3Vec> >e1ImHere_XYZ(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> >e1MagHere_XYZ(particles_XYZ_thisX.size());
+		std::vector<std::vector<C3Vec> >e1PhsHere_XYZ(particles_XYZ_thisX.size());
 
 		std::vector<C3Vec> e1Re_CYL, e1Im_CYL;
 		e1Re_CYL.resize(e_r.size());
@@ -759,16 +773,20 @@ int main ( int argc, char **argv )
 			}
 		}
 
+		int stat = 0;
+
 		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
 
 			//e1ReHere_CYL[iP].resize(nSteps);
 			//e1ImHere_CYL[iP].resize(nSteps);
 			e1ReHere_XYZ[iP].resize(nSteps);
 			e1ImHere_XYZ[iP].resize(nSteps);
+			e1MagHere_XYZ[iP].resize(nSteps);
+			e1PhsHere_XYZ[iP].resize(nSteps);
 
 			for(int i=0;i<nSteps;i++) {
 
-					if(i<=nStepsTaken[iP]) {
+					if(i<=nStepsTaken[iP]&&status[iP][i]==0) {
 
 						// Interpolate e1Now to here, done in CYL
 					
@@ -781,45 +799,54 @@ int main ( int argc, char **argv )
 						//C3Vec e1ReTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Re_CYL );
 						//C3Vec e1ImTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Im_CYL );
 
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ );
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ );
+						stat = 0;
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ, stat );
+						stat = 0;
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ, stat );
 
 						//e1ReHere_CYL[iP][i] = e1ReTmp_CYL;
 						//e1ImHere_CYL[iP][i] = e1ImTmp_CYL;
 
 						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
 						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
-
+						e1MagHere_XYZ[iP][i].c1 = sqrt ( pow(e1ReTmp_XYZ.c1,2) + pow(e1ImTmp_XYZ.c1,2) );
+						e1MagHere_XYZ[iP][i].c2 = sqrt ( pow(e1ReTmp_XYZ.c2,2) + pow(e1ImTmp_XYZ.c2,2) );
+						e1MagHere_XYZ[iP][i].c3 = sqrt ( pow(e1ReTmp_XYZ.c3,2) + pow(e1ImTmp_XYZ.c3,2) );
+						e1PhsHere_XYZ[iP][i].c1 = atan2 ( e1ImTmp_XYZ.c1, e1ReTmp_XYZ.c1 );
+						e1PhsHere_XYZ[iP][i].c2 = atan2 ( e1ImTmp_XYZ.c2, e1ReTmp_XYZ.c2 );
+						e1PhsHere_XYZ[iP][i].c3 = atan2 ( e1ImTmp_XYZ.c3, e1ReTmp_XYZ.c3 );
 						//std::cout 	<< "e1ReTmp.c1: "<<e1ReTmp_CYL.c1
 						//			<<" e1ReTmp.c2: "<<e1ReTmp_CYL.c2
 						//			<<" e1ReTmp.c3: "<<e1ReTmp_CYL.c3<< std::endl;
 	
 					}
 					else {
-						printf("\t%s line: %i\n",__FILE__,__LINE__);
-						std::cout<<"i < nStepsTaken[iP]"<<std::endl;
-						exit (1);
+						//printf("\t%s line: %i\n",__FILE__,__LINE__);
+						//std::cout<<"i < nStepsTaken[iP]"<<std::endl;
 						//e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
 						//e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
 						e1ReHere_XYZ[iP][i] = C3Vec(0,0,0);
 						e1ImHere_XYZ[iP][i] = C3Vec(0,0,0);
-					}
+						e1MagHere_XYZ[iP][i] = C3Vec(0,0,0);
+						e1PhsHere_XYZ[iP][i] = C3Vec(0,0,0);
+
+				}
 
 			}
 
 		}
 		//exit(1);
 		std::cout << "DONE" << std::endl;
-
+#if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 		printf("\nOribit E interpolation performance ...\n");
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-
+#endif
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = 3;
+		int nJpCycles = 4;
 		int nJpPerCycle = 20;
 		int nJp = nJpCycles * nJpPerCycle + 1;
 		float dtJp = tRF / nJpPerCycle;
@@ -927,10 +954,10 @@ int main ( int argc, char **argv )
 
 				}
 		}
-
+#if USEPAPI >= 1
 		float eT_cpuTime=0, eT_realTime=0, eT_flpIns=0, eT_mFlops=0;
 		float vT_cpuTime=0, vT_realTime=0, vT_flpIns=0, vT_mFlops=0;
-
+#endif
 		for(int jt=0;jt<nJp;jt++) {
 
 			tJp[jt] = jt*dtJp;
@@ -944,9 +971,10 @@ int main ( int argc, char **argv )
 				for(int i=0;i<nSteps;i++) {
 					v1[iP][jt][i] = C3Vec(0,0,0);
 				}
+#if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-	
+#endif	
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+t[i];
@@ -974,8 +1002,22 @@ int main ( int argc, char **argv )
 						//				sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
 						//				0+0+1*e1NowAndHere_CYL.c3 );
 
-						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp-_pi/2)
-								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp-_pi/2);//e1NowAndHere_XYZ;
+						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)
+								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp);
+						
+						//std::cout << e1[iP][i].c3;
+
+						//std::complex<double> cwt(0,wrf*tTmp-_pi/2);
+						//std::complex<double> cph_c1(0,e1PhsHere_XYZ[iP][i].c1);
+						//std::complex<double> cph_c2(0,e1PhsHere_XYZ[iP][i].c2);
+						//std::complex<double> cph_c3(0,e1PhsHere_XYZ[iP][i].c3);
+
+						//e1[iP][i].c1 = e1MagHere_XYZ[iP][i].c1 * std::real ( exp(cph_c1+cwt) );
+						//e1[iP][i].c2 = e1MagHere_XYZ[iP][i].c2 * std::real ( exp(cph_c2+cwt) );
+						//e1[iP][i].c3 = e1MagHere_XYZ[iP][i].c3 * std::real ( exp(cph_c3+cwt) );
+
+						//std::cout << "   " << e1[iP][i].c3 << std::endl;
+
 					}
 					else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
@@ -984,7 +1026,7 @@ int main ( int argc, char **argv )
 						e1[iP][i] = C3Vec(0,0,0);
 					}	
 				}
-
+#if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 
@@ -992,7 +1034,7 @@ int main ( int argc, char **argv )
 				eT_cpuTime += (cpuTime-cpuTime0);
 				eT_flpIns += (flpIns-flpIns0);
 				eT_mFlops += mFlops;
-
+#endif
 				// Intergrate e1 from t=-inf to 0 to get v1
 				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
 
@@ -1010,7 +1052,7 @@ int main ( int argc, char **argv )
 					v1[iP][jt][i].c3 = trapInt3;
 
 				}
-
+#if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 
@@ -1018,12 +1060,12 @@ int main ( int argc, char **argv )
 				vT_cpuTime += (cpuTime-cpuTime0);
 				vT_flpIns += (flpIns-flpIns0);
 				vT_mFlops += mFlops;
-
+#endif
 			}
-
+#if USEPAPI >= 1
 			cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-
+#endif
 			//for(int i=0;i<nx;i++){
 			//		for(int j=0;j<ny;j++){
 			//				for(int k=0;k<nz;k++){
@@ -1060,7 +1102,7 @@ int main ( int argc, char **argv )
 			//j1y[jt] = 0;
 			//j1z[jt] = 0;
 
-			float qe =  particles_XYZ_thisX[0].q;
+			float qe = particles_XYZ_thisX[0].q;
 			//densityCheck = 0;
 			//for(int i=0;i<nx;i++){
 			//		for(int j=0;j<ny;j++){
@@ -1086,6 +1128,7 @@ int main ( int argc, char **argv )
 			
 		}
 
+#if USEPAPI >= 1
 		printf("\nGet e(t) and integrate performance ...\n");
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   eT_realTime, eT_cpuTime, eT_flpIns, eT_mFlops/(nJp-1));
@@ -1093,13 +1136,12 @@ int main ( int argc, char **argv )
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   vT_realTime, vT_cpuTime, vT_flpIns, vT_mFlops/(nJp-1));
 
-
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 		printf("\nj(t) performance ...\n");
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-
+#endif
 
 #if __SAVE_ORBITS__>=1
 		// Write orbits to file

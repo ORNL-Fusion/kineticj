@@ -40,19 +40,21 @@ CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
 CC := $(GCCDIR)/gcc
 CPP := $(GCCDIR)/g++
+
 NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
 INCLUDEFLAGS := -I${PAPI_DIR}/include -I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) -I$(LIBCONFIGDIR)/include
 CFLAGS := 
-CPPFLAGS := -g -pg -O3
+CPPFLAGS := -O3 #-g -pg
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
 LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib #-L$(CUDALIBDIR) -L$(LIBCONFIGDIR)/lib
 LIBS := -lnetcdf_c++4 -lpapi #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart -lconfig++
 
 USECUDA:=0
 DEBUG:=0
+USEPAPI:=0
 PITCH_SCATTERING:=0
 ENERGY_SCATTERING:=0
 GOOSE:=0
@@ -66,7 +68,7 @@ LINK := $(CPP) ${CPPFLAGS}
 # 		the .cu files will work too :)
 
 DIRNAME = `dirname $1`
-MAKEDEPS = $(CC) -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 
@@ -80,12 +82,12 @@ CPPFLAGS += $(INCLUDEFLAGS) -DDEBUGLEVEL=$(DEBUG) \
 			-DPITCH_SCATTERING=$(PITCH_SCATTERING) \
 			-DENERGY_SCATTERING=$(ENERGY_SCATTERING) \
 			-DGOOSE=$(GOOSE) \
-			-D__SAVE_ORBITS__=$(SAVE_ORBITS)
+			-D__SAVE_ORBITS__=$(SAVE_ORBITS) -DUSEPAPI=${USEPAPI}
 NVCCFLAGS += $(INCLUDEFLAGS) -DDEBUGLEVEL=$(DEBUG) \
 			 -DPITCH_SCATTERING=$(PITCH_SCATTERING) \
 			 -DENERGY_SCATTERING=$(ENERGY_SCATTERING) \
 			 -DGOOSE=$(GOOSE) \
-			 -D__SAVE_ORBITS__=$(SAVE_ORBITS)
+			 -D__SAVE_ORBITS__=$(SAVE_ORBITS) -DUSEPAPI=${USEPAPI}
 
 # determine the object files
 SRCTYPES := c cpp 
