@@ -56,31 +56,35 @@ pro kj_plot_current
 
 		nCdf_close,	cdfId 
 
-		j1x[*,f] = j1x_0
+		j1x[*,f] = j1x_0-mean(j1x_0)
 		xF[f] = x
 
 		dt = t[1]-t[0]
-		jrFFT = fft ( hanWindow * j1x_0 )
-		freq = fIndGen(nT) / (nT*dt)
-		antFreq = wrf / (2*!pi)
-		freqNorm = freq / antFreq
+		;jrFFT = fft ( hanWindow * j1x[*,f] )
+		;ampRe = 1000.0
+		;ampIm = 0.0
+		;if x gt 99.95 then stop
+		;j1x_0 = ampRe * cos ( wrf * t ) + ampIm * ii * sin ( wrf * t )
+		jrFFT = fft ( j1x[0:-2,f] )
+		freqAxis = fIndGen(nT-1) / ((nT-1)*dt)
+		freqNorm = freqAxis / freq
 
 		;p=plot(freqNorm,abs(jrFFT)^2,xRange=[0,5])
 		;p=plot(freqNorm,imaginary(jrFFT),color='blue',xRange=[0,5])
 
 		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
-		rp = real_part ( jrFFT[iiAntFreq[0]] )
-		ip = imaginary ( jrFFT[iiAntFreq[0]] )
+		rp = -2*real_part ( jrFFT[iiAntFreq[0]] )
+		ip = 2*imaginary ( jrFFT[iiAntFreq[0]] )
 
 		j1[f] = complex ( rp, ip )
 
 	endfor
 
-	fudgeFac = 4.0 
+	fudgeFac = 1.0 
 	xrange = [min(r),max(r)]
 	pb_re=plot(r,j1_cold,thick=3.0,xrange=xRange,name='base_re',transp=50)
 	pb_im=plot(r,imaginary(j1_cold),thick=3.0,xrange=xRange,/over,name='base_im',color='r',transp=50)
-	pk_re=plot(xF,-j1*fudgeFac,/over,thick=1.0,name='kj_re')
+	pk_re=plot(xF,j1*fudgeFac,/over,thick=1.0,name='kj_re')
 	pk_im=plot(xF,imaginary(j1)*fudgeFac,/over,color='r',thick=1.0,name='kj_im')
 
 	l=legend(target=[pb_re,pb_im,pk_re,pk_im],position=[0.98,0.9],/norm,font_size=10,horizontal_align='RIGHT')

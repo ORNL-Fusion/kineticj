@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <complex>
 #include "constants.hpp"
+#include <libconfig.h++>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -403,11 +404,37 @@ int main ( int argc, char **argv )
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
 
+		// Write a config file if required
+
+		libconfig::Config cfg;
+		std::string cfgName = "kj.cfg";
+
+		//libconfig::Setting &root = cfg.getRoot();
+
+		//root.add("xGridMin", libconfig::Setting::TypeFloat) = 98.0;
+		//root.add("xGridMax", libconfig::Setting::TypeFloat) = 100.0;
+		//root.add("nXGrid", libconfig::Setting::TypeInt) = 20;
+
+		//root.add("nRFCycles", libconfig::Setting::TypeInt) = 10;
+		//root.add("nStepsPerCycle", libconfig::Setting::TypeInt) = 100;
+	
+		//root.add("nJpCycles", libconfig::Setting::TypeInt) = 6;
+		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
+
+		//root.add("eField_fName", libconfig::Setting::TypeString) = "data/kj_aorsa_1d.nc";
+
+		//cfg.writeFile(cfgName.c_str());
+		
+		// Read the config file
+
+		cfg.readFile(cfgName.c_str());
+
+
 		// Read E
 	
-		//std::string rsfwc_fName ( "data/rsfwc_1d.nc" );	
-		std::string rsfwc_fName ( "data/kj_aorsa_1d.nc" );	
-		std::cout << "Reading rsfwc data file" << rsfwc_fName << std::endl;
+		//std::string eField_fName ( "data/rsfwc_1d.nc" );	
+		std::string eField_fName = cfg.lookup("eField_fName");	
+		std::cout << "Reading eField data file" << eField_fName << std::endl;
 
 		// Here we are using the cxx-4 netcdf interface by Lynton Appel
 		// This needs netCDF 4.1.1 or later build with
@@ -423,7 +450,7 @@ int main ( int argc, char **argv )
 		std::vector<std::complex<float> > e_r, e_p, e_z;	
 
 		try {
-				netCDF::NcFile dataFile ( rsfwc_fName.c_str(), netCDF::NcFile::read );
+				netCDF::NcFile dataFile ( eField_fName.c_str(), netCDF::NcFile::read );
 	
 				netCDF::NcDim nc_nR(dataFile.getDim("nR"));
 				netCDF::NcDim nc_scalar(dataFile.getDim("scalar"));
@@ -610,10 +637,10 @@ int main ( int argc, char **argv )
 	std::cout << "kPar [m^-1]: " << kPar << std::endl;
 	std::cout << "lambdaPar [m]: " << lambdaPar << std::endl;
 
-	float xGridMin = 98.0;
-	float xGridMax = 100.0;
+	float xGridMin = cfg.lookup("xGridMin");
+	float xGridMax = cfg.lookup("xGridMax");
 	float xGridRng = xGridMax-xGridMin;
-	int nXGrid = 80;
+	int nXGrid = cfg.lookup("nXGrid");
 	float xGridStep = xGridRng/(nXGrid-1);
 	std::vector<float> xGrid(nXGrid);
 
@@ -651,8 +678,8 @@ int main ( int argc, char **argv )
 
 		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
 
-		int nRFCycles = 10;
-		int nStepsPerCycle = 100.0;
+		int nRFCycles = cfg.lookup("nRFCycles");
+		int nStepsPerCycle = cfg.lookup("nStepsPerCycle"); 
 
 		float tRF = (2*_pi)/wrf;
 		float dtMin = -tRF/nStepsPerCycle;
@@ -846,8 +873,8 @@ int main ( int argc, char **argv )
 #endif
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = 4;
-		int nJpPerCycle = 20;
+		int nJpCycles = cfg.lookup("nJpCycles");
+		int nJpPerCycle = cfg.lookup("nJpPerCycle");
 		int nJp = nJpCycles * nJpPerCycle + 1;
 		float dtJp = tRF / nJpPerCycle;
 		std::vector<float> tJp(nJp,0);
