@@ -56,7 +56,7 @@ pro kj_plot_current
 
 		nCdf_close,	cdfId 
 
-		j1x[*,f] = j1x_0-mean(j1x_0)
+		j1x[*,f] = j1x_0-mean(j1x_0) ; not sure if there is a nicer way to do this
 		xF[f] = x
 
 		dt = t[1]-t[0]
@@ -73,7 +73,7 @@ pro kj_plot_current
 		;p=plot(freqNorm,imaginary(jrFFT),color='blue',xRange=[0,5])
 
 		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
-		rp = -2*real_part ( jrFFT[iiAntFreq[0]] )
+		rp = -2*real_part ( jrFFT[iiAntFreq[0]] ) ; not sure exactly where this -2 comes from :s
 		ip = 2*imaginary ( jrFFT[iiAntFreq[0]] )
 
 		j1[f] = complex ( rp, ip )

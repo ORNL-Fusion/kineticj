@@ -21,12 +21,14 @@
 #define PRINT printf
 #endif
 
+using namespace std;
+
 class CSpecies {
 		public:
 				double m, q;
 				double amu;
 				int Z;
-				std::string name;
+				string name;
 
 				CSpecies () {};
 				CSpecies ( const double amu, const int Z);
@@ -47,7 +49,7 @@ CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
 		Z = _Z;
 		m = amu * _mi;
 		q = Z * _e;
-		name = std::string(_s);
+		name = string(_s);
 }
 
 class CParticle: public CSpecies {
@@ -97,10 +99,10 @@ CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
 
 class C3VecI {
 		public:
-				std::complex<float> c1, c2, c3;
+				complex<float> c1, c2, c3;
 
-				C3VecI () {c1=std::complex<float>(0.0f,0.0f);c2=std::complex<float>(0.0f,0.0f);c3=std::complex<float>(0.0f,0.0f);};
-				C3VecI ( std::complex<float> _c1, std::complex<float> _c2, std::complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
+				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 };
 
 class C3Vec {
@@ -236,24 +238,24 @@ C3Vec operator* ( const float &other, const C3Vec &rhs ) {
 
 // First-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
-				const std::vector<C3Vec> &b0Vec, const std::vector<C3VecI> &e1, const float wrf ) {
+				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
 
 	C3Vec b0(0,0,0), F;
 
 	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
-	//C3Vec F ( std::real(e1.c1) * cos ( wrf * t ) + std::imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-	//	  	std::real(e1.c2) * cos ( wrf * t ) + std::imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-	//	  	std::real(e1.c3) * cos ( wrf * t ) + std::imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
+	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
+	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
+	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
 
 	return F*(p.q/p.m);	
 }
 
-C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::vector<C3Vec> &yVec, int &stat ) {
+C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &stat ) {
 
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			//printf("\t%s line: %i\n",__FILE__,__LINE__);
-			//std::cout << "\tERROR: Interpolation pt off grid." << std::endl;
-			//std::cout << "\tx: " << x << " x.front(): " << xVec.front() << " x.back(): " << xVec.back() << std::endl;
+			//cout << "\tERROR: Interpolation pt off grid." << endl;
+			//cout << "\tx: " << x << " x.front(): " << xVec.front() << " x.back(): " << xVec.back() << endl;
 			++stat;
 			return C3Vec(0,0,0);
 	}
@@ -264,8 +266,8 @@ C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::v
 
 	// Catch for particle at point
 	if(x0==x1) {
-		//std::cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << std::endl;
-		//std::cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << std::endl;
+		//cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		//cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 		return yVec[x0];
 	}
 	else {
@@ -279,8 +281,8 @@ C3Vec kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::v
 
 // Zero-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
-				const C3Vec &v_XYZ, const C3Vec &x, const std::vector<C3Vec> &b0Vec_CYL,
-			  	const std::vector<float> &rVec ) {
+				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+			  	const vector<float> &rVec ) {
 
 	// Interpolate b0 at location in CYL
 	
@@ -288,10 +290,10 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	float _p = atan2 ( x.c2, x.c1 );
 
 #if DEBUGLEVEL >= 3
-	std::cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << std::endl;
-	std::cout << "\t\t\tr: " << _r << " p: " << _p << std::endl;
-	std::cout << "\t\t\trVec.front(): " << rVec.front() << std::endl;
-	std::cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << std::endl;
+	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
+	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
+	cout << "\t\t\trVec.front(): " << rVec.front() << endl;
+	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
 #endif
 
 	C3Vec b0_CYL, b0_XYZ;
@@ -307,8 +309,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
 
 #if DEBUGLEVEL >= 3
-	std::cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << std::endl;
-	std::cout << "\tp.q/p.m: " << p.q/p.m << std::endl;
+	cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << endl;
+	cout << "\tp.q/p.m: " << p.q/p.m << endl;
 #endif
 
 	return v_x_b0*(p.q/p.m);	
@@ -316,7 +318,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 // Zero-order orbits
 void rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const std::vector<C3Vec> &b0, const std::vector<float> &r ) {
+				const vector<C3Vec> &b0, const vector<float> &r ) {
 
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
@@ -341,18 +343,18 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		p.v_c3 = yn1.c3;
 
 #if DEBUGLEVEL >= 3
-		std::cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << std::endl;
-		std::cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << std::endl;
-		std::cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << std::endl;
-		std::cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << std::endl;
-		std::cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << std::endl;
+		cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << endl;
+		cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << endl;
+		cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << endl;
+		cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << endl;
+		cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << endl;
 #endif
 
 }
 
 // First-order orbits
 void rk4_move ( CParticle &p, float dt, float t0, 
-				const std::vector<C3Vec> &b0, const std::vector<C3VecI> &e1, const float wrf ) {
+				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
 
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
@@ -378,9 +380,9 @@ void rk4_move ( CParticle &p, float dt, float t0,
 }
 
 
-float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
+float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
-	std::vector<float> inputAbs(input.size());
+	vector<float> inputAbs(input.size());
 	for(int i=0;i<input.size();i++) {
 		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
 	}
@@ -404,50 +406,41 @@ int main ( int argc, char **argv )
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
 
-		// Write a config file if required
-
 		libconfig::Config cfg;
-		std::string cfgName = "kj.cfg";
+		string cfgName = "kj.cfg";
 
+		// Write a config file if required
 		//libconfig::Setting &root = cfg.getRoot();
-
 		//root.add("xGridMin", libconfig::Setting::TypeFloat) = 98.0;
 		//root.add("xGridMax", libconfig::Setting::TypeFloat) = 100.0;
 		//root.add("nXGrid", libconfig::Setting::TypeInt) = 20;
-
 		//root.add("nRFCycles", libconfig::Setting::TypeInt) = 10;
 		//root.add("nStepsPerCycle", libconfig::Setting::TypeInt) = 100;
-	
 		//root.add("nJpCycles", libconfig::Setting::TypeInt) = 6;
 		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
-
 		//root.add("eField_fName", libconfig::Setting::TypeString) = "data/kj_aorsa_1d.nc";
-
+		//root.add("particleList_fName", libconfig::Setting::TypeString) = "data/f.nc";
 		//cfg.writeFile(cfgName.c_str());
 		
-		// Read the config file
-
+		// Open the config file
 		cfg.readFile(cfgName.c_str());
 
-
 		// Read E
-	
-		//std::string eField_fName ( "data/rsfwc_1d.nc" );	
-		std::string eField_fName = cfg.lookup("eField_fName");	
-		std::cout << "Reading eField data file" << eField_fName << std::endl;
+		string eField_fName = cfg.lookup("eField_fName");	
+		cout << "Reading eField data file" << eField_fName << endl;
 
 		// Here we are using the cxx-4 netcdf interface by Lynton Appel
 		// This needs netCDF 4.1.1 or later build with
 		// ./configure --enable-cxx-4 [plus other options]
 
-		std::vector<float> r, b0_r, b0_p, b0_z,
+		vector<float> r, b0_r, b0_p, b0_z,
 				e_r_re, e_p_re, e_z_re,
 				e_r_im, e_p_im, e_z_im;
-		std::vector<C3Vec> b0_CYL, b0_XYZ;
+		vector<C3Vec> b0_CYL, b0_XYZ;
 		
 		float freq;
 
-		std::vector<std::complex<float> > e_r, e_p, e_z;	
+		vector<complex<float> > e_r, e_p, e_z;	
 
 		try {
 				netCDF::NcFile dataFile ( eField_fName.c_str(), netCDF::NcFile::read );
@@ -457,7 +450,7 @@ int main ( int argc, char **argv )
 	
 				int nR = nc_nR.getSize();
 	
-				std::cout << "\tnR: " << nR << std::endl;
+				cout << "\tnR: " << nR << endl;
 	
 				netCDF::NcVar nc_r(dataFile.getVar("r"));
 				netCDF::NcVar nc_freq(dataFile.getVar("freq"));
@@ -510,33 +503,65 @@ int main ( int argc, char **argv )
 				nc_e_z_im.getVar(&e_z_im[0]);
 
 				for(int i=0; i<nR; i++){
-						e_r.push_back(std::complex<float>( e_r_re[i], e_r_im[i] ) );
-						e_p.push_back(std::complex<float>( e_p_re[i], e_p_im[i] ) );
-						e_z.push_back(std::complex<float>( e_z_re[i], e_z_im[i] ) );
+						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
+						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
+						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
 				}
 
-				std::cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << std::endl;
-				std::cout << "\tfreq: " << freq << std::endl;
-				std::vector<float>::iterator min = std::min_element(b0_p.begin(),b0_p.end());
-				std::vector<float>::iterator max = std::max_element(b0_p.begin(),b0_p.end());
-				std::cout << "\tmin(b0_p): " << *min << std::endl;
-				std::cout << "\tmax(b0_p): " << *max << std::endl;
-				std::cout << "\tabs(e_r[nR/2]): " << std::abs(e_r[nR/2]) << std::endl;
-				std::cout << "\tabs(e_p[nR/2]): " << std::abs(e_p[nR/2]) << std::endl;
-				std::cout << "\tabs(e_z[nR/2]): " << std::abs(e_z[nR/2]) << std::endl;
+				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
+				cout << "\tfreq: " << freq << endl;
+				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
+				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+				cout << "\tmin(b0_p): " << *min << endl;
+				cout << "\tmax(b0_p): " << *max << endl;
+				cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR/2]) << endl;
+				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
+				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
 		}
 		catch(netCDF::exceptions::NcException &e) {
-				std::cout << "NetCDF: unknown error" << std::endl;
+				cout << "NetCDF: unknown error" << endl;
 				e.what();
 		}
 
-		// Create f0(v)
+		// Rotate the e field to XYZ
 
-		std::string particleList_fName ( "data/f.nc" );	
-		std::cout << "Reading particle list " << particleList_fName << std::endl;
+		vector<C3Vec> e1Re_CYL, e1Im_CYL;
+		e1Re_CYL.resize(e_r.size());
+		e1Im_CYL.resize(e_r.size());
 
-		std::vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
-		std::vector<int> p_Z;
+		vector<C3Vec> e1Re_XYZ, e1Im_XYZ;
+		e1Re_XYZ.resize(e_r.size());
+		e1Im_XYZ.resize(e_r.size());
+
+		for(int i=0;i<e_r.size();i++) {
+
+			e1Re_CYL[i].c1 = real(e_r[i]);
+			e1Re_CYL[i].c2 = real(e_p[i]);
+			e1Re_CYL[i].c3 = real(e_z[i]);
+			e1Im_CYL[i].c1 = imag(e_r[i]);
+			e1Im_CYL[i].c2 = imag(e_p[i]);
+			e1Im_CYL[i].c3 = imag(e_z[i]);
+
+			float _p = 0.0;
+
+			e1Re_XYZ[i] = C3Vec( 
+				cos(_p)*e1Re_CYL[i].c1-sin(_p)*e1Re_CYL[i].c2+0,
+				sin(_p)*e1Re_CYL[i].c1+cos(_p)*e1Re_CYL[i].c2+0,
+				0+0+1*e1Re_CYL[i].c3 );
+
+			e1Im_XYZ[i] = C3Vec( 
+				cos(_p)*e1Im_CYL[i].c1-sin(_p)*e1Im_CYL[i].c2+0,
+				sin(_p)*e1Im_CYL[i].c1+cos(_p)*e1Im_CYL[i].c2+0,
+				0+0+1*e1Im_CYL[i].c3 );
+		}
+
+
+		// Read particle list
+		string particleList_fName = cfg.lookup ("particleList_fName");	
+		cout << "Reading particle list " << particleList_fName << endl;
+
+		vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
+		vector<int> p_Z;
 		float vTh;
 		int nThermal;
 		
@@ -547,7 +572,7 @@ int main ( int argc, char **argv )
 	
 				int nP = nc_nP.getSize();
 	
-				std::cout << "\tnP: " << nP << std::endl;
+				cout << "\tnP: " << nP << endl;
 
 				netCDF::NcVar nc_p_amu(dataFile.getVar("amu"));
 				netCDF::NcVar nc_p_Z(dataFile.getVar("Z"));
@@ -596,11 +621,11 @@ int main ( int argc, char **argv )
 
 		}
 		catch(netCDF::exceptions::NcException &e) {
-				std::cout << "NetCDF: unknown error" << std::endl;
+				cout << "NetCDF: unknown error" << endl;
 				e.what();
 		}
 
-		std::vector<CParticle> particles_XYZ;
+		vector<CParticle> particles_XYZ;
 		particles_XYZ.resize(p_x.size());
 
 		for(int i=0;i<particles_XYZ.size();i++){
@@ -610,19 +635,6 @@ int main ( int argc, char **argv )
 								p_amu[i],p_Z[i],p_weight[i]);
 				particles_XYZ[i] = thisParticle;
 				particles_XYZ[i].number = i;
-
-				//std::cout << "\tamu: " << p_amu[i] << std::endl;
-
-				//std::cout << "\tParticle[" << i << "]: " 
-				//		<< particles_XYZ[i].c1 << "  " 
-				//		<< particles_XYZ[i].c2 << "  " 
-				//		<< particles_XYZ[i].c3 << "  " 
-				//		<< particles_XYZ[i].v_c1 << "  " 
-				//		<< particles_XYZ[i].v_c2 << "  " 
-				//		<< particles_XYZ[i].v_c3 << "  " 
-				//		<< particles_XYZ[i].q << "  " 
-				//		<< particles_XYZ[i].m << "  " 
-				//		<< std::endl;
 		}
 
 	// Langmuir wave dispersion relation
@@ -633,25 +645,25 @@ int main ( int argc, char **argv )
 	double kPar = sqrt ( kParSq );
 	double lambdaPar = 2*_pi/kPar;
 	
-	std::cout << "kParSq [m^-2]: " << kParSq << std::endl;
-	std::cout << "kPar [m^-1]: " << kPar << std::endl;
-	std::cout << "lambdaPar [m]: " << lambdaPar << std::endl;
+	cout << "kParSq [m^-2]: " << kParSq << endl;
+	cout << "kPar [m^-1]: " << kPar << endl;
+	cout << "lambdaPar [m]: " << lambdaPar << endl;
 
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	float xGridRng = xGridMax-xGridMin;
 	int nXGrid = cfg.lookup("nXGrid");
 	float xGridStep = xGridRng/(nXGrid-1);
-	std::vector<float> xGrid(nXGrid);
+	vector<float> xGrid(nXGrid);
 
 	for(int iX=0;iX<nXGrid;iX++) {
 			xGrid[iX] = xGridMin+iX*xGridStep;
-			std::cout << "\t\txGrid[iX]: " << xGrid[iX] << std::endl;
+			cout << "\t\txGrid[iX]: " << xGrid[iX] << endl;
 	}
 
-	std::vector<CParticle> particles_XYZ_0(particles_XYZ);
+	vector<CParticle> particles_XYZ_0(particles_XYZ);
 
-	//std::string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
+	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
 	//
 #if USEPAPI >= 1
@@ -662,43 +674,110 @@ int main ( int argc, char **argv )
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
 
+	int nRFCycles 		= cfg.lookup("nRFCycles");
+	int nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
+	float tRF 			= (2*_pi)/wrf;
+	float dtMin 		= -tRF/nStepsPerCycle;
+	int nSteps 			= nRFCycles*nStepsPerCycle+1;
+	int nJpCycles 		= cfg.lookup("nJpCycles");
+	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
+	int nJp 			= nJpCycles * nJpPerCycle + 1;
+	float dtJp 			= tRF / nJpPerCycle;
+	int stat = 0;
+
 	for(int iX=0;iX<nXGrid;iX++) {
+
+		vector<float> thisT(nSteps);
+		vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
+		vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
+		vector<float> tJp(nJp,0);
+		vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0), tJ(nJp,0);
+
+		cout << "xGrid " << iX << endl;
 
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif	
-		std::vector<CParticle> particles_XYZ_thisX(particles_XYZ);
 
-		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-			particles_XYZ_thisX[iP].c1 = xGrid[iX];
+#if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
+
+		for(int iP=0;iP<particles_XYZ.size();iP++) {
+
+			CParticle thisParticle_XYZ(particles_XYZ[iP]);
+			thisParticle_XYZ.c1 = xGrid[iX];
+
+			// generate orbit and get time-harmonic e along it
+
+			vector<C3Vec> thisOrbit_XYZ(nSteps);
+
+	 		for(int i=0;i<nSteps;i++) {	
+
+				thisT[i]=i*dtMin;
+				if(thisParticle_XYZ.status==0) {
+
+					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+
+					if(thisParticle_XYZ.status==0) {
+						stat = 0;
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, stat );
+						stat = 0;
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, stat );
+						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
+						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
+					}
+				}
+			}
+
+			// get Jp(t) for this spatial point
+		
+			for(int jt=0;jt<nJp;jt++) {
+
+				tJp[jt] = jt*dtJp;
+				vector<C3Vec> thisE(nSteps,C3Vec(0,0,0));
+
+				// get Jp(t=jt*dtJp)
+				for(int i=0;i<nSteps;i++) {	
+
+					float tTmp = tJp[jt]+thisT[i];
+					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
+						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)+thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+					}
+				}
+
+				float trapInt1=0, trapInt2=0, trapInt3=0;
+				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
+				for(int i=nSteps-2;i>-1;i--) {
+					trapInt1 += qOverm * dtMin/2.0 * (thisE[i].c1+thisE[i+1].c1);
+					trapInt2 += qOverm * dtMin/2.0 * (thisE[i].c2+thisE[i+1].c2);
+					trapInt3 += qOverm * dtMin/2.0 * (thisE[i].c3+thisE[i+1].c3);
+				}
+
+				C3Vec thisV1(trapInt1,trapInt2,trapInt3);
+				float qe = thisParticle_XYZ.q;
+
+				j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
+			
+			}
 		}
 
+#else // END OF LOWMEM CODING ^^^
+
+		vector<CParticle> this_particles_XYZ(particles_XYZ);
+		for(int iP=0;iP<particles_XYZ.size();iP++) {
+				this_particles_XYZ[iP].c1 = xGrid[iX];
+		}
 		// Generate linear orbits
+		vector<vector<C3Vec> > orbits_XYZ(this_particles_XYZ.size());
+		vector<vector<int> > status(this_particles_XYZ.size());
 
-		std::cout << "Calculating orbit for xGrid " << iX << std::endl;
+		vector<int> nStepsTaken(this_particles_XYZ.size(),0);
+		vector<float> t;
 
-		int nRFCycles = cfg.lookup("nRFCycles");
-		int nStepsPerCycle = cfg.lookup("nStepsPerCycle"); 
-
-		float tRF = (2*_pi)/wrf;
-		float dtMin = -tRF/nStepsPerCycle;
-		//float tEnd = dtMin*nStepsPerCycle*nRFCycles;
-
-		std::vector<std::vector<C3Vec> > orbits_XYZ(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> > orbits_CYL(particles_XYZ_thisX.size());
-		std::vector<std::vector<int> > status(particles_XYZ_thisX.size());
-
-		std::vector<int> nStepsTaken(particles_XYZ_thisX.size(),0);
-		std::vector<float> t;
-
-		int nSteps = nRFCycles*nStepsPerCycle+1;
-		//std::cout.precision(15);
-		//std::cout << std::fixed << nSteps*dtMin/tRF << std::endl;
-		//exit(1);
 		t.resize(nSteps);
 
-		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
 			status[iP].resize(nSteps);
@@ -706,17 +785,17 @@ int main ( int argc, char **argv )
 	 		for(int i=0;i<nSteps;i++) {	
 
 #if DEBUGLEVEL >= 3
-					std::cout << "\tE: " << 
-							0.5 * particles_XYZ_thisX[iP].m * 
-							sqrt (pow(particles_XYZ_thisX[iP].v_c1,2)
-											+pow(particles_XYZ_thisX[iP].v_c2,2)
-											+pow(particles_XYZ_thisX[iP].v_c3,2))/_e << std::endl;
+					cout << "\tE: " << 
+							0.5 * this_particles_XYZ[iP].m * 
+							sqrt (pow(this_particles_XYZ[iP].v_c1,2)
+											+pow(this_particles_XYZ[iP].v_c2,2)
+											+pow(this_particles_XYZ[iP].v_c3,2))/_e << endl;
 #endif	
 					t[i]=i*dtMin;
-					if(particles_XYZ_thisX[iP].status==0) {
-						orbits_XYZ[iP][i] = C3Vec(particles_XYZ_thisX[iP].c1,particles_XYZ_thisX[iP].c2,particles_XYZ_thisX[iP].c3);
-						rk4_move ( particles_XYZ_thisX[iP], dtMin, t[i], b0_CYL, r );
-						if(particles_XYZ_thisX[iP].status==0) {
+					if(this_particles_XYZ[iP].status==0) {
+						orbits_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].c1,this_particles_XYZ[iP].c2,this_particles_XYZ[iP].c3);
+						rk4_move ( this_particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
+						if(this_particles_XYZ[iP].status==0) {
 							status[iP][i] = 0;
 							nStepsTaken[iP]++;
 						}
@@ -730,8 +809,8 @@ int main ( int argc, char **argv )
 			}
 		}
 
-		std::cout << "\tnSteps: " << nSteps << std::endl;
-		std::cout << "DONE" << std::endl;
+		cout << "\tnSteps: " << nSteps << endl;
+		cout << "DONE" << endl;
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -739,131 +818,45 @@ int main ( int argc, char **argv )
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
-		std::cout << "Interpolating complex E field along trajectories for xGrid " << iX << std::endl;
+		cout << "Interpolating complex E field along trajectories for xGrid " << iX << endl;
 
-		std::vector<C3Vec> dv(nSteps);	
-		std::vector<std::vector<C3Vec> >e1(particles_XYZ_thisX.size());
-		std::vector<std::vector<std::vector<C3Vec> > >v1(particles_XYZ_thisX.size());
+		vector<C3Vec> dv(nSteps);	
+		vector<vector<C3Vec> >e1(this_particles_XYZ.size());
+		vector<vector<vector<C3Vec> > >v1(this_particles_XYZ.size());
 
-		//std::vector<std::vector<C3Vec> >e1ReHere_CYL(particles_XYZ_thisX.size());
-		//std::vector<std::vector<C3Vec> >e1ImHere_CYL(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> >e1ReHere_XYZ(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> >e1ImHere_XYZ(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> >e1MagHere_XYZ(particles_XYZ_thisX.size());
-		std::vector<std::vector<C3Vec> >e1PhsHere_XYZ(particles_XYZ_thisX.size());
+		vector<vector<C3Vec> >e1ReHere_XYZ(this_particles_XYZ.size());
+		vector<vector<C3Vec> >e1ImHere_XYZ(this_particles_XYZ.size());
 
-		std::vector<C3Vec> e1Re_CYL, e1Im_CYL;
-		e1Re_CYL.resize(e_r.size());
-		e1Im_CYL.resize(e_r.size());
 
-		std::vector<C3Vec> e1Re_XYZ, e1Im_XYZ;
-		e1Re_XYZ.resize(e_r.size());
-		e1Im_XYZ.resize(e_r.size());
+		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
-		for(int i=0;i<e_r.size();i++) {
-
-			e1Re_CYL[i].c1 = std::real(e_r[i]);
-			e1Re_CYL[i].c2 = std::real(e_p[i]);
-			e1Re_CYL[i].c3 = std::real(e_z[i]);
-			e1Im_CYL[i].c1 = std::imag(e_r[i]);
-			e1Im_CYL[i].c2 = std::imag(e_p[i]);
-			e1Im_CYL[i].c3 = std::imag(e_z[i]);
-
-			float _p = 0.0;
-
-			e1Re_XYZ[i] = C3Vec( 
-				cos(_p)*e1Re_CYL[i].c1-sin(_p)*e1Re_CYL[i].c2+0,
-				sin(_p)*e1Re_CYL[i].c1+cos(_p)*e1Re_CYL[i].c2+0,
-				0+0+1*e1Re_CYL[i].c3 );
-
-			e1Im_XYZ[i] = C3Vec( 
-				cos(_p)*e1Im_CYL[i].c1-sin(_p)*e1Im_CYL[i].c2+0,
-				sin(_p)*e1Im_CYL[i].c1+cos(_p)*e1Im_CYL[i].c2+0,
-				0+0+1*e1Im_CYL[i].c3 );
-		}
-
-		// Calculate orbit CYL coords for interpolation in CYL 
-		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-
-			orbits_CYL[iP].resize(nSteps);
-
-			for(int i=0;i<nSteps;i++) {
-				if(i<=nStepsTaken[iP]) {
-
-					float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
-					float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
-
-					orbits_CYL[iP][i].c1 = _r;
-					orbits_CYL[iP][i].c2 = _p;
-					orbits_CYL[iP][i].c3 = orbits_XYZ[iP][i].c3;
-				}
-			}
-		}
-
-		int stat = 0;
-
-		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-
-			//e1ReHere_CYL[iP].resize(nSteps);
-			//e1ImHere_CYL[iP].resize(nSteps);
 			e1ReHere_XYZ[iP].resize(nSteps);
 			e1ImHere_XYZ[iP].resize(nSteps);
-			e1MagHere_XYZ[iP].resize(nSteps);
-			e1PhsHere_XYZ[iP].resize(nSteps);
 
 			for(int i=0;i<nSteps;i++) {
 
 					if(i<=nStepsTaken[iP]&&status[iP][i]==0) {
-
-						// Interpolate e1Now to here, done in CYL
-					
-						//float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
-						//float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
-
-						//C3Vec e1ReTmp_CYL = kj_interp1D ( _r, r, e1Re_CYL );
-						//C3Vec e1ImTmp_CYL = kj_interp1D ( _r, r, e1Im_CYL );
-
-						//C3Vec e1ReTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Re_CYL );
-						//C3Vec e1ImTmp_CYL = kj_interp1D ( orbits_CYL[iP][i].c1, r, e1Im_CYL );
 
 						stat = 0;
 						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ, stat );
 						stat = 0;
 						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ, stat );
 
-						//e1ReHere_CYL[iP][i] = e1ReTmp_CYL;
-						//e1ImHere_CYL[iP][i] = e1ImTmp_CYL;
-
 						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
 						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
-						e1MagHere_XYZ[iP][i].c1 = sqrt ( pow(e1ReTmp_XYZ.c1,2) + pow(e1ImTmp_XYZ.c1,2) );
-						e1MagHere_XYZ[iP][i].c2 = sqrt ( pow(e1ReTmp_XYZ.c2,2) + pow(e1ImTmp_XYZ.c2,2) );
-						e1MagHere_XYZ[iP][i].c3 = sqrt ( pow(e1ReTmp_XYZ.c3,2) + pow(e1ImTmp_XYZ.c3,2) );
-						e1PhsHere_XYZ[iP][i].c1 = atan2 ( e1ImTmp_XYZ.c1, e1ReTmp_XYZ.c1 );
-						e1PhsHere_XYZ[iP][i].c2 = atan2 ( e1ImTmp_XYZ.c2, e1ReTmp_XYZ.c2 );
-						e1PhsHere_XYZ[iP][i].c3 = atan2 ( e1ImTmp_XYZ.c3, e1ReTmp_XYZ.c3 );
-						//std::cout 	<< "e1ReTmp.c1: "<<e1ReTmp_CYL.c1
-						//			<<" e1ReTmp.c2: "<<e1ReTmp_CYL.c2
-						//			<<" e1ReTmp.c3: "<<e1ReTmp_CYL.c3<< std::endl;
-	
 					}
 					else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
-						//std::cout<<"i < nStepsTaken[iP]"<<std::endl;
-						//e1ReHere_CYL[iP][i] = C3Vec(0,0,0);
-						//e1ImHere_CYL[iP][i] = C3Vec(0,0,0);
+						//cout<<"i < nStepsTaken[iP]"<<endl;
 						e1ReHere_XYZ[iP][i] = C3Vec(0,0,0);
 						e1ImHere_XYZ[iP][i] = C3Vec(0,0,0);
-						e1MagHere_XYZ[iP][i] = C3Vec(0,0,0);
-						e1PhsHere_XYZ[iP][i] = C3Vec(0,0,0);
-
 				}
 
 			}
 
 		}
-		//exit(1);
-		std::cout << "DONE" << std::endl;
+		
+		cout << "DONE" << endl;
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -873,90 +866,11 @@ int main ( int argc, char **argv )
 #endif
 		// Calculate jP1 for each time at the spatial point
 
-		int nJpCycles = cfg.lookup("nJpCycles");
-		int nJpPerCycle = cfg.lookup("nJpPerCycle");
-		int nJp = nJpCycles * nJpPerCycle + 1;
-		float dtJp = tRF / nJpPerCycle;
-		std::vector<float> tJp(nJp,0);
-
-		std::vector<std::vector<std::vector<float> > > f_XYZ, f_XYZ_0;
-		std::vector<float> vxGrid, vyGrid, vzGrid;
 
 #if DEBUGLEVEL >= 1
-		std::cout << "\tnThermal: " << nThermal << std::endl;
-		std::cout << "\tvTh: " << vTh << std::endl;
+		cout << "\tnThermal: " << nThermal << endl;
+		cout << "\tvTh: " << vTh << endl;
 #endif
-
-		//int nx=1000, ny=20, nz=20;
-		//vxGrid.resize(nx);vyGrid.resize(ny);vzGrid.resize(nz);
-
-		//float vxMin = -nThermal*vTh*7000;
-		//float vxMax = -vxMin;
-		//float vxRange = (vxMax-vxMin);
-		//float dVx = vxRange / (vxGrid.size()-1);
-
-		//float vyMin = -nThermal*vTh*5;
-		//float vyMax = -vyMin;
-		//float vyRange = (vyMax-vyMin);
-		//float dVy = vyRange / (vyGrid.size()-1);
-
-		//float vzMin = -nThermal*vTh*5;
-		//float vzMax = -vzMin;
-		//float vzRange = (vzMax-vzMin);
-		//float dVz = vzRange / (vzGrid.size()-1);
-		//
-		//float dV = dVx * dVy * dVz;
-
-		//std::cout << "\tdVx: " << dVx << std::endl;
-		//for(int i=0;i<vxGrid.size();i++) {
-		//		vxGrid[i] = vxMin + i*dVx;
-		//}
-		//for(int j=0;j<vyGrid.size();j++) {
-		//		vyGrid[j] = vyMin + j*dVy;
-		//}
-		//for(int k=0;k<vzGrid.size();k++) {
-		//		vzGrid[k] = vzMin + k*dVz;
-		//}
-
-		//f_XYZ.resize(nx);
-		//f_XYZ_0.resize(nx);
-		//for(int i=0;i<nx;i++) {
-		//		f_XYZ[i].resize(ny);
-		//		f_XYZ_0[i].resize(ny);
-		//		for(int j=0;j<ny;j++) {
-		//				f_XYZ[i][j].resize(nz);
-		//				f_XYZ_0[i][j].resize(nz);
-		//		}
-		//}
-
-		//std::cout << "Create f0 ..." << std::endl;
-
-		//// Create the initial f
-		//for(int iP=0;iP<particles_XYZ_0.size();iP++) {
-		//		float iix = (particles_XYZ_0[iP].v_c1-vxMin)/vxRange*(vxGrid.size()-1);
-		//		if(iix<0 || iix>(nx-1)){
-		//				std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c1<<std::endl;
-		//				std::cout<<"max v: "<<vxMax<<std::endl;
-		//		}
-		//		float iiy = (particles_XYZ_0[iP].v_c2-vyMin)/vyRange*(vyGrid.size()-1);
-		//		if(iiy<0 || iiy>(ny-1)){
-		//				std::cout<<"Outside v grid: "<<particles_XYZ_0[iP].v_c2<<std::endl;
-		//				std::cout<<"max v: "<<vyMax<<std::endl;
-		//		}
-		//		float iiz = (particles_XYZ_0[iP].v_c3-vzMin)/vzRange*(vzGrid.size()-1);
-		//		f_XYZ_0[iix][iiy][iiz] += particles_XYZ_0[iP].weight/dV;
-		//}	
-
-		//// Check density against expected
-		//float densityCheck = 0;
-		//for(int i=0;i<nx;i++){
-		//		for(int j=0;j<ny;j++){
-		//				for(int k=0;k<nz;k++){
-		//					densityCheck += f_XYZ_0[i][j][k]*dV;
-		//				}
-		//		}
-		//}
-		//std::cout << "Density on f0: " << densityCheck << std::endl;
 
 		// Check density using non-grid method
 		float densityCheck = 0;
@@ -964,13 +878,12 @@ int main ( int argc, char **argv )
 				densityCheck += particles_XYZ_0[iP].weight;
 		}
 
-		std::cout << "Density on f0 using non-grid method: " << densityCheck << std::endl;
+		cout << "Density on f0 using non-grid method: " << densityCheck << endl;
 
-		std::cout << "DONE" << std::endl;
+		cout << "DONE" << endl;
 
-		std::vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0), tJ(nJp,0);
 
-		for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 				e1[iP].resize(nSteps);
 				v1[iP].resize(nJp);
@@ -988,11 +901,11 @@ int main ( int argc, char **argv )
 		for(int jt=0;jt<nJp;jt++) {
 
 			tJp[jt] = jt*dtJp;
-			//std::cout << "Create f1 for this tJp: " << tJp[jt] << std::endl;
+			//cout << "Create f1 for this tJp: " << tJp[jt] << endl;
 			
 
 			// Get e1 magnitude along orbit
-			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 
 				for(int i=0;i<nSteps;i++) {
@@ -1008,47 +921,13 @@ int main ( int argc, char **argv )
 					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 
 						// Get E(t) along orbit 
-						//C3Vec e1NowAndHere_CYL;
-
-						//float _r = sqrt ( pow(orbits_XYZ[iP][i].c1,2) + pow(orbits_XYZ[iP][i].c2,2) );
-						//float _p = atan2 ( orbits_XYZ[iP][i].c2, orbits_XYZ[iP][i].c1 );
-
-						//float _r = orbits_CYL[iP][i].c1;
-						//float _p = orbits_CYL[iP][i].c2;
-
-						//e1NowAndHere_CYL = e1ReHere_CYL[iP][i]*cos(wrf*tTmp-_pi/2)
-						//		+e1ImHere_CYL[iP][i]*sin(wrf*tTmp-_pi/2); 
-						
-						//C3Vec e1NowAndHere_XYZ = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp-_pi/2)
-						//		+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp-_pi/2); 
-
-						//C3Vec e1NowAndHere_XYZ;
-
-						//e1NowAndHere_XYZ = C3Vec( 
-						//				cos(_p)*e1NowAndHere_CYL.c1-sin(_p)*e1NowAndHere_CYL.c2+0,
-						//				sin(_p)*e1NowAndHere_CYL.c1+cos(_p)*e1NowAndHere_CYL.c2+0,
-						//				0+0+1*e1NowAndHere_CYL.c3 );
-
 						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)
 								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp);
 						
-						//std::cout << e1[iP][i].c3;
-
-						//std::complex<double> cwt(0,wrf*tTmp-_pi/2);
-						//std::complex<double> cph_c1(0,e1PhsHere_XYZ[iP][i].c1);
-						//std::complex<double> cph_c2(0,e1PhsHere_XYZ[iP][i].c2);
-						//std::complex<double> cph_c3(0,e1PhsHere_XYZ[iP][i].c3);
-
-						//e1[iP][i].c1 = e1MagHere_XYZ[iP][i].c1 * std::real ( exp(cph_c1+cwt) );
-						//e1[iP][i].c2 = e1MagHere_XYZ[iP][i].c2 * std::real ( exp(cph_c2+cwt) );
-						//e1[iP][i].c3 = e1MagHere_XYZ[iP][i].c3 * std::real ( exp(cph_c3+cwt) );
-
-						//std::cout << "   " << e1[iP][i].c3 << std::endl;
-
 					}
 					else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
-						//std::cout << "i > nStepsTaken" << std::endl;
+						//cout << "i > nStepsTaken" << endl;
 						//exit (1);
 						e1[iP][i] = C3Vec(0,0,0);
 					}	
@@ -1066,13 +945,13 @@ int main ( int argc, char **argv )
 				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
 
 				float trapInt1=0, trapInt2=0, trapInt3=0;
-				double qOverm =  particles_XYZ_thisX[iP].q/particles_XYZ_thisX[iP].m;
+				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
 				for(int i=nSteps-2;i>-1;i--) {
 
 					trapInt1 += qOverm * dtMin/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
 					trapInt2 += qOverm * dtMin/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
 					trapInt3 += qOverm * dtMin/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
-					//std::cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << std::endl;
+					//cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << endl;
 
 					v1[iP][jt][i].c1 = trapInt1;
 					v1[iP][jt][i].c2 = trapInt2;
@@ -1093,67 +972,20 @@ int main ( int argc, char **argv )
 			cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif
-			//for(int i=0;i<nx;i++){
-			//		for(int j=0;j<ny;j++){
-			//				for(int k=0;k<nz;k++){
-			//					f_XYZ[i][j][k]=0;
-			//				}
-			//		}
-			//}
-
-			//for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
-			//		float iix = (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin)/vxRange*(vxGrid.size()-1);
-			//		if(iix<0 || iix>(nx-1)){
-			//				std::cout<<"\t\tError - v: "<<particles_XYZ_thisX[iP].v_c1<<std::endl;
-			//				std::cout<<"\t\tError - max v: "<<vxMax<<std::endl;
-			//				std::cout<<"\t\tError - v+v1: "<<particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1-vxMin<<std::endl;
-			//				std::cout<<"\t\tError - iix: "<<iix<<std::endl;
-			//				exit(1);
-			//		}
-			//		float iiy = (particles_XYZ_0[iP].v_c2+v1[iP][jt][0].c2-vyMin)/vyRange*(vyGrid.size()-1);
-			//		if(iiy<0 || iiy>(ny-1)){
-			//				std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
-			//				std::cout<<"max v: "<<vyMax<<std::endl;
-			//				exit(1);
-			//		}
-			//		float iiz = (particles_XYZ_0[iP].v_c3+v1[iP][jt][0].c3-vzMin)/vzRange*(vzGrid.size()-1);
-			//		if(iiz<0 || iiy>(nz-1)){
-			//				std::cout<<"Outside v grid: "<<particles_XYZ_thisX[iP].v_c2<<std::endl;
-			//				std::cout<<"max v: "<<vzMax<<std::endl;
-			//				exit(1);
-			//		}
-			//		f_XYZ[iix][iiy][iiz] += particles_XYZ_thisX[iP].weight/dV;
-			//}	
-
-			//j1x[jt] = 0;
-			//j1y[jt] = 0;
-			//j1z[jt] = 0;
-
-			float qe = particles_XYZ_thisX[0].q;
-			//densityCheck = 0;
-			//for(int i=0;i<nx;i++){
-			//		for(int j=0;j<ny;j++){
-			//				for(int k=0;k<nz;k++){
-			//					j1x[jt] += qe*vxGrid[i]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-			//					j1y[jt] += qe*vyGrid[j]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-			//					j1z[jt] += qe*vzGrid[k]*(f_XYZ[i][j][k]-f_XYZ_0[i][j][k])*dV;
-			//					densityCheck += f_XYZ[i][j][k]*dV;
-			//				}
-			//		}
-			//}
-
-			//std::cout << "Density on f1: " << densityCheck << std::endl;
-			//std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
+			float qe = this_particles_XYZ[0].q;
 
 			j1x[jt] = 0;
-			for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
 					//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
 			j1x[jt] = j1x[jt] * qe;
-			//std::cout << "j1x["<<jt<<"]: "<< j1x[jt]<<std::endl;
+			//cout << "j1x["<<jt<<"]: "<< j1x[jt]<<endl;
 			
 		}
+
+#endif // END OF HIGHMEM CODING ^^^
+
 
 #if USEPAPI >= 1
 		printf("\nGet e(t) and integrate performance ...\n");
@@ -1173,11 +1005,11 @@ int main ( int argc, char **argv )
 #if __SAVE_ORBITS__>=1
 		// Write orbits to file
 	
-		std::cout << "Writing orbits to file ... " << std::endl;
+		cout << "Writing orbits to file ... " << endl;
 
-		std::stringstream ncOrbitsFileName;
+		stringstream ncOrbitsFileName;
 		ncOrbitsFileName << "output/orbits_";
-		ncOrbitsFileName << std::setw(3) << std::setfill('0') << iX;
+		ncOrbitsFileName << setw(3) << setfill('0') << iX;
 	   	ncOrbitsFileName << ".nc"; 	
 
 		try {
@@ -1186,15 +1018,15 @@ int main ( int argc, char **argv )
 
 				netCDF::NcFile ncOrbitsFile (ncOrbitsFileName.str().c_str(), netCDF::NcFile::replace);
 		
-				netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", particles_XYZ_thisX.size());
+				netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", this_particles_XYZ.size());
 				netCDF::NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
 				netCDF::NcDim nc_nJp = ncOrbitsFile.addDim("nJp", nJp);
 	
-				std::vector<netCDF::NcDim> nc_nPxnSteps(2);
+				vector<netCDF::NcDim> nc_nPxnSteps(2);
 				nc_nPxnSteps[0]=nc_nP;
 				nc_nPxnSteps[1]=nc_nSteps;
 
-				std::vector<netCDF::NcDim> nc_nPxnJpxnSteps(3);
+				vector<netCDF::NcDim> nc_nPxnJpxnSteps(3);
 				nc_nPxnJpxnSteps[0]=nc_nP;
 				nc_nPxnJpxnSteps[1]=nc_nJp;
 				nc_nPxnJpxnSteps[2]=nc_nSteps;
@@ -1213,16 +1045,16 @@ int main ( int argc, char **argv )
 				netCDF::NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",netCDF::ncFloat,nc_nPxnJpxnSteps);
 				netCDF::NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",netCDF::ncFloat,nc_nPxnJpxnSteps);
 		
-				std::vector<size_t> startpA(2);
-				std::vector<size_t> countpA(2);
-				for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+				vector<size_t> startpA(2);
+				vector<size_t> countpA(2);
+				for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 		
 						startpA[0]=iP;
 						startpA[1]=0;
 						countpA[0]=1;
 						countpA[1]=nSteps;
 		
-						std::vector<float> tmpData (nSteps,0);
+						vector<float> tmpData (nSteps,0);
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c1;}
 						nc_x.putVar(startpA,countpA,&tmpData[0]);
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c2;}
@@ -1239,9 +1071,9 @@ int main ( int argc, char **argv )
 
 				}
 
-				std::vector<size_t> startpB(3);
-				std::vector<size_t> countpB(3);
-				for(int iP=0;iP<particles_XYZ_thisX.size();iP++) {
+				vector<size_t> startpB(3);
+				vector<size_t> countpB(3);
+				for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 						for(int iJ=0;iJ<nJp;iJ++) {
 		
 							startpB[0]=iP;
@@ -1251,7 +1083,7 @@ int main ( int argc, char **argv )
 							countpB[1]=1;
 							countpB[2]=nSteps;
 		
-							std::vector<float> tmpData (nSteps,0);
+							vector<float> tmpData (nSteps,0);
 
 							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iJ][iS].c1;}
 							nc_v1_x.putVar(startpB,countpB,&tmpData[0]);
@@ -1263,28 +1095,28 @@ int main ( int argc, char **argv )
 						}
 				}
 		
-				std::vector<size_t> startp (1,0);
-				std::vector<size_t> countp (1,nSteps);
+				vector<size_t> startp (1,0);
+				vector<size_t> countp (1,nSteps);
 		
 				nc_t.putVar(startp,countp,&t[0]);
 		
 		
 		}
 				catch(netCDF::exceptions::NcException &e) {
-						std::cout << "NetCDF: unknown error" << std::endl;
+						cout << "NetCDF: unknown error" << endl;
 						e.what();
 		}
 
-		std::cout << "DONE" << std::endl;
+		cout << "DONE" << endl;
 #endif
 
 		// Write current to file
 	
-		std::cout << "Writing jP to file ... ";
+		//cout << "Writing jP to file ... ";
 
-		std::stringstream ncjPFileName;
+		stringstream ncjPFileName;
 		ncjPFileName << "output/jP_";
-		ncjPFileName << std::setw(3) << std::setfill('0') << iX;
+		ncjPFileName << setw(3) << setfill('0') << iX;
 	   	ncjPFileName << ".nc"; 	
 		netCDF::NcFile ncjPFile (ncjPFileName.str().c_str(), netCDF::NcFile::replace);
 
@@ -1301,8 +1133,8 @@ int main ( int argc, char **argv )
 
 		nc_x.putVar(&xGrid[iX]);
 
-		std::vector<size_t> startp (1,0);
-		std::vector<size_t> countp (1,nJp);
+		vector<size_t> startp (1,0);
+		vector<size_t> countp (1,nJp);
 
 		nc_t.putVar(startp,countp,&tJp[0]);
 
@@ -1315,7 +1147,7 @@ int main ( int argc, char **argv )
 
 	//ProfilerStop();
 
-	std::cout << "DONE" << std::endl;
+	cout << "DONE" << endl;
 
 	return EXIT_SUCCESS;
 }
