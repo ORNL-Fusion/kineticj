@@ -22,11 +22,18 @@ pro kj_plot_current
 		ncdf_varget, cdfId, 'j_z_re', jz_re
 		ncdf_varget, cdfId, 'j_z_im', jz_im
 
+		ncdf_varget, cdfId, 'jA_r_re', jAr_re
+		ncdf_varget, cdfId, 'jA_r_im', jAr_im
+		ncdf_varget, cdfId, 'jA_p_re', jAp_re
+		ncdf_varget, cdfId, 'jA_p_im', jAp_im
+		ncdf_varget, cdfId, 'jA_z_re', jAz_re
+		ncdf_varget, cdfId, 'jA_z_im', jAz_im
+
 	ncdf_close, cdfId
 
 	wrf = freq * 2 * !pi
 
-	j1_cold = complex ( jr_re, jr_im ) 
+	j1_cold = complex ( jr_re, jr_im ) + complex ( jAr_re, jAr_im ) 
 
 	fileList = file_search ( 'output/jP*' )
 

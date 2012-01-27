@@ -6,12 +6,21 @@ pro kj_create_aorsa_input
 	listNo = 0
 
 	cdfId = ncdf_open ( dataFileList[listNo], /noWrite ) 
+
 		nCdf_varGet, cdfId, 'freq', freq 
 		nCdf_varGet, cdfId, 'capR', x 
 		nCdf_varGet, cdfId, 'bmod', bmod
 		nCdf_varGet, cdfId, 'brU', brU
 		nCdf_varGet, cdfId, 'btU', btU
 		nCdf_varGet, cdfId, 'bzU', bzU
+
+		nCdf_varGet, cdfId, 'jr_re', jA_r_re 
+		nCdf_varGet, cdfId, 'jt_re', jA_t_re 
+		nCdf_varGet, cdfId, 'jz_re', jA_z_re 
+		nCdf_varGet, cdfId, 'jr_im', jA_r_im 
+		nCdf_varGet, cdfId, 'jt_im', jA_t_im 
+		nCdf_varGet, cdfId, 'jz_im', jA_z_im 
+
 	ncdf_close, cdfId
 
 	cdfId = ncdf_open ( solutionFileList[listNo], /noWrite ) 
@@ -63,6 +72,14 @@ pro kj_create_aorsa_input
 	j_z_re_id = nCdf_varDef ( nc_id, 'j_z_re', nr_id, /float )
 	j_z_im_id = nCdf_varDef ( nc_id, 'j_z_im', nr_id, /float )
 
+	jA_r_re_id = nCdf_varDef ( nc_id, 'jA_r_re', nr_id, /float )
+	jA_r_im_id = nCdf_varDef ( nc_id, 'jA_r_im', nr_id, /float )
+	jA_p_re_id = nCdf_varDef ( nc_id, 'jA_p_re', nr_id, /float )
+	jA_p_im_id = nCdf_varDef ( nc_id, 'jA_p_im', nr_id, /float )
+	jA_z_re_id = nCdf_varDef ( nc_id, 'jA_z_re', nr_id, /float )
+	jA_z_im_id = nCdf_varDef ( nc_id, 'jA_z_im', nr_id, /float )
+
+
 	nCdf_control, nc_id, /enDef
 
 	nCdf_varPut, nc_id, freq_id, freq
@@ -86,6 +103,13 @@ pro kj_create_aorsa_input
 	nCdf_varPut, nc_id, j_p_im_id, (total(jP_t_im,3))[*,0] 
 	nCdf_varPut, nc_id, j_z_re_id, (total(jP_z_re,3))[*,0] 
 	nCdf_varPut, nc_id, j_z_im_id, (total(jP_z_im,3))[*,0] 
+
+	nCdf_varPut, nc_id, jA_r_re_id, jA_r_re[*,0] 
+	nCdf_varPut, nc_id, jA_r_im_id, jA_r_im[*,0] 
+	nCdf_varPut, nc_id, jA_p_re_id, jA_t_re[*,0] 
+	nCdf_varPut, nc_id, jA_p_im_id, jA_t_im[*,0] 
+	nCdf_varPut, nc_id, jA_z_re_id, jA_z_re[*,0] 
+	nCdf_varPut, nc_id, jA_z_im_id, jA_z_im[*,0] 
 
 	nCdf_close, nc_id
 
