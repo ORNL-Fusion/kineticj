@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cstdlib>
 #include <netcdf>
@@ -22,6 +23,8 @@
 #endif
 
 using namespace std;
+using namespace netCDF;
+using namespace exceptions;
 
 class CSpecies {
 		public:
@@ -427,7 +430,7 @@ int main ( int argc, char **argv )
 
 		// Read E
 		string eField_fName = cfg.lookup("eField_fName");	
-		cout << "Reading eField data file" << eField_fName << endl;
+		cout << "Reading eField data file " << eField_fName << endl;
 
 		// Here we are using the cxx-4 netcdf interface by Lynton Appel
 		// This needs netCDF 4.1.1 or later build with
@@ -442,29 +445,36 @@ int main ( int argc, char **argv )
 
 		vector<complex<float> > e_r, e_p, e_z;	
 
+		ifstream file(eField_fName.c_str());
+		if(!file.good()) {
+			cout << "ERROR: Cannot find file " << eField_fName << endl;
+			exit(1);
+		}
+
+
 		try {
-				netCDF::NcFile dataFile ( eField_fName.c_str(), netCDF::NcFile::read );
+				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
 	
-				netCDF::NcDim nc_nR(dataFile.getDim("nR"));
-				netCDF::NcDim nc_scalar(dataFile.getDim("scalar"));
+				NcDim nc_nR(dataFile.getDim("nR"));
+				NcDim nc_scalar(dataFile.getDim("scalar"));
 	
 				int nR = nc_nR.getSize();
 	
 				cout << "\tnR: " << nR << endl;
 	
-				netCDF::NcVar nc_r(dataFile.getVar("r"));
-				netCDF::NcVar nc_freq(dataFile.getVar("freq"));
+				NcVar nc_r(dataFile.getVar("r"));
+				NcVar nc_freq(dataFile.getVar("freq"));
 
-				netCDF::NcVar nc_b0_r(dataFile.getVar("B0_r"));
-				netCDF::NcVar nc_b0_p(dataFile.getVar("B0_p"));
-				netCDF::NcVar nc_b0_z(dataFile.getVar("B0_z"));
+				NcVar nc_b0_r(dataFile.getVar("B0_r"));
+				NcVar nc_b0_p(dataFile.getVar("B0_p"));
+				NcVar nc_b0_z(dataFile.getVar("B0_z"));
 
-				netCDF::NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
-				netCDF::NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
-				netCDF::NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
-				netCDF::NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
-				netCDF::NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
-				netCDF::NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
+				NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
+				NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
+				NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
+				NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
+				NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
+				NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
 
 				r.resize(nR);
 
@@ -518,7 +528,7 @@ int main ( int argc, char **argv )
 				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
 				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
 		}
-		catch(netCDF::exceptions::NcException &e) {
+		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error" << endl;
 				e.what();
 		}
@@ -560,35 +570,41 @@ int main ( int argc, char **argv )
 		string particleList_fName = cfg.lookup ("particleList_fName");	
 		cout << "Reading particle list " << particleList_fName << endl;
 
+		ifstream file2(particleList_fName.c_str());
+		if(!file.good()) {
+			cout << "ERROR: Cannot find file " << particleList_fName << endl;
+			exit(1);
+		}
+
 		vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
 		vector<int> p_Z;
 		float vTh;
 		int nThermal;
 		
 		try {
-				netCDF::NcFile dataFile ( particleList_fName.c_str(), netCDF::NcFile::read );
+				NcFile dataFile ( particleList_fName.c_str(), NcFile::read );
 	
-				netCDF::NcDim nc_nP(dataFile.getDim("nP"));
+				NcDim nc_nP(dataFile.getDim("nP"));
 	
 				int nP = nc_nP.getSize();
 	
 				cout << "\tnP: " << nP << endl;
 
-				netCDF::NcVar nc_p_amu(dataFile.getVar("amu"));
-				netCDF::NcVar nc_p_Z(dataFile.getVar("Z"));
+				NcVar nc_p_amu(dataFile.getVar("amu"));
+				NcVar nc_p_Z(dataFile.getVar("Z"));
 
-				netCDF::NcVar nc_p_x(dataFile.getVar("x"));
-				netCDF::NcVar nc_p_y(dataFile.getVar("y"));
-				netCDF::NcVar nc_p_z(dataFile.getVar("z"));
+				NcVar nc_p_x(dataFile.getVar("x"));
+				NcVar nc_p_y(dataFile.getVar("y"));
+				NcVar nc_p_z(dataFile.getVar("z"));
 				
-				netCDF::NcVar nc_p_vx(dataFile.getVar("vx"));
-				netCDF::NcVar nc_p_vy(dataFile.getVar("vy"));
-				netCDF::NcVar nc_p_vz(dataFile.getVar("vz"));
+				NcVar nc_p_vx(dataFile.getVar("vx"));
+				NcVar nc_p_vy(dataFile.getVar("vy"));
+				NcVar nc_p_vz(dataFile.getVar("vz"));
 
-				netCDF::NcVar nc_p_weight(dataFile.getVar("weight"));
+				NcVar nc_p_weight(dataFile.getVar("weight"));
 
-				netCDF::NcVar nc_nThermal(dataFile.getVar("nThermal"));
-				netCDF::NcVar nc_vTh(dataFile.getVar("vTh"));
+				NcVar nc_nThermal(dataFile.getVar("nThermal"));
+				NcVar nc_vTh(dataFile.getVar("vTh"));
 
 				p_x.resize(nP);
 				p_y.resize(nP);
@@ -620,9 +636,10 @@ int main ( int argc, char **argv )
 				nc_vTh.getVar(&vTh);
 
 		}
-		catch(netCDF::exceptions::NcException &e) {
+		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error" << endl;
 				e.what();
+				exit(1);
 		}
 
 		vector<CParticle> particles_XYZ;
@@ -658,7 +675,7 @@ int main ( int argc, char **argv )
 
 	for(int iX=0;iX<nXGrid;iX++) {
 			xGrid[iX] = xGridMin+iX*xGridStep;
-			cout << "\t\txGrid[iX]: " << xGrid[iX] << endl;
+			//cout << "\t\txGrid[iX]: " << xGrid[iX] << endl;
 	}
 
 	vector<CParticle> particles_XYZ_0(particles_XYZ);
@@ -742,7 +759,7 @@ int main ( int argc, char **argv )
 
 					float tTmp = tJp[jt]+thisT[i];
 					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
-						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)+thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
 					}
 				}
 
@@ -1016,34 +1033,34 @@ int main ( int argc, char **argv )
 				// Really need to fix this but I don't know how to 
 				// write a vector of structures using netCDF yet.
 
-				netCDF::NcFile ncOrbitsFile (ncOrbitsFileName.str().c_str(), netCDF::NcFile::replace);
+				NcFile ncOrbitsFile (ncOrbitsFileName.str().c_str(), NcFile::replace);
 		
-				netCDF::NcDim nc_nP = ncOrbitsFile.addDim("nP", this_particles_XYZ.size());
-				netCDF::NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
-				netCDF::NcDim nc_nJp = ncOrbitsFile.addDim("nJp", nJp);
+				NcDim nc_nP = ncOrbitsFile.addDim("nP", this_particles_XYZ.size());
+				NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
+				NcDim nc_nJp = ncOrbitsFile.addDim("nJp", nJp);
 	
-				vector<netCDF::NcDim> nc_nPxnSteps(2);
+				vector<NcDim> nc_nPxnSteps(2);
 				nc_nPxnSteps[0]=nc_nP;
 				nc_nPxnSteps[1]=nc_nSteps;
 
-				vector<netCDF::NcDim> nc_nPxnJpxnSteps(3);
+				vector<NcDim> nc_nPxnJpxnSteps(3);
 				nc_nPxnJpxnSteps[0]=nc_nP;
 				nc_nPxnJpxnSteps[1]=nc_nJp;
 				nc_nPxnJpxnSteps[2]=nc_nSteps;
 		
-				netCDF::NcVar nc_t = ncOrbitsFile.addVar("t",netCDF::ncFloat,nc_nSteps);
+				NcVar nc_t = ncOrbitsFile.addVar("t",ncFloat,nc_nSteps);
 		
-				netCDF::NcVar nc_x = ncOrbitsFile.addVar("x",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_y = ncOrbitsFile.addVar("y",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_z = ncOrbitsFile.addVar("z",netCDF::ncFloat,nc_nPxnSteps);
+				NcVar nc_x = ncOrbitsFile.addVar("x",ncFloat,nc_nPxnSteps);
+				NcVar nc_y = ncOrbitsFile.addVar("y",ncFloat,nc_nPxnSteps);
+				NcVar nc_z = ncOrbitsFile.addVar("z",ncFloat,nc_nPxnSteps);
 		
-				netCDF::NcVar nc_e1_x = ncOrbitsFile.addVar("e1_x",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",netCDF::ncFloat,nc_nPxnSteps);
-				netCDF::NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",netCDF::ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_x = ncOrbitsFile.addVar("e1_x",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",ncFloat,nc_nPxnSteps);
 		
-				netCDF::NcVar nc_v1_x = ncOrbitsFile.addVar("v1x",netCDF::ncFloat,nc_nPxnJpxnSteps);
-				netCDF::NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",netCDF::ncFloat,nc_nPxnJpxnSteps);
-				netCDF::NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",netCDF::ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_x = ncOrbitsFile.addVar("v1x",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",ncFloat,nc_nPxnJpxnSteps);
 		
 				vector<size_t> startpA(2);
 				vector<size_t> countpA(2);
@@ -1102,7 +1119,7 @@ int main ( int argc, char **argv )
 		
 		
 		}
-				catch(netCDF::exceptions::NcException &e) {
+				catch(exceptions::NcException &e) {
 						cout << "NetCDF: unknown error" << endl;
 						e.what();
 		}
@@ -1118,18 +1135,18 @@ int main ( int argc, char **argv )
 		ncjPFileName << "output/jP_";
 		ncjPFileName << setw(3) << setfill('0') << iX;
 	   	ncjPFileName << ".nc"; 	
-		netCDF::NcFile ncjPFile (ncjPFileName.str().c_str(), netCDF::NcFile::replace);
+		NcFile ncjPFile (ncjPFileName.str().c_str(), NcFile::replace);
 
-		netCDF::NcDim nc_nJp = ncjPFile.addDim("nJp", nJp);
-		netCDF::NcDim nc_scalar = ncjPFile.addDim("scalar", 1);
+		NcDim nc_nJp = ncjPFile.addDim("nJp", nJp);
+		NcDim nc_scalar = ncjPFile.addDim("scalar", 1);
 
-		netCDF::NcVar nc_t = ncjPFile.addVar("t",netCDF::ncFloat,nc_nJp);
+		NcVar nc_t = ncjPFile.addVar("t",ncFloat,nc_nJp);
 
-		netCDF::NcVar nc_x = ncjPFile.addVar("x",netCDF::ncFloat,nc_scalar);
+		NcVar nc_x = ncjPFile.addVar("x",ncFloat,nc_scalar);
 
-		netCDF::NcVar nc_j1x = ncjPFile.addVar("j1x",netCDF::ncFloat,nc_nJp);
-		netCDF::NcVar nc_j1y = ncjPFile.addVar("j1y",netCDF::ncFloat,nc_nJp);
-		netCDF::NcVar nc_j1z = ncjPFile.addVar("j1z",netCDF::ncFloat,nc_nJp);
+		NcVar nc_j1x = ncjPFile.addVar("j1x",ncFloat,nc_nJp);
+		NcVar nc_j1y = ncjPFile.addVar("j1y",ncFloat,nc_nJp);
+		NcVar nc_j1z = ncjPFile.addVar("j1z",ncFloat,nc_nJp);
 
 		nc_x.putVar(&xGrid[iX]);
 
