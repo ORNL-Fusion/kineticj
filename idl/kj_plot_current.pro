@@ -2,6 +2,9 @@ pro kj_plot_current
 
 	@constants
 
+	cd, current=currentDir
+	runIdent = file_baseName(currentDir)
+
 	runFile = 'kj.cfg'
 	openr, lun, runFile, /get_lun
 	runFileArray = ''
@@ -29,12 +32,12 @@ pro kj_plot_current
 		ncdf_varget, cdfId, 'e_z_re', ez_re
 		ncdf_varget, cdfId, 'e_z_im', ez_im
 
-		ncdf_varget, cdfId, 'j_r_re', jr_re
-		ncdf_varget, cdfId, 'j_r_im', jr_im
-		ncdf_varget, cdfId, 'j_p_re', jp_re
-		ncdf_varget, cdfId, 'j_p_im', jp_im
-		ncdf_varget, cdfId, 'j_z_re', jz_re
-		ncdf_varget, cdfId, 'j_z_im', jz_im
+		ncdf_varget, cdfId, 'jP_r_re', jPr_re
+		ncdf_varget, cdfId, 'jP_r_im', jPr_im
+		ncdf_varget, cdfId, 'jP_p_re', jPp_re
+		ncdf_varget, cdfId, 'jP_p_im', jPp_im
+		ncdf_varget, cdfId, 'jP_z_re', jPz_re
+		ncdf_varget, cdfId, 'jP_z_im', jPz_im
 
 		ncdf_varget, cdfId, 'jA_r_re', jAr_re
 		ncdf_varget, cdfId, 'jA_r_im', jAr_im
@@ -80,7 +83,7 @@ pro kj_plot_current
 	j1_hot = complex ( ao_jr_re, ao_jr_im ) ;+ complex ( ao_jAr_re, ao_jAr_im ) 
 
 	r_cold = r
-	j1_cold = complex ( jr_re, jr_im ) ;+ complex ( jAr_re, jAr_im ) 
+	j1_cold = complex ( jPr_re, jPr_im ) ;+ complex ( jAr_re, jAr_im ) 
 
 	fileList = file_search ( 'output/jP*' )
 
@@ -142,12 +145,12 @@ pro kj_plot_current
 	jAT = complex(jAp_re,jAp_im)
 	jAZ = complex(jAz_re,jAz_im)
 
-	jAR_ = interpol ( jAR, r, r_ ) 
-	jAT_ = interpol ( jAT, r, r_ ) 
-	jAZ_ = interpol ( jAZ, r, r_ ) 
+	jAR_ = complex(interpol(jAr_re,r,r_,/spline),interpol(jAr_im,r,r_,/spline))
+	jAT_ = complex(interpol(jAp_re,r,r_,/spline),interpol(jAp_im,r,r_,/spline))
+	jAZ_ = complex(interpol(jAz_re,r,r_,/spline),interpol(jAz_im,r,r_,/spline))
 
-	jROut = interpol ( j1*fudgeFac, xF, r ) ;- jAR
-	jROut_ = interpol ( j1*fudgeFac, xF, r_ ) ;- jAR_
+	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) - jAR
+	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) - jAR_
 
 	jTOut = jROut*0
 	jTOut_ = jROut_*0
@@ -177,7 +180,7 @@ pro kj_plot_current
 
 	; Write kj_jP in file for next iterate
 
-	nc_id = nCdf_create ('data/kjInput.nc', /clobber )
+	nc_id = nCdf_create ('data/kj_jP_'+runIdent+'.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
