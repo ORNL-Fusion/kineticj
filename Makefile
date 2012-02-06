@@ -1,21 +1,22 @@
 NAME := bin/kineticj
 
-# Defaults for dlg-hp.ornl.gov
-GCCDIR := /home/dg6/code/gcc/gcc-${GNUVER}/bin
-ALGLIBDIR := /home/dg6/code/alglib/cpp/src
-NETCDFDIR := /home/dg6/code/netcdf/gnu_${GNUVER}# must be an --enable-cxx-4 dist
-CUDADIR := /home/dg6/code/cuda/4.1/cuda
+# Defaults to dlg-hp.ornl.gov
+
+GCCDIR := ${HOME}/code/gcc/gcc-${GNUVER}/bin
+ALGLIBDIR := ${HOME}/code/alglib/cpp/src
+NETCDFDIR := ${HOME}/code/netcdf/gnu_${GNUVER}# must be an --enable-cxx-4 dist
+CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
-CUDA_SDK_DIR := /home/dg6/code/cuda/NVIDIA_GPU_Computing_SDK
-LIBCONFIGDIR := /home/dg6/code/libconfig
-GOOGLE_PERF_DIR := /home/dg6/code/google-perftools
-PAPI_DIR :=/home/dg6/code/papi/gnu_${GNUVER}
+CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
+LIBCONFIGDIR := ${HOME}/code/libconfig
+GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
+PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
 # Catch for greendl.* (my laptop)
 ifeq ($(findstring greendl,$(HOSTNAME_OSX)),greendl)
 GCCDIR := /opt/local/bin
-ALGLIBDIR := /home/dg6/code/alglib/cpp/src
+ALGLIBDIR := ${HOME}/code/alglib/cpp/src
 NETCDFDIR := /opt/local
 CUDADIR := /usr/local/cuda
 CUDALIBDIR := ${CUDADIR}/lib
@@ -52,7 +53,7 @@ OPTFLAGS := -O3
 CFLAGS := 
 CPPFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS}
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L/home/dg6/code/google-perftools/lib -L$(LIBCONFIGDIR)/lib #-L$(CUDALIBDIR) 
+LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L${HOME}/code/google-perftools/lib -L$(LIBCONFIGDIR)/lib #-L$(CUDALIBDIR) 
 LIBS := -lnetcdf_c++4 -lpapi -lconfig++ #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
 USECUDA:=0
