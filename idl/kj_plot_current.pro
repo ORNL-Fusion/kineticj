@@ -23,7 +23,11 @@ pro kj_plot_current
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
-		ncdf_varget, cdfId, 'r_', r_
+		if(strMatch(eField_fName,'*aorsa*'))then begin
+			r_ = r[0:-2]+(r[1]-r[0])/2.0
+		endif else begin
+			ncdf_varget, cdfId, 'r_', r_
+		endelse
 
 		ncdf_varget, cdfId, 'e_r_re', er_re
 		ncdf_varget, cdfId, 'e_r_im', er_im
@@ -60,12 +64,12 @@ pro kj_plot_current
 		ncdf_varget, cdfId, 'e_z_re', ao_ez_re
 		ncdf_varget, cdfId, 'e_z_im', ao_ez_im
 
-		ncdf_varget, cdfId, 'j_r_re', ao_jr_re
-		ncdf_varget, cdfId, 'j_r_im', ao_jr_im
-		ncdf_varget, cdfId, 'j_p_re', ao_jp_re
-		ncdf_varget, cdfId, 'j_p_im', ao_jp_im
-		ncdf_varget, cdfId, 'j_z_re', ao_jz_re
-		ncdf_varget, cdfId, 'j_z_im', ao_jz_im
+		ncdf_varget, cdfId, 'jP_r_re', ao_jr_re
+		ncdf_varget, cdfId, 'jP_r_im', ao_jr_im
+		ncdf_varget, cdfId, 'jP_p_re', ao_jp_re
+		ncdf_varget, cdfId, 'jP_p_im', ao_jp_im
+		ncdf_varget, cdfId, 'jP_z_re', ao_jz_re
+		ncdf_varget, cdfId, 'jP_z_im', ao_jz_im
 
 		ncdf_varget, cdfId, 'jA_r_re', ao_jAr_re
 		ncdf_varget, cdfId, 'jA_r_im', ao_jAr_im
@@ -180,7 +184,7 @@ pro kj_plot_current
 
 	; Write kj_jP in file for next iterate
 
-	nc_id = nCdf_create ('data/kj_jP_'+runIdent+'.nc', /clobber )
+	nc_id = nCdf_create ('output/kj_jP_'+runIdent+'.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
@@ -192,19 +196,19 @@ pro kj_plot_current
 	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
 	rH_id = nCdf_varDef ( nc_id, 'r_', nrH_id, /float )
 
-	jP_r_re_id = nCdf_varDef ( nc_id, 'kj_jP_r_re', nr_id, /float )
-	jP_r_im_id = nCdf_varDef ( nc_id, 'kj_jP_r_im', nr_id, /float )
-	jP_p_re_id = nCdf_varDef ( nc_id, 'kj_jP_p_re', nr_id, /float )
-	jP_p_im_id = nCdf_varDef ( nc_id, 'kj_jP_p_im', nr_id, /float )
-	jP_z_re_id = nCdf_varDef ( nc_id, 'kj_jP_z_re', nr_id, /float )
-	jP_z_im_id = nCdf_varDef ( nc_id, 'kj_jP_z_im', nr_id, /float )
+	jP_r_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
+	jP_r_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
+	jP_p_re_id = nCdf_varDef ( nc_id, 'jP_p_re', nr_id, /float )
+	jP_p_im_id = nCdf_varDef ( nc_id, 'jP_p_im', nr_id, /float )
+	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
+	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
 
-	jP_r_re_id_ = nCdf_varDef ( nc_id, 'kj_jP_r_re_', nrH_id, /float )
-	jP_r_im_id_ = nCdf_varDef ( nc_id, 'kj_jP_r_im_', nrH_id, /float )
-	jP_p_re_id_ = nCdf_varDef ( nc_id, 'kj_jP_p_re_', nrH_id, /float )
-	jP_p_im_id_ = nCdf_varDef ( nc_id, 'kj_jP_p_im_', nrH_id, /float )
-	jP_z_re_id_ = nCdf_varDef ( nc_id, 'kj_jP_z_re_', nrH_id, /float )
-	jP_z_im_id_ = nCdf_varDef ( nc_id, 'kj_jP_z_im_', nrH_id, /float )
+	jP_r_re_id_ = nCdf_varDef ( nc_id, 'jP_r_re_', nrH_id, /float )
+	jP_r_im_id_ = nCdf_varDef ( nc_id, 'jP_r_im_', nrH_id, /float )
+	jP_p_re_id_ = nCdf_varDef ( nc_id, 'jP_p_re_', nrH_id, /float )
+	jP_p_im_id_ = nCdf_varDef ( nc_id, 'jP_p_im_', nrH_id, /float )
+	jP_z_re_id_ = nCdf_varDef ( nc_id, 'jP_z_re_', nrH_id, /float )
+	jP_z_im_id_ = nCdf_varDef ( nc_id, 'jP_z_im_', nrH_id, /float )
 
 	nCdf_control, nc_id, /enDef
 

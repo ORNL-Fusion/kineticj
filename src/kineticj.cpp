@@ -702,13 +702,19 @@ int main ( int argc, char **argv )
 	float dtJp 			= tRF / nJpPerCycle;
 	int stat = 0;
 
+	vector<float> tJp(nJp,0);
+	for(int jt=0;jt<nJp;jt++) {
+		tJp[jt] = jt*dtJp;
+	}
+
+	vector<float> thisT(nSteps);
+	for(int i=0;i<nSteps;i++) {	
+		thisT[i]=i*dtMin;
+	}
+	
 	for(int iX=0;iX<nXGrid;iX++) {
 
-		vector<float> thisT(nSteps);
-		vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
-		vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
-		vector<float> tJp(nJp,0);
-		vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0), tJ(nJp,0);
+		vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0);//, tJ(nJp,0);
 
 		cout << "xGrid " << iX << endl;
 
@@ -719,7 +725,11 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
+		#pragma omp parallel for private(stat)
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
+
+			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
 
 			CParticle thisParticle_XYZ(particles_XYZ[iP]);
 			thisParticle_XYZ.c1 = xGrid[iX];
@@ -730,7 +740,7 @@ int main ( int argc, char **argv )
 
 	 		for(int i=0;i<nSteps;i++) {	
 
-				thisT[i]=i*dtMin;
+				//thisT[i]=i*dtMin;
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
@@ -751,7 +761,6 @@ int main ( int argc, char **argv )
 		
 			for(int jt=0;jt<nJp;jt++) {
 
-				tJp[jt] = jt*dtJp;
 				vector<C3Vec> thisE(nSteps,C3Vec(0,0,0));
 
 				// get Jp(t=jt*dtJp)
@@ -774,6 +783,7 @@ int main ( int argc, char **argv )
 				C3Vec thisV1(trapInt1,trapInt2,trapInt3);
 				float qe = thisParticle_XYZ.q;
 
+				#pragma omp atomic
 				j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
 			
 			}
@@ -917,7 +927,7 @@ int main ( int argc, char **argv )
 #endif
 		for(int jt=0;jt<nJp;jt++) {
 
-			tJp[jt] = jt*dtJp;
+			//tJp[jt] = jt*dtJp;
 			//cout << "Create f1 for this tJp: " << tJp[jt] << endl;
 			
 
