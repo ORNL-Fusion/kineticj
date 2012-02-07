@@ -1,3 +1,6 @@
+.SUFFIXES:
+.SUFFIXES: .c .cpp .cu
+
 NAME := bin/kineticj
 
 # Defaults to dlg-hp.ornl.gov
@@ -46,7 +49,9 @@ NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include -I${PAPI_DIR}/include -I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include #-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) 
+INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include -I${PAPI_DIR}/include \
+		-I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include \
+		#-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) 
 OPENMPFLAGS := -fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
@@ -54,7 +59,7 @@ CFLAGS :=
 CPPFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS}
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
 LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L${HOME}/code/google-perftools/lib -L$(LIBCONFIGDIR)/lib #-L$(CUDALIBDIR) 
-LIBS := -lnetcdf_c++4 -lpapi -lconfig++ #-lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
+LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
 USECUDA:=0
 DEBUG:=0

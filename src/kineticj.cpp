@@ -668,14 +668,18 @@ int main ( int argc, char **argv )
 
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
-	float xGridRng = xGridMax-xGridMin;
 	int nXGrid = cfg.lookup("nXGrid");
-	float xGridStep = xGridRng/(nXGrid-1);
 	vector<float> xGrid(nXGrid);
+	float xGridRng = 0;
+	float xGridStep = 0;
+	
+	if(nXGrid>1) {
+		xGridRng = xGridMax-xGridMin;
+		xGridStep = xGridRng/(nXGrid-1);
+	}
 
 	for(int iX=0;iX<nXGrid;iX++) {
-			xGrid[iX] = xGridMin+iX*xGridStep;
-			//cout << "\t\txGrid[iX]: " << xGrid[iX] << endl;
+		xGrid[iX] = xGridMin+iX*xGridStep;
 	}
 
 	vector<CParticle> particles_XYZ_0(particles_XYZ);
@@ -1153,12 +1157,14 @@ int main ( int argc, char **argv )
 		NcVar nc_t = ncjPFile.addVar("t",ncFloat,nc_nJp);
 
 		NcVar nc_x = ncjPFile.addVar("x",ncFloat,nc_scalar);
+		NcVar nc_freq = ncjPFile.addVar("freq",ncFloat,nc_scalar);
 
 		NcVar nc_j1x = ncjPFile.addVar("j1x",ncFloat,nc_nJp);
 		NcVar nc_j1y = ncjPFile.addVar("j1y",ncFloat,nc_nJp);
 		NcVar nc_j1z = ncjPFile.addVar("j1z",ncFloat,nc_nJp);
 
 		nc_x.putVar(&xGrid[iX]);
+		nc_freq.putVar(&freq);
 
 		vector<size_t> startp (1,0);
 		vector<size_t> countp (1,nJp);

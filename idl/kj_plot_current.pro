@@ -117,31 +117,40 @@ pro kj_plot_current
 
 		nCdf_close,	cdfId 
 
-		j1x[*,f] = j1x_0-mean(j1x_0) ; not sure if there is a nicer way to do this
+		j1x[*,f] = j1x_0;-mean(j1x_0) ; not sure if there is a nicer way to do this
 		xF[f] = x
 
 		dt = t[1]-t[0]
-		;jrFFT = fft ( hanWindow * j1x[*,f] )
+
+		;; Test code
 		;ampRe = 1000.0
-		;ampIm = 0.0
-		;if x gt 99.95 then stop
-		;j1x_0 = ampRe * cos ( wrf * t ) + ampIm * ii * sin ( wrf * t )
-		jrFFT = fft ( j1x[0:-2,f] )
-		freqAxis = fIndGen(nT-1) / ((nT-1)*dt)
+		;ampIm = -300.0
+		;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
+
+		jrFFT = fft ( j1x[0:-2,f], /center )
+		freqAxis = (fIndGen(nT-1)-(nT/2+1)) / ((nT-1)*dt)
 		freqNorm = freqAxis / freq
 
-		;p=plot(freqNorm,abs(jrFFT)^2,xRange=[0,5])
-		;p=plot(freqNorm,imaginary(jrFFT),color='blue',xRange=[0,5])
+		;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
+		;p=plot(freqNorm,imaginary(jrFFT),color='blue');,xRange=[0,5])
 
+		; Right going piece
 		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
-		rp = real_part ( jrFFT[iiAntFreq[0]] )
-		ip = imaginary ( jrFFT[iiAntFreq[0]] )
+		rpL = real_part ( jrFFT[iiAntFreq[0]] )
+		ipL = imaginary ( jrFFT[iiAntFreq[0]] )
+		; Left going piece
+		iiAntFreq = where(abs(freqNorm+1) eq min(abs(freqNorm+1)),iiAntFreqCnt)
+		rpR = real_part ( jrFFT[iiAntFreq[0]] )
+		ipR = -imaginary ( jrFFT[iiAntFreq[0]] )
 
-		j1[f] = complex ( rp, ip )
+		print, 'Re: ', rpL, rpR, rpL+rpR
+		print, 'Im: ', ipL, ipR, ipL+ipR
+
+		j1[f] = complex ( rpL+rpR, ipL+ipR )
 
 	endfor
 
-	fudgeFac = 1.0*!pi ; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = 1.0*!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
