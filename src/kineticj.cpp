@@ -9,6 +9,9 @@
 #include <complex>
 #include "constants.hpp"
 #include <libconfig.h++>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -423,10 +426,13 @@ int main ( int argc, char **argv )
 		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
 		//root.add("eField_fName", libconfig::Setting::TypeString) = "data/kj_aorsa_1d.nc";
 		//root.add("particleList_fName", libconfig::Setting::TypeString) = "data/f.nc";
+		//root.add("runIdent", libconfig::Setting::TypeString) = "thisRun";
 		//cfg.writeFile(cfgName.c_str());
 		
 		// Open the config file
 		cfg.readFile(cfgName.c_str());
+
+		string runIdent = cfg.lookup("runIdent");	
 
 		// Read E
 		string eField_fName = cfg.lookup("eField_fName");	
@@ -704,7 +710,7 @@ int main ( int argc, char **argv )
 	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
 	int nJp 			= nJpCycles * nJpPerCycle + 1;
 	float dtJp 			= tRF / nJpPerCycle;
-	int stat = 0;
+	int istat = 0;
 
 	vector<float> tJp(nJp,0);
 	for(int jt=0;jt<nJp;jt++) {
@@ -729,7 +735,7 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
-		#pragma omp parallel for private(stat)
+		#pragma omp parallel for private(istat)
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
 
 			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
@@ -751,10 +757,10 @@ int main ( int argc, char **argv )
 					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
 
 					if(thisParticle_XYZ.status==0) {
-						stat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, stat );
-						stat = 0;
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, stat );
+						istat = 0;
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
+						istat = 0;
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
 					}
@@ -1146,7 +1152,14 @@ int main ( int argc, char **argv )
 		//cout << "Writing jP to file ... ";
 
 		stringstream ncjPFileName;
-		ncjPFileName << "output/jP_";
+		ncjPFileName << "output/";
+		ncjPFileName << runIdent.c_str();
+		// check directory exists
+		struct stat st;
+		if(stat(ncjPFileName.str().c_str(),&st) != 1) {
+			int mkDirStat = mkdir(ncjPFileName.str().c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+		}
+		ncjPFileName << "/jP_";
 		ncjPFileName << setw(3) << setfill('0') << iX;
 	   	ncjPFileName << ".nc"; 	
 		NcFile ncjPFile (ncjPFileName.str().c_str(), NcFile::replace);

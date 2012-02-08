@@ -3,9 +3,10 @@ pro kj_plot_current
 	@constants
 
 	cd, current=currentDir
-	runIdent = file_baseName(currentDir)
 
 	runFile = 'kj.cfg'
+	cfg = kj_read_cfg (runFile)	
+
 	openr, lun, runFile, /get_lun
 	runFileArray = ''
 	line = ''
@@ -89,7 +90,7 @@ pro kj_plot_current
 	r_cold = r
 	j1_cold = complex ( jPr_re, jPr_im ) ;+ complex ( jAr_re, jAr_im ) 
 
-	fileList = file_search ( 'output/jP*' )
+	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
 	cdfId = ncdf_open(fileList[0])
 	ncdf_varget, cdfId, 't', t
@@ -150,7 +151,7 @@ pro kj_plot_current
 
 	endfor
 
-	fudgeFac = 1.0*!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = !pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
@@ -193,7 +194,7 @@ pro kj_plot_current
 
 	; Write kj_jP in file for next iterate
 
-	nc_id = nCdf_create ('output/kj_jP_'+runIdent+'.nc', /clobber )
+	nc_id = nCdf_create ('output/kj_jP_'+cfg.runIdent+'.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
@@ -242,5 +243,4 @@ pro kj_plot_current
 
 	nCdf_close, nc_id
 
-stop
 end
