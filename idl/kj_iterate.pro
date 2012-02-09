@@ -7,7 +7,7 @@ pro kj_iterate
 	rsfwcCfg = kj_read_rsfwc_cfg('data/rsfwc_input.pro')
 	kjCfg = kj_read_cfg('kj.cfg')
 
-	for it=0,15 do begin
+	for it=0,3 do begin
 
 		thisIdent = runIdent+'_'+string(it,format='(i3.3)')
 		lastIdent = runIdent+'_'+string(it-1,format='(i3.3)')

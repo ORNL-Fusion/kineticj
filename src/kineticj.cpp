@@ -205,7 +205,8 @@ C3Vec& C3Vec::operator/= (const float &rhs ) {
 }
 
 C3Vec C3Vec::operator+ (const C3Vec &other) {
-		return C3Vec(*this)+=other;
+		//return C3Vec(*this)+=other;
+		return C3Vec(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
 }
 
 C3Vec C3Vec::operator+ (const float &other) {
@@ -240,6 +241,10 @@ C3Vec C3Vec::operator/ (const float &other) {
 
 C3Vec operator* ( const float &other, const C3Vec &rhs ) {
 		return C3Vec(rhs)*=other;
+}
+
+C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
+		return C3Vec(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
 }
 
 // First-order orbits
@@ -393,6 +398,17 @@ float maxC3VecAbs ( const vector<C3Vec> &input ) {
 		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
 	}
 	return *max_element(inputAbs.begin(),inputAbs.end());
+}
+
+C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
+
+	C3Vec result(0,0,0);
+	for(int i=1;i<f.size()-1;i++) {
+		float h = x[i+1]-x[i];
+		result += h/2.0*(f[i]+f[i+1]);
+	}
+
+	return result;
 }
 
 
@@ -777,20 +793,31 @@ int main ( int argc, char **argv )
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
-					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
-						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
-					}
+					thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+
+					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
+					//	thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+					//}
 				}
 
-				float trapInt1=0, trapInt2=0, trapInt3=0;
+				// This is the hot piece and is done numerically. If there are no kinetic
+				// effects here, then this piece should integrate to zero.
+				//float trapInt1=0, trapInt2=0, trapInt3=0;
 				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
-				for(int i=nSteps-2;i>-1;i--) {
-					trapInt1 += qOverm * dtMin/2.0 * (thisE[i].c1+thisE[i+1].c1);
-					trapInt2 += qOverm * dtMin/2.0 * (thisE[i].c2+thisE[i+1].c2);
-					trapInt3 += qOverm * dtMin/2.0 * (thisE[i].c3+thisE[i+1].c3);
-				}
+				////for(int i=nSteps-2;i>-1;i--) {
+				//for(int i=0;i<nSteps-1;i++) {
+				//	trapInt1 += qOverm * dtMin/2.0 * (thisE[i].c1+thisE[i+1].c1);
+				//	trapInt2 += qOverm * dtMin/2.0 * (thisE[i].c2+thisE[i+1].c2);
+				//	trapInt3 += qOverm * dtMin/2.0 * (thisE[i].c3+thisE[i+1].c3);
+				//}
 
-				C3Vec thisV1(trapInt1,trapInt2,trapInt3);
+				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE );
+				//cout << trapInt1 << "   " << thisV1.c1 << endl;
+
+				// This is the cold piece and is done analytically
+				//trapInt1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
+
+				//C3Vec thisV1(trapInt1,trapInt2,trapInt3);
 				float qe = thisParticle_XYZ.q;
 
 				#pragma omp atomic

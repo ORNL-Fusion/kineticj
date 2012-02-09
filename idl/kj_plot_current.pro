@@ -151,7 +151,7 @@ pro kj_plot_current
 
 	endfor
 
-	fudgeFac = !pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = 1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
@@ -163,8 +163,8 @@ pro kj_plot_current
 	jAT_ = complex(interpol(jAp_re,r,r_,/spline),interpol(jAp_im,r,r_,/spline))
 	jAZ_ = complex(interpol(jAz_re,r,r_,/spline),interpol(jAz_im,r,r_,/spline))
 
-	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) - jAR
-	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) - jAR_
+	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) ;- jAR
+	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) ;- jAR_
 
 	jTOut = jROut*0
 	jTOut_ = jROut_*0
