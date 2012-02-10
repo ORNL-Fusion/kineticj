@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <assert.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -245,6 +246,48 @@ C3Vec operator* ( const float &other, const C3Vec &rhs ) {
 
 C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
 		return C3Vec(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
+}
+
+vector<C3Vec> operator- ( const vector<C3Vec> &other, const C3Vec &rhs) {
+		vector<C3Vec> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 - rhs.c1;
+				out[i].c2 = other[i].c2 - rhs.c2;
+				out[i].c3 = other[i].c3 - rhs.c3;
+		}
+		return out;
+}
+
+vector<C3Vec> operator+ ( const vector<C3Vec> &other, const C3Vec &rhs) {
+		vector<C3Vec> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 + rhs.c1;
+				out[i].c2 = other[i].c2 + rhs.c2;
+				out[i].c3 = other[i].c3 + rhs.c3;
+		}
+		return out;
+}
+
+vector<C3Vec> operator- ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) {
+		assert(other.size()==rhs.size());
+		vector<C3Vec> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 - rhs[i].c1;
+				out[i].c2 = other[i].c2 - rhs[i].c2;
+				out[i].c3 = other[i].c3 - rhs[i].c3;
+		}
+		return out;
+}
+
+vector<C3Vec> operator+ ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) {
+		assert(other.size()==rhs.size());
+		vector<C3Vec> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 + rhs[i].c1;
+				out[i].c2 = other[i].c2 + rhs[i].c2;
+				out[i].c3 = other[i].c3 + rhs[i].c3;
+		}
+		return out;
 }
 
 // First-order orbits
@@ -788,12 +831,14 @@ int main ( int argc, char **argv )
 			for(int jt=0;jt<nJp;jt++) {
 
 				vector<C3Vec> thisE(nSteps,C3Vec(0,0,0));
+				vector<C3Vec> coldE(nSteps,C3Vec(0,0,0));
 
 				// get Jp(t=jt*dtJp)
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
 					thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+					coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
 
 					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
 					//	thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
@@ -802,22 +847,12 @@ int main ( int argc, char **argv )
 
 				// This is the hot piece and is done numerically. If there are no kinetic
 				// effects here, then this piece should integrate to zero.
-				//float trapInt1=0, trapInt2=0, trapInt3=0;
 				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
-				////for(int i=nSteps-2;i>-1;i--) {
-				//for(int i=0;i<nSteps-1;i++) {
-				//	trapInt1 += qOverm * dtMin/2.0 * (thisE[i].c1+thisE[i+1].c1);
-				//	trapInt2 += qOverm * dtMin/2.0 * (thisE[i].c2+thisE[i+1].c2);
-				//	trapInt3 += qOverm * dtMin/2.0 * (thisE[i].c3+thisE[i+1].c3);
-				//}
-
-				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE );
-				//cout << trapInt1 << "   " << thisV1.c1 << endl;
+				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE-coldE );
 
 				// This is the cold piece and is done analytically
-				//trapInt1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
+				thisV1.c1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
 
-				//C3Vec thisV1(trapInt1,trapInt2,trapInt3);
 				float qe = thisParticle_XYZ.q;
 
 				#pragma omp atomic
