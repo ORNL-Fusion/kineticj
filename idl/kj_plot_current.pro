@@ -183,10 +183,10 @@ pro kj_plot_current
 	h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transp=50,color='r',/over)
 	h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transp=50)
 	
-	;pk_re=plot(xF,j1*fudgeFac,/over,thick=3.0,name='kj_re',color='black')
-	;pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transp=50)
-	pk_re=plot(r,jROut,/over,thick=3.0,name='kj_re',color='black')
-	pk_im=plot(r,imaginary(jROut),/over,color='black',thick=2.0,name='kj_im',transp=50)
+	pk_re=plot(xF,j1*fudgeFac,/over,thick=3.0,name='kj_re',color='black')
+	pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transp=50)
+	;pk_re=plot(r,jROut,/over,thick=3.0,name='kj_re',color='black')
+	;pk_im=plot(r,imaginary(jROut),/over,color='black',thick=2.0,name='kj_im',transp=50)
 
 
 	l=legend(target=[c_pb_re,c_pb_im,h_pb_re,h_pb_im,pk_re,pk_im],$

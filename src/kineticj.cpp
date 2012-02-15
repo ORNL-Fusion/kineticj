@@ -290,6 +290,17 @@ vector<C3Vec> operator+ ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) 
 		return out;
 }
 
+vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) {
+		assert(other.size()==rhs.size());
+		vector<C3Vec> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 * rhs[i];
+				out[i].c2 = other[i].c2 * rhs[i];
+				out[i].c3 = other[i].c3 * rhs[i];
+		}
+		return out;
+}
+
 // First-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
@@ -780,7 +791,13 @@ int main ( int argc, char **argv )
 	for(int i=0;i<nSteps;i++) {	
 		thisT[i]=i*dtMin;
 	}
-	
+
+	vector<float> linearWeight(nSteps);
+	for(int i=0;i<nSteps;i++) {
+		linearWeight[i]=+thisT[i]*1.0/(tRF*nRFCycles)+1.0;
+		//cout << linearWeight[i] << endl;
+	}
+
 	for(int iX=0;iX<nXGrid;iX++) {
 
 		vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0);//, tJ(nJp,0);
@@ -831,33 +848,38 @@ int main ( int argc, char **argv )
 			for(int jt=0;jt<nJp;jt++) {
 
 				vector<C3Vec> thisE(nSteps,C3Vec(0,0,0));
-				vector<C3Vec> coldE(nSteps,C3Vec(0,0,0));
+				//vector<C3Vec> coldE(nSteps,C3Vec(0,0,0));
 
 				// get Jp(t=jt*dtJp)
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
 					thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
-					coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
+					//coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
 
 					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
 					//	thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
 					//}
 				}
 
+				//vector<C3Vec> thisEWeighted = thisE * linearWeight;
+
 				// This is the hot piece and is done numerically. If there are no kinetic
 				// effects here, then this piece should integrate to zero.
 				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
-				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE-coldE );
+				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE );
 
 				// This is the cold piece and is done analytically
-				thisV1.c1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
+				//thisV1.c1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
 
 				float qe = thisParticle_XYZ.q;
 
+				// DO I NEED THIS DC PIECE?
+				//#pragma omp atomic
+				//j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
 				#pragma omp atomic
-				j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
-			
+				j1x[jt] += (thisV1.c1)*particles_XYZ[iP].weight*qe;
+
 			}
 		}
 
@@ -936,10 +958,10 @@ int main ( int argc, char **argv )
 
 					if(i<=nStepsTaken[iP]&&status[iP][i]==0) {
 
-						stat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ, stat );
-						stat = 0;
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ, stat );
+						istat = 0;
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ, istat );
+						istat = 0;
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ, istat );
 
 						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
 						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
@@ -1017,19 +1039,19 @@ int main ( int argc, char **argv )
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+t[i];
-					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
+					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 
 						// Get E(t) along orbit 
 						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)
 								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp);
 						
-					}
-					else {
+					//}
+					//else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
 						//cout << "i > nStepsTaken" << endl;
 						//exit (1);
-						e1[iP][i] = C3Vec(0,0,0);
-					}	
+						//e1[iP][i] = C3Vec(0,0,0);
+					//}	
 				}
 #if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
@@ -1045,7 +1067,7 @@ int main ( int argc, char **argv )
 
 				float trapInt1=0, trapInt2=0, trapInt3=0;
 				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
-				for(int i=nSteps-2;i>-1;i--) {
+				for(int i=0;i<nSteps;i++) {
 
 					trapInt1 += qOverm * dtMin/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
 					trapInt2 += qOverm * dtMin/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
@@ -1057,6 +1079,7 @@ int main ( int argc, char **argv )
 					v1[iP][jt][i].c3 = trapInt3;
 
 				}
+
 #if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
