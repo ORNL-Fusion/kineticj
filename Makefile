@@ -20,7 +20,8 @@ PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 ifeq ($(findstring greendl,$(HOSTNAME_OSX)),greendl)
 GCCDIR := /opt/local/bin
 ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFDIR := /opt/local
+NETCDFDIR := ${HOME}/code/netcdf/gnu_4.3.6
+LIBCONFIGDIR := ${HOME}/code/libconfig/gnu_4.3.6
 CUDADIR := /usr/local/cuda
 CUDALIBDIR := ${CUDADIR}/lib
 CUDA_ARCH := sm_11
@@ -49,8 +50,8 @@ NVCC := $(CUDADIR)/bin/nvcc
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include -I${PAPI_DIR}/include \
-		-I$(NETCDFDIR)/include -I$(GOOGLE_PERF_DIR)/include \
+INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
+		-I$(NETCDFDIR)/include #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
 		#-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) 
 OPENMPFLAGS := #-fopenmp
 DEBUGFLAGS := #-g -pg
@@ -58,7 +59,7 @@ OPTFLAGS := -O3
 CFLAGS := 
 CPPFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS}
 NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L${PAPI_DIR}/lib -L$(NETCDFDIR)/lib -L${HOME}/code/google-perftools/lib -L$(LIBCONFIGDIR)/lib #-L$(CUDALIBDIR) 
+LFLAGS := -L$(NETCDFDIR)/lib -L$(LIBCONFIGDIR)/lib #-L${PAPI_DIR}/lib -L${HOME}/code/google-perftools/lib #-L$(CUDALIBDIR) 
 LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
 USECUDA:=0
