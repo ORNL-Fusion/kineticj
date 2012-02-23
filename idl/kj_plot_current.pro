@@ -53,7 +53,7 @@ pro kj_plot_current
 
 	ncdf_close, cdfId
 
-	cdfId = ncdf_open('data/kj_aorsa_1d_0.5keV.nc')
+	cdfId = ncdf_open('data/kj_aorsa_1d.nc')
 
 		ncdf_varget, cdfId, 'freq', ao_freq 
 		ncdf_varget, cdfId, 'r', ao_r 
@@ -148,7 +148,7 @@ pro kj_plot_current
 		print, 'Im: ', ipL, ipR, ipL+ipR
 
 		j1[f] = complex ( rpL+rpR, ipL+ipR )
-
+;stop
 	endfor
 
 	fudgeFac = 1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
@@ -242,5 +242,5 @@ pro kj_plot_current
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
 
 	nCdf_close, nc_id
-
+stop
 end

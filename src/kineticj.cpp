@@ -826,7 +826,6 @@ int main ( int argc, char **argv )
 
 	 		for(int i=0;i<nSteps;i++) {	
 
-				//thisT[i]=i*dtMin;
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
@@ -854,12 +853,12 @@ int main ( int argc, char **argv )
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
-					thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+					//thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
 					//coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
 
-					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
-					//	thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
-					//}
+					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
+						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+					}
 				}
 
 				//vector<C3Vec> thisEWeighted = thisE * linearWeight;
@@ -867,7 +866,7 @@ int main ( int argc, char **argv )
 				// This is the hot piece and is done numerically. If there are no kinetic
 				// effects here, then this piece should integrate to zero.
 				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
-				C3Vec thisV1 = qOverm * intC3VecArray ( thisT, thisE );
+				C3Vec thisV1 = -qOverm * intC3VecArray ( thisT, thisE );
 
 				// This is the cold piece and is done analytically
 				//thisV1.c1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
@@ -876,9 +875,9 @@ int main ( int argc, char **argv )
 
 				// DO I NEED THIS DC PIECE?
 				//#pragma omp atomic
-				//j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
+				j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
 				#pragma omp atomic
-				j1x[jt] += (thisV1.c1)*particles_XYZ[iP].weight*qe;
+				//j1x[jt] += (thisV1.c1)*particles_XYZ[iP].weight*qe;
 
 			}
 		}
@@ -1021,13 +1020,8 @@ int main ( int argc, char **argv )
 #endif
 		for(int jt=0;jt<nJp;jt++) {
 
-			//tJp[jt] = jt*dtJp;
-			//cout << "Create f1 for this tJp: " << tJp[jt] << endl;
-			
-
 			// Get e1 magnitude along orbit
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
 
 				for(int i=0;i<nSteps;i++) {
 					v1[iP][jt][i] = C3Vec(0,0,0);
@@ -1038,20 +1032,14 @@ int main ( int argc, char **argv )
 #endif	
 				for(int i=0;i<nSteps;i++) {	
 
-					float tTmp = tJp[jt]+t[i];
-					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
-
+					float tTmp = tJp[jt]+thisT[i];
+					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 						// Get E(t) along orbit 
-						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)
-								+e1ImHere_XYZ[iP][i]*sin(wrf*tTmp);
-						
-					//}
-					//else {
-						//printf("\t%s line: %i\n",__FILE__,__LINE__);
-						//cout << "i > nStepsTaken" << endl;
-						//exit (1);
-						//e1[iP][i] = C3Vec(0,0,0);
-					//}	
+						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)-e1ImHere_XYZ[iP][i]*sin(wrf*tTmp);
+					}
+					else {
+						e1[iP][i] = C3Vec(0,0,0);
+					}	
 				}
 #if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
@@ -1067,16 +1055,16 @@ int main ( int argc, char **argv )
 
 				float trapInt1=0, trapInt2=0, trapInt3=0;
 				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
-				for(int i=0;i<nSteps;i++) {
+				for(int i=0;i<nSteps-1;i++) {
 
-					trapInt1 += qOverm * dtMin/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
-					trapInt2 += qOverm * dtMin/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
-					trapInt3 += qOverm * dtMin/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
+					trapInt1 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
+					trapInt2 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
+					trapInt3 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
 					//cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << endl;
 
-					v1[iP][jt][i].c1 = trapInt1;
-					v1[iP][jt][i].c2 = trapInt2;
-					v1[iP][jt][i].c3 = trapInt3;
+					v1[iP][jt][i].c1 = -trapInt1;
+					v1[iP][jt][i].c2 = -trapInt2;
+					v1[iP][jt][i].c3 = -trapInt3;
 
 				}
 
@@ -1098,11 +1086,10 @@ int main ( int argc, char **argv )
 
 			j1x[jt] = 0;
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
+					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][nSteps-2].c1)*particles_XYZ_0[iP].weight;
 					//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
 			j1x[jt] = j1x[jt] * qe;
-			//cout << "j1x["<<jt<<"]: "<< j1x[jt]<<endl;
 			
 		}
 

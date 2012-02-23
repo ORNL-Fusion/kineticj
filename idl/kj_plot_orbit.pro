@@ -11,9 +11,10 @@ pro kj_plot_orbit
 		ncdf_varget, cdfId, 'weight', p_weight
 	nCdf_close, cdfId
 
-	binSize = 0.3e6
-	vMax = 0.5e8
-	vMin = -vMax 
+	vMax = 5e7
+	vMin = -vMax
+	nBins = 1000000L 
+	binSize = (vMax-vMin)/nBins
 	nBins = (vMax-vMin)/binSize
 	histX = fIndGen(nBins)*binSize+vMin+binSize/2.0
 	histY = fltArr(nBins)
@@ -22,13 +23,22 @@ pro kj_plot_orbit
 		histY[ii] += p_weight[n]
 	endfor
 
-	p=plot(histX,histY)
+	iiPlot = where(histY gt 0)
+
+	histX = histX[iiPlot]
+	histY = histY[iiPlot]
+	;plotHist=plot(histX[iiPlot],histY[iiPlot],thick=3,transp=50)
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
-	cdfId = ncdf_open(fileList[0])
+	spatialPoint = 0 
+
+	cdfId = ncdf_open(fileList[spatialPoint])
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 't', tJ 
+		ncdf_varget, cdfId, 'x', x
+		ncdf_varget, cdfId, 'j1x', j1x_0 
+
 	nCdf_close, cdfId
 	
 	fileList = file_search ( 'output/orbits*' )
@@ -41,7 +51,8 @@ pro kj_plot_orbit
 	nF = n_elements(fileList)
 
 	maxE = 0
-	for f=0,nF-1 do begin
+
+	for f=spatialPoint,spatialPoint do begin
 
 		cdfId = ncdf_open(fileList[f])
 
@@ -65,24 +76,20 @@ pro kj_plot_orbit
 
 	endfor
 
-	pNum = 20
+	;pNum = 20
 	;p=plot(t_0*freq,v1x_0[*,pNum])
 	;p=plot(t_0*freq,e1x_0[*,pNum]
 
 
-	binSize = 0.1
-	vMax = 910
-	vMin = 890 
-	nBins = (vMax-vMin)/binSize
-	histXa = fIndGen(nBins)*binSize+vMin+binSize/2.0
-	histYa = fltArr(nBins)
-	for n=0,n_elements(p_vx)-1 do begin
-		ii = (v1x_0[0,5,n]-vMin)/(vMax-vMin)*nBins
-		histYa[ii] += p_weight[n]
+	nSteps = n_elements(v1x_0[*,0,0])
+	nJp = n_elements(v1x_0[0,*,0])
+
+	for pp=0,8 do begin
+		p=plot(histX,histY,thick=3,transp=50,layout=[9,2,pp+1],/current,axis_style=0)
+		p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
 	endfor
 
-	p=plot(histXa,histYa)
-
-
+	p=plot(tJ,j1x_0,thick=3,color='red',transp=20,layout=[1,2,2],$
+			/current,position=[0.02,0.05,0.98,0.45],/norm,font_size=8)
 stop
 end
