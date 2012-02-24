@@ -53,7 +53,7 @@ pro kj_plot_current
 
 	ncdf_close, cdfId
 
-	cdfId = ncdf_open('data/kj_aorsa_1d.nc')
+	cdfId = ncdf_open('data/kj_aorsa_1d_hot.nc')
 
 		ncdf_varget, cdfId, 'freq', ao_freq 
 		ncdf_varget, cdfId, 'r', ao_r 
