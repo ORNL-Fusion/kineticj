@@ -736,11 +736,15 @@ int main ( int argc, char **argv )
 	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
 	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
 	double kPar = sqrt ( kParSq );
+	double vPhase = wrf / kPar;
 	double lambdaPar = 2*_pi/kPar;
-	
+
+	cout << "freq [Hz]: " << freq << endl;
 	cout << "kParSq [m^-2]: " << kParSq << endl;
 	cout << "kPar [m^-1]: " << kPar << endl;
 	cout << "lambdaPar [m]: " << lambdaPar << endl;
+	cout << "vPhase [m/s]: " << vPhase << endl;
+	cout << "vTh [m/s]: " << vTh << endl;
 
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
@@ -892,6 +896,8 @@ int main ( int argc, char **argv )
 		}
 		// Generate linear orbits
 		vector<vector<C3Vec> > orbits_XYZ(this_particles_XYZ.size());
+		vector<vector<C3Vec> > orbits_v_XYZ(this_particles_XYZ.size());
+
 		vector<vector<int> > status(this_particles_XYZ.size());
 
 		vector<int> nStepsTaken(this_particles_XYZ.size(),0);
@@ -902,6 +908,7 @@ int main ( int argc, char **argv )
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
+			orbits_v_XYZ[iP].resize(nSteps);
 			status[iP].resize(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
@@ -916,6 +923,7 @@ int main ( int argc, char **argv )
 					t[i]=i*dtMin;
 					if(this_particles_XYZ[iP].status==0) {
 						orbits_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].c1,this_particles_XYZ[iP].c2,this_particles_XYZ[iP].c3);
+						orbits_v_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].v_c1,this_particles_XYZ[iP].v_c2,this_particles_XYZ[iP].v_c3);
 						rk4_move ( this_particles_XYZ[iP], dtMin, t[i], b0_CYL, r );
 						if(this_particles_XYZ[iP].status==0) {
 							status[iP][i] = 0;
@@ -966,6 +974,16 @@ int main ( int argc, char **argv )
 
 						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
 						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
+
+						if(e1ReHere_XYZ[iP][i].c1 != e1ReHere_XYZ[iP][i].c1) {
+							cout << "\tERROR: NaN detected in e1ReHere_XYZ." << endl;
+							exit(1);
+						}
+						if(e1ImHere_XYZ[iP][i].c1 != e1ImHere_XYZ[iP][i].c1) {
+							cout << "\tERROR: NaN detected in e1ImHere_XYZ." << endl;
+							exit(1);
+						}
+	
 					}
 					else {
 						//printf("\t%s line: %i\n",__FILE__,__LINE__);
@@ -1038,13 +1056,21 @@ int main ( int argc, char **argv )
 					float tTmp = tJp[jt]+thisT[i];
 					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 						// Get E(t) along orbit 
-						int iOff = nStepsPerCycle*nJpCycles;
-						e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)-e1ImHere_XYZ[iP][i]*sin(wrf*tTmp));
+						int iOff = nStepsPerCycle*nJpCycles-(tJp[jt]/tRF*nStepsPerCycle);
+						// Remember we are changing from -iwt to +iwt to get the correct particle motion
+						// relative to the electric field, i.e., doppler shift was messed up before
+						e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
 						//e1[iP][i] = (e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)-e1ImHere_XYZ[iP][i]*sin(wrf*tTmp));
-						if(e1[iP][i].c1 != e1[iP][i].c1) {
-							cout << "\tERROR: NaN detected in E1." << endl;
-							exit(1);
+						if(hanningWeight[i+iOff] != hanningWeight[i+iOff]) {
+							cout << "\tERROR: NaN detected in hanningWeight at i=" <<
+									i+iOff<<" with value="<<hanningWeight[i+iOff]<<endl;
+							//exit(1);
 						}
+
+						//if(e1[iP][i].c1 != e1[iP][i].c1) {
+						//	cout << "\tERROR: NaN detected in E1." << endl;
+						//	exit(1);
+						//}
 					}
 					else {
 						e1[iP][i] = C3Vec(0,0,0);
@@ -1071,7 +1097,7 @@ int main ( int argc, char **argv )
 					trapInt3 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
 					//cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << endl;
 
-					v1[iP][jt][i].c1 = trapInt1;
+					v1[iP][jt][i].c1 = trapInt1;//+qOverm/wrf*(e1ReHere_XYZ[iP][0].c1*cos(wrf*tJp[jt]-_pi/2)-e1ImHere_XYZ[iP][0].c1*sin(wrf*tJp[jt]-_pi/2));
 					v1[iP][jt][i].c2 = trapInt2;
 					v1[iP][jt][i].c3 = trapInt3;
 
@@ -1154,11 +1180,15 @@ int main ( int argc, char **argv )
 				NcVar nc_x = ncOrbitsFile.addVar("x",ncFloat,nc_nPxnSteps);
 				NcVar nc_y = ncOrbitsFile.addVar("y",ncFloat,nc_nPxnSteps);
 				NcVar nc_z = ncOrbitsFile.addVar("z",ncFloat,nc_nPxnSteps);
+
+				NcVar nc_vx = ncOrbitsFile.addVar("vx",ncFloat,nc_nPxnSteps);
+				NcVar nc_vy = ncOrbitsFile.addVar("vy",ncFloat,nc_nPxnSteps);
+				NcVar nc_vz = ncOrbitsFile.addVar("vz",ncFloat,nc_nPxnSteps);
 		
 				NcVar nc_e1_x = ncOrbitsFile.addVar("e1_x",ncFloat,nc_nPxnSteps);
 				NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",ncFloat,nc_nPxnSteps);
 				NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",ncFloat,nc_nPxnSteps);
-		
+
 				NcVar nc_v1_x = ncOrbitsFile.addVar("v1x",ncFloat,nc_nPxnJpxnSteps);
 				NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",ncFloat,nc_nPxnJpxnSteps);
 				NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",ncFloat,nc_nPxnJpxnSteps);
@@ -1179,6 +1209,14 @@ int main ( int argc, char **argv )
 						nc_y.putVar(startpA,countpA,&tmpData[0]);
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_XYZ[iP][iS].c3;}
 						nc_z.putVar(startpA,countpA,&tmpData[0]);
+
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_v_XYZ[iP][iS].c1;}
+						nc_vx.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_v_XYZ[iP][iS].c2;}
+						nc_vy.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_v_XYZ[iP][iS].c3;}
+						nc_vz.putVar(startpA,countpA,&tmpData[0]);
+
 
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c1;}
 						nc_e1_x.putVar(startpA,countpA,&tmpData[0]);

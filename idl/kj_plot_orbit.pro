@@ -11,22 +11,22 @@ pro kj_plot_orbit
 		ncdf_varget, cdfId, 'weight', p_weight
 	nCdf_close, cdfId
 
-	vMax = 5e7
-	vMin = -vMax
-	nBins = 1000000L 
-	binSize = (vMax-vMin)/nBins
-	nBins = (vMax-vMin)/binSize
-	histX = fIndGen(nBins)*binSize+vMin+binSize/2.0
-	histY = fltArr(nBins)
-	for n=0,n_elements(p_vx)-1 do begin
-		ii = (p_vx[n]-vMin)/(vMax-vMin)*nBins
-		histY[ii] += p_weight[n]
-	endfor
+	;vMax = 5e7
+	;vMin = -vMax
+	;nBins = 1000000L 
+	;binSize = (vMax-vMin)/nBins
+	;nBins = (vMax-vMin)/binSize
+	;histX = fIndGen(nBins)*binSize+vMin+binSize/2.0
+	;histY = fltArr(nBins)
+	;for n=0,n_elements(p_vx)-1 do begin
+	;	ii = (p_vx[n]-vMin)/(vMax-vMin)*nBins
+	;	histY[ii] += p_weight[n]
+	;endfor
 
-	iiPlot = where(histY gt 0)
+	;iiPlot = where(histY gt 0)
 
-	histX = histX[iiPlot]
-	histY = histY[iiPlot]
+	;histX = histX[iiPlot]
+	;histY = histY[iiPlot]
 	;plotHist=plot(histX[iiPlot],histY[iiPlot],thick=3,transp=50)
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
@@ -38,9 +38,10 @@ pro kj_plot_orbit
 		ncdf_varget, cdfId, 't', tJ 
 		ncdf_varget, cdfId, 'x', x
 		ncdf_varget, cdfId, 'j1x', j1x_0 
-
 	nCdf_close, cdfId
-	
+
+	wrf = freq * 2 * !pi
+
 	fileList = file_search ( 'output/orbits*' )
 
 	cdfId = ncdf_open(fileList[0])
@@ -59,6 +60,10 @@ pro kj_plot_orbit
 			ncdf_varget, cdfId, 'x', x_0
 			ncdf_varget, cdfId, 'y', y_0
 			ncdf_varget, cdfId, 'z', z_0
+
+			ncdf_varget, cdfId, 'vx', vx_0
+			ncdf_varget, cdfId, 'vy', vy_0
+			ncdf_varget, cdfId, 'vz', vz_0
 
 			ncdf_varget, cdfId, 't', t_0
 
@@ -85,7 +90,7 @@ pro kj_plot_orbit
 	nJp = n_elements(v1x_0[0,*,0])
 
 	for pp=0,8 do begin
-		p=plot(histX,histY,thick=3,transp=50,layout=[9,2,pp+1],/current,axis_style=0)
+		p=plot(p_vx,p_weight,thick=3,transp=50,layout=[9,2,pp+1],/current,axis_style=0)
 		p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
 	endfor
 
