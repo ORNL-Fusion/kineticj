@@ -317,17 +317,32 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 
 C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &stat ) {
 
+	float _x, x0, x1;
+	float xTmp;
+	xTmp = x;
+
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
-			//printf("\t%s line: %i\n",__FILE__,__LINE__);
-			//cout << "\tERROR: Interpolation pt off grid." << endl;
-			//cout << "\tx: " << x << " x.front(): " << xVec.front() << " x.back(): " << xVec.back() << endl;
+#if _PARTICLE_BOUNDARY == 1
+			// Particle absorbing walls
 			++stat;
 			return C3Vec(0,0,0);
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+#endif
+	}
+	else
+	{
+		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
 	}
 
-	float _x = (x-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
-	float x0 = floor(_x);
-	float x1 = ceil(_x);
+	x0 = floor(_x);
+	x1 = ceil(_x);
 
 	// Catch for particle at point
 	if(x0==x1) {
@@ -406,6 +421,38 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		p.v_c1 = yn1.c1;
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
+
+#if _PARTICLE_BOUNDARY == 1
+		// Particle absorbing walls
+#elif _PARTICLE_BOUNDARY == 2
+		// Periodic 
+		if(p.c1<r.front())
+		{	
+			cout<<"Particle went left"<<endl;
+			p.c1 = r.back()-(r.front()-p.c1);
+		}
+		if(p.c1>r.back())
+		{
+			cout<<"Particle went right"<<endl;
+			p.c1 = r.front()+(p.c1-r.back());
+		}
+#elif _PARTICLE_BOUNDARY == 3
+		// Particle reflecting walls
+		if(p.c1<r.front())
+		{
+			cout<<"Particle hit the left wall"<<endl;
+			cout<<"r.front(): "<<r.front()<<endl;
+			p.c1 = r.front()+(r.front()-p.c1);
+			p.v_c1 = -p.v_c1;
+		}
+		if(p.c1>r.back())
+		{
+			cout<<"Particle hit the right wall"<<endl;
+			cout<<"r.back(): "<<r.back()<<endl;
+			p.c1 = r.back()-(p.c1-r.back());
+			p.v_c1 = -p.v_c1;
+		}
+#endif
 
 #if DEBUGLEVEL >= 3
 		cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << endl;
@@ -749,6 +796,7 @@ int main ( int argc, char **argv )
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
+	float xGridPtSize = cfg.lookup("xGridPtSize");
 	vector<float> xGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
@@ -782,7 +830,7 @@ int main ( int argc, char **argv )
 	int nSteps 			= nRFCycles*nStepsPerCycle+1;
 	int nJpCycles 		= cfg.lookup("nJpCycles");
 	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
-	int nJp 			= nJpCycles * nJpPerCycle + 1;
+	int nJp 			= nJpCycles * nJpPerCycle;
 	float dtJp 			= tRF / nJpPerCycle;
 	int istat = 0;
 
@@ -935,6 +983,9 @@ int main ( int argc, char **argv )
 					}
 					else {
 						status[iP][i] = 1;
+#if _PARTICLE_BOUNDARY == 2
+						cout<<"ERROR: particle should never hit the wall with -D_PARTICLE_BOUNDARY=2"<<endl;
+#endif
 					}
 			}
 		}
@@ -1039,6 +1090,8 @@ int main ( int argc, char **argv )
 		float eT_cpuTime=0, eT_realTime=0, eT_flpIns=0, eT_mFlops=0;
 		float vT_cpuTime=0, vT_realTime=0, vT_flpIns=0, vT_mFlops=0;
 #endif
+
+
 		for(int jt=0;jt<nJp;jt++) {
 
 			// Get e1 magnitude along orbit
@@ -1090,16 +1143,16 @@ int main ( int argc, char **argv )
 
 				float trapInt1=0, trapInt2=0, trapInt3=0;
 				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
-				for(int i=0;i<nSteps-1;i++) {
+				for(int i=nSteps-1;i>0;i--) { // integrate from t=-inf to t=0
 
-					trapInt1 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c1+e1[iP][i+1].c1);
-					trapInt2 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c2+e1[iP][i+1].c2);
-					trapInt3 += qOverm * (thisT[i+1]-thisT[i])/2.0 * (e1[iP][i].c3+e1[iP][i+1].c3);
+					trapInt1 += qOverm * (thisT[i-1]-thisT[i])/2.0 * (e1[iP][i-1].c1+e1[iP][i].c1);
+					trapInt2 += qOverm * (thisT[i-1]-thisT[i])/2.0 * (e1[iP][i-1].c2+e1[iP][i].c2);
+					trapInt3 += qOverm * (thisT[i-1]-thisT[i])/2.0 * (e1[iP][i-1].c3+e1[iP][i].c3);
 					//cout << "dtMin: " << dtMin << "  t[i+1]-t[i]: " << (t[i+1]-t[i]) << endl;
 
-					v1[iP][jt][i].c1 = trapInt1;//+qOverm/wrf*(e1ReHere_XYZ[iP][0].c1*cos(wrf*tJp[jt]-_pi/2)-e1ImHere_XYZ[iP][0].c1*sin(wrf*tJp[jt]-_pi/2));
-					v1[iP][jt][i].c2 = trapInt2;
-					v1[iP][jt][i].c3 = trapInt3;
+					v1[iP][jt][i-1].c1 = trapInt1;//+qOverm/wrf*(e1ReHere_XYZ[iP][0].c1*cos(wrf*tJp[jt]-_pi/2)-e1ImHere_XYZ[iP][0].c1*sin(wrf*tJp[jt]-_pi/2));
+					v1[iP][jt][i-1].c2 = trapInt2;
+					v1[iP][jt][i-1].c3 = trapInt3;
 
 				}
 
@@ -1117,15 +1170,78 @@ int main ( int argc, char **argv )
 			cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif
-			float qe = this_particles_XYZ[0].q;
 
 			j1x[jt] = 0;
+			//for(int iP=0;iP<this_particles_XYZ.size();iP++) {
+			//		j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
+			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
+			//}
+	
+
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][nSteps-2].c1)*particles_XYZ_0[iP].weight;
-					//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
+
+					vector<float> _j1xR(nJp,0), _j1xL(nJp,0);		
+					vector<int> AvgCntrR(nJp,0), AvgCntrL(nJp,0);
+
+					for(int i=0;i<nSteps-2;i++) { // remember the first pt, i=0, has no value due to integration above
+						float _x = orbits_XYZ[iP][i].c1;
+
+						//if(_x>(xGrid[iX]-xGridStep/2.0)&&_x<(xGrid[iX]+xGridStep/2.0))
+						if(_x>(xGrid[iX]-xGridPtSize/2.0)&&_x<(xGrid[iX]+xGridPtSize/2.0))
+						//if(i==0)
+						{
+							float _t = tJp[jt]+thisT[i];
+							int _jt;
+							if(_t>=0) {
+								_jt = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
+								if(_jt>nJp-1)_jt=0;
+								//cout<<"_jt float: "<<fmod(_t,tRF*nJpCycles)/dtJp<<endl;
+							}
+							else {
+								_jt = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
+								if(_jt>nJp-1)_jt=0;
+								//cout<<"_jt float: "<<(tRF*nJpCycles+fmod(_t,tRF*nJpCycles))/dtJp-jt<<endl;
+							}
+							//if(_jt!=jt){
+							//		cout<<"_jt: "<<_jt<<" jt: "<<jt<<endl;
+							//		exit(0);
+							//}
+							if(v1[iP][jt][i].c1>0) {
+								_j1xL[_jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+								AvgCntrL[_jt]++;
+							} else {
+								_j1xR[_jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+								AvgCntrR[_jt]++;
+							}
+							//cout<<"xLeft: "<<xGrid[iX]-xGridStep/2.0<<" xRight: "<<(xGrid[iX]+xGridStep/2.0)<<endl;
+							cout<<"iP: "<<iP<<" i: "<<i<<" _jt: "<<_jt<<" nJp: "<<nJp
+									<<" AvgCntrL[_jt]: "<<AvgCntrL[_jt]
+									<<" AvgCntrR[_jt]: "<<AvgCntrR[_jt]<<" _t: "<<_t
+									<<" _j1xL[_jt]/AvgCntrL: "<<_j1xL[_jt]/AvgCntrL[_jt]
+									<<" _j1xR[_jt]/AvgCntrR: "<<_j1xR[_jt]/AvgCntrR[_jt]
+									<<endl;
+						}
+					}
+				
+					for(int _jt=0;_jt<nJp;_jt++) {
+							if(AvgCntrR[_jt]>0) {
+								_j1xR[_jt] = _j1xR[_jt] / AvgCntrR[_jt];
+							}
+							if(AvgCntrL[_jt]>0) {
+								_j1xL[_jt] = _j1xL[_jt] / AvgCntrL[_jt];
+							}
+							j1x[_jt] += (_j1xR[_jt]+_j1xL[_jt])/2.0;
+					}	
+
 			}
-			j1x[jt] = j1x[jt] * qe;
+	
 			
+		}
+
+		float qe = this_particles_XYZ[0].q;
+		for(int jt=0;jt<nJp;jt++)
+		{
+			j1x[jt] = j1x[jt] * qe;
 		}
 
 #endif // END OF HIGHMEM CODING ^^^

@@ -81,15 +81,16 @@ pro kj_plot_orbit
 
 	endfor
 
-	;pNum = 20
-	;p=plot(t_0*freq,v1x_0[*,pNum])
-	;p=plot(t_0*freq,e1x_0[*,pNum]
-
+	pNum = 19 
+	p=plot(t_0*freq,v1x_0[*,pNum])
+	p=plot(t_0*freq,e1x_0[*,pNum])
 
 	nSteps = n_elements(v1x_0[*,0,0])
 	nJp = n_elements(v1x_0[0,*,0])
 
-	for pp=0,8 do begin
+	p=plot(p_vx,p_weight,thick=3,transp=50,layout=[9,2,0+1],axis_style=0)
+	p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
+	for pp=1,8 do begin
 		p=plot(p_vx,p_weight,thick=3,transp=50,layout=[9,2,pp+1],/current,axis_style=0)
 		p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
 	endfor

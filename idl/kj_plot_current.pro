@@ -1,4 +1,4 @@
-pro kj_plot_current
+pro kj_plot_current, noInterp = noInterp
 
 	@constants
 
@@ -20,11 +20,13 @@ pro kj_plot_current
 				eField_fName=(strSplit(runFileArray[f],'"',/extract))[1]
 	endfor
 
+	print, 'eField_fName: ', eField_fName
+
 	cdfId = ncdf_open(eField_fName)
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
-		if(strMatch(eField_fName,'*aorsa*'))then begin
+		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*'))then begin
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
 			ncdf_varget, cdfId, 'r_', r_
@@ -128,8 +130,8 @@ pro kj_plot_current
 		;ampIm = -300.0
 		;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
 
-		jrFFT = fft ( j1x[0:-2,f], /center )
-		freqAxis = (fIndGen(nT-1)-(nT/2+1)) / ((nT-1)*dt)
+		jrFFT = fft ( j1x[0:-1,f], /center )
+		freqAxis = (fIndGen(nT)-(nT/2+1)) / (nT*dt)
 		freqNorm = freqAxis / freq
 
 		;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
@@ -148,7 +150,7 @@ pro kj_plot_current
 		print, 'Im: ', ipL, ipR, ipL+ipR
 
 		j1[f] = complex ( rpL+rpR, ipL+ipR )
-;stop
+
 	endfor
 
 	fudgeFac = 1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
@@ -159,9 +161,16 @@ pro kj_plot_current
 	jAT = complex(jAp_re,jAp_im)
 	jAZ = complex(jAz_re,jAz_im)
 
-	jAR_ = complex(interpol(jAr_re,r,r_,/spline),interpol(jAr_im,r,r_,/spline))
-	jAT_ = complex(interpol(jAp_re,r,r_,/spline),interpol(jAp_im,r,r_,/spline))
-	jAZ_ = complex(interpol(jAz_re,r,r_,/spline),interpol(jAz_im,r,r_,/spline))
+	if(NOT keyword_set(noInterp))then begin
+		jAR_ = complex(interpol(jAr_re,r,r_,/spline),interpol(jAr_im,r,r_,/spline))
+		jAT_ = complex(interpol(jAp_re,r,r_,/spline),interpol(jAp_im,r,r_,/spline))
+		jAZ_ = complex(interpol(jAz_re,r,r_,/spline),interpol(jAz_im,r,r_,/spline))
+
+	endif else begin
+		jAR_ = complex(r_*0,r_*0)
+		jAT_ = complex(r_*0,r_*0)
+		jAZ_ = complex(r_*0,r_*0)
+	endelse
 
 	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) ;- jAR
 	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) ;- jAR_

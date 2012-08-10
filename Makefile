@@ -5,9 +5,9 @@ NAME := bin/kineticj
 
 # Defaults to dlg-hp.ornl.gov
 
-GCCDIR := ${HOME}/code/gcc/gcc-${GNUVER}/bin
+GCCDIR :=  
 ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFDIR := ${HOME}/code/netcdf/gnu_${GNUVER}# must be an --enable-cxx-4 dist
+NETCDFDIR := ${HOME}/code/netcdf/gnu_4.7.0# must be an --enable-cxx-4 dist
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
@@ -43,8 +43,8 @@ endif
 
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
-CC := $(GCCDIR)/gcc
-CPP := $(GCCDIR)/g++
+CC := gcc
+CPP := g++
 
 NVCC := $(CUDADIR)/bin/nvcc
 
@@ -52,26 +52,24 @@ MODULES := src include
 
 INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
 		-I$(NETCDFDIR)/include #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
-		#-I$(ALGLIBDIR) -I$(CUDA_SDK_DIR)  -I$(CUDA_SDK_INC) 
 OPENMPFLAGS := #-fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
 CFLAGS := 
-CPPFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS}
-NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
+CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS} 
+CPPFLAGS :=
+#NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
+NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
 LFLAGS := -L$(NETCDFDIR)/lib -L$(LIBCONFIGDIR)/lib #-L${PAPI_DIR}/lib -L${HOME}/code/google-perftools/lib #-L$(CUDALIBDIR) 
 LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
-USECUDA:=0
-DEBUG:=0
-USEPAPI:=0
-PITCH_SCATTERING:=0
-ENERGY_SCATTERING:=0
-GOOSE:=0
-SAVE_ORBITS:=1
-LOWMEM:=0
+CPPFLAGS += -DDEBUGLEVEL=0
+CPPFLAGS += -DUSEPAPI=0
+CPPFLAGS += -D__SAVE_ORBITS__=1
+CPPFLAGS += -DLOWMEM=0
+CPPFLAGS += -D_PARTICLE_BOUNDARY=3 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 
-LINK := $(CPP) ${CPPFLAGS} 
+LINK := $(CPP) ${CXXFLAGS} 
 
 # You shouldn't have to go below here
 #
@@ -79,7 +77,8 @@ LINK := $(CPP) ${CPPFLAGS}
 # 		the .cu files will work too :)
 
 DIRNAME = `dirname $1`
-MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+#MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = ${CC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 
@@ -89,23 +88,13 @@ all : $(NAME)
 INCLUDEFLAGS += $(patsubst %, -I%, $(MODULES))
 
 CFLAGS += $(INCLUDEFLAGS)
-CPPFLAGS += $(INCLUDEFLAGS) -DDEBUGLEVEL=$(DEBUG) \
-			-DPITCH_SCATTERING=$(PITCH_SCATTERING) \
-			-DENERGY_SCATTERING=$(ENERGY_SCATTERING) \
-			-DGOOSE=$(GOOSE) \
-			-D__SAVE_ORBITS__=$(SAVE_ORBITS) -DUSEPAPI=${USEPAPI} -DLOWMEM=${LOWMEM}
-NVCCFLAGS += $(INCLUDEFLAGS) -DDEBUGLEVEL=$(DEBUG) \
-			 -DPITCH_SCATTERING=$(PITCH_SCATTERING) \
-			 -DENERGY_SCATTERING=$(ENERGY_SCATTERING) \
-			 -DGOOSE=$(GOOSE) \
-			 -D__SAVE_ORBITS__=$(SAVE_ORBITS) -DUSEPAPI=${USEPAPI}
+CXXFLAGS += $(INCLUDEFLAGS) 
+NVCCFLAGS += $(INCLUDEFLAGS) 
 
 # determine the object files
 SRCTYPES := c cpp 
 ifeq ($(USECUDA),1)
 SRCTYPES += cu
-CPPFLAGS += -DUSECUDA  #-D__PROFILING__
-NVCCFLAGS += #-D__PROFILING__
 endif
 OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildcard $(patsubst %, %/*.$(srctype), $(MODULES)))))
 
@@ -120,7 +109,7 @@ $(NAME) : $(OBJ)
 
 obj/%.o : %.cpp
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.o$$||'`
-	$(CPP) $(CPPFLAGS) -c -o $@ $<
+	$(CPP) $(CXXFLAGS) ${CPPFLAGS} -c -o $@ $<
 
 .dep/%.d : %.c
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.d$$||'`
@@ -136,7 +125,7 @@ obj/%.o : %.c
 
 obj/%.o : %.cu
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.o$$||'`
-	$(NVCC) $(NVCCFLAGS) -c -o $@ $<
+	$(NVCC) $(NVCCFLAGS) ${CPPFLAGS} -c -o $@ $<
 
 
 # include the C include dependencies
