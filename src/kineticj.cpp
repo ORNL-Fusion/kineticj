@@ -1214,23 +1214,32 @@ int main ( int argc, char **argv )
 								AvgCntrR[_jt]++;
 							}
 							//cout<<"xLeft: "<<xGrid[iX]-xGridStep/2.0<<" xRight: "<<(xGrid[iX]+xGridStep/2.0)<<endl;
-							cout<<"iP: "<<iP<<" i: "<<i<<" _jt: "<<_jt<<" nJp: "<<nJp
-									<<" AvgCntrL[_jt]: "<<AvgCntrL[_jt]
-									<<" AvgCntrR[_jt]: "<<AvgCntrR[_jt]<<" _t: "<<_t
-									<<" _j1xL[_jt]/AvgCntrL: "<<_j1xL[_jt]/AvgCntrL[_jt]
-									<<" _j1xR[_jt]/AvgCntrR: "<<_j1xR[_jt]/AvgCntrR[_jt]
-									<<endl;
+							//cout<<"iP: "<<iP<<" i: "<<i<<" _jt: "<<_jt<<" nJp: "<<nJp
+							//		<<" AvgCntrL[_jt]: "<<AvgCntrL[_jt]
+							//		<<" AvgCntrR[_jt]: "<<AvgCntrR[_jt]<<" _t: "<<_t
+							//		<<" _j1xL[_jt]/AvgCntrL: "<<_j1xL[_jt]/AvgCntrL[_jt]
+							//		<<" _j1xR[_jt]/AvgCntrR: "<<_j1xR[_jt]/AvgCntrR[_jt]
+							//		<<endl;
 						}
 					}
 				
 					for(int _jt=0;_jt<nJp;_jt++) {
+							int cntr = 0;
 							if(AvgCntrR[_jt]>0) {
 								_j1xR[_jt] = _j1xR[_jt] / AvgCntrR[_jt];
+								cntr++;
 							}
 							if(AvgCntrL[_jt]>0) {
 								_j1xL[_jt] = _j1xL[_jt] / AvgCntrL[_jt];
+								cntr++;
 							}
-							j1x[_jt] += (_j1xR[_jt]+_j1xL[_jt])/2.0;
+							if(cntr==0)
+							{
+									cout<<"ERROR: cntr==0"<<endl;
+									cout<<"Why does it ever even get here?"<<endl;
+									exit(1);
+							}
+							j1x[_jt] += (_j1xR[_jt]+_j1xL[_jt])/cntr;
 					}	
 
 			}
