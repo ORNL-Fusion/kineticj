@@ -27,11 +27,11 @@ pro kj_plot_orbit
 
 	;histX = histX[iiPlot]
 	;histY = histY[iiPlot]
-	;plotHist=plot(histX[iiPlot],histY[iiPlot],thick=3,transp=50)
+	;plotHist=plot(histX[iiPlot],histY[iiPlot],thick=3,transparency=50)
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
-	spatialPoint = 0 
+	spatialPoint = 16 
 
 	cdfId = ncdf_open(fileList[spatialPoint])
 		ncdf_varget, cdfId, 'freq', freq 
@@ -88,14 +88,14 @@ pro kj_plot_orbit
 	nSteps = n_elements(v1x_0[*,0,0])
 	nJp = n_elements(v1x_0[0,*,0])
 
-	p=plot(p_vx,p_weight,thick=3,transp=50,layout=[9,2,0+1],axis_style=0)
-	p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
+	p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,0+1],axis_style=0)
+	p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
 	for pp=1,8 do begin
-		p=plot(p_vx,p_weight,thick=3,transp=50,layout=[9,2,pp+1],/current,axis_style=0)
-		p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transp=30)
+		p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,pp+1],/current,axis_style=0)
+		p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
 	endfor
 
-	p=plot(tJ,j1x_0,thick=3,color='red',transp=20,layout=[1,2,2],$
-			/current,position=[0.02,0.05,0.98,0.45],/norm,font_size=8)
+	p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,layout=[1,2,2],$
+			/current,position=[0.02,0.05,0.98,0.45],font_size=8)
 stop
 end

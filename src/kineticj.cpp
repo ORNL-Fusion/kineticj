@@ -1174,7 +1174,9 @@ int main ( int argc, char **argv )
 			j1x[jt] = 0;
 			//for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 			//		j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
-			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
+			//		cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
+			//			<<" j1x[jt]: "<<j1x[jt]<<endl;
+			////		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			//}
 	
 
@@ -1185,73 +1187,48 @@ int main ( int argc, char **argv )
 
 					for(int i=0;i<nSteps-2;i++) { // remember the first pt, i=0, has no value due to integration above
 						float _x = orbits_XYZ[iP][i].c1;
-
-						//if(_x>(xGrid[iX]-xGridStep/2.0)&&_x<(xGrid[iX]+xGridStep/2.0))
-						if(_x>(xGrid[iX]-xGridPtSize/2.0)&&_x<(xGrid[iX]+xGridPtSize/2.0))
-						//if(i==0)
+						if(i==0) // This is the non-reflective current as above
+						{
+							j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+						}
+						else // This is the reflective piece of the current
 						{
 							float _t = tJp[jt]+thisT[i];
+							float _jt_float;
 							int _jt;
 							if(_t>=0) {
-								_jt = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
+								_jt_float = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
+								_jt = _jt_float;
 								if(_jt>nJp-1)_jt=0;
-								//cout<<"_jt float: "<<fmod(_t,tRF*nJpCycles)/dtJp<<endl;
 							}
 							else {
-								_jt = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
+								_jt_float = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
+								_jt = _jt_float;
 								if(_jt>nJp-1)_jt=0;
-								//cout<<"_jt float: "<<(tRF*nJpCycles+fmod(_t,tRF*nJpCycles))/dtJp-jt<<endl;
 							}
-							//if(_jt!=jt){
-							//		cout<<"_jt: "<<_jt<<" jt: "<<jt<<endl;
-							//		exit(0);
-							//}
-							if(v1[iP][jt][i].c1>0) {
-								_j1xL[_jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-								AvgCntrL[_jt]++;
-							} else {
-								_j1xR[_jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-								AvgCntrR[_jt]++;
-							}
-							//cout<<"xLeft: "<<xGrid[iX]-xGridStep/2.0<<" xRight: "<<(xGrid[iX]+xGridStep/2.0)<<endl;
-							//cout<<"iP: "<<iP<<" i: "<<i<<" _jt: "<<_jt<<" nJp: "<<nJp
-							//		<<" AvgCntrL[_jt]: "<<AvgCntrL[_jt]
-							//		<<" AvgCntrR[_jt]: "<<AvgCntrR[_jt]<<" _t: "<<_t
-							//		<<" _j1xL[_jt]/AvgCntrL: "<<_j1xL[_jt]/AvgCntrL[_jt]
-							//		<<" _j1xR[_jt]/AvgCntrR: "<<_j1xR[_jt]/AvgCntrR[_jt]
-							//		<<endl;
+							if(
+								(orbits_XYZ[iP][i].c1>xGrid[iX]&&orbits_XYZ[iP][i-1].c1<xGrid[iX]) ||
+						   		(orbits_XYZ[iP][i].c1<xGrid[iX]&&orbits_XYZ[iP][i-1].c1>xGrid[iX]) ){
+								float jA=0, jB=0;	
+								jA = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+								jB = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
+								j1x[_jt] +=	(jA+jB)/2.0;						
+								cout<<"Extra left/right going "<<"iP: "<<iP<<" i: "<<i<<endl;
+							} 
 						}
 					}
-				
-					for(int _jt=0;_jt<nJp;_jt++) {
-							int cntr = 0;
-							if(AvgCntrR[_jt]>0) {
-								_j1xR[_jt] = _j1xR[_jt] / AvgCntrR[_jt];
-								cntr++;
-							}
-							if(AvgCntrL[_jt]>0) {
-								_j1xL[_jt] = _j1xL[_jt] / AvgCntrL[_jt];
-								cntr++;
-							}
-							if(cntr==0)
-							{
-									cout<<"ERROR: cntr==0"<<endl;
-									cout<<"Why does it ever even get here?"<<endl;
-									exit(1);
-							}
-							j1x[_jt] += (_j1xR[_jt]+_j1xL[_jt])/cntr;
-					}	
-
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
+						<<" j1x[jt]: "<<j1x[jt]<<endl;
 			}
-	
-			
 		}
 
 		float qe = this_particles_XYZ[0].q;
 		for(int jt=0;jt<nJp;jt++)
 		{
 			j1x[jt] = j1x[jt] * qe;
+			cout<<j1x[jt]<<"  ";
 		}
+		cout<<endl;
 
 #endif // END OF HIGHMEM CODING ^^^
 

@@ -16,32 +16,11 @@ LIBCONFIGDIR := ${HOME}/code/libconfig
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
-# Catch for greendl.* (my laptop)
-ifeq ($(findstring greendl,$(HOSTNAME_OSX)),greendl)
-GCCDIR := /opt/local/bin
-ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFDIR := ${HOME}/code/netcdf/gnu_4.3.6
-LIBCONFIGDIR := ${HOME}/code/libconfig/gnu_4.3.6
-CUDADIR := /usr/local/cuda
-CUDALIBDIR := ${CUDADIR}/lib
-CUDA_ARCH := sm_11
-CUDA_SDK_DIR := /Developer/GPU\ Computing
-endif
-
-# Catch for xbmc.* (my tv)
-MACHINE:=$(shell hostname)
-ifeq ($(MACHINE),xbmc-desktop)
-GCCDIR := /usr/bin
-ALGLIBDIR := 
-NETCDFDIR := /home/xbmc/code/netcdf# must be an --enable-cxx-4 dist
-CUDADIR := 
-CUDALIBDIR = ${CUDADIR}/lib64
-CUDA_ARCH := sm_13
-CUDA_SDK_DIR := 
-LIBCONFIGDIR := 
-endif
-
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
+
+ifneq (,$(findstring dlg-air,$(shell uname -n)))
+	include Makefile.dlg-air
+endif
 
 CC := gcc
 CPP := g++
