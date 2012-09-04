@@ -1193,32 +1193,36 @@ int main ( int argc, char **argv )
 						}
 						else // This is the reflective piece of the current
 						{
-							float _t = tJp[jt]+thisT[i];
-							float _jt_float;
-							int _jt;
-							if(_t>=0) {
-								_jt_float = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
-								_jt = _jt_float;
-								if(_jt>nJp-1)_jt=0;
-							}
-							else {
-								_jt_float = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
-								_jt = _jt_float;
-								if(_jt>nJp-1)_jt=0;
-							}
 							if(
 								(orbits_XYZ[iP][i].c1>xGrid[iX]&&orbits_XYZ[iP][i-1].c1<xGrid[iX]) ||
 						   		(orbits_XYZ[iP][i].c1<xGrid[iX]&&orbits_XYZ[iP][i-1].c1>xGrid[iX]) ){
+
+								float _t = tJp[jt]+thisT[i];
+								float _jt_float;
+								int _jt;
+								if(_t>=0) {
+									_jt_float = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
+									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
+									_jt = _jt_float;
+									if(_jt>nJp-1)_jt=0;
+								}
+								else {
+									_jt_float = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
+									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
+									_jt = _jt_float;
+									if(_jt>nJp-1)_jt=0;
+								}
 								float jA=0, jB=0;	
-								jA = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-								jB = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
+								//jA = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+								//jB = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
+								jA = (v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+								jB = (v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
 								j1x[_jt] +=	(jA+jB)/2.0;						
 								cout<<"Extra left/right going "<<"iP: "<<iP<<" i: "<<i<<endl;
 							} 
 						}
 					}
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
-						<<" j1x[jt]: "<<j1x[jt]<<endl;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
 			}
 		}
 

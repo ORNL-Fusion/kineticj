@@ -31,7 +31,7 @@ pro kj_plot_orbit
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
-	spatialPoint = 16 
+	spatialPoint = 1 
 
 	cdfId = ncdf_open(fileList[spatialPoint])
 		ncdf_varget, cdfId, 'freq', freq 
