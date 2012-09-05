@@ -153,6 +153,14 @@ pro kj_plot_current, noInterp = noInterp
 
 	endfor
 
+	; Create Debye length axis
+
+	n = 1d14
+	n_20 = n/10d0^20
+	T_keV = 0.001
+   	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
+	print, "Debye Length: ", lambda_D
+
 	fudgeFac = 1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
@@ -191,8 +199,8 @@ pro kj_plot_current, noInterp = noInterp
 	;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
 	;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
 	
-	pk_re=plot(xF,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
-	pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+	pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
+	pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
 	;pk_re=plot(r,jROut,/over,thick=3.0,name='kj_re',color='black')
 	;pk_im=plot(r,imaginary(jROut),/over,color='black',thick=2.0,name='kj_im',transp=50)
 
