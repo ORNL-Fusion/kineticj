@@ -26,7 +26,8 @@ pro kj_plot_current, noInterp = noInterp
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
-		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*'))then begin
+		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*') $
+				or strMatch(eField_fName,'*mets*'))then begin
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
 			ncdf_varget, cdfId, 'r_', r_
@@ -46,51 +47,12 @@ pro kj_plot_current, noInterp = noInterp
 		ncdf_varget, cdfId, 'jP_z_re', jPz_re
 		ncdf_varget, cdfId, 'jP_z_im', jPz_im
 
-		ncdf_varget, cdfId, 'jA_r_re', jAr_re
-		ncdf_varget, cdfId, 'jA_r_im', jAr_im
-		ncdf_varget, cdfId, 'jA_p_re', jAp_re
-		ncdf_varget, cdfId, 'jA_p_im', jAp_im
-		ncdf_varget, cdfId, 'jA_z_re', jAz_re
-		ncdf_varget, cdfId, 'jA_z_im', jAz_im
-
 	ncdf_close, cdfId
-
-	cdfId = ncdf_open('data/kj_aorsa_1d_hot.nc')
-
-		ncdf_varget, cdfId, 'freq', ao_freq 
-		ncdf_varget, cdfId, 'r', ao_r 
-
-		ncdf_varget, cdfId, 'e_r_re', ao_er_re
-		ncdf_varget, cdfId, 'e_r_im', ao_er_im
-		ncdf_varget, cdfId, 'e_p_re', ao_ep_re
-		ncdf_varget, cdfId, 'e_p_im', ao_ep_im
-		ncdf_varget, cdfId, 'e_z_re', ao_ez_re
-		ncdf_varget, cdfId, 'e_z_im', ao_ez_im
-
-		ncdf_varget, cdfId, 'jP_r_re', ao_jr_re
-		ncdf_varget, cdfId, 'jP_r_im', ao_jr_im
-		ncdf_varget, cdfId, 'jP_p_re', ao_jp_re
-		ncdf_varget, cdfId, 'jP_p_im', ao_jp_im
-		ncdf_varget, cdfId, 'jP_z_re', ao_jz_re
-		ncdf_varget, cdfId, 'jP_z_im', ao_jz_im
-
-		ncdf_varget, cdfId, 'jA_r_re', ao_jAr_re
-		ncdf_varget, cdfId, 'jA_r_im', ao_jAr_im
-		ncdf_varget, cdfId, 'jA_p_re', ao_jAp_re
-		ncdf_varget, cdfId, 'jA_p_im', ao_jAp_im
-		ncdf_varget, cdfId, 'jA_z_re', ao_jAz_re
-		ncdf_varget, cdfId, 'jA_z_im', ao_jAz_im
-
-	ncdf_close, cdfId
-
 
 	wrf = freq * 2 * !pi
 
-	r_hot = ao_r
-	j1_hot = complex ( ao_jr_re, ao_jr_im ) ;+ complex ( ao_jAr_re, ao_jAr_im ) 
-
 	r_cold = r
-	j1_cold = complex ( jPr_re, jPr_im ) ;+ complex ( jAr_re, jAr_im ) 
+	j1_cold = complex ( jPr_re, jPr_im ) 
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
@@ -165,21 +127,6 @@ pro kj_plot_current, noInterp = noInterp
 
 	; Create a jP for rsfcw_1d
 
-	jAR = complex(jAr_re,jAr_im)
-	jAT = complex(jAp_re,jAp_im)
-	jAZ = complex(jAz_re,jAz_im)
-
-	if(NOT keyword_set(noInterp))then begin
-		jAR_ = complex(interpol(jAr_re,r,r_,/spline),interpol(jAr_im,r,r_,/spline))
-		jAT_ = complex(interpol(jAp_re,r,r_,/spline),interpol(jAp_im,r,r_,/spline))
-		jAZ_ = complex(interpol(jAz_re,r,r_,/spline),interpol(jAz_im,r,r_,/spline))
-
-	endif else begin
-		jAR_ = complex(r_*0,r_*0)
-		jAT_ = complex(r_*0,r_*0)
-		jAZ_ = complex(r_*0,r_*0)
-	endelse
-
 	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) ;- jAR
 	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) ;- jAR_
 
@@ -193,14 +140,13 @@ pro kj_plot_current, noInterp = noInterp
 
 	xrange = [min(r),max(r)]
 
-	;c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
-	;c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
+	c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
+	c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
 
-	;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
-	;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
-	
-	pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
-	pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+	pk_re=plot(xF,j1*fudgeFac,thick=3.0,name='kj_re',color='black',/over)
+	pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+	;pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
+	;pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
 	;pk_re=plot(r,jROut,/over,thick=3.0,name='kj_re',color='black')
 	;pk_im=plot(r,imaginary(jROut),/over,color='black',thick=2.0,name='kj_im',transp=50)
 
