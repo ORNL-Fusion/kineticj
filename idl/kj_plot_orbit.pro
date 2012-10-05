@@ -81,8 +81,9 @@ pro kj_plot_orbit
 
 	endfor
 
-	pNum = 19 
-	p=plot(t_0*freq,v1x_0[*,pNum])
+	pNum = 95 
+	phaseNum = 1
+	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum])
 	p=plot(t_0*freq,e1x_0[*,pNum])
 
 	nSteps = n_elements(v1x_0[*,0,0])
