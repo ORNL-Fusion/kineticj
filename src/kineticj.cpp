@@ -321,11 +321,13 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	float xTmp;
 	xTmp = x;
 
-	if(x<xVec.front()||x>xVec.back()||stat>0) {
 #if _PARTICLE_BOUNDARY == 1
+	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			// Particle absorbing walls
+			cout<<"Particle absorbed"<<endl;
 			++stat;
 			return C3Vec(0,0,0);
+	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
 			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
@@ -335,11 +337,16 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
 			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
 #endif
+	
+	if(stat>0){
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+			exit(1);
 	}
-	else
-	{
+
+	//else
+	//{
 		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
-	}
+	//}
 
 	x0 = floor(_x);
 	x1 = ceil(_x);
@@ -654,6 +661,7 @@ int main ( int argc, char **argv )
 		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error" << endl;
 				e.what();
+				exit(1);
 		}
 
 		// Rotate the e field to XYZ
@@ -1172,11 +1180,10 @@ int main ( int argc, char **argv )
 #endif
 
 			j1x[jt] = 0;
-#if _PARTICLE_BOUNDARY == 0
+#if _PARTICLE_BOUNDARY == 0 || _PARTICLE_BOUNDARY == 2
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
-						<<" j1x[jt]: "<<j1x[jt]<<endl;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
 			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
 #else	
@@ -1368,6 +1375,7 @@ int main ( int argc, char **argv )
 				catch(exceptions::NcException &e) {
 						cout << "NetCDF: unknown error" << endl;
 						e.what();
+						exit(1);
 		}
 
 		cout << "DONE" << endl;
