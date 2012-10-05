@@ -796,7 +796,7 @@ int main ( int argc, char **argv )
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
-	float xGridPtSize = cfg.lookup("xGridPtSize");
+	//float xGridPtSize = cfg.lookup("xGridPtSize");
 	vector<float> xGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
@@ -1172,14 +1172,14 @@ int main ( int argc, char **argv )
 #endif
 
 			j1x[jt] = 0;
-			//for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-			//		j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
-			//		cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
-			//			<<" j1x[jt]: "<<j1x[jt]<<endl;
-			////		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
-			//}
-	
-
+#if _PARTICLE_BOUNDARY == 0
+			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
+					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp
+						<<" j1x[jt]: "<<j1x[jt]<<endl;
+			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
+			}
+#else	
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 					vector<float> _j1xR(nJp,0), _j1xL(nJp,0);		
@@ -1224,6 +1224,7 @@ int main ( int argc, char **argv )
 					}
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
 			}
+#endif
 		}
 
 		float qe = this_particles_XYZ[0].q;

@@ -26,7 +26,9 @@ pro kj_plot_current, noInterp = noInterp
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
+		sheath = 0
 		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*'))then begin
+			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
 			ncdf_varget, cdfId, 'r_', r_
@@ -55,7 +57,8 @@ pro kj_plot_current, noInterp = noInterp
 
 	ncdf_close, cdfId
 
-	cdfId = ncdf_open('data/kj_aorsa_1d_hot.nc')
+	;cdfId = ncdf_open('data/kj_aorsa_1d_hot.nc')
+	cdfId = ncdf_open('data/rsfwc_1d_0.5keV.nc')
 
 		ncdf_varget, cdfId, 'freq', ao_freq 
 		ncdf_varget, cdfId, 'r', ao_r 
@@ -86,11 +89,11 @@ pro kj_plot_current, noInterp = noInterp
 
 	wrf = freq * 2 * !pi
 
-	r_hot = ao_r
-	j1_hot = complex ( ao_jr_re, ao_jr_im ) ;+ complex ( ao_jAr_re, ao_jAr_im ) 
+	r_cold = ao_r
+	j1_cold = complex ( ao_jr_re, ao_jr_im ) ;+ complex ( ao_jAr_re, ao_jAr_im ) 
 
-	r_cold = r
-	j1_cold = complex ( jPr_re, jPr_im ) ;+ complex ( jAr_re, jAr_im ) 
+	r_hot = r
+	j1_hot = complex ( jPr_re, jPr_im ) ;+ complex ( jAr_re, jAr_im ) 
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
@@ -131,7 +134,7 @@ pro kj_plot_current, noInterp = noInterp
 		;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
 
 		jrFFT = fft ( j1x[0:-1,f], /center )
-		freqAxis = (fIndGen(nT)-(nT/2+1)) / (nT*dt)
+		freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
 		freqNorm = freqAxis / freq
 
 		;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
@@ -150,18 +153,17 @@ pro kj_plot_current, noInterp = noInterp
 		print, 'Im: ', ipL, ipR, ipL+ipR
 
 		j1[f] = complex ( rpL+rpR, ipL+ipR )
-
 	endfor
 
 	; Create Debye length axis
 
-	n = 1d14
+	n = 1.1d14
 	n_20 = n/10d0^20
-	T_keV = 0.001
+	T_keV = 0.0001
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	fudgeFac = 1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = -1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
@@ -193,21 +195,29 @@ pro kj_plot_current, noInterp = noInterp
 
 	xrange = [min(r),max(r)]
 
-	;c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
-	;c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
+	if(not sheath)then begin
+		c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
+		c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
 
-	;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
-	;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
-	
-	pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
-	pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+		h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
+		h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
+	endif	
+	if(sheath)then begin
+		pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
+		pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+	endif else begin
+		pk_re=plot(xF,j1*fudgeFac,thick=3.0,name='kj_re',color='black',/over)
+		pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+	endelse
+
 	;pk_re=plot(r,jROut,/over,thick=3.0,name='kj_re',color='black')
 	;pk_im=plot(r,imaginary(jROut),/over,color='black',thick=2.0,name='kj_im',transp=50)
 
 
+	if(not sheath)then begin
 	l=legend(target=[c_pb_re,c_pb_im,h_pb_re,h_pb_im,pk_re,pk_im],$
 			position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
-
+	endif
 	; Write kj_jP in file for next iterate
 
 	nc_id = nCdf_create ('output/kj_jP_'+cfg.runIdent+'.nc', /clobber )
