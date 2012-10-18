@@ -1,4 +1,4 @@
-pro kj_plot_current, noInterp = noInterp
+pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	@constants
 
@@ -28,7 +28,7 @@ pro kj_plot_current, noInterp = noInterp
 		ncdf_varget, cdfId, 'r', r 
 		sheath = 0
 		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*') $
-				or strMatch(eField_fName,'*mets*'))then begin
+				or strMatch(eField_fName,'*mets*') or strMatch(eField_fName,'*single*'))then begin
 			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
@@ -124,7 +124,7 @@ pro kj_plot_current, noInterp = noInterp
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	fudgeFac = -1.0;!pi/2 ; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = -1.0; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
@@ -141,6 +141,7 @@ pro kj_plot_current, noInterp = noInterp
 
 	xrange = [min(r),max(r)]
 
+	if not keyword_set(sig33) then begin
 	if(not sheath)then begin
 		c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
 		c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
@@ -160,6 +161,13 @@ pro kj_plot_current, noInterp = noInterp
 	l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
 			position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
 	endif
+	endif
+	; Interpolate the E field to the Jp locations to calculated sig33
+
+	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
+
+	sig33 = j1*fudgeFac/E_at_Jp
+
 	; Write kj_jP in file for next iterate
 
 	nc_id = nCdf_create ('output/kj_jP_'+cfg.runIdent+'.nc', /clobber )
@@ -210,5 +218,5 @@ pro kj_plot_current, noInterp = noInterp
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
 
 	nCdf_close, nc_id
-stop
+
 end

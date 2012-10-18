@@ -31,7 +31,7 @@ pro kj_plot_orbit
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
-	spatialPoint = 1 
+	spatialPoint = 0 
 
 	cdfId = ncdf_open(fileList[spatialPoint])
 		ncdf_varget, cdfId, 'freq', freq 
@@ -56,6 +56,7 @@ pro kj_plot_orbit
 	for f=spatialPoint,spatialPoint do begin
 
 		cdfId = ncdf_open(fileList[f])
+			print, fileList[f]
 
 			ncdf_varget, cdfId, 'x', x_0
 			ncdf_varget, cdfId, 'y', y_0
@@ -85,7 +86,7 @@ pro kj_plot_orbit
 	nJp = n_elements(v1x_0[0,*,0])
 	nP = n_elements(v1x_0[0,0,*])
 
-	pNum = 3800 
+	pNum = 780 
 	phaseNum = 1
 	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum],title='v1x_0')
 	p=plot(t_0*freq,e1x_0[*,pNum],title='e1x_0')
@@ -99,7 +100,7 @@ pro kj_plot_orbit
 	;	p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
 	;endfor
 
-	;p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,layout=[1,2,2],$
-	;		/current,position=[0.02,0.05,0.98,0.45],font_size=8)
+	p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,layout=[1,2,2],$
+			/current,position=[0.02,0.05,0.98,0.45],font_size=8)
 stop
 end

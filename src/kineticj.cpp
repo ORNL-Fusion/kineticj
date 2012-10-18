@@ -353,8 +353,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 	// Catch for particle at point
 	if(x0==x1) {
-		//cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		//cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 		return yVec[x0];
 	}
 	else {
