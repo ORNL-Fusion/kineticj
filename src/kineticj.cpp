@@ -1137,7 +1137,7 @@ int main ( int argc, char **argv )
 #endif
 
 
-		#pragma omp parallel for
+		#pragma omp parallel for private(e1)
 		for(int jt=0;jt<nJp;jt++) {
 
 			// Get e1 magnitude along orbit
