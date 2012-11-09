@@ -92,7 +92,10 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		;; Test code
 		;ampRe = 1000.0
 		;ampIm = -300.0
-		;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
+		;;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
+		;amp = sqrt(ampRe^2+ampIm^2)
+		;phs = atan(ampIm,ampRe)
+		;j1x = real_part(amp * exp (-II*(wrf*t+phs)))
 
 		jrFFT = fft ( j1x[0:-1,f], /center )
 		freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
@@ -101,11 +104,11 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
 		;p=plot(freqNorm,imaginary(jrFFT),color='blue');,xRange=[0,5])
 
-		; Right going piece
+		; Positive (right) frequency 
 		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
 		rpL = real_part ( jrFFT[iiAntFreq[0]] )
 		ipL = imaginary ( jrFFT[iiAntFreq[0]] )
-		; Left going piece
+		; Negative (left) frequency 
 		iiAntFreq = where(abs(freqNorm+1) eq min(abs(freqNorm+1)),iiAntFreqCnt)
 		rpR = real_part ( jrFFT[iiAntFreq[0]] )
 		ipR = -imaginary ( jrFFT[iiAntFreq[0]] )
@@ -114,6 +117,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		print, 'Im: ', ipL, ipR, ipL+ipR
 
 		j1[f] = complex ( rpL+rpR, ipL+ipR )
+		
 	endfor
 
 	; Create Debye length axis
@@ -124,7 +128,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	fudgeFac = -1.0; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = 1.0; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 

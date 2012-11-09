@@ -86,12 +86,14 @@ pro kj_plot_orbit
 	nJp = n_elements(v1x_0[0,*,0])
 	nP = n_elements(v1x_0[0,0,*])
 
-	pNum = 780 
+	pNum = 320 
 	phaseNum = 1
 	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum],title='v1x_0')
 	p=plot(t_0*freq,e1x_0[*,pNum],title='e1x_0')
-	s=surface(reform(v1x_0[*,0,*],nSteps,nP),$
-			t_0*freq,fIndGen(nP))
+	kPar=22.11
+	vPhs = wrf/kPar
+	
+	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[2.0,0.0])
 
 	;p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,0+1],axis_style=0)
 	;p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
@@ -100,7 +102,7 @@ pro kj_plot_orbit
 	;	p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
 	;endfor
 
-	p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,layout=[1,2,2],$
-			/current,position=[0.02,0.05,0.98,0.45],font_size=8)
+	p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,$
+			position=[0.02,0.05,0.98,0.45],font_size=8)
 stop
 end

@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <omp.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -301,6 +302,30 @@ vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) 
 		return out;
 }
 
+C3Vec pow ( const C3Vec &in, const int arg ) {
+		C3Vec out;
+		out.c1 = pow(in.c1,arg);
+		out.c2 = pow(in.c2,arg);
+		out.c3 = pow(in.c3,arg);
+		return out;
+}
+
+C3Vec sqrt ( const C3Vec &in ) {
+		C3Vec out;
+		out.c1 = sqrt(in.c1);
+		out.c2 = sqrt(in.c2);
+		out.c3 = sqrt(in.c3);
+		return out;
+}
+
+C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
+		C3Vec out;
+		out.c1 = atan2(Y.c1,X.c1);
+		out.c2 = atan2(Y.c2,X.c2);
+		out.c3 = atan2(Y.c3,X.c3);
+		return out;
+}
+
 // First-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
@@ -353,8 +378,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 	// Catch for particle at point
 	if(x0==x1) {
+#if DEBUGLEVEL >= 1
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+#endif
 		return yVec[x0];
 	}
 	else {
@@ -435,12 +462,16 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		// Periodic 
 		if(p.c1<r.front())
 		{	
+#if DEBUGLEVEL >= 1
 			cout<<"Particle went left"<<endl;
+#endif
 			p.c1 = r.back()-(r.front()-p.c1);
 		}
 		if(p.c1>r.back())
 		{
+#if DEBUGLEVEL >= 1
 			cout<<"Particle went right"<<endl;
+#endif
 			p.c1 = r.front()+(p.c1-r.back());
 		}
 #elif _PARTICLE_BOUNDARY == 3
@@ -853,10 +884,16 @@ int main ( int argc, char **argv )
 	}
 
 	vector<float> hanningWeight(nSteps);
+	vector<float> linearWeight(nSteps);
 	for(int i=0;i<nSteps;i++) {
 		//linearWeight[i]=thisT[i]*1.0/(tRF*nRFCycles)+1.0;
-		hanningWeight[i]=0.5*(1-cos(2*_pi*i/(nSteps-1)));
-		if(i<nSteps/2) hanningWeight[i]=1;
+		//hanningWeight[i]=0.5*(1-cos(2*_pi*i/(nSteps-1))); //Regular
+		hanningWeight[i]=0.5*(1-cos(2*_pi*i/(nSteps*0.25-1))); //Sharper
+
+		//hanningWeight[i] = linearWeight[i];
+		//if(i<nSteps/2) hanningWeight[i]=1; //Regular
+		if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
+
 		//cout << hanningWeight[i] << endl;
 	}
 
@@ -919,10 +956,9 @@ int main ( int argc, char **argv )
 					//coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
 
 					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
-						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
+						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)+thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
 					}
 				}
-
 				vector<C3Vec> thisEWeighted = thisE * hanningWeight;
 
 				// This is the hot piece and is done numerically. If there are no kinetic
@@ -961,6 +997,7 @@ int main ( int argc, char **argv )
 
 		t.resize(nSteps);
 
+		#pragma omp parallel for
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
@@ -1016,7 +1053,7 @@ int main ( int argc, char **argv )
 		vector<vector<C3Vec> >e1ReHere_XYZ(this_particles_XYZ.size());
 		vector<vector<C3Vec> >e1ImHere_XYZ(this_particles_XYZ.size());
 
-
+		#pragma omp parallel for
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			e1ReHere_XYZ[iP].resize(nSteps);
@@ -1100,6 +1137,7 @@ int main ( int argc, char **argv )
 #endif
 
 
+		#pragma omp parallel for
 		for(int jt=0;jt<nJp;jt++) {
 
 			// Get e1 magnitude along orbit
@@ -1120,6 +1158,7 @@ int main ( int argc, char **argv )
 						int iOff = nStepsPerCycle*nJpCycles-(tJp[jt]/tRF*nStepsPerCycle);
 						// Remember we are changing from -iwt to +iwt to get the correct particle motion
 						// relative to the electric field, i.e., doppler shift was messed up before
+#if COMPLEX_WRF < 1
 						e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
 						//e1[iP][i] = (e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)-e1ImHere_XYZ[iP][i]*sin(wrf*tTmp));
 						if(hanningWeight[i+iOff] != hanningWeight[i+iOff]) {
@@ -1127,11 +1166,24 @@ int main ( int argc, char **argv )
 									i+iOff<<" with value="<<hanningWeight[i+iOff]<<endl;
 							//exit(1);
 						}
-
-						//if(e1[iP][i].c1 != e1[iP][i].c1) {
-						//	cout << "\tERROR: NaN detected in E1." << endl;
-						//	exit(1);
+#else
+						C3Vec amp = sqrt(pow(e1ReHere_XYZ[iP][i],2)+pow(e1ImHere_XYZ[iP][i],2));
+						C3Vec phs = atan2(e1ImHere_XYZ[iP][i],e1ReHere_XYZ[iP][i]);
+						complex<float> _i (0.0,1.0);	
+						complex<float> wrf_c (wrf,wrf/nRFCycles);
+						complex<float> wrf_r (wrf);
+						//if(tTmp>=0) {
+						//		wrf_c = complex<float> (wrf,0);
 						//}
+						float expFac1 = abs(exp(-_i*(phs.c1+wrf_c*thisT[i])));
+						float expFac2 = abs(exp(-_i*(phs.c2+wrf_c*thisT[i])));
+						float expFac3 = abs(exp(-_i*(phs.c3+wrf_c*thisT[i])));
+
+						C3Vec tmpEHere ( 	expFac1*real(amp.c1*exp(-_i*(phs.c1+wrf_r*tTmp))),
+											expFac2*real(amp.c2*exp(-_i*(phs.c2+wrf_r*tTmp))),
+											expFac3*real(amp.c3*exp(-_i*(phs.c3+wrf_r*tTmp))) );
+						e1[iP][i] = tmpEHere;
+#endif
 					}
 					else {
 						e1[iP][i] = C3Vec(0,0,0);
@@ -1183,7 +1235,9 @@ int main ( int argc, char **argv )
 #if _PARTICLE_BOUNDARY == 0 || _PARTICLE_BOUNDARY == 2
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 					j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
+#if DEBUGLEVEL >= 1
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
+#endif
 			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
 #else	
@@ -1209,13 +1263,17 @@ int main ( int argc, char **argv )
 								int _jt;
 								if(_t>=0) {
 									_jt_float = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
+#if DEBUGLEVEL >= 1
 									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
+#endif
 									_jt = _jt_float;
 									if(_jt>nJp-1)_jt=0;
 								}
 								else {
 									_jt_float = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
+#if DEBUGLEVEL >= 1
 									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
+#endif
 									_jt = _jt_float;
 									if(_jt>nJp-1)_jt=0;
 								}
@@ -1225,11 +1283,16 @@ int main ( int argc, char **argv )
 								jA = (v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
 								jB = (v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
 								j1x[_jt] +=	(jA+jB)/2.0;						
+#if DEBUGLEVEL >= 1
 								cout<<"Extra left/right going "<<"iP: "<<iP<<" i: "<<i<<endl;
+#endif
 							} 
 						}
 					}
+
+#if DEBUGLEVEL >= 1
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
+#endif
 			}
 #endif
 		}
@@ -1238,7 +1301,9 @@ int main ( int argc, char **argv )
 		for(int jt=0;jt<nJp;jt++)
 		{
 			j1x[jt] = j1x[jt] * qe;
+#if DEBUGLEVEL >= 1
 			cout<<j1x[jt]<<"  ";
+#endif
 		}
 		cout<<endl;
 

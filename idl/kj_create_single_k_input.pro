@@ -5,7 +5,7 @@ pro kj_create_single_k_input
 f_Hz = 1.15d8
 E_eV = 0.5d3
 n_e = 1.1d14
-b0 = 0.01
+b0 = 0.001
 Z = -1.0
 
 n = 0
@@ -72,7 +72,7 @@ print, 'sighot/sigcold: ',imaginary(sig33)/imaginarY(sig33_cold)
 
 
 xOffset = 100
-nPts = 1001
+nPts = 10001
 nCycles = 19 
 xRange = lambdaPar*nCycles
 dx = xRange / (nPts-1)

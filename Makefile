@@ -31,7 +31,7 @@ MODULES := src include
 
 INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
 		-I$(NETCDFDIR)/include #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
-OPENMPFLAGS := #-fopenmp
+OPENMPFLAGS := -fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
 CFLAGS := 
@@ -47,6 +47,7 @@ CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=0
 CPPFLAGS += -D_PARTICLE_BOUNDARY=2 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
+CPPFLAGS += -DCOMPLEX_WRF=0
 
 LINK := $(CPP) ${CXXFLAGS} 
 
