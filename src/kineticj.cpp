@@ -997,7 +997,7 @@ int main ( int argc, char **argv )
 
 		t.resize(nSteps);
 
-		#pragma omp parallel for
+		#pragma omp parallel for firstprivate(t,b0_CYL,r)
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
@@ -1137,7 +1137,7 @@ int main ( int argc, char **argv )
 #endif
 
 
-		#pragma omp parallel for private(e1)
+		#pragma omp parallel for firstprivate(e1)
 		for(int jt=0;jt<nJp;jt++) {
 
 			// Get e1 magnitude along orbit
