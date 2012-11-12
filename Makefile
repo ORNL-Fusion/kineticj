@@ -34,7 +34,7 @@ MODULES := src include
 
 INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
 		-I$(NETCDFDIR)/include #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
-OPENMPFLAGS := #-fopenmp
+OPENMPFLAGS := -fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
 CFLAGS := 
