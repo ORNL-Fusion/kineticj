@@ -18,14 +18,17 @@ PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
+CC := gcc
+CPP := g++
+NVCC := $(CUDADIR)/bin/nvcc
+
 ifneq (,$(findstring dlg-air,$(shell uname -n)))
 	include Makefile.dlg-air
 endif
 
-CC := gcc
-CPP := g++
-
-NVCC := $(CUDADIR)/bin/nvcc
+ifneq (,$(findstring hopper,$(shell uname -n)))
+	include Makefile.hopper
+endif
 
 MODULES := src include
 
