@@ -6,14 +6,15 @@ sig33All2 = !null
 energyAll = !null
 
 ;ee = [100.0,200.0,400.0,600.0,1000.0,1300.0,2000.0,4000.0,5000.0,7000.0,1d4]
-nPts = 20
-ee = 10^((fIndGen(nPts)/(nPts/2-1)))*1e2
+nPts = 30.0
+ee = 10^((fIndGen(nPts)/(nPts/2.0-1)))*1e2
 ee = ee[0:-2]
 
+stop
 for i = 0,n_elements(ee)-1 do begin
 
-	;create_test_particle_f, /weighted_maxwellian_xyz, rsfwc_1d='data/kj_single_1d.nc', energy_keV = ee[i]*1e-3
-	create_test_particle_f, standard_maxwellian_1d=1, rsfwc_1d='data/kj_single_1d.nc', energy_keV = ee[i]*1e-3
+	create_test_particle_f, /weighted_maxwellian_xyz, rsfwc_1d='data/kj_single_1d.nc', energy_keV = ee[i]*1e-3
+	;create_test_particle_f, standard_maxwellian_1d=1, rsfwc_1d='data/kj_single_1d.nc', energy_keV = ee[i]*1e-3
 
     if keyword_set(hopper) then begin
 	    spawn, 'aprun -n 1 -d 24 /global/homes/g/greendl1/kineticj/bin/kineticj'

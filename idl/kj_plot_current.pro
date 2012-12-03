@@ -128,7 +128,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	fudgeFac = 1.0; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = -1.0; Not sure why we need a pi here, most likely IDLs fft.
 
 	; Create a jP for rsfcw_1d
 
@@ -222,5 +222,5 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
 
 	nCdf_close, nc_id
-
+stop
 end

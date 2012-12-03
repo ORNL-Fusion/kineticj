@@ -880,12 +880,16 @@ int main ( int argc, char **argv )
 					df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
 			}
 			else if(i==particles_XYZ_0.size()-1){
-					df0_dv[i] = ( 1*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 3*particles_XYZ_0[i-2].weight)/(2*h);
+					df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
 			}
 			else {
 					df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
 			}
 	}
+
+	//for(int i=0;i<df0_dv.size();i++){
+	//	cout<<"f0: "<<particles_XYZ_0[i].weight<<" df0_dv: "<<df0_dv[i]<<endl;
+	//}
 
 	vector<float> tJp(nJp,0);
 	for(int jt=0;jt<nJp;jt++) {
