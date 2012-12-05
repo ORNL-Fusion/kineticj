@@ -1135,11 +1135,12 @@ int main ( int argc, char **argv )
 
 		// Check density using non-grid method
 		float densityCheck = 0;
-		for(int iP=0;iP<particles_XYZ_0.size();iP++){
-				densityCheck += particles_XYZ_0[iP].weight;
+		for(int iP=1;iP<particles_XYZ_0.size();iP++){
+				densityCheck += -(particles_XYZ_0[iP-1].v_c1-particles_XYZ_0[iP].v_c1)*
+						(particles_XYZ_0[iP-1].weight+particles_XYZ_0[iP].weight)/2;
 		}
 
-		cout << "Density on f0 using non-grid method: " << densityCheck << endl;
+		cout << "Density on f0 using gridded method: " << densityCheck << endl;
 
 		cout << "DONE" << endl;
 
@@ -1272,9 +1273,23 @@ int main ( int argc, char **argv )
 
 			j1x[jt] = 0;
 #if _PARTICLE_BOUNDARY == 0 || _PARTICLE_BOUNDARY == 2
-			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-					//j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][0].c1)*particles_XYZ_0[iP].weight;
-					j1x[jt] += particles_XYZ_0[iP].v_c1*(-v1[iP][jt][0].c1*df0_dv[iP]);
+			for(int iP=1;iP<this_particles_XYZ.size();iP++) {
+
+					float qe = particles_XYZ_0[0].q;
+					float f0_i = particles_XYZ_0[iP].weight;
+					float f0_im1 = particles_XYZ_0[iP-1].weight;
+
+					float f1_i = -v1[iP][jt][0].c1*df0_dv[iP];
+					float f1_im1 = -v1[iP-1][jt][0].c1*df0_dv[iP-1];
+					float v0_i = particles_XYZ_0[iP].v_c1;
+					float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+					float dv = -(v0_im1-v0_i);
+
+					// Integrate over velocity space with trapazoidal rule.
+					j1x[jt] += qe * dv * ( v0_im1*f1_im1 + v0_i*f1_i)/2;
+					//j1x[jt] += dv * ( v0_im1*f0_im1 + v0_i*f0_i)/2;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
+
 
 #if DEBUGLEVEL >= 1
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
@@ -1338,15 +1353,15 @@ int main ( int argc, char **argv )
 #endif
 		}
 
-		float qe = this_particles_XYZ[0].q;
-		for(int jt=0;jt<nJp;jt++)
-		{
-			j1x[jt] = j1x[jt] * qe;
-#if DEBUGLEVEL >= 1
-			cout<<j1x[jt]<<"  ";
-#endif
-		}
-		cout<<endl;
+//		float qe = this_particles_XYZ[0].q;
+//		for(int jt=0;jt<nJp;jt++)
+//		{
+//			j1x[jt] = j1x[jt] * qe;
+//#if DEBUGLEVEL >= 1
+//			cout<<j1x[jt]<<"  ";
+//#endif
+//		}
+//		cout<<endl;
 
 #endif // END OF HIGHMEM CODING ^^^
 
