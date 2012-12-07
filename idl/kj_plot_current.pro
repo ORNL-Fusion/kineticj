@@ -134,8 +134,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	print, "Debye Length: ", lambda_D
 
 	fudgeFac = 1;-complex(0,-1); Not sure why we need a pi here, most likely IDLs fft.
-	j1 = -j1
-	j1xc = -j1xc
+	j1 = j1
+	j1xc = j1xc
 
 	; Create a jP for rsfcw_1d
 

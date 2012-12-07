@@ -72,7 +72,7 @@ print, 'sighot/sigcold: ',imaginary(sig33)/imaginarY(sig33_cold)
 
 
 xOffset = 100
-nPts = 10001
+nPts = 10001L
 nCycles = 5 
 xRange = lambdaPar*nCycles
 dx = xRange / (nPts-1)
@@ -91,6 +91,11 @@ p = plot(x,Jp,layout=[1,2,2],/current)
 !null = plot(x,Jp_kj,layout=[1,2,2],/over,color='orange')
 !null = plot(x,imaginary(Jp_kj),/over,color='r')
 
+; Test some e field values with those in kineticJ
+
+xTest = 101.3
+eTest = E0*exp(-II*kPar*xTest)
+print,xTest,sig33*eTest,sig33,eTest
 
 br = fltArr(nPts)+b0
 bt = br*0

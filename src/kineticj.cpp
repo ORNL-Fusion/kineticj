@@ -375,7 +375,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 	x0 = floor(_x);
 	x1 = ceil(_x);
-
+	
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUGLEVEL >= 1
@@ -575,7 +575,7 @@ int main ( int argc, char **argv )
 		//root.add("xGridMin", libconfig::Setting::TypeFloat) = 98.0;
 		//root.add("xGridMax", libconfig::Setting::TypeFloat) = 100.0;
 		//root.add("nXGrid", libconfig::Setting::TypeInt) = 20;
-		//root.add("nRFCycles", libconfig::Setting::TypeInt) = 10;
+		//root.add("nRFCycles", libconfig::Setting::TypeFloat) = 10;
 		//root.add("nStepsPerCycle", libconfig::Setting::TypeInt) = 100;
 		//root.add("nJpCycles", libconfig::Setting::TypeInt) = 6;
 		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
@@ -894,7 +894,7 @@ int main ( int argc, char **argv )
 
 	vector<float> tJp(nJp,0);
 	for(int jt=0;jt<nJp;jt++) {
-		tJp[jt] = jt*dtJp;
+		tJp[jt] = jt*dtJp;//-0.33*dtJp;
 	}
 
 	vector<float> thisT(nSteps);
@@ -1108,8 +1108,14 @@ int main ( int argc, char **argv )
 						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
 						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
 
+						//if(iP==0)
+						//cout<<"x: "<<orbits_XYZ[iP][i].c1<<" \teRe: "<<e1ReHere_XYZ[iP][i].c1<<endl;
+
 						if(e1ReHere_XYZ[iP][i].c1 != e1ReHere_XYZ[iP][i].c1) {
 							cout << "\tERROR: NaN detected in e1ReHere_XYZ." << endl;
+							cout << "\tDETAILS: c1: "<<orbits_XYZ[iP][i].c1<<endl;
+							cout << "\t\t e1Re: "<<e1ReHere_XYZ[iP][i].c1<<endl;
+
 							exit(1);
 						}
 						if(e1ImHere_XYZ[iP][i].c1 != e1ImHere_XYZ[iP][i].c1) {
@@ -1197,10 +1203,11 @@ int main ( int argc, char **argv )
 #endif	
 				for(int i=0;i<nSteps;i++) {	
 
+					float phs = 0;//-2*_pi/37.4;
 					float tTmp = tJp[jt]+thisT[i];
-					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
+					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
 						// Get E(t) along orbit 
-						int iOff = nStepsPerCycle*nJpCycles-(tJp[jt]/tRF*nStepsPerCycle);
+						//int iOff = nStepsPerCycle*nJpCycles-(tJp[jt]/tRF*nStepsPerCycle);
 						// Remember we are changing from -iwt to +iwt to get the correct particle motion
 						// relative to the electric field, i.e., doppler shift was messed up before
 						//float gamma = 1/sqrt( 1-pow(particles_XYZ_0[iP].v_c1,2)/pow(_c,2) );
@@ -1211,23 +1218,24 @@ int main ( int argc, char **argv )
 						//}
 						//cout << "gamma: " << gamma << endl;
 #if COMPLEX_WRF < 1
-						e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
+						//e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
+						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs));
 						e1c[iP][i] = C3VecI(
-										complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i].c1*sin(-wrf*tTmp),
-												e1ImHere_XYZ[iP][i].c1*cos(-wrf*tTmp)-e1ReHere_XYZ[iP][i].c1*sin(-wrf*tTmp)),
+										complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
+												e1ImHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))+e1ReHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs))),
 										complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
 										complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
-	
-						//e1c[iP][i] = C3VecI(
-						//				complex<float>(e1ReHere_XYZ[iP][i].c1,e1ImHere_XYZ[iP][i].c1),
-						//				complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
-						//				complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
-						//e1[iP][i] = (e1ReHere_XYZ[iP][i]*cos(wrf*tTmp)-e1ImHere_XYZ[iP][i]*sin(wrf*tTmp));
-						if(hanningWeight[i+iOff] != hanningWeight[i+iOff]) {
-							cout << "\tERROR: NaN detected in hanningWeight at i=" <<
-									i+iOff<<" with value="<<hanningWeight[i+iOff]<<endl;
-							exit(1);
-						}
+						//if(jt==0&&iP==0)
+						//		cout<<"t: "<<tTmp<<" \tx: "<<orbits_XYZ[iP][i].c1<<" \te: "<<e1c[iP][i].c1<<endl;
+
+						//if(i==0&&jt==0){
+						//		cout<<"x: "<<orbits_XYZ[iP][i].c1<<" e: "<<e1c[iP][i].c1<<endl;
+						//}
+						//if(hanningWeight[i+iOff] != hanningWeight[i+iOff]) {
+						//	cout << "\tERROR: NaN detected in hanningWeight at i=" <<
+						//			i+iOff<<" with value="<<hanningWeight[i+iOff]<<endl;
+						//	exit(1);
+						//}
 #else
 						e1[iP][i] = expWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
 						if(expWeight[i+iOff] != expWeight[i+iOff]) {
@@ -1237,10 +1245,10 @@ int main ( int argc, char **argv )
 						}
 
 #endif
-					}
-					else {
-						e1[iP][i] = C3Vec(0,0,0);
-					}	
+					//}
+					//else {
+					//	e1[iP][i] = C3Vec(0,0,0);
+					//}	
 				}
 #if USEPAPI >= 1
 				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
@@ -1258,11 +1266,12 @@ int main ( int argc, char **argv )
 
 				float trapInt1=0, trapInt2=0, trapInt3=0;
 				complex<float> trapInt1c=c0;
-				//float simpInt1=0, simpInt2=0, simpInt3=0;
+				float simpInt1=0, simpInt2=0, simpInt3=0;
 
 				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
 				float h = -(thisT[1]-thisT[0])*qOverm;
-				for(int i=nSteps-1;i>0;i--) { // integrate from t=-inf to t=0
+				//for(int i=nSteps-1;i>0;i--) { // integrate from t=-inf to t=0
+				for(int i=0;i<nSteps;i++) { // integrate from t=-inf to t=0
 
 					//if(i==0||i==nSteps-1) { // n intervals must be even so nSteps mush be odd
 					//	simpInt1 += h/3 * (e1[iP][i].c1);
@@ -1272,17 +1281,28 @@ int main ( int argc, char **argv )
 					//	simpInt1 += h/3 * (4*e1[iP][i].c1);
 					//}
 
-					trapInt1 += h/2.0 * (e1[iP][i-1].c1+e1[iP][i].c1);
-					trapInt2 += h/2.0 * (e1[iP][i-1].c2+e1[iP][i].c2);
-					trapInt3 += h/2.0 * (e1[iP][i-1].c3+e1[iP][i].c3);
+					if(i>0) {
+						trapInt1 += h/2.0 * (e1[iP][i-1].c1+e1[iP][i].c1);
+						trapInt2 += h/2.0 * (e1[iP][i-1].c2+e1[iP][i].c2);
+						trapInt3 += h/2.0 * (e1[iP][i-1].c3+e1[iP][i].c3);
 
-					trapInt1c += h/2 * (e1c[iP][i-1].c1+e1c[iP][i].c1);
+						trapInt1c += h/2 * (e1c[iP][i-1].c1+e1c[iP][i].c1);
+					} else {
+						trapInt1 = 0;
+						trapInt2 = 0;
+						trapInt3 = 0;
 
-					v1[iP][jt][i-1].c1 = trapInt1;
-					v1[iP][jt][i-1].c2 = trapInt2;
-					v1[iP][jt][i-1].c3 = trapInt3;
+						trapInt1c = c0;
+					}
 
-					v1c[iP][jt][i-1].c1 = trapInt1c;
+					//if(jt==0)
+					//cout<<trapInt1c<<endl;
+
+					v1[iP][jt][i].c1 = trapInt1;
+					v1[iP][jt][i].c2 = trapInt2;
+					v1[iP][jt][i].c3 = trapInt3;
+
+					v1c[iP][jt][i].c1 = trapInt1c;
 
 				}
 
@@ -1303,34 +1323,39 @@ int main ( int argc, char **argv )
 
 			j1x[jt] = 0;
 			j1xc[jt] = complex<float>(0,0);
-#if _PARTICLE_BOUNDARY == 0 || _PARTICLE_BOUNDARY == 2
-			for(int iP=1;iP<this_particles_XYZ.size();iP++) {
-
-					float qe = particles_XYZ_0[0].q;
-					float f0_i = particles_XYZ_0[iP].weight;
-					float f0_im1 = particles_XYZ_0[iP-1].weight;
-
-					float f1_i = -v1[iP][jt][0].c1*df0_dv[iP];
-					float f1_im1 = -v1[iP-1][jt][0].c1*df0_dv[iP-1];
-					float v0_i = particles_XYZ_0[iP].v_c1;
-					float v0_im1 = particles_XYZ_0[iP-1].v_c1;
-					float dv = -(v0_im1-v0_i);
-					float h = dv*qe;
+#if _PARTICLE_BOUNDARY == 1 || _PARTICLE_BOUNDARY == 2
+			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 					// Integrate over velocity space with trapazoidal rule.
-					j1x[jt] += (qe*dv/2) * ( v0_im1*f1_im1 + v0_i*f1_i);
+					if(iP>0){
+						float qe = particles_XYZ_0[0].q;
+						float f0_i = particles_XYZ_0[iP].weight;
+						float f0_im1 = particles_XYZ_0[iP-1].weight;
 
-					complex<float> f1c_i = -v1c[iP][jt][0].c1*df0_dv[iP];
-					complex<float> f1c_im1 = -v1c[iP-1][jt][0].c1*df0_dv[iP-1];
+						float f1_i = -v1[iP][jt][nSteps-1].c1*df0_dv[iP];
+						float f1_im1 = -v1[iP-1][jt][nSteps-1].c1*df0_dv[iP-1];
+						float v0_i = particles_XYZ_0[iP].v_c1;
+						float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+						float dv = -(v0_im1-v0_i);
+						float h = dv*qe;
+
+						j1x[jt] += (qe*dv/2) * ( v0_im1*f1_im1 + v0_i*f1_i);
+
+						complex<float> f1c_i = -v1c[iP][jt][nSteps-1].c1*df0_dv[iP];
+						complex<float> f1c_im1 = -v1c[iP-1][jt][nSteps-1].c1*df0_dv[iP-1];
+						j1xc[jt] += (qe*dv/2) * ( v0_im1*f1c_im1 + v0_i*f1c_i);
 	
-					j1xc[jt] += (qe*dv/2) * ( v0_im1*f1c_im1 + v0_i*f1c_i);
+					}
 
+					//if(jt==0)	
+					//cout<<"iP: "<<iP<<" \tv0: "<<particles_XYZ_0[iP].v_c1<<" \tv1: " << v1c[iP][jt][nSteps-1].c1 << endl;
 #if DEBUGLEVEL >= 1
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
 #endif
 			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
-			cout<<"j1xc[jt]: "<<j1xc[jt]<<endl;
+			//if(jt==0)
+			//cout<<"x: "<<xGrid[iX]<<" \tj1xc[jt]: "<<j1xc[jt]<<" \tsig33[jt]: "<<j1xc[jt]/e1c[0][0].c1<<" \te1c[jt]: "<<e1c[0][0].c1<<endl;
 #else	
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
