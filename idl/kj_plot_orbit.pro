@@ -86,17 +86,21 @@ pro kj_plot_orbit
 	nJp = n_elements(v1x_0[0,*,0])
 	nP = n_elements(v1x_0[0,0,*])
 
-	pNum = 320 
+	pNum = 2 
+
 	phaseNum = 1
 	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum],title='v1x_0')
 	p=plot(t_0*freq,e1x_0[*,pNum],title='e1x_0')
 	kPar=22.11
 	vPhs = wrf/kPar
-	
-	s=surface(e1x_0,t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[2.0,0.0])
-	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[2.0,0.0])
-	s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs),yRange=[2.0,0.0])
 
+	s=surface(e1x_0,t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
+	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
+	s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
+
+	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")
+
+	print, 'This particle v/vPhs: ', vx_0[0,pNum]/vPhs
 
 	;p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,0+1],axis_style=0)
 	;p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)

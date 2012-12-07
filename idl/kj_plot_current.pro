@@ -66,6 +66,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	nF = n_elements(fileList)
 
 	j1x = fltArr ( nT, nF )
+	j1xc = complexArr ( nF )
 	j1 = complexArr ( nF )
 	xF = fltArr ( nF )
 
@@ -82,7 +83,12 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 			ncdf_varget, cdfId, 'j1y', j1y_0 
 			ncdf_varget, cdfId, 'j1z', j1z_0 
 
+			ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
+			ncdf_varget, cdfId, 'j1xc_im', j1xc_im
+
 		nCdf_close,	cdfId 
+
+		j1xc[f] = complex(j1xc_re,j1xc_im)
 
 		j1x[*,f] = j1x_0;-mean(j1x_0) ; not sure if there is a nicer way to do this
 		xF[f] = x
@@ -92,10 +98,9 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		;; Test code
 		;ampRe = 1000.0
 		;ampIm = -300.0
-		;;j1x = ampRe * cos ( wrf * t ) - ampIm * sin ( wrf * t )
 		;amp = sqrt(ampRe^2+ampIm^2)
 		;phs = atan(ampIm,ampRe)
-		;j1x = real_part(amp * exp (-II*(wrf*t+phs)))
+		;j1x = (amp * exp (-II*(wrf*t+phs)))
 
 		jrFFT = fft ( j1x[0:-1,f], /center )
 		freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
@@ -117,7 +122,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		print, 'Im: ', ipL, ipR, ipL+ipR
 
 		j1[f] = complex ( rpL+rpR, ipL+ipR )
-		
+	
 	endfor
 
 	; Create Debye length axis
@@ -128,12 +133,14 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	fudgeFac = -1.0; Not sure why we need a pi here, most likely IDLs fft.
+	fudgeFac = 1;-complex(0,-1); Not sure why we need a pi here, most likely IDLs fft.
+	j1 = -j1
+	j1xc = -j1xc
 
 	; Create a jP for rsfcw_1d
 
-	jROut  = complex(interpol(real_part(j1*fudgeFac),xF,r ,/spline),interpol(imaginary(j1*fudgeFac),xF,r ,/spline)) ;- jAR
-	jROut_ = complex(interpol(real_part(j1*fudgeFac),xF,r_,/spline),interpol(real_part(j1*fudgeFac),xF,r_,/spline)) ;- jAR_
+	jROut  = complex(interpol(real_part(j1),xF,r ,/spline),interpol(imaginary(j1),xF,r ,/spline)) ;- jAR
+	jROut_ = complex(interpol(real_part(j1),xF,r_,/spline),interpol(real_part(j1),xF,r_,/spline)) ;- jAR_
 
 	jTOut = jROut*0
 	jTOut_ = jROut_*0
@@ -147,18 +154,20 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	if not keyword_set(sig33) then begin
 	if(not sheath)then begin
-		c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',transparency=50,color='b',window_title='kj')
-		c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',transparency=50,color='b')
+		c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',color='b',window_title='kj')
+		c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',color='b')
 
 		;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
 		;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
 	endif	
 	if(sheath)then begin
-		pk_re=plot(xF/lambda_D,j1*fudgeFac,thick=3.0,name='kj_re',color='black')
-		pk_im=plot(xF/lambda_D,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+		pk_re=plot(xF/lambda_D,j1,thick=3.0,name='kj_re',color='black')
+		pk_im=plot(xF/lambda_D,imaginary(j1),/over,color='black',thick=2.0,name='kj_im')
 	endif else begin
-		pk_re=plot(xF,j1*fudgeFac,thick=3.0,name='kj_re',color='black',/over)
-		pk_im=plot(xF,imaginary(j1*fudgeFac),/over,color='black',thick=2.0,name='kj_im',transparency=50)
+		pk_re=plot(xF,j1,thick=3.0,name='kj_re',color='black',/over)
+		pk_im=plot(xF,imaginary(j1),/over,color='black',thick=2.0,name='kj_im')
+		!null = plot(xf,j1xc,color='orange',/over,thick=2.0)
+		!null = plot(xf,imaginary(j1xc),color='orange',/over)
 	endelse
 
 	if(not sheath)then begin
@@ -170,7 +179,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
 
-	sig33 = j1*fudgeFac/E_at_Jp
+	sig33 = j1/E_at_Jp
 
 	; Write kj_jP in file for next iterate
 

@@ -73,7 +73,7 @@ print, 'sighot/sigcold: ',imaginary(sig33)/imaginarY(sig33_cold)
 
 xOffset = 100
 nPts = 10001
-nCycles = 19 
+nCycles = 5 
 xRange = lambdaPar*nCycles
 dx = xRange / (nPts-1)
 x = fIndGen(nPts)*dx+xOffSet
@@ -81,11 +81,16 @@ E0 = 5000
 ;E = E0*complex(cos(kPar*x),sin(kPar*x))
 E = E0*exp(-II*kPar*x)
 Jp = sig33*E
+sig33_kj = complex(0.000522289,0.00625663)
+Jp_kj = sig33_kj * E
 
 p = plot(x,E,layout=[1,2,1])
 !null = plot(x,imaginary(E),/over,color='b')
 p = plot(x,Jp,layout=[1,2,2],/current)
 !null = plot(x,imaginary(Jp),/over,color='b')
+!null = plot(x,Jp_kj,layout=[1,2,2],/over,color='orange')
+!null = plot(x,imaginary(Jp_kj),/over,color='r')
+
 
 br = fltArr(nPts)+b0
 bt = br*0
