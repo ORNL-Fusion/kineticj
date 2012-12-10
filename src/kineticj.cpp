@@ -920,7 +920,7 @@ int main ( int argc, char **argv )
 		if(expWeight[i]>1) expWeight[i]=1; //Sharper
 
 		//cout << expWeight[i] << "  "<< hanningWeight[i] << endl;
-		hanningWeight[i] = 1;
+		//hanningWeight[i] = 1;
 	}
 
 	for(int iX=0;iX<nXGrid;iX++) {
@@ -1219,12 +1219,12 @@ int main ( int argc, char **argv )
 						//cout << "gamma: " << gamma << endl;
 #if COMPLEX_WRF < 1
 						//e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
-						e1[iP][i] = e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs));
+						e1[iP][i] = hanningWeight[i]*(e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs)));
 						e1c[iP][i] = C3VecI(
-										complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
+										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
 												e1ImHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))+e1ReHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs))),
-										complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
-										complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
+										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
+										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
 						//if(jt==0&&iP==0)
 						//		cout<<"t: "<<tTmp<<" \tx: "<<orbits_XYZ[iP][i].c1<<" \te: "<<e1c[iP][i].c1<<endl;
 

@@ -1,6 +1,6 @@
 pro kj_write_kj_cfg, cfg, it
 
-	itStr = string(it-1,format='(i+4.3)')
+	itStr = string(it+1-1,format='(i+4.3)')
 	;if(it gt 0) then $
 		spawn, 'mv kj.cfg kj'+itStr+'.cfg'
 	openw, lun, 'kj.cfg', /get_lun 	

@@ -33,8 +33,8 @@ for i = 0,n_elements(ee)-1 do begin
 
 endfor
 
-sig33All1 = conj(sig33All1)
-sig33All2 = conj(sig33All2)
+;sig33All1 = conj(sig33All1)
+;sig33All2 = conj(sig33All2)
 
 p=plot(energyAll,sig33All1,/xlog,thick=2.0,transparency=50,color='b',buffer=1)
 !null=plot(energyAll,imaginary(sig33All1),/over,thick=2.0,transparency=50)
