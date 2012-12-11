@@ -27,7 +27,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
 		sheath = 0
-		if(strMatch(eField_fName,'*aorsa*') or strMatch(eField_fName,'*sheath*') $
+		if(strMatch(eField_fName,'*sheath*') $
 				or strMatch(eField_fName,'*mets*') or strMatch(eField_fName,'*single*'))then begin
 			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
@@ -44,8 +44,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 		ncdf_varget, cdfId, 'jP_r_re', jPr_re
 		ncdf_varget, cdfId, 'jP_r_im', jPr_im
-		ncdf_varget, cdfId, 'jP_p_re', jPp_re
-		ncdf_varget, cdfId, 'jP_p_im', jPp_im
+		ncdf_varget, cdfId, 'jP_p_re', jPt_re
+		ncdf_varget, cdfId, 'jP_p_im', jPt_im
 		ncdf_varget, cdfId, 'jP_z_re', jPz_re
 		ncdf_varget, cdfId, 'jP_z_im', jPz_im
 
@@ -53,8 +53,15 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	wrf = freq * 2 * !pi
 
-	r_cold = r
-	j1_cold = complex ( jPr_re, jPr_im ) 
+	r_prevIterate = r
+
+	jPr_prevIterate = complex ( jPr_re, jPr_im ) 
+	jPt_prevIterate = complex ( jPt_re, jPt_im ) 
+	jPz_prevIterate = complex ( jPz_re, jPz_im ) 
+
+	jPr_prevIterate_ = complex(interpol(jPr_re,r,r_,/spline),interpol(jPr_im,r,r_,/spline))
+	jPt_prevIterate_ = complex(interpol(jPt_re,r,r_,/spline),interpol(jPt_im,r,r_,/spline))
+	jPz_prevIterate_ = complex(interpol(jPz_re,r,r_,/spline),interpol(jPz_im,r,r_,/spline))
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
@@ -139,8 +146,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	; Create a jP for rsfcw_1d
 
-	jROut  = complex(interpol(real_part(j1),xF,r ,/spline),interpol(imaginary(j1),xF,r ,/spline)) ;- jAR
-	jROut_ = complex(interpol(real_part(j1),xF,r_,/spline),interpol(real_part(j1),xF,r_,/spline)) ;- jAR_
+	jROut  = complex(interpol(real_part(j1),xF,r ,/spline),interpol(imaginary(j1),xF,r ,/spline))
+	jROut_ = complex(interpol(real_part(j1),xF,r_,/spline),interpol(real_part(j1),xF,r_,/spline))
 
 	jTOut = jROut*0
 	jTOut_ = jROut_*0
@@ -148,14 +155,46 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	jZOut = jROut*0
 	jZOut_ = jROut_*0
 
+	; Average the iterations to test stability and convergence.
+
+	jROut = (jROut + jPr_prevIterate)/2
+	jTOut = (jTOut + jPt_prevIterate)/2
+	jZOut = (jZOut + jPz_prevIterate)/2
+
+	jROut_ = (jROut_ + jPr_prevIterate_)/2
+	jTOut_ = (jTOut_ + jPt_prevIterate_)/2
+	jZOut_ = (jZOut_ + jPz_prevIterate_)/2
+
+	; Write the iteration error to a file for analysis
+
+	nc_id = nCdf_create ('output/kj_itErr_'+cfg.runIdent+'.nc', /clobber )
+
+		nCdf_control, nc_id, /verbose
+
+		nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
+		r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
+
+		jP_err_re_id = nCdf_varDef ( nc_id, 'jP_err_re', nr_id, /float )
+		jP_err_im_id = nCdf_varDef ( nc_id, 'jP_err_im', nr_id, /float )
+
+		nCdf_control, nc_id, /enDef
+
+		nCdf_varPut, nc_id, r_id, r
+		jP_err = jROut - jPr_prevIterate
+		nCdf_varPut, nc_id, jP_err_re_id, real_part(jP_err)
+		nCdf_varPut, nc_id, jP_err_im_id, imaginary(jP_err) 
+
+	nCdf_close, nc_id
+
+
 	; Plot comparison with previous iterate
 
 	xrange = [min(r),max(r)]
 
 	if not keyword_set(sig33) then begin
 	if(not sheath)then begin
-		c_pb_re=plot(r_cold,j1_cold,thick=3.0,xrange=xRange,name='cold_re',color='b',window_title='kj')
-		c_pb_im=plot(r_cold,imaginary(j1_cold),thick=2.0,xrange=xRange,/over,name='cold_im',color='b')
+		c_pb_re=plot(r_prevIterate,jPr_prevIterate,thick=3.0,xrange=xRange,name='prevIterate_re',color='b',window_title='kj')
+		c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
 
 		;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
 		;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
@@ -231,5 +270,4 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
 
 	nCdf_close, nc_id
-;stop
 end
