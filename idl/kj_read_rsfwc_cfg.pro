@@ -22,12 +22,14 @@ function kj_read_rsfwc_cfg, runFile
 		endif
 		if(strMatch(runFileArray[f],'*runIdent*'))then runIdent=(strSplit(runFileArray[f],"'",/extract))[1]
 		if(strMatch(runFileArray[f],'*kjInput*'))then kjInput=fix((strSplit(runFileArray[f],'=',/extract))[1])
+		if(strMatch(runFileArray[f],'*jAmp*'))then jAmp=float((strSplit(runFileArray[f],'=',/extract))[1])
 	endfor
 
 	cfg = create_struct ( name='rsfwcCfg', $
 			'kj_jP_fileName', kj_jP_fileName, $
 		   	'runIdent', runIdent, $
-			'kjInput', kjInput )
+			'kjInput', kjInput, $
+		    'jAmp', jAmp )
 
 	return, cfg
 

@@ -111,6 +111,27 @@ class C3VecI {
 
 				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
 				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+
+				C3VecI& operator = (const C3VecI &rhs);
+				C3VecI& operator += (const C3VecI &rhs);
+				C3VecI& operator += (const float &rhs);
+				C3VecI& operator -= (const C3VecI &rhs);
+				C3VecI& operator -= (const float &rhs);
+				C3VecI& operator *= (const C3VecI &rhs);
+				C3VecI& operator *= (const float &rhs);
+				C3VecI& operator /= (const C3VecI &rhs);
+				C3VecI& operator /= (const float &rhs);
+
+
+				C3VecI operator + (const C3VecI &other);
+				C3VecI operator + (const float &other);
+				C3VecI operator - (const C3VecI &other);
+				C3VecI operator - (const float &other);
+				C3VecI operator * (const C3VecI &other);
+				C3VecI operator * (const float &other);
+				friend C3VecI operator * (const float &other, const C3VecI &rhs);
+				C3VecI operator / (const C3VecI &other);
+				C3VecI operator / (const float &other);
 };
 
 class C3Vec {
@@ -149,7 +170,14 @@ C3Vec& C3Vec::operator= (const C3Vec &rhs ) {
 		}
 		return *this;
 }
-
+C3VecI& C3VecI::operator= (const C3VecI &rhs ) {
+		if (this != &rhs) {
+				c1 = rhs.c1;
+				c2 = rhs.c2;
+				c3 = rhs.c3;
+		}
+		return *this;
+}
 C3Vec& C3Vec::operator+= (const C3Vec &rhs ) {
 		c1 += rhs.c1;
 		c2 += rhs.c2;
@@ -172,6 +200,19 @@ C3Vec& C3Vec::operator-= (const C3Vec &rhs ) {
 }
 
 C3Vec& C3Vec::operator-= (const float &rhs ) {
+		c1 -= rhs;
+		c2 -= rhs;
+		c3 -= rhs;
+		return *this;
+}
+C3VecI& C3VecI::operator-= (const C3VecI &rhs ) {
+		c1 -= rhs.c1;
+		c2 -= rhs.c2;
+		c3 -= rhs.c3;
+		return *this;
+}
+
+C3VecI& C3VecI::operator-= (const float &rhs ) {
 		c1 -= rhs;
 		c2 -= rhs;
 		c3 -= rhs;
@@ -206,8 +247,20 @@ C3Vec& C3Vec::operator/= (const float &rhs ) {
 		return *this;
 }
 
+C3VecI& C3VecI::operator/= (const C3VecI &rhs ) {
+		c1 /= rhs.c1;
+		c2 /= rhs.c2;
+		c3 /= rhs.c3;
+		return *this;
+}
+
+C3VecI& C3VecI::operator/= (const float &rhs ) {
+		c1 /= rhs;
+		c2 /= rhs;
+		c3 /= rhs;
+		return *this;
+}
 C3Vec C3Vec::operator+ (const C3Vec &other) {
-		//return C3Vec(*this)+=other;
 		return C3Vec(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
 }
 
@@ -221,6 +274,14 @@ C3Vec C3Vec::operator- (const C3Vec &other) {
 
 C3Vec C3Vec::operator- (const float &other) {
 		return C3Vec(*this)-=other;
+}
+
+C3VecI C3VecI::operator- (const C3VecI &other) {
+		return C3VecI(*this)-=other;
+}
+
+C3VecI C3VecI::operator- (const float &other) {
+		return C3VecI(*this)-=other;
 }
 
 C3Vec C3Vec::operator* (const C3Vec &other) {
@@ -239,16 +300,73 @@ C3Vec C3Vec::operator/ (const float &other) {
 		return C3Vec(*this)/=other;
 }
 
+C3VecI C3VecI::operator/ (const C3VecI &other) {
+		return C3VecI(*this)/=other;
+}
+
+C3VecI C3VecI::operator/ (const float &other) {
+		return C3VecI(*this)/=other;
+}
+// C3VecI 
+
+C3VecI& C3VecI::operator+= (const C3VecI &rhs ) {
+		c1 += rhs.c1;
+		c2 += rhs.c2;
+		c3 += rhs.c3;
+		return *this;
+}
+
+C3VecI& C3VecI::operator+= (const float &rhs ) {
+		c1 += rhs;
+		c2 += rhs;
+		c3 += rhs;
+		return *this;
+}
+
+C3VecI& C3VecI::operator*= (const C3VecI &rhs ) {
+		c1 *= rhs.c1;
+		c2 *= rhs.c2;
+		c3 *= rhs.c3;
+		return *this;
+}
+
+C3VecI& C3VecI::operator*= (const float &rhs ) {
+		c1 *= rhs;
+		c2 *= rhs;
+		c3 *= rhs;
+		return *this;
+}
+C3VecI C3VecI::operator+ (const C3VecI &other) {
+		return C3VecI(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
+}
+
+C3VecI C3VecI::operator+ (const float &other) {
+		return C3VecI(*this)+=other;
+}
+C3VecI C3VecI::operator* (const C3VecI &other) {
+		return C3VecI(*this)*=other;
+}
+
+C3VecI C3VecI::operator* (const float &other) {
+		return C3VecI(*this)*=other;
+}
+
 // Global (not member) functions for lhs operators
 
 C3Vec operator* ( const float &other, const C3Vec &rhs ) {
 		return C3Vec(rhs)*=other;
 }
 
+C3VecI operator* ( const float &other, const C3VecI &rhs ) {
+		return C3VecI(rhs)*=other;
+}
+
 C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
 		return C3Vec(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
 }
-
+C3VecI operator+ ( const C3VecI &other, const C3VecI &rhs) {
+		return C3VecI(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
+}
 vector<C3Vec> operator- ( const vector<C3Vec> &other, const C3Vec &rhs) {
 		vector<C3Vec> out(other.size());
 		for(int i=0;i<other.size();i++) {
@@ -268,7 +386,15 @@ vector<C3Vec> operator+ ( const vector<C3Vec> &other, const C3Vec &rhs) {
 		}
 		return out;
 }
-
+vector<C3VecI> operator+ ( const vector<C3VecI> &other, const C3VecI &rhs) {
+		vector<C3VecI> out(other.size());
+		for(int i=0;i<other.size();i++) {
+				out[i].c1 = other[i].c1 + rhs.c1;
+				out[i].c2 = other[i].c2 + rhs.c2;
+				out[i].c3 = other[i].c3 + rhs.c3;
+		}
+		return out;
+}
 vector<C3Vec> operator- ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) {
 		assert(other.size()==rhs.size());
 		vector<C3Vec> out(other.size());
@@ -349,7 +475,9 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			// Particle absorbing walls
+#if DEBUGLEVEL >= 1
 			cout<<"Particle absorbed"<<endl;
+#endif
 			++stat;
 			return C3Vec(0,0,0);
 	}
@@ -541,7 +669,7 @@ float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
 C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 
-	C3Vec result(0,0,0);
+	C3Vec result;
 	for(int i=1;i<f.size()-1;i++) {
 		float h = x[i+1]-x[i];
 		result += h/2.0*(f[i]+f[i+1]);
@@ -550,6 +678,16 @@ C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 	return result;
 }
 
+C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
+
+	C3VecI result;
+	for(int i=1;i<f.size()-1;i++) {
+		float h = x[i+1]-x[i];
+		result += h/2.0*(f[i]+f[i+1]);
+	}
+
+	return result;
+}
 
 // Calculate the jP given some know E and f(v)
 
@@ -915,9 +1053,8 @@ int main ( int argc, char **argv )
 		//if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
 
 		complex<float> _i (0.0,1.0);	
-		complex<float> wrf_c (wrf,wrf/(0.5*nRFCycles));
-		expWeight[i] = abs(exp(-_i*(wrf_c*(thisT[i]+abs(thisT[nSteps/2])))));
-		if(expWeight[i]>1) expWeight[i]=1; //Sharper
+		complex<float> wrf_c (wrf,wrf*0.01);
+		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
 
 		//cout << expWeight[i] << "  "<< hanningWeight[i] << endl;
 		//hanningWeight[i] = 1;
@@ -937,6 +1074,10 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
+		vector<float> f1(nV);
+		vector<complex<float> > f1c(nV);
+		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
+
 		#pragma omp parallel for private(istat)
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
 
@@ -946,6 +1087,10 @@ int main ( int argc, char **argv )
 			CParticle thisParticle_XYZ(particles_XYZ[iP]);
 			thisParticle_XYZ.c1 = xGrid[iX];
 
+			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
+			float qe = thisParticle_XYZ.q;
+			float h = dv * qe;
+	
 			// generate orbit and get time-harmonic e along it
 
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
@@ -969,41 +1114,51 @@ int main ( int argc, char **argv )
 			}
 
 			// get Jp(t) for this spatial point
-		
+			//
+
 			for(int jt=0;jt<nJp;jt++) {
 
-				vector<C3Vec> thisE(nSteps,C3Vec(0,0,0));
-				//vector<C3Vec> coldE(nSteps,C3Vec(0,0,0));
+				vector<C3Vec> thisE(nSteps,C3Vec());
+				vector<C3VecI> thisEc(nSteps,C3VecI());
 
-				// get Jp(t=jt*dtJp)
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
-					//thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
-					//coldE[i] = thisOrbitE_re_XYZ[0]*cos(wrf*tTmp)-thisOrbitE_im_XYZ[0]*sin(wrf*tTmp);
+					float weight = expWeight[i]*hanningWeight[i];
+					float phs = -(wrf*tTmp);
 
-					if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { 
-						thisE[i] = thisOrbitE_re_XYZ[i]*cos(wrf*tTmp)+thisOrbitE_im_XYZ[i]*sin(wrf*tTmp);
-					}
+					thisE[i] = weight*(thisOrbitE_re_XYZ[i]*cos(phs)-thisOrbitE_im_XYZ[i]*sin(phs));
+					thisEc[i] = C3VecI(
+									weight*complex<float>(
+											thisOrbitE_re_XYZ[i].c1*cos(phs)-thisOrbitE_im_XYZ[i].c1*sin(phs),
+											thisOrbitE_im_XYZ[i].c1*cos(phs)+thisOrbitE_re_XYZ[i].c1*sin(phs)),
+									weight*complex<float>(
+											thisOrbitE_re_XYZ[i].c2*cos(phs)-thisOrbitE_im_XYZ[i].c2*sin(phs),
+											thisOrbitE_im_XYZ[i].c2*cos(phs)+thisOrbitE_re_XYZ[i].c2*sin(phs)),
+									weight*complex<float>(
+											thisOrbitE_re_XYZ[i].c3*cos(phs)-thisOrbitE_im_XYZ[i].c3*sin(phs),
+											thisOrbitE_im_XYZ[i].c3*cos(phs)+thisOrbitE_re_XYZ[i].c3*sin(phs))
+									);	
 				}
-				vector<C3Vec> thisEWeighted = thisE * hanningWeight;
 
-				// This is the hot piece and is done numerically. If there are no kinetic
-				// effects here, then this piece should integrate to zero.
-				double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
 				C3Vec thisV1 = -qOverm * intC3VecArray ( thisT, thisE );
+				C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisEc );
 
-				// This is the cold piece and is done analytically
-				//thisV1.c1 += -qOverm/wrf*(thisOrbitE_re_XYZ[0].c1*cos(wrf*tJp[jt]-_pi/2)-thisOrbitE_im_XYZ[0].c1*sin(wrf*tJp[jt]-_pi/2));
+				f1[iP] = -thisV1.c1*df0_dv[iP];
+				f1c[iP] = -thisV1c.c1*df0_dv[iP];
 
-				float qe = thisParticle_XYZ.q;
+				//if(iP>0) {
 
-				// DO I NEED THIS DC PIECE?
-				//#pragma omp atomic
-				j1x[jt] += (particles_XYZ[iP].v_c1+thisV1.c1)*particles_XYZ[iP].weight*qe;
-				#pragma omp atomic
-				//j1x[jt] += (thisV1.c1)*particles_XYZ[iP].weight*qe;
+				//	float v0_i = particles_XYZ_0[iP].v_c1;
+				//	float v0_im1 = particles_XYZ_0[iP-1].v_c1;
 
+				//	#pragma omp atomic
+				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
+
+				//	#pragma omp atomic
+				//	j1xc[jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+
+				//}
 			}
 		}
 
@@ -1219,12 +1374,13 @@ int main ( int argc, char **argv )
 						//cout << "gamma: " << gamma << endl;
 #if COMPLEX_WRF < 1
 						//e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
-						e1[iP][i] = hanningWeight[i]*(e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs)));
+						float weight = expWeight[i]*hanningWeight[i];
+						e1[iP][i] = weight*(e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs)));
 						e1c[iP][i] = C3VecI(
-										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
+										weight*complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
 												e1ImHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))+e1ReHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs))),
-										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
-										hanningWeight[i]*complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
+										weight*complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
+										weight*complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
 						//if(jt==0&&iP==0)
 						//		cout<<"t: "<<tTmp<<" \tx: "<<orbits_XYZ[iP][i].c1<<" \te: "<<e1c[iP][i].c1<<endl;
 

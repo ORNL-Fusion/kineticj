@@ -1,4 +1,4 @@
-pro kj_plot_current, noInterp = noInterp, sig33 = sig33
+pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 
 	@constants
 
@@ -59,9 +59,9 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	jPt_prevIterate = complex ( jPt_re, jPt_im ) 
 	jPz_prevIterate = complex ( jPz_re, jPz_im ) 
 
-	jPr_prevIterate_ = complex(interpol(jPr_re,r,r_,/spline),interpol(jPr_im,r,r_,/spline))
-	jPt_prevIterate_ = complex(interpol(jPt_re,r,r_,/spline),interpol(jPt_im,r,r_,/spline))
-	jPz_prevIterate_ = complex(interpol(jPz_re,r,r_,/spline),interpol(jPz_im,r,r_,/spline))
+	jPr_prevIterate_ = complex(spline(r,jPr_re,r_,10.0),spline(r,jPr_im,r_,10.0))
+	jPt_prevIterate_ = complex(spline(r,jPt_re,r_,10.0),spline(r,jPt_im,r_,10.0))
+	jPz_prevIterate_ = complex(spline(r,jPz_re,r_,10.0),spline(r,jPz_im,r_,10.0))
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
@@ -86,49 +86,55 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 			ncdf_varget, cdfId, 'x', x
 			ncdf_varget, cdfId, 't', t
 
-			ncdf_varget, cdfId, 'j1x', j1x_0 
-			ncdf_varget, cdfId, 'j1y', j1y_0 
-			ncdf_varget, cdfId, 'j1z', j1z_0 
+			if not keyword_set(noTimeDep) then begin
+				ncdf_varget, cdfId, 'j1x', j1x_0 
+				ncdf_varget, cdfId, 'j1y', j1y_0 
+				ncdf_varget, cdfId, 'j1z', j1z_0 
+			endif
 
 			ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
 			ncdf_varget, cdfId, 'j1xc_im', j1xc_im
 
 		nCdf_close,	cdfId 
 
-		j1xc[f] = complex(j1xc_re,j1xc_im)
-
-		j1x[*,f] = j1x_0;-mean(j1x_0) ; not sure if there is a nicer way to do this
 		xF[f] = x
 
-		dt = t[1]-t[0]
+		j1xc[f] = complex(j1xc_re,j1xc_im)
 
-		;; Test code
-		;ampRe = 1000.0
-		;ampIm = -300.0
-		;amp = sqrt(ampRe^2+ampIm^2)
-		;phs = atan(ampIm,ampRe)
-		;j1x = (amp * exp (-II*(wrf*t+phs)))
+		if not keyword_set(noTimeDep) then begin
 
-		jrFFT = fft ( j1x[0:-1,f], /center )
-		freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
-		freqNorm = freqAxis / freq
+			j1x[*,f] = j1x_0;-mean(j1x_0) ; not sure if there is a nicer way to do this
 
-		;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
-		;p=plot(freqNorm,imaginary(jrFFT),color='blue');,xRange=[0,5])
+			dt = t[1]-t[0]
 
-		; Positive (right) frequency 
-		iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
-		rpL = real_part ( jrFFT[iiAntFreq[0]] )
-		ipL = imaginary ( jrFFT[iiAntFreq[0]] )
-		; Negative (left) frequency 
-		iiAntFreq = where(abs(freqNorm+1) eq min(abs(freqNorm+1)),iiAntFreqCnt)
-		rpR = real_part ( jrFFT[iiAntFreq[0]] )
-		ipR = -imaginary ( jrFFT[iiAntFreq[0]] )
+			;; Test code
+			;ampRe = 1000.0
+			;ampIm = -300.0
+			;amp = sqrt(ampRe^2+ampIm^2)
+			;phs = atan(ampIm,ampRe)
+			;j1x = (amp * exp (-II*(wrf*t+phs)))
 
-		print, 'Re: ', rpL, rpR, rpL+rpR
-		print, 'Im: ', ipL, ipR, ipL+ipR
+			jrFFT = fft ( j1x[0:-1,f], /center )
+			freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
+			freqNorm = freqAxis / freq
 
-		j1[f] = complex ( rpL+rpR, ipL+ipR )
+			;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
+			;p=plot(freqNorm,imaginary(jrFFT),color='blue');,xRange=[0,5])
+
+			; Positive (right) frequency 
+			iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
+			rpL = real_part ( jrFFT[iiAntFreq[0]] )
+			ipL = imaginary ( jrFFT[iiAntFreq[0]] )
+			; Negative (left) frequency 
+			iiAntFreq = where(abs(freqNorm+1) eq min(abs(freqNorm+1)),iiAntFreqCnt)
+			rpR = real_part ( jrFFT[iiAntFreq[0]] )
+			ipR = -imaginary ( jrFFT[iiAntFreq[0]] )
+
+			print, 'Re: ', rpL, rpR, rpL+rpR
+			print, 'Im: ', ipL, ipR, ipL+ipR
+
+			j1[f] = complex ( rpL+rpR, ipL+ipR )
+		endif
 	
 	endfor
 
@@ -140,30 +146,48 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
 
-	; Fudge Factoring
-	j1 = conj(j1) ; Not sure why we neet a conj here. Most likely due to the way I'm doing the fft
-	j1xc = j1xc
+	if not keyword_set(noTimeDep) then begin
 
-	; Create a jP for rsfcw_1d
+		; Fudge Factoring
+		j1 = conj(j1) ; Not sure why we neet a conj here. Most likely due to the way I'm doing the fft
 
-	jROut  = complex(interpol(real_part(j1),xF,r ,/spline),interpol(imaginary(j1),xF,r ,/spline))
-	jROut_ = complex(interpol(real_part(j1),xF,r_,/spline),interpol(real_part(j1),xF,r_,/spline))
+		; Create a jP for rsfcw_1d
 
-	jTOut = jROut*0
-	jTOut_ = jROut_*0
+		jROut  = complex(spline(xf,real_part(j1),r,10.0),spline(xf,imaginary(j1),r,10.0))
+		jROut_ = complex(spline(xf,real_part(j1),r_,10.0),spline(xf,imaginary(j1),r_,10.0))
 
-	jZOut = jROut*0
-	jZOut_ = jROut_*0
+		jTOut = jROut*0
+		jTOut_ = jROut_*0
 
-	; Average the iterations to test stability and convergence.
+		jZOut = jROut*0
+		jZOut_ = jROut_*0
 
-	jROut = (jROut + jPr_prevIterate)/2
-	jTOut = (jTOut + jPt_prevIterate)/2
-	jZOut = (jZOut + jPz_prevIterate)/2
+		; Average the iterations to test stability and convergence.
 
-	jROut_ = (jROut_ + jPr_prevIterate_)/2
-	jTOut_ = (jTOut_ + jPt_prevIterate_)/2
-	jZOut_ = (jZOut_ + jPz_prevIterate_)/2
+	endif else begin
+
+		j1 = j1xc
+
+		jROut  = complex(spline(xf,real_part(j1),r,10.0),spline(xf,imaginary(j1),r,10.0))
+		jROut_ = complex(spline(xf,real_part(j1),r_,10.0),spline(xf,imaginary(j1),r_,10.0))
+
+		jTOut = jROut*0
+		jTOut_ = jROut_*0
+
+		jZOut = jROut*0
+		jZOut_ = jROut_*0
+
+	endelse
+
+	relaxFactor = 0.5
+
+	jROut = jROut*(1-relaxFactor) + jPr_prevIterate*relaxFactor
+	jTOut = jTOut*(1-relaxFactor) + jPt_prevIterate*relaxFactor
+	jZOut = jZOut*(1-relaxFactor) + jPz_prevIterate*relaxFactor
+	
+	jROut_ = jROut_*(1-relaxFactor) + jPr_prevIterate_*relaxFactor
+	jTOut_ = jTOut_*(1-relaxFactor) + jPt_prevIterate_*relaxFactor
+	jZOut_ = jZOut_*(1-relaxFactor) + jPz_prevIterate_*relaxFactor
 
 	; Write the iteration error to a file for analysis
 
@@ -193,11 +217,15 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 
 	if not keyword_set(sig33) then begin
 	if(not sheath)then begin
-		c_pb_re=plot(r_prevIterate,jPr_prevIterate,thick=3.0,xrange=xRange,name='prevIterate_re',color='b',window_title='kj')
+		c_pb_re=plot(r_prevIterate,jPr_prevIterate,$
+				thick=3.0,$
+				xrange=xRange,$
+				name='prevIterate_re',$
+				color='b',$
+				window_title='kj',$
+				buffer=1,$
+				dimensions=[1200,400])
 		c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
-
-		;h_pb_re=plot(r_hot,j1_hot,thick=3.0,name='hot_re',transparency=50,color='r',/over)
-		;h_pb_im=plot(r_hot,imaginary(j1_hot),thick=2.0,/over,name='hot_im',color='r',transparency=50)
 	endif	
 	if(sheath)then begin
 		pk_re=plot(xF/lambda_D,j1,thick=3.0,name='kj_re',color='black')
@@ -205,14 +233,13 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33
 	endif else begin
 		pk_re=plot(xF,j1,thick=3.0,name='kj_re',color='black',/over)
 		pk_im=plot(xF,imaginary(j1),/over,color='black',thick=2.0,name='kj_im')
-		!null = plot(xf,j1xc,color='orange',/over,thick=2.0)
-		!null = plot(xf,imaginary(j1xc),color='orange',/over)
 	endelse
 
 	if(not sheath)then begin
 	l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
 			position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
 	endif
+	c_pb_re.save, 'kj_jP.png'
 	endif
 	; Interpolate the E field to the Jp locations to calculated sig33
 

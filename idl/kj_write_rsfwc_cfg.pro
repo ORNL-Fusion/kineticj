@@ -8,6 +8,7 @@ pro kj_write_rsfwc_cfg, cfg, it
 		printf, lun, 'kjInput = ', strTrim(string(cfg.kjInput),2)
 		printf, lun, 'kj_jP_fileName = ', "'",cfg.kj_jP_fileName,"'"
 		printf, lun, 'runIdent = ', "'",cfg.runIdent,"'"
+		printf, lun, 'jAmp = ', "'",cfg.jAmp,"'"
 
 	free_lun, lun
 
