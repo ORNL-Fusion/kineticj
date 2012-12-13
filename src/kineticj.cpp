@@ -1060,12 +1060,22 @@ int main ( int argc, char **argv )
 		//hanningWeight[i] = 1;
 	}
 
+	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
+	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
+
+	#pragma omp parallel for private(istat)
 	for(int iX=0;iX<nXGrid;iX++) {
 
-		vector<float> j1x(nJp,0), j1y(nJp,0), j1z(nJp,0);//, tJ(nJp,0);
-		vector<complex<float> > j1xc(nJp,complex<float>(0,0)), j1yc(nJp,complex<float>(0,0)), j1zc(nJp,complex<float>(0,0));//, tJ(nJp,0);
+		j1x[iX].resize(nJp);
+		j1xc[iX].resize(nJp);
 
-		cout << "xGrid " << iX << endl;
+		j1y[iX].resize(nJp);
+		j1yc[iX].resize(nJp);
+
+		j1z[iX].resize(nJp);
+		j1zc[iX].resize(nJp);
+
+		cout << "xGrid\t" << iX << endl;
 
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
@@ -1078,7 +1088,7 @@ int main ( int argc, char **argv )
 		vector<complex<float> > f1c(nV);
 		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
-		#pragma omp parallel for private(istat)
+		//#pragma omp parallel for private(istat)
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
 
 			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
@@ -1179,7 +1189,7 @@ int main ( int argc, char **argv )
 
 		//t.resize(nSteps);
 
-		#pragma omp parallel for firstprivate(b0_CYL,r)
+		//#pragma omp parallel for firstprivate(b0_CYL,r)
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
@@ -1225,8 +1235,8 @@ int main ( int argc, char **argv )
 		//		cout<<"p: "<<p<<" last x: "<<orbits_XYZ[p][nSteps-1].c1<<endl;
 		//}	
 
-		cout << "\tnSteps: " << nSteps << endl;
-		cout << "DONE" << endl;
+		//cout << "\tnSteps: " << nSteps << endl;
+		//cout << "DONE" << endl;
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -1234,7 +1244,7 @@ int main ( int argc, char **argv )
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
-		cout << "Interpolating complex E field along trajectories for xGrid " << iX << endl;
+		//cout << "Interpolating complex E field along trajectories for xGrid " << iX << endl;
 
 		vector<C3Vec> dv(nSteps);	
 		vector<vector<C3Vec> >e1(this_particles_XYZ.size());
@@ -1245,7 +1255,7 @@ int main ( int argc, char **argv )
 		vector<vector<C3Vec> >e1ReHere_XYZ(this_particles_XYZ.size());
 		vector<vector<C3Vec> >e1ImHere_XYZ(this_particles_XYZ.size());
 
-		#pragma omp parallel for
+		//#pragma omp parallel for
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
 			e1ReHere_XYZ[iP].resize(nSteps);
@@ -1290,7 +1300,7 @@ int main ( int argc, char **argv )
 
 		}
 		
-		cout << "DONE" << endl;
+		//cout << "DONE" << endl;
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -1315,7 +1325,7 @@ int main ( int argc, char **argv )
 
 		cout << "Density on f0 using gridded method: " << densityCheck << endl;
 
-		cout << "DONE" << endl;
+		//cout << "DONE" << endl;
 
 
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
@@ -1342,7 +1352,7 @@ int main ( int argc, char **argv )
 #endif
 
 
-		#pragma omp parallel for firstprivate(e1,e1c)
+		//#pragma omp parallel for firstprivate(e1,e1c)
 		for(int jt=0;jt<nJp;jt++) {
 
 			// Get e1 magnitude along orbit
@@ -1477,8 +1487,8 @@ int main ( int argc, char **argv )
 			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif
 
-			j1x[jt] = 0;
-			j1xc[jt] = complex<float>(0,0);
+			j1x[iX][jt] = 0;
+			j1xc[iX][jt] = complex<float>(0,0);
 #if _PARTICLE_BOUNDARY == 1 || _PARTICLE_BOUNDARY == 2
 			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
 
@@ -1495,18 +1505,18 @@ int main ( int argc, char **argv )
 						float dv = -(v0_im1-v0_i);
 						float h = dv*qe;
 
-						j1x[jt] += (qe*dv/2) * ( v0_im1*f1_im1 + v0_i*f1_i);
+						j1x[iX][jt] += (qe*dv/2) * ( v0_im1*f1_im1 + v0_i*f1_i);
 
 						complex<float> f1c_i = -v1c[iP][jt][nSteps-1].c1*df0_dv[iP];
 						complex<float> f1c_im1 = -v1c[iP-1][jt][nSteps-1].c1*df0_dv[iP-1];
-						j1xc[jt] += (qe*dv/2) * ( v0_im1*f1c_im1 + v0_i*f1c_i);
+						j1xc[iX][jt] += (qe*dv/2) * ( v0_im1*f1c_im1 + v0_i*f1c_i);
 	
 					}
 
 					//if(jt==0)	
 					//cout<<"iP: "<<iP<<" \tv0: "<<particles_XYZ_0[iP].v_c1<<" \tv1: " << v1c[iP][jt][nSteps-1].c1 << endl;
 #if DEBUGLEVEL >= 1
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[iX][jt]: "<<j1x[iX][jt]<<endl;
 #endif
 			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
 			}
@@ -1522,7 +1532,7 @@ int main ( int argc, char **argv )
 						float _x = orbits_XYZ[iP][i].c1;
 						if(i==0) // This is the non-reflective current as above
 						{
-							j1x[jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
+							j1x[iX][jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
 						}
 						else // This is the reflective piece of the current
 						{
@@ -1554,7 +1564,7 @@ int main ( int argc, char **argv )
 								//jB = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
 								jA = (v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
 								jB = (v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
-								j1x[_jt] +=	(jA+jB)/2.0;						
+								j1x[iX][_jt] +=	(jA+jB)/2.0;						
 #if DEBUGLEVEL >= 1
 								cout<<"Extra left/right going "<<"iP: "<<iP<<" i: "<<i<<endl;
 #endif
@@ -1563,7 +1573,7 @@ int main ( int argc, char **argv )
 					}
 
 #if DEBUGLEVEL >= 1
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[jt]: "<<j1x[jt]<<endl;
+					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[iX][jt]: "<<j1x[iX][jt]<<endl;
 #endif
 			}
 #endif
@@ -1715,12 +1725,16 @@ int main ( int argc, char **argv )
 						exit(1);
 		}
 
-		cout << "DONE" << endl;
+		//cout << "DONE" << endl;
 #endif
 
-		// Write current to file
+	} // End of xGrid loop
+
+	// Write current(s) to file
 	
-		//cout << "Writing jP to file ... ";
+	//cout << "Writing jP to file ... ";
+
+	for(int iX=0;iX<nXGrid;iX++) {
 
 		stringstream ncjPFileName;
 		ncjPFileName << "output/";
@@ -1732,7 +1746,10 @@ int main ( int argc, char **argv )
 		}
 		ncjPFileName << "/jP_";
 		ncjPFileName << setw(3) << setfill('0') << iX;
-	   	ncjPFileName << ".nc"; 	
+		ncjPFileName << ".nc"; 	
+
+		cout<<ncjPFileName.str().c_str()<<endl;
+
 		NcFile ncjPFile (ncjPFileName.str().c_str(), NcFile::replace);
 
 		NcDim nc_nJp = ncjPFile.addDim("nJp", nJp);
@@ -1758,17 +1775,16 @@ int main ( int argc, char **argv )
 
 		nc_t.putVar(startp,countp,&tJp[0]);
 
-		nc_j1x.putVar(startp,countp,&j1x[0]);
-		nc_j1y.putVar(startp,countp,&j1y[0]);
-		nc_j1z.putVar(startp,countp,&j1z[0]);
+		nc_j1x.putVar(startp,countp,&j1x[iX][0]);
+		nc_j1y.putVar(startp,countp,&j1y[iX][0]);
+		nc_j1z.putVar(startp,countp,&j1z[iX][0]);
 
-		float tmpJxRe = real(j1xc[0]);
-		float tmpJxIm = imag(j1xc[0]);
+		float tmpJxRe = real(j1xc[iX][0]);
+		float tmpJxIm = imag(j1xc[iX][0]);
 
 		nc_j1xc_re.putVar(&tmpJxRe);
 		nc_j1xc_im.putVar(&tmpJxIm);
-
-	} // End of xGrid loop
+	}
 
 	//ProfilerStop();
 
