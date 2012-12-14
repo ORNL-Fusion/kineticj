@@ -179,7 +179,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 
 	endelse
 
-	relaxFactor = 0.5
+	relaxFactor = 0.0
 
 	jROut = jROut*(1-relaxFactor) + jPr_prevIterate*relaxFactor
 	jTOut = jTOut*(1-relaxFactor) + jPt_prevIterate*relaxFactor
@@ -239,7 +239,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 	l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
 			position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
 	endif
-	c_pb_re.save, 'kj_jP.png'
+	c_pb_re.save, 'kj_jP.png', resolution=72
 	endif
 	; Interpolate the E field to the Jp locations to calculated sig33
 

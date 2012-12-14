@@ -817,15 +817,17 @@ int main ( int argc, char **argv )
 						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
 				}
 
-				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
-				cout << "\tfreq: " << freq << endl;
 				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
 				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+#if DEBUGLEVEL >= 1 
+				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
+				cout << "\tfreq: " << freq << endl;
 				cout << "\tmin(b0_p): " << *min << endl;
 				cout << "\tmax(b0_p): " << *max << endl;
 				cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR/2]) << endl;
 				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
 				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
+#endif
 		}
 		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error" << endl;
@@ -887,9 +889,9 @@ int main ( int argc, char **argv )
 				NcDim nc_nP(dataFile.getDim("nP"));
 	
 				int nP = nc_nP.getSize();
-	
+#if DEBUGLEVEL >= 1	
 				cout << "\tnP: " << nP << endl;
-
+#endif
 				NcVar nc_p_amu(dataFile.getVar("amu"));
 				NcVar nc_p_Z(dataFile.getVar("Z"));
 
@@ -962,14 +964,14 @@ int main ( int argc, char **argv )
 	double kPar = sqrt ( kParSq );
 	double vPhase = wrf / kPar;
 	double lambdaPar = 2*_pi/kPar;
-
+#if DEBUGLEVEL >= 1
 	cout << "freq [Hz]: " << freq << endl;
 	cout << "kParSq [m^-2]: " << kParSq << endl;
 	cout << "kPar [m^-1]: " << kPar << endl;
 	cout << "lambdaPar [m]: " << lambdaPar << endl;
 	cout << "vPhase [m/s]: " << vPhase << endl;
 	cout << "vTh [m/s]: " << vTh << endl;
-
+#endif
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
@@ -1075,7 +1077,7 @@ int main ( int argc, char **argv )
 		j1z[iX].resize(nJp);
 		j1zc[iX].resize(nJp);
 
-		cout << "xGrid\t" << iX << endl;
+		//cout << "xGrid\t" << iX << endl;
 
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
@@ -1323,7 +1325,7 @@ int main ( int argc, char **argv )
 						(particles_XYZ_0[iP-1].weight+particles_XYZ_0[iP].weight)/2;
 		}
 
-		cout << "Density on f0 using gridded method: " << densityCheck << endl;
+		//cout << "Density on f0 using gridded method: " << densityCheck << endl;
 
 		//cout << "DONE" << endl;
 
@@ -1747,8 +1749,9 @@ int main ( int argc, char **argv )
 		ncjPFileName << "/jP_";
 		ncjPFileName << setw(3) << setfill('0') << iX;
 		ncjPFileName << ".nc"; 	
-
+#if DEBUGLEVEL >= 1
 		cout<<ncjPFileName.str().c_str()<<endl;
+#endif
 
 		NcFile ncjPFile (ncjPFileName.str().c_str(), NcFile::replace);
 
