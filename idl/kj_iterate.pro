@@ -87,31 +87,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 
 		endfor
 
-		;x = real_part(eGuess)
-		;U = x[*,1:nk-2]-x[*,0:nk-3]
-		;pInv = pseudo_inverse(u)
-		;c = -pInv # (x[*,nk-1]-x[*,nk-2])
-		;c = [c,1]
-		;s_re = x[*,1:nk-1] # c / total ( c )
-
-		x = (eGuess)
-
-		N = n_elements(x[*,0])
-		_k = n_elements(x[0,*])
-
-		U = x[*,1:_k-2]-x[*,0:_k-3]
-		k = n_elements(U[0,*])
-		uk = x[*,_k-1]-x[*,_k-2]
-		c = fltArr(k+1)
-		c[0:k-1] = la_least_squares(transpose(U),-uk,method=3,status=stat)
-		if stat ne 0 then stop
-		c[k] = 1
-		alpha = 0
-		for i=0,k do alpha = alpha + c[i]
-		_gamma = c / alpha
-		s = fltArr(N)
-		if alpha eq 0 then stop
-		for j=0,k do s = s + _gamma[j] * x[*,j]
+		s = s_mpe(eGuess)
 
 		p=plot(s,dim=[1200,400],buffer=1,color='b')
 		for i=0,_k-1 do !null=plot(x[*,i],/over)
@@ -120,21 +96,6 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 		p=plot(imaginary(s),dim=[1200,400],buffer=1,color='b')
 		for i=0,_k-1 do !null=plot(imaginary(x[*,i]),/over)
 		p.save, 'tmpi.eps'
-
-
-		;x = imaginary(eGuess)
-		;U = x[*,1:nk-2]-x[*,0:nk-3]
-		;pInv = pseudo_inverse(u)
-		;c = -pInv # (x[*,nk-1]-x[*,nk-2])
-		;c = [c,1]
-		;s_im = x[*,1:nk-1] # c / total ( c )
-
-		x = imaginary(eGuess)
-		U = x[*,1:nk-1]-x[*,0:nk-2]
-		pInv = pseudo_inverse(u[*,0:nk-3])
-		c = -pInv # u[*,nk-2]
-		c = [c,1]
-		s_im = x[*,0:nk-2] # c / total ( c )
 
 		cdfId = ncdf_open(eGuessFileList[0],/write)
 			e_r_re_id = nCdf_varid(cdfId, 'e_r_re')
