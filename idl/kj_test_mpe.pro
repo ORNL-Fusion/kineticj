@@ -1,15 +1,10 @@
-function amultp, p
-	common Cg_comm1, A
-	return, A # p
-end
-
 pro kj_test_mpe
 
 common Cg_comm1, A
 
 ; Generate A
 
-n = 1000
+n = 100
 
 A = dblArr(n,n)
 
@@ -29,7 +24,7 @@ A = 0.06d0 * A
 
 s_exact = dblArr(n)+1
 
-b = s_exact - A # s_exact
+b = s_exact - A ## s_exact
 
 x = transpose(dblArr(n))
 
@@ -44,23 +39,47 @@ C = I - A
 
 eigenVals = la_eigenQL(A)
 
+print, min(eigenVals)
+print, max(eigenVals)
 
-nIt = 10
-w = 1d0
+nk = 10 
+nm = 5 
+w = 2d0
 
-;result=imsl_sp_cg('amultp',transpose(b))
+
+
+xAll = !null
+s_mpe = x
 
 p=plot(x)
+for m = 0, nm-1 do begin
 
-for i = 0, nIt-1 do begin
+	for k = 0, nk-1 do begin
+	
+		xAll = [[xAll],[x]]
+		x0 = x
+		Fx = A # x0 + b
+		x = (1d0-w)*x0 + w*Fx
+	
+		s1=norm(x-x0,LNORM=2)
+		s2=norm(x-s_exact,LNORM=2)
+	
+		;print, k, s1,s2
+		;!null=plot(x,/over)
+	endfor
 
-	x0 = x
-	Fx = A ## x + b
-	x = (1d0-w)*x + w*Fx
+	s0 = s_mpe	
+	s_mpe = kj_mpe(xAll)
 
-	s = sqrt(mean((x-x0)^2))
-	print, s
-	!null=plot(x,/over)
+	!null = plot(s_mpe, thick=2,color='b',/over)
+
+	s1=norm(s_mpe-s0,LNORM=2)
+	s2=norm(s_mpe-s_exact,LNORM=2)
+	
+	print, m, s1,s2
+	xAll = s_mpe
+	x = s_mpe
+;stop
 endfor
 
 
