@@ -7,8 +7,8 @@ NAME := bin/kineticj
 
 GCCDIR :=  
 ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFINCDIR := /usr/include/openmpi-x86_64
-NETCDFDIR := /usr/lib64/openmpi# must be an --enable-cxx-4 dist
+NETCDFDIR := ${HOME}/code/netcdf/gnu_4.7.0# must be an --enable-cxx-4 dist
+NETCDFINCDIR := ${NETCDFDIR}/include
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13

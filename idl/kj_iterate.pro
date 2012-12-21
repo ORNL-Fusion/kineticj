@@ -13,7 +13,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 	jAmpMax = 50.0
 	jAmpStep = 50.0 
 
-	nk = 6
+	nk =6
 	eGuessFileList = strArr(nk)
 
 	for it=itStart,itStart+nIt-1 do begin
@@ -87,20 +87,74 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 
 		endfor
 
-		x = eGuess
+		;x = real_part(eGuess)
+		;U = x[*,1:nk-2]-x[*,0:nk-3]
+		;pInv = pseudo_inverse(u)
+		;c = -pInv # (x[*,nk-1]-x[*,nk-2])
+		;c = [c,1]
+		;s_re = x[*,1:nk-1] # c / total ( c )
 
-		U = x[*,1:nk-2]-x[*,0:nk-3]
-		pInv = transpose(invert(transpose(U)##U) ## transpose(U))
-		c = -pInv ## (x[*,nk-1]-x[*,nk-2])
-		c = [[c],[1]]
-		s = x[*,1:nk-1] # c[*] / total ( c )
-		
+		x = (eGuess)
+
+		N = n_elements(x[*,0])
+		_k = n_elements(x[0,*])
+
+		U = x[*,1:_k-2]-x[*,0:_k-3]
+		k = n_elements(U[0,*])
+		uk = x[*,_k-1]-x[*,_k-2]
+		c = fltArr(k+1)
+		c[0:k-1] = la_least_squares(transpose(U),-uk,method=3,status=stat)
+		if stat ne 0 then stop
+		c[k] = 1
+		alpha = 0
+		for i=0,k do alpha = alpha + c[i]
+		_gamma = c / alpha
+		s = fltArr(N)
+		if alpha eq 0 then stop
+		for j=0,k do s = s + _gamma[j] * x[*,j]
+
+		p=plot(s,dim=[1200,400],buffer=1,color='b')
+		for i=0,_k-1 do !null=plot(x[*,i],/over)
+		p.save, 'tmpr.eps'
+
+		p=plot(imaginary(s),dim=[1200,400],buffer=1,color='b')
+		for i=0,_k-1 do !null=plot(imaginary(x[*,i]),/over)
+		p.save, 'tmpi.eps'
+
+
+		;x = imaginary(eGuess)
+		;U = x[*,1:nk-2]-x[*,0:nk-3]
+		;pInv = pseudo_inverse(u)
+		;c = -pInv # (x[*,nk-1]-x[*,nk-2])
+		;c = [c,1]
+		;s_im = x[*,1:nk-1] # c / total ( c )
+
+		x = imaginary(eGuess)
+		U = x[*,1:nk-1]-x[*,0:nk-2]
+		pInv = pseudo_inverse(u[*,0:nk-3])
+		c = -pInv # u[*,nk-2]
+		c = [c,1]
+		s_im = x[*,0:nk-2] # c / total ( c )
+
 		cdfId = ncdf_open(eGuessFileList[0],/write)
-		e_r_re_id = nCdf_varid(cdfId, 'e_r_re')
-		e_r_im_id = nCdf_varid(cdfId, 'e_r_im')
-		nCdf_varPut, cdfId, e_r_re_id, real_part(s) 
-		nCdf_varPut, cdfId, e_r_im_id, imaginary(s) 
+			e_r_re_id = nCdf_varid(cdfId, 'e_r_re')
+			e_r_im_id = nCdf_varid(cdfId, 'e_r_im')
+			nCdf_varPut, cdfId, e_r_re_id, s_re
+			nCdf_varPut, cdfId, e_r_im_id, s_im
 		nCdf_close, cdfId
+
+		pr=plot(s_re,color='b',thick=2,buffer=1, dim=[1200,400])
+		for k=0,nk-1 do begin
+			!null=plot(real_part(eGuess[*,k]),/over)
+		endfor
+		pi=plot(s_im,color='b',thick=2,buffer=1, dim=[1200,400])
+		for k=0,nk-1 do begin
+			!null=plot(imaginary(eGuess[*,k]),/over)
+		endfor
+		pr.save, 'er.png'
+		pi.save, 'ei.png'
+
+		stop
 
 	endfor
 

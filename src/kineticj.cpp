@@ -1055,7 +1055,7 @@ int main ( int argc, char **argv )
 		//if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
 
 		complex<float> _i (0.0,1.0);	
-		complex<float> wrf_c (wrf,wrf*0.01);
+		complex<float> wrf_c (wrf,wrf*0.00);
 		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
 
 		//cout << expWeight[i] << "  "<< hanningWeight[i] << endl;
