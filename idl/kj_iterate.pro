@@ -49,8 +49,8 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 			cd, runDir
 
 			kjCfg.eField_fName = 'data/rsfwc_1d_'+rsfwcCfg.runIdent+'.nc'
-			jGuessFileList[k] = 'data/kj_jP_'+kjCfg.runIdent+'.nc'
 			kjCfg.runIdent = thisIdent 
+			jGuessFileList[k] = 'data/kj_jP_'+kjCfg.runIdent+'.nc'
 
 			kj_write_kj_cfg, kjCfg, k
 
@@ -91,22 +91,15 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 		x = jGuess
 		_k = n_elements(x[0,*])
 
-		s = kj_mpe(x)
-		s_ = complex(spline(r,real_part(s),r_,10.0),spline(r,imaginary(s),r_,10.0))
+		s_re = kj_mpe(real_part(x))
+		s_im = kj_mpe(imaginary(x))
 
-		s_re = real_part(s)
-		s_im = imaginary(s)
+		s = complex(s_re,s_im)
+
+		s_ = complex(spline(r,s_re,r_,10.0),spline(r,s_im,r_,10.0))
 
 		s_re_ = real_part(s_)
 		s_im_ = imaginary(s_)
-
-		;p=plot(s,dim=[1200,400],buffer=1,color='b')
-		;for i=0,_k-1 do !null=plot(x[*,i],/over)
-		;p.save, 'tmpr.eps'
-
-		;p=plot(imaginary(s),dim=[1200,400],buffer=1,color='b')
-		;for i=0,_k-1 do !null=plot(imaginary(x[*,i]),/over)
-		;p.save, 'tmpi.eps'
 
 		print, 'Writing vector extrapolated jP to file ... ', jGuessFileList[0]
 		cdfId = ncdf_open(jGuessFileList[0],/write)
