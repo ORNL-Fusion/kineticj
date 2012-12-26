@@ -1,5 +1,7 @@
 function kj_mpe, x
 
+	type = size(x,/type)
+
 	N = n_elements(x[*,0])
 	_k = n_elements(x[0,*])
 
@@ -7,7 +9,7 @@ function kj_mpe, x
 	uk = x[*,_k-1]-x[*,_k-2]
 	k = n_elements(U[0,*])
 
-	c = dblArr(k+1)
+	c = make_array(k+1,type=type)
 
 	c[0:k-1] = la_least_squares(-transpose(U),-uk,method=3,status=stat,/double)
 
@@ -24,7 +26,7 @@ function kj_mpe, x
 
 	_gamma = c / alpha
 
-	s = dblArr(N)
+	s = make_array(N,type=type)
 
 	if alpha eq 0 then stop
 

@@ -59,9 +59,11 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 	jPt_prevIterate = complex ( jPt_re, jPt_im ) 
 	jPz_prevIterate = complex ( jPz_re, jPz_im ) 
 
-	jPr_prevIterate_ = complex(spline(r,jPr_re,r_,10.0),spline(r,jPr_im,r_,10.0))
-	jPt_prevIterate_ = complex(spline(r,jPt_re,r_,10.0),spline(r,jPt_im,r_,10.0))
-	jPz_prevIterate_ = complex(spline(r,jPz_re,r_,10.0),spline(r,jPz_im,r_,10.0))
+	spline_sigma = 0.01
+
+	jPr_prevIterate_ = complex(spline(r,jPr_re,r_,spline_sigma),spline(r,jPr_im,r_,spline_sigma))
+	jPt_prevIterate_ = complex(spline(r,jPt_re,r_,spline_sigma),spline(r,jPt_im,r_,spline_sigma))
+	jPz_prevIterate_ = complex(spline(r,jPz_re,r_,spline_sigma),spline(r,jPz_im,r_,spline_sigma))
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
@@ -153,8 +155,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 
 		; Create a jP for rsfcw_1d
 
-		jROut  = complex(spline(xf,real_part(j1),r,10.0),spline(xf,imaginary(j1),r,10.0))
-		jROut_ = complex(spline(xf,real_part(j1),r_,10.0),spline(xf,imaginary(j1),r_,10.0))
+		jROut  = complex(spline(xf,real_part(j1),r,spline_sigma),spline(xf,imaginary(j1),r,spline_sigma))
+		jROut_ = complex(spline(xf,real_part(j1),r_,spline_sigma),spline(xf,imaginary(j1),r_,spline_sigma))
 
 		jTOut = jROut*0
 		jTOut_ = jROut_*0
@@ -168,8 +170,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 
 		j1 = j1xc
 
-		jROut  = complex(spline(xf,real_part(j1),r,10.0),spline(xf,imaginary(j1),r,10.0))
-		jROut_ = complex(spline(xf,real_part(j1),r_,10.0),spline(xf,imaginary(j1),r_,10.0))
+		jROut  = complex(spline(xf,real_part(j1),r,spline_sigma),spline(xf,imaginary(j1),r,spline_sigma))
+		jROut_ = complex(spline(xf,real_part(j1),r_,spline_sigma),spline(xf,imaginary(j1),r_,spline_sigma))
 
 		jTOut = jROut*0
 		jTOut_ = jROut_*0

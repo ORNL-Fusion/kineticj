@@ -29,13 +29,14 @@ pro kj_iteration_error
 	nlevels=20
 	levels = (fIndGen(nLevels)+1)/(nLevels)*scale
 	colors = 255-(bytScl(levels,top=253)+1)
-	c1=contour(real_part(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=7,/fil)
+	c1=contour(real_part(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=7,/fil,/buffer)
 	!null=contour(-real_part(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=1,/fil,/over)
 
-	c2=contour(imaginary(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=7,/fil)
+	c2=contour(imaginary(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=7,/fil,/buffer)
 	!null=contour(-imaginary(jPerr),r,fIndGen(nIt),c_value=levels,rgb_indices=colors,rgb_table=1,/fil,/over)
 
-
+	c1.save, 'itErr_r.png', res='100'
+	c2.save, 'itErr_i.png', res='100'
 
 	stop
 end

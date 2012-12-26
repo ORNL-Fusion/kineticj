@@ -91,13 +91,17 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 		x = jGuess
 		_k = n_elements(x[0,*])
 
-		s_re = kj_mpe(real_part(x))
-		s_im = kj_mpe(imaginary(x))
+		;s_re = kj_mpe(real_part(x))
+		;s_im = kj_mpe(imaginary(x))
 
-		s = complex(s_re,s_im)
+		;s = complex(s_re,s_im)
+	
+		s = kj_mpe(x)
+		s_re = real_part(s)
+		s_im = imaginary(s)
 
-		s_ = complex(spline(r,s_re,r_,10.0),spline(r,s_im,r_,10.0))
-
+		spline_sigma = 0.01
+		s_ = complex(spline(r,s_re,r_,spline_sigma),spline(r,s_im,r_,spline_sigma))
 		s_re_ = real_part(s_)
 		s_im_ = imaginary(s_)
 
@@ -117,13 +121,10 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 		nCdf_close, cdfId
 
 		pr=plot(s_re,color='b',thick=6,buffer=1, dim=[1200,400],transp=50)
-		for k=0,nk-1 do begin
-			!null=plot(real_part(jGuess[*,k]),/over,transp=50)
-		endfor
+		for k=0,nk-1 do !null=plot(real_part(jGuess[*,k]),/over,transp=50)
+
 		pi=plot(s_im,color='b',thick=6,buffer=1, dim=[1200,400],transp=50)
-		for k=0,nk-1 do begin
-			!null=plot(imaginary(jGuess[*,k]),/over,transp=50)
-		endfor
+		for k=0,nk-1 do !null=plot(imaginary(jGuess[*,k]),/over,transp=50)
 
 		pr.save, 'jPr.png'
 		pi.save, 'jPi.png'
