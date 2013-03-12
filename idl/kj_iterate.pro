@@ -62,6 +62,9 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 
 		; Read the previous n guesses and apply vector extrapolation
 
+		mpe_it_dir = 'output/mpe_it_'+string(it,format='(i3.3)')
+		spawn, 'mkdir  ' + mpe_it_dir
+
 		jGuess = !null
 
 		for k=0,nk-1 do begin
@@ -69,6 +72,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 			cdfId = ncdf_open(jGuessFileList[k])
 
 				print, jGuessFileList[k]
+				spawn, 'cp '+jGuessFileList[k]+' '+mpe_it_dir+'/'
 
 				ncdf_varget, cdfId, 'r', r 
 				ncdf_varget, cdfId, 'r_', r_ 
@@ -105,6 +109,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 		s_re_ = real_part(s_)
 		s_im_ = imaginary(s_)
 
+
 		print, 'Writing vector extrapolated jP to file ... ', jGuessFileList[0]
 		cdfId = ncdf_open(jGuessFileList[0],/write)
 
@@ -120,14 +125,19 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 	
 		nCdf_close, cdfId
 
-		pr=plot(s_re,color='b',thick=6,buffer=1, dim=[1200,400],transp=50)
-		for k=0,nk-1 do !null=plot(real_part(jGuess[*,k]),/over,transp=50)
+		spawn, 'cp '+jGuessFileList[0]+' '+mpe_it_dir+'/mpe_extrapolated_jP.nc'
 
-		pi=plot(s_im,color='b',thick=6,buffer=1, dim=[1200,400],transp=50)
-		for k=0,nk-1 do !null=plot(imaginary(jGuess[*,k]),/over,transp=50)
+		pr=plot(s_re,color='b',thick=6,buffer=1, dim=[1200,400],transparency=50)
+		for k=0,nk-1 do !null=plot(real_part(jGuess[*,k]),/over,transparency=50)
+
+		pi=plot(s_im,color='b',thick=6,buffer=1, dim=[1200,400],transparency=50)
+		for k=0,nk-1 do !null=plot(imaginary(jGuess[*,k]),/over,transparency=50)
 
 		pr.save, 'jPr.png'
 		pi.save, 'jPi.png'
+
+		pr.save, 'jPr.eps'
+		pi.save, 'jPi.eps'
 
 		jPFile = file_baseName(jGuessFileList[0])
 
