@@ -86,17 +86,19 @@ pro kj_plot_orbit
 	nJp = n_elements(v1x_0[0,*,0])
 	nP = n_elements(v1x_0[0,0,*])
 
-	pNum = 2 
+	pNum = 100 
 
-	phaseNum = 1
+	phaseNum = 0
 	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum],title='v1x_0')
 	p=plot(t_0*freq,e1x_0[*,pNum],title='e1x_0')
-	kPar=22.11
+	kPar= 12;22.11
 	vPhs = wrf/kPar
 
-	s=surface(e1x_0,t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
-	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
-	s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs),yRange=[-2.3,-1.8])
+    p = plot3d(x_0[*,pNum],y_0[*,pNum],z_0[*,pNum])
+
+	s=surface(e1x_0,t_0*freq, reform(vx_0[0,*]/vPhs))
+	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs))
+	;s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs))
 
 	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")
 

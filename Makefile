@@ -46,9 +46,9 @@ NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G
 LFLAGS := -L$(NETCDFDIR)/lib -L$(LIBCONFIGDIR)/lib #-L${PAPI_DIR}/lib -L${HOME}/code/google-perftools/lib #-L$(CUDALIBDIR) 
 LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
-CPPFLAGS += -DDEBUGLEVEL=0
+CPPFLAGS += -DDEBUGLEVEL=1
 CPPFLAGS += -DUSEPAPI=0
-CPPFLAGS += -D__SAVE_ORBITS__=0
+CPPFLAGS += -D__SAVE_ORBITS__=1
 CPPFLAGS += -DLOWMEM=0
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0

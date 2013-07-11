@@ -476,7 +476,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			// Particle absorbing walls
 #if DEBUGLEVEL >= 1
-			cout<<"Particle absorbed"<<endl;
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec.front()<<endl;
+            cout<<"xVec.back():"<<xVec.back()<<endl;
 #endif
 			++stat;
 			return C3Vec(0,0,0);
@@ -1002,7 +1005,7 @@ int main ( int argc, char **argv )
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
 
-	int nRFCycles 		= cfg.lookup("nRFCycles");
+	float nRFCycles 		= cfg.lookup("nRFCycles");
 	int nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
 	float tRF 			= (2*_pi)/wrf;
 	float dtMin 		= -tRF/nStepsPerCycle;
@@ -1014,6 +1017,12 @@ int main ( int argc, char **argv )
 	int istat = 0;
 	int nV = particles_XYZ_0.size();
 
+#if DEBUGLEVEL >= 1
+    cout << "dtMin [s]: " << dtMin << endl;
+    cout << "nSteps: " << nSteps << endl;
+    cout << "tRF: " << tRF << endl;
+#endif
+	
 	vector<float> df0_dv(particles_XYZ_0.size());
 	for(int i=0;i<particles_XYZ_0.size();i++){
 			float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
@@ -1193,6 +1202,7 @@ int main ( int argc, char **argv )
 
 		//#pragma omp parallel for firstprivate(b0_CYL,r)
 		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
+		//for(int iP=100;iP<101;iP++) {
 
 			orbits_XYZ[iP].resize(nSteps);
 			orbits_v_XYZ[iP].resize(nSteps);
@@ -1212,9 +1222,13 @@ int main ( int argc, char **argv )
 						orbits_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].c1,this_particles_XYZ[iP].c2,this_particles_XYZ[iP].c3);
 						orbits_v_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].v_c1,this_particles_XYZ[iP].v_c2,this_particles_XYZ[iP].v_c3);
 						//if(iP==495||iP==496||iP==497) {
-						//		cout<<"p: "<<iP<<" i: "<<i<<" vx: "<<orbits_v_XYZ[iP][i].c1<<" x: "<<orbits_XYZ[iP][i].c1<<endl;
 						//}
 						rk4_move ( this_particles_XYZ[iP], dtMin, thisT[i], b0_CYL, r );
+						//cout<<"p: "<<iP<<" i: "<<i<<" vx: "<<orbits_v_XYZ[iP][i].c1
+                        //        <<" x: "<<orbits_XYZ[iP][i].c1<<endl;
+                        //cout<<"r.Front: "<<r.front()<<endl;
+                        //cout<<"r.Back: "<<r.back()<<endl;
+
 						if(this_particles_XYZ[iP].status==0) {
 							status[iP][i] = 0;
 							nStepsTaken[iP]++;
@@ -1517,7 +1531,7 @@ int main ( int argc, char **argv )
 
 					//if(jt==0)	
 					//cout<<"iP: "<<iP<<" \tv0: "<<particles_XYZ_0[iP].v_c1<<" \tv1: " << v1c[iP][jt][nSteps-1].c1 << endl;
-#if DEBUGLEVEL >= 1
+#if DEBUGLEVEL >= 2
 					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[iX][jt]: "<<j1x[iX][jt]<<endl;
 #endif
 			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
