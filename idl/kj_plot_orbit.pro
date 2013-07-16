@@ -96,8 +96,17 @@ pro kj_plot_orbit
 
     p = plot3d(x_0[*,pNum],y_0[*,pNum],z_0[*,pNum])
 
-	s=surface(e1x_0,t_0*freq, reform(vx_0[0,*]/vPhs))
-	s=surface(reform(v1x_0[*,0,*],nSteps,nP), t_0*freq, reform(vx_0[0,*]/vPhs))
+    SubSampleFac = 5
+    nT = n_elements(t_0)/SubSampleFac
+    nV = n_elements(vx_0[0,*])/SubSampleFac
+    ThisX = congrid(t_0*freq,nT)
+    ThisY = congrid(reform(vx_0[0,*]/vPhs),nV)
+
+    ThisSurf = congrid(e1x_0,nT,nV)
+	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
+
+    ThisSurf = congrid(reform(v1x_0[*,0,*],nSteps,nP),nT,nV)
+	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
 	;s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs))
 
 	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")

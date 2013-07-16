@@ -1,4 +1,4 @@
-pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
+pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, noIterate=noIterate
 
 	@constants
 
@@ -28,7 +28,9 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 		ncdf_varget, cdfId, 'r', r 
 		sheath = 0
 		if(strMatch(eField_fName,'*sheath*') $
-				or strMatch(eField_fName,'*mets*') or strMatch(eField_fName,'*single*'))then begin
+				or strMatch(eField_fName,'*mets*') $
+                or strMatch(eField_fName,'*single*') $
+                or strMatch(eField_fName,'*upshift*') )then begin
 			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
@@ -136,7 +138,10 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 			print, 'Im: ', ipL, ipR, ipL+ipR
 
 			j1[f] = complex ( rpL+rpR, ipL+ipR )
-		endif
+
+		endif else begin
+            j1[f] = j1xc[f]
+        endelse
 	
 	endfor
 
@@ -147,6 +152,9 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 	T_keV = 0.0001
    	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
 	print, "Debye Length: ", lambda_D
+
+
+if not keyword_set(noIterate) then begin
 
 	if not keyword_set(noTimeDep) then begin
 
@@ -168,7 +176,6 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 
 	endif else begin
 
-		j1 = j1xc
 
 		jROut  = complex(spline(xf,real_part(j1),r,spline_sigma),spline(xf,imaginary(j1),r,spline_sigma))
 		jROut_ = complex(spline(xf,real_part(j1),r_,spline_sigma),spline(xf,imaginary(j1),r_,spline_sigma))
@@ -243,11 +250,6 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 	endif
 	c_pb_re.save, 'kj_jP.png', resolution=72
 	endif
-	; Interpolate the E field to the Jp locations to calculated sig33
-
-	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
-
-	sig33 = j1/E_at_Jp
 
 	; Write kj_jP in file for next iterate
 
@@ -299,4 +301,14 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
 
 	nCdf_close, nc_id
+
+endif
+
+	; Interpolate the E field to the Jp locations to calculated sig33
+	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
+
+	sig33 = j1/E_at_Jp
+
+    print, 'Sig33: ', sig33
+stop
 end

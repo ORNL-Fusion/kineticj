@@ -3,12 +3,26 @@
 
 pro kj_create_upshift_input
 
+    @constants    
 
+    FieldsOutFileName = 'data/kj_upshift.nc'
     f_Hz = 30e6
-    bPolFactor = 1.0
+    n_e = 1.1d14
+    bPolFactor = 0.001
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
+    E_keV = 0.00005
+    Np = 500
+    AtomicZ = -1
 
-    c0_CYL = [1.1,0.0,0.0]
+    ParticlesOutFileName = 'data/f_E_keV_'+string(E_keV,format='(f3.1)')+$
+            '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
+
+    m = 9
+    n = 21
+    nPhi = 12 
+
+    c0_CYL = [1.0,0.0,0.3]
+
     c0_XYZ = Coords_CYL_to_XYZ(c0_CYL)
     dS = 0.01
     dir = 1
@@ -49,6 +63,7 @@ pro kj_create_upshift_input
 
 
     nS = n_elements(s_Coord)
+    StartIndex = TraceNPts-1
 
     BMag = sqrt(total(B_XYZ^2,1))
     BMag_CYL = sqrt(total(B_CYL^2,1))
@@ -63,10 +78,10 @@ pro kj_create_upshift_input
             depth_cue = [0,2], /perspective )
 
     nFrames = 48 
-    for n = 0, nFrames*2/3-1 do begin
+    for _n = 0, nFrames*2/3-1 do begin
             thisR = g.rLim
             thisZ = g.zLim
-            thisT = 360./(nFrames-1)*n+fltArr(n_elements(thisR))
+            thisT = 360./(nFrames-1)*_n+fltArr(n_elements(thisR))
             Frame_Cyl = transpose([[thisT[*]],[thisR[*]],[thisZ[*]]])
             Frame_Rec = cv_coord(from_cylin=Frame_Cyl,/degrees,/to_rect)
             pF = plot3d((Frame_Rec[0,*])[*],(Frame_Rec[1,*])[*],(Frame_Rec[2,*])[*],/over,thick=5,transparency=70)
@@ -74,10 +89,6 @@ pro kj_create_upshift_input
 
 
     ; Create a Fourier basis function of given m,n,nPhi
-
-    m = 3
-    n = 1
-    nPhi = 12 
 
     nR = 129
     nZ = 257
@@ -187,6 +198,56 @@ pro kj_create_upshift_input
 
     endfor
 
+    w    = 2*!pi*f_Hz
+    E_eV = E_keV * 1e3
+    b0   = bMag_CYL[StartIndex]
+    vTh  = sqrt(2d0*E_eV*_e/me)
+    wpe  = sqrt(n_e*_e^2/(me*e0))
+    wce  = abs(AtomicZ)*_e*b0/me
+    kPar = kb[StartIndex]
+    vPhs = w/kPar
+    lambdaPar = 2*!Pi/kPar
+
+    kPer = 0
+    lambda=0
+    In = 1
+    sum = !null
+    for l=0,0 do begin
+    	zeta_n=(w-l*wce)/(kPar*vTh)
+
+        print, 'Z function argument for Mathematica: ', zeta_n
+
+        ; From mathematica Zp worksheet function since I 
+        ; don't have a reliable Z function routine for IDL.
+        ; Perhaps I should get one!
+
+        if E_keV lt 0.0001 then begin
+            print, 'Using COLD Zp_n'
+            Zp_n_0 = complex(7.11e-6,0)
+        endif else begin
+            print, 'Using 0.5 keV Zp_n'
+            Zp_n_0 = complex(0.4207,1.03)
+        endelse
+
+    	if l eq 0 then Zp_n = Zp_n_0 
+    
+    	if sum then begin
+    		sum = sum + In*zeta_n*Zp_n
+    	endif else begin
+    		sum = In*zeta_n*Zp_n
+    	endelse
+    endfor
+
+    K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kPar*vTh) * sum 
+    II = complex(0,1)
+    sig33 = -(K3 - 1d0)*II*w*e0
+    
+    stixP = 1-wpe^2/w^2
+    sig33_cold = -(stixP-1d0)*II*w*e0
+
+    print, 'Analytic Sig33(k): ',sig33
+    print, 'Analytic Sig33(cold)', sig33_cold
+
     p = plot(s_Coord, BMag, layout=[1,3,1], thick = 2, color='b')
     p = plot(s_Coord, real_part(Eb), layout=[1,3,2], /current, thick=2)
     p = plot(s_Coord, imaginary(Eb), layout=[1,3,2], /over, thick=2, color='r', transparency=50)
@@ -194,7 +255,7 @@ pro kj_create_upshift_input
 
     ; Write the input file
 
-    nc_id = nCdf_create ('data/kj_upshift.nc', /clobber )
+    nc_id = nCdf_create ( FieldsOutFileName, /clobber )
 
 	nCdf_control, nc_id, /fill
 	
@@ -248,6 +309,14 @@ pro kj_create_upshift_input
 
 nCdf_close, nc_id
 
+
+    create_test_particle_f, $
+            /weighted_maxwellian_XYZ, $
+            energy_keV = E_keV, $
+            density_m3 = n_e, $
+            rsfwc_1d = FieldsOutFileName, $
+            OutputFileName = ParticlesOutFileName, $
+            n_particles = Np
 
 
     stop

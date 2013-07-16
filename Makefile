@@ -46,7 +46,7 @@ NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G
 LFLAGS := -L$(NETCDFDIR)/lib -L$(LIBCONFIGDIR)/lib #-L${PAPI_DIR}/lib -L${HOME}/code/google-perftools/lib #-L$(CUDALIBDIR) 
 LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
 
-CPPFLAGS += -DDEBUGLEVEL=1
+CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=1
 CPPFLAGS += -DLOWMEM=0
