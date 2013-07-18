@@ -8,7 +8,7 @@ pro kj_create_upshift_input
     FieldsOutFileName = 'data/kj_upshift.nc'
     f_Hz = 30e6
     n_e = 1.1d14
-    bPolFactor = 1.00
+    bPolFactor = 1.0
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
     E_keV = 0.5
     Np = 500
@@ -20,7 +20,7 @@ pro kj_create_upshift_input
 
     m = 45
     n = 21
-    nPhi = 12 
+    nPhi = -12 
 
     c0_CYL = [1.1,0.0,0.0]
 
@@ -63,7 +63,8 @@ pro kj_create_upshift_input
 
 
     nS = n_elements(s_Coord)
-    StartIndex = TraceNPts-1
+	SPoint = 3.5
+    StartIndex = where(abs(s_Coord-SPoint) eq min(abs(s_Coord-SPoint)))
 
     BMag = sqrt(total(B_XYZ^2,1))
     BMag_CYL = sqrt(total(B_CYL^2,1))
@@ -133,20 +134,20 @@ pro kj_create_upshift_input
     Et_2d = E * btu_2d
     Ez_2d = E * bzu_2d
 
-    c = contour ( Er_2d, r, z, rgb_table = 70, /fill, aspect_ratio = 1.0, layout=[3,1,1], current=0 )
+    c = contour ( Er_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,1], current=0 )
     p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
     p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
-    c = contour ( Et_2d, r, z, rgb_table = 70, /fill, aspect_ratio = 1.0, layout=[3,1,2], current=1 )
+    c = contour ( Et_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,2], current=1 )
     p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
     p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
-    c = contour ( Ez_2d, r, z, rgb_table = 70, /fill, aspect_ratio = 1.0, layout=[3,1,3], current=1 )
+    c = contour ( Ez_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,3], current=1 )
     p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
     p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
 
-    c = contour ( E, r, z, rgb_table = 70, /fill, aspect_ratio = 1.0 )
+    c = contour ( E, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0 )
     p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
     p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
@@ -178,7 +179,6 @@ pro kj_create_upshift_input
                 this_k_XYZ[1]*b_XYZ[1,s]/bMag[s] + $
                 this_k_XYZ[2]*b_XYZ[2,s]/bMag[s]
 
-        ;kMagAlongS[s] = n*this_x + m*this_y + nPhi*this_t
         kDotR_AlongS[s] =  $
                  c_CYL[0,s]*this_k_CYL[0] $
                 +c_CYL[1,s]*this_k_CYL[1]*c_CYL[0,s]$
@@ -237,8 +237,15 @@ pro kj_create_upshift_input
             Zp_n_0 = complex(7.11e-6,0)
         endif else begin
             print, 'Using 0.5 keV Zp_n'
-            if kPar lt 0 then Zp_n_0 = complex(0.4207,1.03)
-            if kPar gt 0 then Zp_n_0 = complex(0.4207,-1.03)
+
+			zp_re = -1.102 ; s = -0.5, k~27
+			zp_im = -1.403 
+
+			zp_re = -1.102 ; s = +3.5, k~0
+			zp_im = -1.403 
+
+            if kPar lt 0 then Zp_n_0 = complex(zp_re,+zp_im)
+            if kPar gt 0 then Zp_n_0 = complex(zp_re,-zp_im)
         endelse
 
     	if l eq 0 then Zp_n = Zp_n_0 
