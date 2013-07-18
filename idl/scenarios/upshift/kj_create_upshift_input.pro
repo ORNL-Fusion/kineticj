@@ -8,24 +8,24 @@ pro kj_create_upshift_input
     FieldsOutFileName = 'data/kj_upshift.nc'
     f_Hz = 30e6
     n_e = 1.1d14
-    bPolFactor = 0.001
+    bPolFactor = 1.00
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
-    E_keV = 0.00005
+    E_keV = 0.5
     Np = 500
     AtomicZ = -1
+    Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
 
     ParticlesOutFileName = 'data/f_E_keV_'+string(E_keV,format='(f3.1)')+$
             '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
 
-    m = 9
+    m = 45
     n = 21
     nPhi = 12 
 
-    c0_CYL = [1.0,0.0,0.3]
+    c0_CYL = [1.1,0.0,0.0]
 
     c0_XYZ = Coords_CYL_to_XYZ(c0_CYL)
     dS = 0.01
-    dir = 1
     TraceNPts = 2000
 
     g = ReadGEqdsk ( EqdskFile, $
@@ -53,11 +53,11 @@ pro kj_create_upshift_input
             FieldLineTraceDS = dS, $
             FieldLineTraceNSteps = TraceNPts ) 
 
-    B_XYZ = [ [reverse(B_AlongFieldLine_XYZ[*,0:TraceNPts-1],2)], [B_AlongFieldLine_XYZ_[*,1:TraceNPts-1]] ]
-    B_CYL = [ [reverse(B_AlongFieldLine_CYL[*,0:TraceNPts-1],2)], [B_AlongFieldLine_CYL_[*,1:TraceNPts-1]] ]
+    B_XYZ = [ [reverse(B_AlongFieldLine_XYZ_[*,0:TraceNPts-1],2)], [B_AlongFieldLine_XYZ[*,1:TraceNPts-1]] ]
+    B_CYL = [ [reverse(B_AlongFieldLine_CYL_[*,0:TraceNPts-1],2)], [B_AlongFieldLine_CYL[*,1:TraceNPts-1]] ]
 
-    c_XYZ = [ [reverse(FieldLine_XYZ[*,0:TraceNPts-1],2)], [FieldLine_XYZ_[*,1:TraceNPts-1]] ]
-    c_CYL = [ [reverse(FieldLine_CYL[*,0:TraceNPts-1],2)], [FieldLine_CYL_[*,1:TraceNPts-1]] ]
+    c_XYZ = [ [reverse(FieldLine_XYZ_[*,0:TraceNPts-1],2)], [FieldLine_XYZ[*,1:TraceNPts-1]] ]
+    c_CYL = [ [reverse(FieldLine_CYL_[*,0:TraceNPts-1],2)], [FieldLine_CYL[*,1:TraceNPts-1]] ]
 
     s_Coord = (fIndGen(TraceNpts*2-1)-TraceNPts+1)*dS 
 
@@ -151,25 +151,48 @@ pro kj_create_upshift_input
     p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
     kr = 2*!pi*n/(rMax-rMin)
-    kt = nPhi/c0_CYL[0]
     kz = 2*!pi*m/(zMax-zMin)
 
-    k0_CYL = [kr,kt,kz]
-    k0_XYZ = vector_CYL_to_XYZ(c0_CYL,k0_CYL)
-    print, 'k0_CYL: ', k0_CYL
-
+    kDotR_AlongS  = fltArr(nS)
     kb = fltArr(nS)
     Eb = complexArr(nS)
+    Eb_check = complexArr(nS)
     for s=0,nS-1 do begin
 
         this_r = c_CYL[0,s]
         this_t = c_CYL[1,s]
         this_z = c_CYL[2,s]
 
+        this_kr = kr
+        ;this_kt = Theta_Toroidal_Sign * nPhi/this_r
+        this_kt = nPhi/this_r
+        this_kz = kz
+
+        this_k_CYL = [this_kr,this_kt,this_kz]
+        this_k_XYZ = vector_CYL_to_XYZ(c_CYL[*,s],this_k_CYL)
+
         this_x = (this_r-rMin)/(rMax-rMin)*2*!pi
         this_y = (this_z-zMin)/(zMax-zMin)*2*!pi
 
-        this_E = exp(ii*(n*this_x + m*this_y + nPhi*this_t))
+        kb[s] = this_k_XYZ[0]*b_XYZ[0,s]/bMag[s] + $
+                this_k_XYZ[1]*b_XYZ[1,s]/bMag[s] + $
+                this_k_XYZ[2]*b_XYZ[2,s]/bMag[s]
+
+        ;kMagAlongS[s] = n*this_x + m*this_y + nPhi*this_t
+        kDotR_AlongS[s] =  $
+                 c_CYL[0,s]*this_k_CYL[0] $
+                +c_CYL[1,s]*this_k_CYL[1]*c_CYL[0,s]$
+                +c_CYL[2,s]*this_k_CYL[2]
+
+        ;this_E = exp(ii*n*this_x)*exp(ii*m*this_y)*exp(ii*nPhi*this_t)
+        ;this_E = exp(ii*(n*this_x+m*this_y+nPhi*this_t))
+        ;this_E = exp(ii*(c_CYL[0,s]*this_kr+c_CYL[1,s]*nPhi+c_CYL[2,s]*this_kz))
+        ;this_E = exp(ii*( $
+        ;         c_CYL[0,s]*this_k_CYL[0] $
+        ;        +c_CYL[1,s]*this_k_CYL[1]*c_CYL[0,s]$
+        ;        +c_CYL[2,s]*this_k_CYL[2] $
+        ;        ))
+        this_E = exp(ii*kDotR_AlongS[s])
 
         this_bu_CYL = b_CYL[*,s]/bMag_CYL[s]
 
@@ -179,22 +202,10 @@ pro kj_create_upshift_input
 
         this_E_CYL = [this_Er,this_Et,this_Ez]
 
+        Eb_check[s] = this_E
         Eb[s] = this_bu_CYL[0]*this_E_CYL[0] $
            + this_bu_CYL[1]*this_E_CYL[1] $
            + this_bu_CYL[2]*this_E_CYL[2]  
-
-        ;this_bu_mag = sqrt(total(this_bu_CYL^2))
-        ;this_E_mag = sqrt(total(this_E_CYL^2)) 
-        ;print, this_bu_mag, abs(Eb[s]), abs(this_E_mag)
-
-        this_kt = nPhi/this_r
-
-        this_k_CYL = [kr,this_kt,kz]
-        this_k_XYZ = vector_CYL_to_XYZ(c_CYL[*,s],this_k_CYL)
-
-        kb[s] = this_k_XYZ[0]*b_XYZ[0,s]/bMag[s] + $
-                this_k_XYZ[1]*b_XYZ[1,s]/bMag[s] + $
-                this_k_XYZ[2]*b_XYZ[2,s]/bMag[s]
 
     endfor
 
@@ -226,7 +237,8 @@ pro kj_create_upshift_input
             Zp_n_0 = complex(7.11e-6,0)
         endif else begin
             print, 'Using 0.5 keV Zp_n'
-            Zp_n_0 = complex(0.4207,1.03)
+            if kPar lt 0 then Zp_n_0 = complex(0.4207,1.03)
+            if kPar gt 0 then Zp_n_0 = complex(0.4207,-1.03)
         endelse
 
     	if l eq 0 then Zp_n = Zp_n_0 
@@ -248,10 +260,15 @@ pro kj_create_upshift_input
     print, 'Analytic Sig33(k): ',sig33
     print, 'Analytic Sig33(cold)', sig33_cold
 
-    p = plot(s_Coord, BMag, layout=[1,3,1], thick = 2, color='b')
-    p = plot(s_Coord, real_part(Eb), layout=[1,3,2], /current, thick=2)
-    p = plot(s_Coord, imaginary(Eb), layout=[1,3,2], /over, thick=2, color='r', transparency=50)
-    p = plot(s_Coord, kb, layout=[1,3,3], /current, thick=2, color='g')
+    p = plot(s_Coord, BMag, layout=[1,4,1], thick = 2, color='b', title='bMag Along S')
+    p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S')
+    p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, thick=2, color='r', transparency=50)
+
+    p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, thick=4, title='ePar Along S', transparency=70, lineStyle='--')
+    p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, thick=4, color='r', transparency=70, lineStyle='--')
+
+    p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, thick=2, color='purple',title='kDotR Along S')
+    p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S')
 
     ; Write the input file
 
