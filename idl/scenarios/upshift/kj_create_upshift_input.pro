@@ -1,5 +1,6 @@
 @xyz_cyl 
 @interpb
+@kj_zfunction
 
 pro kj_create_upshift_input
 
@@ -228,27 +229,29 @@ pro kj_create_upshift_input
 
         print, 'Z function argument for Mathematica: ', zeta_n
 
-        ; From mathematica Zp worksheet function since I 
-        ; don't have a reliable Z function routine for IDL.
-        ; Perhaps I should get one!
+		Z_n = kj_zfunction(zeta_n,Zp=Zp_n)
 
-        if E_keV lt 0.0001 then begin
-            print, 'Using COLD Zp_n'
-            Zp_n_0 = complex(7.11e-6,0)
-        endif else begin
-            print, 'Using 0.5 keV Zp_n'
+        ;; From mathematica Zp worksheet function since I 
+        ;; don't have a reliable Z function routine for IDL.
+        ;; Perhaps I should get one!
 
-			zp_re = -1.102 ; s = -0.5, k~27
-			zp_im = -1.403 
+        ;if E_keV lt 0.0001 then begin
+        ;    print, 'Using COLD Zp_n'
+        ;    Zp_n_0 = complex(7.11e-6,0)
+        ;endif else begin
+        ;    print, 'Using 0.5 keV Zp_n'
 
-			zp_re = -1.102 ; s = +3.5, k~0
-			zp_im = -1.403 
+		;	zp_re = -1.102 ; s = -0.5, k~27
+		;	zp_im = -1.403 
 
-            if kPar lt 0 then Zp_n_0 = complex(zp_re,+zp_im)
-            if kPar gt 0 then Zp_n_0 = complex(zp_re,-zp_im)
-        endelse
+		;	zp_re = -1.102 ; s = +3.5, k~0
+		;	zp_im = -1.403 
 
-    	if l eq 0 then Zp_n = Zp_n_0 
+        ;    if kPar lt 0 then Zp_n_0 = complex(zp_re,+zp_im)
+        ;    if kPar gt 0 then Zp_n_0 = complex(zp_re,-zp_im)
+        ;endelse
+		;
+    	;if l eq 0 then Zp_n = Zp_n_0 
     
     	if sum then begin
     		sum = sum + In*zeta_n*Zp_n
