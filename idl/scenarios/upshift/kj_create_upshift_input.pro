@@ -11,7 +11,7 @@ pro kj_create_upshift_input
     n_e = 1.1d14
     bPolFactor = 1.0
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
-    E_keV = 0.5
+    E_keV = 2.0
     Np = 500
     AtomicZ = -1
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
@@ -19,11 +19,11 @@ pro kj_create_upshift_input
     ParticlesOutFileName = 'data/f_E_keV_'+string(E_keV,format='(f3.1)')+$
             '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
 
-    m = 45
-    n = 21
+    m = 15
+    n = 81
     nPhi = -12 
 
-    c0_CYL = [1.1,0.0,0.0]
+    c0_CYL = [1.2,0.0,0.0]
 
     c0_XYZ = Coords_CYL_to_XYZ(c0_CYL)
     dS = 0.01
@@ -64,8 +64,15 @@ pro kj_create_upshift_input
 
 
     nS = n_elements(s_Coord)
-	SPoint = 3.5
-    StartIndex = where(abs(s_Coord-SPoint) eq min(abs(s_Coord-SPoint)))
+	SPointsMin = -3.0
+	SPointsMax = +5.0
+	SPointsN = 40
+	SPoints = fIndGen(SPointsN)/(SPointsN-1)*(SPointsMax-SPointsMin)+SPointsMin
+
+	SPointsIndex = IntArr(SPointsN)
+	for i=0,SPointsN-1 do begin
+    	SPointsIndex[i] = where(abs(s_Coord-SPoints[i]) eq min(abs(s_Coord-SPoints[i])))
+	endfor
 
     BMag = sqrt(total(B_XYZ^2,1))
     BMag_CYL = sqrt(total(B_CYL^2,1))
@@ -210,75 +217,65 @@ pro kj_create_upshift_input
 
     endfor
 
-    w    = 2*!pi*f_Hz
-    E_eV = E_keV * 1e3
-    b0   = bMag_CYL[StartIndex]
-    vTh  = sqrt(2d0*E_eV*_e/me)
-    wpe  = sqrt(n_e*_e^2/(me*e0))
-    wce  = abs(AtomicZ)*_e*b0/me
-    kPar = kb[StartIndex]
-    vPhs = w/kPar
-    lambdaPar = 2*!Pi/kPar
 
-    kPer = 0
-    lambda=0
-    In = 1
-    sum = !null
-    for l=0,0 do begin
-    	zeta_n=(w-l*wce)/(kPar*vTh)
+	SPoints_sig33 = ComplexArr(SPointsN)
+	SPoints_sig33_cold = ComplexArr(SPointsN)
 
-        print, 'Z function argument for Mathematica: ', zeta_n
+	for Pt=0,SPointsN-1 do begin
 
-		Z_n = kj_zfunction(zeta_n,Zp=Zp_n)
+    	w    = 2*!pi*f_Hz
+    	E_eV = E_keV * 1e3
+    	b0   = bMag_CYL[SPointsIndex[Pt]]
+    	vTh  = sqrt(2d0*E_eV*_e/me)
+    	wpe  = sqrt(n_e*_e^2/(me*e0))
+    	wce  = abs(AtomicZ)*_e*b0/me
+    	kPar = kb[SPointsIndex[Pt]]
+    	vPhs = w/kPar
+    	lambdaPar = 2*!Pi/kPar
+		print, 'vTh distance: ', vTh * (1/f_Hz)
 
-        ;; From mathematica Zp worksheet function since I 
-        ;; don't have a reliable Z function routine for IDL.
-        ;; Perhaps I should get one!
+    	kPer = 0
+    	lambda=0
+    	In = 1
+    	sum = !null
+    	for l=0,0 do begin
+    		zeta_n=(w-l*wce)/(kPar*vTh)
 
-        ;if E_keV lt 0.0001 then begin
-        ;    print, 'Using COLD Zp_n'
-        ;    Zp_n_0 = complex(7.11e-6,0)
-        ;endif else begin
-        ;    print, 'Using 0.5 keV Zp_n'
+    	    print, 'Z function argument for Mathematica: ', zeta_n
 
-		;	zp_re = -1.102 ; s = -0.5, k~27
-		;	zp_im = -1.403 
+			Z_n = kj_zfunction(zeta_n,Zp=Zp_n)
 
-		;	zp_re = -1.102 ; s = +3.5, k~0
-		;	zp_im = -1.403 
+    		if sum then begin
+    			sum = sum + In*zeta_n*Zp_n
+    		endif else begin
+    			sum = In*zeta_n*Zp_n
+    		endelse
+    	endfor
 
-        ;    if kPar lt 0 then Zp_n_0 = complex(zp_re,+zp_im)
-        ;    if kPar gt 0 then Zp_n_0 = complex(zp_re,-zp_im)
-        ;endelse
-		;
-    	;if l eq 0 then Zp_n = Zp_n_0 
-    
-    	if sum then begin
-    		sum = sum + In*zeta_n*Zp_n
-    	endif else begin
-    		sum = In*zeta_n*Zp_n
-    	endelse
-    endfor
+    	K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kPar*vTh) * sum 
+    	II = complex(0,1)
+    	SPoints_sig33[Pt] = -(K3 - 1d0)*II*w*e0
+    	
+    	stixP = 1-wpe^2/w^2
+    	SPoints_sig33_cold[Pt] = -(stixP-1d0)*II*w*e0
 
-    K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kPar*vTh) * sum 
-    II = complex(0,1)
-    sig33 = -(K3 - 1d0)*II*w*e0
-    
-    stixP = 1-wpe^2/w^2
-    sig33_cold = -(stixP-1d0)*II*w*e0
+	endfor
 
-    print, 'Analytic Sig33(k): ',sig33
-    print, 'Analytic Sig33(cold)', sig33_cold
+	save, SPoints, SPoints_sig33, SPoints_sig33_cold, FileName='AnalyticSig33.sav'
+
+   	print, 'Analytic Sig33(k): ',SPoints_sig33
+   	print, 'Analytic Sig33(cold)', SPoints_sig33_cold
+
 
     p = plot(s_Coord, BMag, layout=[1,4,1], thick = 2, color='b', title='bMag Along S')
-    p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S')
+    p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S',xRange=[-3,5])
     p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, thick=2, color='r', transparency=50)
 
     p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, thick=4, title='ePar Along S', transparency=70, lineStyle='--')
     p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, thick=4, color='r', transparency=70, lineStyle='--')
 
     p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, thick=2, color='purple',title='kDotR Along S')
-    p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S')
+    p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S',xrange=[-3,5])
 
     ; Write the input file
 

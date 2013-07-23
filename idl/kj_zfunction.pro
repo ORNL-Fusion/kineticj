@@ -13,6 +13,12 @@ function kj_zfunction, arg, Zp=Zp
 
 	ncdf_close, cdfId
 
+	if arg gt max(arg_re) or arg lt min(arg_re) then begin
+			print, 'ERROR: Z-function argument off the end of the interpolation table.'
+			print, 'ERROR: Please re-run the mathematica for appropriate range.'
+			stop
+	endif
+
 	this_Z_re = interpol(Z_re,arg_re,real_part(arg),/spline)
 	this_Z_im = interpol(Z_im,arg_re,real_part(arg),/spline)
 	this_Zp_re = interpol(Zp_re,arg_re,real_part(arg),/spline)

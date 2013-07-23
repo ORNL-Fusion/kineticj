@@ -310,5 +310,13 @@ endif
 	sig33 = j1/E_at_Jp
 
     print, 'Sig33: ', sig33
+
+	restore, 'AnalyticSig33.sav'
+	p=plot(SPoints, SPoints_sig33,thick=2)
+	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',LineStyle='--',thick=2)
+	p=plot(xf, sig33,/over,thick=4,transparency=30)
+	p=plot(xf, imaginary(sig33),/over,thick=4,color='r',LineStyle='--',transparency=30)
+
 stop
+
 end

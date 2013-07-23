@@ -35,7 +35,7 @@ MODULES := src include
 
 INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
 		-I$(NETCDFINCDIR) #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
-OPENMPFLAGS := #-fopenmp
+OPENMPFLAGS := -fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
 CFLAGS := 
@@ -48,7 +48,7 @@ LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o 
 
 CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DUSEPAPI=0
-CPPFLAGS += -D__SAVE_ORBITS__=1
+CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=0
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
