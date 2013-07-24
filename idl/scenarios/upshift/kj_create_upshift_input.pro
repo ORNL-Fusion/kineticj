@@ -2,7 +2,7 @@
 @interpb
 @kj_zfunction
 
-pro kj_create_upshift_input
+pro kj_create_upshift_input, NoPlot=NoPlot
 
     @constants    
 
@@ -66,7 +66,7 @@ pro kj_create_upshift_input
     nS = n_elements(s_Coord)
 	SPointsMin = -3.0
 	SPointsMax = +5.0
-	SPointsN = 40
+	SPointsN = 400
 	SPoints = fIndGen(SPointsN)/(SPointsN-1)*(SPointsMax-SPointsMin)+SPointsMin
 
 	SPointsIndex = IntArr(SPointsN)
@@ -80,22 +80,26 @@ pro kj_create_upshift_input
     print, 'Safety Factor: ', SafetyFactor, SafetyFactor_
 
     vColors = BytScl(BMag, top=253)+1
-    p = plot3d((c_XYZ[0,*])[*],(c_XYZ[1,*])[*],(c_XYZ[2,*])[*],$
-            thick = 3.0, $
-            aspect_ratio = 1.0, aspect_z = 1.0, $
-            rgb_table = 7, vert_colors = vColors,$
-            depth_cue = [0,2], /perspective )
 
-    nFrames = 48 
-    for _n = 0, nFrames*2/3-1 do begin
-            thisR = g.rLim
-            thisZ = g.zLim
-            thisT = 360./(nFrames-1)*_n+fltArr(n_elements(thisR))
-            Frame_Cyl = transpose([[thisT[*]],[thisR[*]],[thisZ[*]]])
-            Frame_Rec = cv_coord(from_cylin=Frame_Cyl,/degrees,/to_rect)
-            pF = plot3d((Frame_Rec[0,*])[*],(Frame_Rec[1,*])[*],(Frame_Rec[2,*])[*],/over,thick=5,transparency=70)
-    endfor
+    if not keyword_set(NoPlot) then begin
 
+		p = plot3d((c_XYZ[0,*])[*],(c_XYZ[1,*])[*],(c_XYZ[2,*])[*],$
+    	        thick = 3.0, $
+    	        aspect_ratio = 1.0, aspect_z = 1.0, $
+    	        rgb_table = 7, vert_colors = vColors,$
+    	        depth_cue = [0,2], /perspective )
+
+    	nFrames = 48 
+    	for _n = 0, nFrames*2/3-1 do begin
+    	        thisR = g.rLim
+    	        thisZ = g.zLim
+    	        thisT = 360./(nFrames-1)*_n+fltArr(n_elements(thisR))
+    	        Frame_Cyl = transpose([[thisT[*]],[thisR[*]],[thisZ[*]]])
+    	        Frame_Rec = cv_coord(from_cylin=Frame_Cyl,/degrees,/to_rect)
+    	        pF = plot3d((Frame_Rec[0,*])[*],(Frame_Rec[1,*])[*],(Frame_Rec[2,*])[*],/over,thick=5,transparency=70)
+    	endfor
+
+	endif
 
     ; Create a Fourier basis function of given m,n,nPhi
 
@@ -142,22 +146,24 @@ pro kj_create_upshift_input
     Et_2d = E * btu_2d
     Ez_2d = E * bzu_2d
 
-    c = contour ( Er_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,1], current=0 )
-    p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
-    p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
+	if not keyword_set(NoPlot) then begin
+    	c = contour ( Er_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,1], current=0 )
+    	p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
+    	p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
-    c = contour ( Et_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,2], current=1 )
-    p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
-    p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
+    	c = contour ( Et_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,2], current=1 )
+    	p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
+    	p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
-    c = contour ( Ez_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,3], current=1 )
-    p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
-    p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
+    	c = contour ( Ez_2d, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0, layout=[3,1,3], current=1 )
+    	p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
+    	p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
 
 
-    c = contour ( E, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0 )
-    p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
-    p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
+    	c = contour ( E, r, z, rgb_table = 17, /fill, aspect_ratio = 1.0 )
+    	p = plot ( g.rlim, g.zLim, /over, thick = 3, transparency=70)
+    	p = plot ( c_CYL[0,*],c_CYL[2,*], /over, thick = 3, rgb_table =  7, vert_colors = vColors )  
+	endif
 
     kr = 2*!pi*n/(rMax-rMin)
     kz = 2*!pi*m/(zMax-zMin)
@@ -261,21 +267,26 @@ pro kj_create_upshift_input
 
 	endfor
 
-	save, SPoints, SPoints_sig33, SPoints_sig33_cold, FileName='AnalyticSig33.sav'
+	save, SPoints, SPoints_sig33, SPoints_sig33_cold, $
+			s_Coord, BMag, Eb, kb, $
+			FileName='AnalyticSig33.sav'
 
    	print, 'Analytic Sig33(k): ',SPoints_sig33
    	print, 'Analytic Sig33(cold)', SPoints_sig33_cold
 
+	if not keyword_set(NoPlot) then begin
 
-    p = plot(s_Coord, BMag, layout=[1,4,1], thick = 2, color='b', title='bMag Along S')
-    p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S',xRange=[-3,5])
-    p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, thick=2, color='r', transparency=50)
+    	p = plot(s_Coord, BMag, layout=[1,4,1], thick = 2, color='b', title='bMag Along S')
+    	p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S',xRange=[-3,5])
+    	p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, thick=2, color='r', transparency=50)
 
-    p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, thick=4, title='ePar Along S', transparency=70, lineStyle='--')
-    p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, thick=4, color='r', transparency=70, lineStyle='--')
+    	p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, thick=4, title='ePar Along S', transparency=70, lineStyle='--')
+    	p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, thick=4, color='r', transparency=70, lineStyle='--')
 
-    p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, thick=2, color='purple',title='kDotR Along S')
-    p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S',xrange=[-3,5])
+    	p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, thick=2, color='purple',title='kDotR Along S')
+    	p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S',xrange=[-3,5])
+
+	endif
 
     ; Write the input file
 
