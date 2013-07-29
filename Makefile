@@ -3,12 +3,22 @@
 
 NAME := bin/kineticj
 
-# Defaults to dlg-hp.ornl.gov
+LFLAGS := 
+LIBS :=  
+INCLUDEFLAGS :=  
 
 GCCDIR :=  
-ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFDIR := ${HOME}/code/netcdf/gnu_4.7.0# must be an --enable-cxx-4 dist
-NETCDFINCDIR := ${NETCDFDIR}/include
+
+ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
+INCLUDEFLAGS += -I${LIBCONFIG_DIR}/lib
+LIBS += 
+LFLAGS +=
+
+NETCDF_DIR := /usr/include
+INCLUDEFLAGS += -I$(NETCDFINCDIR)
+LIBS += -lnetcdf_c++4 -lconfig++
+LFLAGS +=
+
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
@@ -33,8 +43,6 @@ endif
 
 MODULES := src include
 
-INCLUDEFLAGS := -I$(LIBCONFIGDIR)/include  \
-		-I$(NETCDFINCDIR) #-I$(GOOGLE_PERF_DIR)/include -I${PAPI_DIR}/include
 OPENMPFLAGS := -fopenmp
 DEBUGFLAGS := #-g -pg
 OPTFLAGS := -O3
@@ -43,9 +51,6 @@ CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS}
 CPPFLAGS :=
 #NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
 NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-LFLAGS := -L$(NETCDFDIR)/lib -L$(LIBCONFIGDIR)/lib #-L${PAPI_DIR}/lib -L${HOME}/code/google-perftools/lib #-L$(CUDALIBDIR) 
-LIBS := -lnetcdf_c++4 -lconfig++ #-lpapi -lnetcdf #-lprofiler #$(ALGLIBDIR)/*.o -lcuda -lcudart
-
 CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0

@@ -20,7 +20,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
             '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
 
     m = 15
-    n = 81
+    n = 6
     nPhi = -12 
 
     c0_CYL = [1.2,0.0,0.0]
@@ -244,12 +244,31 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     	lambda=0
     	In = 1
     	sum = !null
+
+		;Z_n = ComplexArr(n_elements(kPar))
+		;Zp_n = ComplexArr(n_elements(kPar))
+
     	for l=0,0 do begin
     		zeta_n=(w-l*wce)/(kPar*vTh)
 
     	    print, 'Z function argument for Mathematica: ', zeta_n
 
-			Z_n = kj_zfunction(zeta_n,Zp=Zp_n)
+			;Z_n[*] = 0
+			;Zp_n[*] = 0
+
+			Z_n = kj_zfunction(zeta_n,kPar/abs(kPar),Zp=Zp_n)
+			;Z_n_kPrl_n = kj_zfunction(zeta_n,-1,Zp=Zp_n_kPrl_n)
+
+			;iiKPrlP = where(kPar ge 0,iiCnt_p)
+			;if iiCnt_p gt 0 then begin
+			;		Z_n[iiKPrlP] = Z_n_kPrl_p[iiKPrlP]
+			;		Zp_n[iiKPrlP] = Zp_n_kPrl_p[iiKPrlP]
+			;endif
+			;iiKPrln = where(kPar lt 0,iiCnt_n)
+			;if iiCnt_n gt 0 then begin
+			;		Z_n[iiKPrln] = Z_n_kPrl_n[iiKPrln]
+			;		Zp_n[iiKPrln] = Z_n_kPrl_n[iiKPrln]
+			;endif
 
     		if sum then begin
     			sum = sum + In*zeta_n*Zp_n

@@ -312,10 +312,17 @@ endif
     print, 'Sig33: ', sig33
 
 	restore, 'AnalyticSig33.sav'
-	p=plot(SPoints, SPoints_sig33,thick=2)
-	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',LineStyle='--',thick=2)
-	p=plot(xf, sig33,/over,thick=4,transparency=30)
-	p=plot(xf, imaginary(sig33),/over,thick=4,color='r',LineStyle='--',transparency=30)
+	p=plot(SPoints, SPoints_sig33,thick=2,Layout=[1,3,1],title='Sig33',$
+			xRange=[min(SPoints),max(SPoints)])
+	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
+	p=plot(xf, sig33,/over,thick=4,transparency=50)
+	p=plot(xf, imaginary(sig33),/over,thick=4,color='r',transparency=50)
+	p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='Local kPrl',$
+			xRange=[min(SPoints),max(SPoints)])
+	p=plot(s_Coord, Eb, Layout=[1,3,3], /current, thick=2, title='ePrl',$
+			xRange=[min(SPoints),max(SPoints)])
+	p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r')
+
 
 stop
 
