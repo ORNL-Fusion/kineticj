@@ -20,7 +20,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
             '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
 
     m = 15
-    n = 6
+    n = 20
     nPhi = -12 
 
     c0_CYL = [1.2,0.0,0.0]

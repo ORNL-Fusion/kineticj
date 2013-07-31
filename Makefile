@@ -9,16 +9,6 @@ INCLUDEFLAGS :=
 
 GCCDIR :=  
 
-ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
-INCLUDEFLAGS += -I${LIBCONFIG_DIR}/lib
-LIBS += 
-LFLAGS +=
-
-NETCDF_DIR := /usr/include
-INCLUDEFLAGS += -I$(NETCDFINCDIR)
-LIBS += -lnetcdf_c++4 -lconfig++
-LFLAGS +=
-
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
@@ -33,13 +23,8 @@ CC := gcc
 CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
-ifneq (,$(findstring dlg-air,$(shell uname -n)))
-	include Makefile.dlg-air
-endif
-
-ifneq (,$(findstring hopper,$(shell uname -n)))
-	include Makefile.hopper
-endif
+ThisMachine := $(shell uname -n)
+include Makefile.$(ThisMachine)
 
 MODULES := src include
 
@@ -54,7 +39,7 @@ NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G
 CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0
-CPPFLAGS += -DLOWMEM=0
+CPPFLAGS += -DLOWMEM=1
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
 

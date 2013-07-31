@@ -673,9 +673,9 @@ float maxC3VecAbs ( const vector<C3Vec> &input ) {
 C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 
 	C3Vec result;
-	for(int i=1;i<f.size()-1;i++) {
-		float h = x[i+1]-x[i];
-		result += h/2.0*(f[i]+f[i+1]);
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
 	}
 
 	return result;
@@ -684,9 +684,9 @@ C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
 
 	C3VecI result;
-	for(int i=1;i<f.size()-1;i++) {
-		float h = x[i+1]-x[i];
-		result += h/2.0*(f[i]+f[i+1]);
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
 	}
 
 	return result;
@@ -1086,6 +1086,8 @@ int main ( int argc, char **argv )
 		j1z[iX].resize(nJp);
 		j1zc[iX].resize(nJp);
 
+		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
+
 		//cout << "xGrid\t" << iX << endl;
 
 #if USEPAPI >= 1
@@ -1137,6 +1139,7 @@ int main ( int argc, char **argv )
 			// get Jp(t) for this spatial point
 			//
 
+
 			for(int jt=0;jt<nJp;jt++) {
 
 				vector<C3Vec> thisE(nSteps,C3Vec());
@@ -1162,26 +1165,29 @@ int main ( int argc, char **argv )
 									);	
 				}
 
+				
 				C3Vec thisV1 = -qOverm * intC3VecArray ( thisT, thisE );
 				C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisEc );
 
 				f1[iP] = -thisV1.c1*df0_dv[iP];
 				f1c[iP] = -thisV1c.c1*df0_dv[iP];
 
-				//if(iP>0) {
+				if(iP>0) {
 
-				//	float v0_i = particles_XYZ_0[iP].v_c1;
-				//	float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+					float v0_i = particles_XYZ_0[iP].v_c1;
+					float v0_im1 = particles_XYZ_0[iP-1].v_c1;
 
 				//	#pragma omp atomic
 				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
 
-				//	#pragma omp atomic
-				//	j1xc[jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+					#pragma omp atomic
+					j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
 
-				//}
+				}
 			}
 		}
+
+		// WHERE IS THE j1xc calculation for LOWMEM???
 
 #else // END OF LOWMEM CODING ^^^
 

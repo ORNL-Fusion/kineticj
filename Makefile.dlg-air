@@ -1,7 +1,13 @@
 
 GCCDIR :=  
 ALGLIBDIR := ${HOME}/code/alglib/cpp/src
-NETCDFDIR := # must be an --enable-cxx-4 dist
+
+NETCDF_DIR := /opt/local/lib
+NETCDFINCDIR := /opt/local/include 
+INCLUDEFLAGS += -I$(NETCDFINCDIR)
+LIBS += -lnetcdf_c++4 -lconfig++
+LFLAGS += -L $(NETCDF_DIR)
+
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
