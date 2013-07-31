@@ -1180,14 +1180,14 @@ int main ( int argc, char **argv )
 				//	#pragma omp atomic
 				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
 
-					#pragma omp atomic
-					j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+					#pragma omp critical // "atomic" does not work for complex numbers
+					{
+						j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+					}
 
 				}
 			}
 		}
-
-		// WHERE IS THE j1xc calculation for LOWMEM???
 
 #else // END OF LOWMEM CODING ^^^
 
