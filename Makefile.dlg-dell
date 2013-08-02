@@ -1,0 +1,13 @@
+LIBCONFIG_DIR := ${HOME}/code/libconfig
+ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
+INCLUDEFLAGS += -I${LIBCONFIG_DIR}/lib
+LIBS += 
+LFLAGS +=
+
+NETCDF_DIR := ${HOME}/code/netcdf/gnu_4.7.0
+NETCDF_INC_DIR := ${HOME}/code/netcdf/gnu_4.7.0/include
+INCLUDEFLAGS += -I${NETCDF_INC_DIR}
+LIBS += -lnetcdf_c++4 -lconfig++
+LFLAGS += -L${NETCDF_DIR}/lib
+
+
