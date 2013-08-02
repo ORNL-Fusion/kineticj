@@ -12,23 +12,27 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     bPolFactor = 1.0
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
     E_keV = 2.0
-    Np = 500
+    Np = 1500
     AtomicZ = -1
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
-
-    ParticlesOutFileName = 'data/f_E_keV_'+string(E_keV,format='(f3.1)')+$
-            '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
 
     m = 15
     n = 20
     nPhi = -12 
 
+	SPointsMin = -7.0
+	SPointsMax = +9.0
+	SPointsN = 400
     c0_CYL = [1.2,0.0,0.0]
 
-    c0_XYZ = Coords_CYL_to_XYZ(c0_CYL)
-    dS = 0.01
-    TraceNPts = 2000
+	dS = 0.01
+    TraceNPts = 6000
 
+    ParticlesOutFileName = 'data/f_E_keV_'+string(E_keV,format='(f3.1)')+$
+            '_n_e_'+string(n_e,format='(e7.1)')+'_Np_'+string(Np,format='(i4.4)')+'.nc'
+
+    c0_XYZ = Coords_CYL_to_XYZ(c0_CYL)
+    
     g = ReadGEqdsk ( EqdskFile, $
             bPolFactor = bPolFactor, $
             fieldLineIn = c0_CYL, $
@@ -64,9 +68,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 
 
     nS = n_elements(s_Coord)
-	SPointsMin = -3.0
-	SPointsMax = +5.0
-	SPointsN = 400
+
 	SPoints = fIndGen(SPointsN)/(SPointsN-1)*(SPointsMax-SPointsMin)+SPointsMin
 
 	SPointsIndex = IntArr(SPointsN)
