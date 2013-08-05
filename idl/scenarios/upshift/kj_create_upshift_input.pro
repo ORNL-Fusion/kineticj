@@ -12,16 +12,17 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     bPolFactor = 1.0
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
     E_keV = 2.0
-    Np = 1500
+    Np = 2500
+	nVTh = 8
     AtomicZ = -1
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
 
     m = 15
-    n = 20
+    n = 81
     nPhi = -12 
 
-	SPointsMin = -7.0
-	SPointsMax = +9.0
+	SPointsMin = -2.0
+	SPointsMax = +4.0
 	SPointsN = 400
     c0_CYL = [1.2,0.0,0.0]
 
@@ -241,6 +242,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     	vPhs = w/kPar
     	lambdaPar = 2*!Pi/kPar
 		print, 'vTh distance: ', vTh * (1/f_Hz)
+		print, 'vPhs/vTh: ', vPhs/vTh
 
     	kPer = 0
     	lambda=0
@@ -250,15 +252,17 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 		;Z_n = ComplexArr(n_elements(kPar))
 		;Zp_n = ComplexArr(n_elements(kPar))
 
+		kParAbs = abs(kPar)
+
     	for l=0,0 do begin
-    		zeta_n=(w-l*wce)/(kPar*vTh)
+    		zeta_n=(w-l*wce)/(kParAbs*vTh)
 
     	    print, 'Z function argument for Mathematica: ', zeta_n
 
 			;Z_n[*] = 0
 			;Zp_n[*] = 0
 
-			Z_n = kj_zfunction(zeta_n,kPar/abs(kPar),Zp=Zp_n)
+			Z_n = kj_zfunction(zeta_n,kParAbs/abs(kParAbs),Zp=Zp_n)
 			;Z_n_kPrl_n = kj_zfunction(zeta_n,-1,Zp=Zp_n_kPrl_n)
 
 			;iiKPrlP = where(kPar ge 0,iiCnt_p)
@@ -279,7 +283,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     		endelse
     	endfor
 
-    	K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kPar*vTh) * sum 
+    	K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kParAbs*vTh) * sum 
     	II = complex(0,1)
     	SPoints_sig33[Pt] = -(K3 - 1d0)*II*w*e0
     	
@@ -295,17 +299,25 @@ pro kj_create_upshift_input, NoPlot=NoPlot
    	print, 'Analytic Sig33(k): ',SPoints_sig33
    	print, 'Analytic Sig33(cold)', SPoints_sig33_cold
 
+	PlotRange = [-3,5]
+
 	if not keyword_set(NoPlot) then begin
 
     	p = plot(s_Coord, BMag, layout=[1,4,1], thick = 2, color='b', title='bMag Along S')
-    	p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, thick=2, title='ePar Along S',xRange=[-3,5])
-    	p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, thick=2, color='r', transparency=50)
+    	p = plot(s_Coord, real_part(Eb), layout=[1,4,2], /current, $
+				thick=2, title='ePar Along S',xRange=PlotRange)
+    	p = plot(s_Coord, imaginary(Eb), layout=[1,4,2], /over, $
+				thick=2, color='r', transparency=50)
 
-    	p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, thick=4, title='ePar Along S', transparency=70, lineStyle='--')
-    	p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, thick=4, color='r', transparency=70, lineStyle='--')
+    	p = plot(s_Coord, real_part(Eb_check), layout=[1,4,2], /over, $
+				thick=4, title='ePar Along S', transparency=70, lineStyle='--')
+    	p = plot(s_Coord, imaginary(Eb_check), layout=[1,4,2], /over, $
+				thick=4, color='r', transparency=70, lineStyle='--')
 
-    	p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, thick=2, color='purple',title='kDotR Along S')
-    	p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, color='g', title='kPar Along S',xrange=[-3,5])
+    	p = plot(s_Coord, kDotR_AlongS, layout=[1,4,3], /current, $
+				thick=2, color='purple',title='kDotR Along S')
+    	p = plot(s_Coord, kb, layout=[1,4,4], /current, thick=2, $
+				color='g', title='kPar Along S',xrange=PlotRange)
 
 	endif
 
@@ -372,7 +384,8 @@ nCdf_close, nc_id
             density_m3 = n_e, $
             rsfwc_1d = FieldsOutFileName, $
             OutputFileName = ParticlesOutFileName, $
-            n_particles = Np
+            n_particles = Np, $
+			nVTh = nVTh
 
 
     stop

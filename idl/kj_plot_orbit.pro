@@ -9,7 +9,9 @@ pro kj_plot_orbit
 	cdfId = ncdf_open(particleList)
 		ncdf_varget, cdfId, 'vx', p_vx 
 		ncdf_varget, cdfId, 'weight', p_weight
+		ncdf_varget, cdfId, 'vTh', p_vTh
 	nCdf_close, cdfId
+	df0_dv = deriv(p_vx,p_weight)
 
 	;vMax = 5e7
 	;vMin = -vMax
@@ -31,7 +33,7 @@ pro kj_plot_orbit
 
 	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
 
-	spatialPoint = 0 
+	spatialPoint = 1 
 
 	cdfId = ncdf_open(fileList[spatialPoint])
 		ncdf_varget, cdfId, 'freq', freq 
@@ -107,7 +109,9 @@ pro kj_plot_orbit
 
     ThisSurf = congrid(reform(v1x_0[*,0,*],nSteps,nP),nT,nV)
 	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
-	;s=surface(reform(v1x_0[0,*,*],nJp,nP), tj*freq, reform(vx_0[0,*]/vPhs))
+
+    ThisSurf = congrid(-reform(v1x_0[*,0,*]*transpose(rebin(df0_dv,nP,nSteps)),nSteps,nP),nT,nV)
+	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='f1')
 
 	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")
 
