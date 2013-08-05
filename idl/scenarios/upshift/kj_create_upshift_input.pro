@@ -12,13 +12,13 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     bPolFactor = 1.0
     EqdskFile = 'g130608.00355.EFIT02.mds.corrected.qscale_1.00000'
     E_keV = 2.0
-    Np = 2500
-	nVTh = 8
+    Np = 500
+	nVTh = 3 
     AtomicZ = -1
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
 
     m = 15
-    n = 81
+    n = 20
     nPhi = -12 
 
 	SPointsMin = -2.0
@@ -241,6 +241,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     	kPar = kb[SPointsIndex[Pt]]
     	vPhs = w/kPar
     	lambdaPar = 2*!Pi/kPar
+		print, 'vTh: ', vTh
 		print, 'vTh distance: ', vTh * (1/f_Hz)
 		print, 'vPhs/vTh: ', vPhs/vTh
 
