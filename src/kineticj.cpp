@@ -1672,10 +1672,26 @@ int main ( int argc, char **argv )
 				NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y",ncFloat,nc_nPxnSteps);
 				NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z",ncFloat,nc_nPxnSteps);
 
+				NcVar nc_e1_x_re = ncOrbitsFile.addVar("e1_x_re",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_y_re = ncOrbitsFile.addVar("e1_y_re",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_z_re = ncOrbitsFile.addVar("e1_z_re",ncFloat,nc_nPxnSteps);
+
+				NcVar nc_e1_x_im = ncOrbitsFile.addVar("e1_x_im",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_y_im = ncOrbitsFile.addVar("e1_y_im",ncFloat,nc_nPxnSteps);
+				NcVar nc_e1_z_im = ncOrbitsFile.addVar("e1_z_im",ncFloat,nc_nPxnSteps);
+
 				NcVar nc_v1_x = ncOrbitsFile.addVar("v1x",ncFloat,nc_nPxnJpxnSteps);
 				NcVar nc_v1_y = ncOrbitsFile.addVar("v1y",ncFloat,nc_nPxnJpxnSteps);
 				NcVar nc_v1_z = ncOrbitsFile.addVar("v1z",ncFloat,nc_nPxnJpxnSteps);
-		
+
+				NcVar nc_v1_x_re = ncOrbitsFile.addVar("v1x_re",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_y_re = ncOrbitsFile.addVar("v1y_re",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_z_re = ncOrbitsFile.addVar("v1z_re",ncFloat,nc_nPxnJpxnSteps);
+
+				NcVar nc_v1_x_im = ncOrbitsFile.addVar("v1x_im",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_y_im = ncOrbitsFile.addVar("v1y_im",ncFloat,nc_nPxnJpxnSteps);
+				NcVar nc_v1_z_im = ncOrbitsFile.addVar("v1z_im",ncFloat,nc_nPxnJpxnSteps);
+	
 				vector<size_t> startpA(2);
 				vector<size_t> countpA(2);
 				for(int iP=0;iP<this_particles_XYZ.size();iP++) {
@@ -1700,13 +1716,26 @@ int main ( int argc, char **argv )
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = orbits_v_XYZ[iP][iS].c3;}
 						nc_vz.putVar(startpA,countpA,&tmpData[0]);
 
-
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c1;}
 						nc_e1_x.putVar(startpA,countpA,&tmpData[0]);
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c2;}
 						nc_e1_y.putVar(startpA,countpA,&tmpData[0]);
 						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = e1[iP][iS].c3;}
 						nc_e1_z.putVar(startpA,countpA,&tmpData[0]);
+
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(e1c[iP][iS].c1);}
+						nc_e1_x_re.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(e1c[iP][iS].c2);}
+						nc_e1_y_re.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(e1c[iP][iS].c3);}
+						nc_e1_z_re.putVar(startpA,countpA,&tmpData[0]);
+
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(e1c[iP][iS].c1);}
+						nc_e1_x_im.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(e1c[iP][iS].c2);}
+						nc_e1_y_im.putVar(startpA,countpA,&tmpData[0]);
+						for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(e1c[iP][iS].c3);}
+						nc_e1_z_im.putVar(startpA,countpA,&tmpData[0]);
 
 				}
 
@@ -1730,6 +1759,20 @@ int main ( int argc, char **argv )
 							nc_v1_y.putVar(startpB,countpB,&tmpData[0]);
 							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = v1[iP][iJ][iS].c3;}
 							nc_v1_z.putVar(startpB,countpB,&tmpData[0]);
+
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(v1c[iP][iJ][iS].c1);}
+							nc_v1_x_re.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(v1c[iP][iJ][iS].c2);}
+							nc_v1_y_re.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = real(v1c[iP][iJ][iS].c3);}
+							nc_v1_z_re.putVar(startpB,countpB,&tmpData[0]);
+
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(v1c[iP][iJ][iS].c1);}
+							nc_v1_x_im.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(v1c[iP][iJ][iS].c2);}
+							nc_v1_y_im.putVar(startpB,countpB,&tmpData[0]);
+							for(int iS=0;iS<nSteps;iS++){tmpData[iS] = imag(v1c[iP][iJ][iS].c3);}
+							nc_v1_z_im.putVar(startpB,countpB,&tmpData[0]);
 
 						}
 				}

@@ -213,9 +213,9 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 
         this_bu_CYL = b_CYL[*,s]/bMag_CYL[s]
 
-        this_Er = this_bu_CYL[0] * this_E 
-        this_Et = this_bu_CYL[1] * this_E 
-        this_Ez = this_bu_CYL[2] * this_E 
+        this_Er = this_E * this_bu_CYL[0]   
+        this_Et = this_E * this_bu_CYL[1]   
+        this_Ez = this_E * this_bu_CYL[2]   
 
         this_E_CYL = [this_Er,this_Et,this_Ez]
 

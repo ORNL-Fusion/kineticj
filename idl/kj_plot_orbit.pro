@@ -73,10 +73,35 @@ pro kj_plot_orbit
 			ncdf_varget, cdfId, 'v1x', v1x_0 
 			ncdf_varget, cdfId, 'v1y', v1y_0 
 			ncdf_varget, cdfId, 'v1z', v1z_0 
+stop
+			ncdf_varget, cdfId, 'v1x_re', v1x_0_re 
+			ncdf_varget, cdfId, 'v1y_re', v1y_0_re 
+			ncdf_varget, cdfId, 'v1z_re', v1z_0_re 
+
+			ncdf_varget, cdfId, 'v1x_im', v1x_0_im 
+			ncdf_varget, cdfId, 'v1y_im', v1y_0_im 
+			ncdf_varget, cdfId, 'v1z_im', v1z_0_im 
 
 			ncdf_varget, cdfId, 'e1_x', e1x_0 
 			ncdf_varget, cdfId, 'e1_y', e1y_0 
 			ncdf_varget, cdfId, 'e1_z', e1z_0 
+
+			ncdf_varget, cdfId, 'e1_x_re', e1x_0_re 
+			ncdf_varget, cdfId, 'e1_y_re', e1y_0_re 
+			ncdf_varget, cdfId, 'e1_z_re', e1z_0_re 
+
+			ncdf_varget, cdfId, 'e1_x_im', e1x_0_im 
+			ncdf_varget, cdfId, 'e1_y_im', e1y_0_im 
+			ncdf_varget, cdfId, 'e1_z_im', e1z_0_im 
+
+			e1x_0 = complex(e1x_0_re,e1x_0_im)
+			e1y_0 = complex(e1y_0_re,e1y_0_im)
+			e1z_0 = complex(e1z_0_re,e1z_0_im)
+
+			v1x_0 = complex(v1x_0_re,v1x_0_im)
+			v1y_0 = complex(v1y_0_re,v1y_0_im)
+			v1z_0 = complex(v1z_0_re,v1z_0_im)
+
 
 		nCdf_close,	cdfId 
 
@@ -111,7 +136,11 @@ pro kj_plot_orbit
 	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
 
     ThisSurf = congrid(-reform(v1x_0[*,0,*]*transpose(rebin(df0_dv,nP,nSteps)),nSteps,nP),nT,nV)
-	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='f1')
+	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='Re[f1]')
+	
+    ThisSurf = imaginary(congrid(-reform(v1x_0[*,0,*]*transpose(rebin(df0_dv,nP,nSteps)),nSteps,nP),nT,nV))
+	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='Im[f1]')
+
 
 	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")
 
