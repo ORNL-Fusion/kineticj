@@ -1,12 +1,12 @@
 function kj_zfunction, arg, Sgn_kPrl, Zp=Zp
 
-	if abs(imaginary(arg)) gt 0 then stop
+	;if abs(imaginary(arg)) gt 0 then stop
 
-	if Sgn_kPrl ge 0 then begin
+	;if Sgn_kPrl ge 0 then begin
 		zfunFileName = 'zFunction_kPrl_p.nc'
-	endif else begin
-		zfunFileName = 'zFunction_kPrl_n.nc'
-	endelse
+	;endif else begin
+	;	zfunFileName = 'zFunction_kPrl_n.nc'
+	;endelse
 	cdfId = ncdf_open(zFunFileName)
 
 		ncdf_varget, cdfId, 'arg_re', arg_re
@@ -17,9 +17,10 @@ function kj_zfunction, arg, Sgn_kPrl, Zp=Zp
 
 	ncdf_close, cdfId
 
-	if arg gt max(arg_re) or arg lt min(arg_re) then begin
+	if max(arg) gt max(arg_re) or min(arg) lt min(arg_re) then begin
 			print, 'ERROR: Z-function argument off the end of the interpolation table.'
 			print, 'ERROR: Please re-run the mathematica for appropriate range.'
+			print, 'ERROR: Present max is: ',max(arg_re)
 			stop
 	endif
 

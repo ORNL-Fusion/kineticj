@@ -312,18 +312,53 @@ endif
     print, 'Sig33: ', sig33
 
 	restore, 'AnalyticSig33.sav'
-	p=plot(SPoints, SPoints_sig33,thick=2,Layout=[1,3,1],title='Sig33',$
-			xRange=[min(SPoints),max(SPoints)])
+	this_margin = 0.2
+	p=plot(SPoints, SPoints_sig33,Layout=[1,3,1],title='sig33',$
+			xRange=[min(SPoints),max(SPoints)],$
+			margin=this_margin, color='grey',thick=2)
 	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
-	p=plot(xf, sig33,/over,thick=4,transparency=50)
-	p=plot(xf, imaginary(sig33),/over,thick=4,color='r',transparency=50)
-	p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='Local kPrl',$
-			xRange=[min(SPoints),max(SPoints)])
+
+	SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
+	p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2)
+	p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='r',thick=2)
+
+	p=plot(xf, sig33,/over,thick=4,color='dark slate grey')
+	p=plot(xf, imaginary(sig33),/over,thick=4,color='orange red')
+	p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='local kPrl',$
+			xRange=[min(SPoints),max(SPoints)],margin=this_margin)
 	p=plot(s_Coord, Eb, Layout=[1,3,3], /current, thick=2, title='ePrl',$
-			xRange=[min(SPoints),max(SPoints)])
-	p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r')
+			xRange=[min(SPoints),max(SPoints)],$
+			margin = this_margin)
+	p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r',margin=this_margin)
+
+	p.save, 'kj_sig33_analytic_comparison.png', resolution=128
+	p.save, 'kj_sig33_analytic_comparison.pdf', /close
 
 
+	; try to reconstruct some Z-function data
+
+   	wpe  = sqrt(n_e*_e^2/(me*e0))
+	k_ = interpol(kb,s_coord,xF,/spline) 
+	K3 = -sig33/(II*wrf*e0)+1	
+	Zeta_Zp = -(K3-1)/(wpe^2)*wrf*k_*vTh
+ 	zeta = wrf/(k_*vTh)
+	Zp = Zeta_Zp / zeta
+
+	Z_ = ComplexArr(n_elements(zeta))
+	Zp_ = ComplexArr(n_elements(zeta))	
+	for i=0,n_elements(zeta)-1 do begin
+		Z_[i] = kj_zfunction(zeta[i],k_[i]/abs(k_[i]),Zp=tmp)
+		Zp_[i] = tmp
+	endfor
+
+	xrange=[-5,5]
+	p=plot(zeta,zP,LineStyle=6,Symbol="o",xrange=xrange)
+	p=plot(zeta,imaginary(zP),LineStyle=6,Symbol="o",sym_color="r",/over)
+
+	iiSorted = sort(zeta)
+
+	p=plot(zeta[iiSorted],Zp_[iiSorted],/over,thick=2,transparency=50)
+	p=plot(zeta[iiSorted],imaginary(Zp_[iiSorted]),/over,thick=2,transparency=50,color='r')
 stop
 
 end

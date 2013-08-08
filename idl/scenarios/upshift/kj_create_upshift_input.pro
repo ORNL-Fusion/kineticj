@@ -18,7 +18,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
 
     m = 15
-    n = 20
+    n = 20 
     nPhi = -12 
 
 	SPointsMin = -2.0
@@ -229,6 +229,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 
 	SPoints_sig33 = ComplexArr(SPointsN)
 	SPoints_sig33_cold = ComplexArr(SPointsN)
+	SPoints_sig33_FApprox = ComplexArr(SPointsN)
 
 	for Pt=0,SPointsN-1 do begin
 
@@ -241,17 +242,15 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     	kPar = kb[SPointsIndex[Pt]]
     	vPhs = w/kPar
     	lambdaPar = 2*!Pi/kPar
+		dTh = vTh * (1/f_Hz)
 		print, 'vTh: ', vTh
-		print, 'vTh distance: ', vTh * (1/f_Hz)
+		print, 'vTh distance: ', dTh
 		print, 'vPhs/vTh: ', vPhs/vTh
 
     	kPer = 0
     	lambda=0
     	In = 1
     	sum = !null
-
-		;Z_n = ComplexArr(n_elements(kPar))
-		;Zp_n = ComplexArr(n_elements(kPar))
 
 		kParAbs = abs(kPar)
 
@@ -260,22 +259,7 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 
     	    print, 'Z function argument for Mathematica: ', zeta_n
 
-			;Z_n[*] = 0
-			;Zp_n[*] = 0
-
 			Z_n = kj_zfunction(zeta_n,kParAbs/abs(kParAbs),Zp=Zp_n)
-			;Z_n_kPrl_n = kj_zfunction(zeta_n,-1,Zp=Zp_n_kPrl_n)
-
-			;iiKPrlP = where(kPar ge 0,iiCnt_p)
-			;if iiCnt_p gt 0 then begin
-			;		Z_n[iiKPrlP] = Z_n_kPrl_p[iiKPrlP]
-			;		Zp_n[iiKPrlP] = Zp_n_kPrl_p[iiKPrlP]
-			;endif
-			;iiKPrln = where(kPar lt 0,iiCnt_n)
-			;if iiCnt_n gt 0 then begin
-			;		Z_n[iiKPrln] = Z_n_kPrl_n[iiKPrln]
-			;		Zp_n[iiKPrln] = Z_n_kPrl_n[iiKPrln]
-			;endif
 
     		if sum then begin
     			sum = sum + In*zeta_n*Zp_n
@@ -291,10 +275,43 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     	stixP = 1-wpe^2/w^2
     	SPoints_sig33_cold[Pt] = -(stixP-1d0)*II*w*e0
 
+		; Also look at a Fourier decomposition of the local
+		; wave content and sum those sigmas to compare with
+		; the kj result.
+
+		nDth = 3
+		iiPoints = where(s_coord gt sPoints[pt]-nDth*dTh $
+				and s_coord lt sPoints[pt]+nDth*dth,iiCnt)
+		thisCoord = s_coord[iiPoints]
+		thisE = Eb[iiPoints]*hanning(iiCnt)
+		kCoeffs = fft(thisE,-1)
+		N_ = iiCnt
+	
+		; this is taken from the IDL help page on the FFT	
+		dX = thisCoord[1]-thisCoord[0]
+		X_ = (FINDGEN((N_ - 1)/2) + 1)
+		is_N_even = (N_ MOD 2) EQ 0
+		if (is_N_even) then $
+				thisKAxis = [0.0, X_, N_/2, -N_/2 + X_]/(N_*dX) $
+				else $
+				thisKAxis = [0.0, X_, -(N_/2 + 1) + X_]/(N_*dX)
+
+		thisSigma = 0
+		kAbs = abs(thisKAxis)>1e-5
+    	zeta=w/(kAbs*vTh)
+		Z = kj_zfunction(zeta<300,kAbs/kAbs,Zp=Zp)
+		sum = zeta*Zp
+		for kk=0,N_-1 do begin
+    		K3 = 1d0 - wpe^2 / (w*kAbs[kk]*vTh) * sum[kk]
+    		thisSigma = thisSigma +kCoeffs[kk]*(-(K3 - 1d0)*II*w*e0)
+		endfor
+
+		SPoints_sig33_FApprox[pt] = thisSigma
+
 	endfor
 
-	save, SPoints, SPoints_sig33, SPoints_sig33_cold, $
-			s_Coord, BMag, Eb, kb, $
+	save, SPoints, SPoints_sig33, SPoints_sig33_cold, SPoints_sig33_FApprox, $
+			s_Coord, BMag, Eb, kb, vTh, n_e, $
 			FileName='AnalyticSig33.sav'
 
    	print, 'Analytic Sig33(k): ',SPoints_sig33
