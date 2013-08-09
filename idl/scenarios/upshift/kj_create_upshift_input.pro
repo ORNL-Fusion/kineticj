@@ -18,12 +18,12 @@ pro kj_create_upshift_input, NoPlot=NoPlot
     Theta_Toroidal_Sign = -1 ; Switch this depending on the magnetic field tordoial direction.
 
     m = 15
-    n = 20 
+    n = 81
     nPhi = -12 
 
 	SPointsMin = -2.0
 	SPointsMax = +4.0
-	SPointsN = 400
+	SPointsN = 100
     c0_CYL = [1.2,0.0,0.0]
 
 	dS = 0.01
@@ -279,14 +279,15 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 		; wave content and sum those sigmas to compare with
 		; the kj result.
 
-		nDth = 3
+		nDth = 3.0
+		iiThisPoint = where(abs(s_coord - sPoints[pt]) eq min(abs(s_coord-sPoints[pt])))
 		iiPoints = where(s_coord gt sPoints[pt]-nDth*dTh $
 				and s_coord lt sPoints[pt]+nDth*dth,iiCnt)
 		thisCoord = s_coord[iiPoints]
 		thisE = Eb[iiPoints]*hanning(iiCnt)
 		kCoeffs = fft(thisE,-1)
 		N_ = iiCnt
-	
+
 		; this is taken from the IDL help page on the FFT	
 		dX = thisCoord[1]-thisCoord[0]
 		X_ = (FINDGEN((N_ - 1)/2) + 1)
@@ -296,18 +297,19 @@ pro kj_create_upshift_input, NoPlot=NoPlot
 				else $
 				thisKAxis = [0.0, X_, -(N_/2 + 1) + X_]/(N_*dX)
 
+		thisKAxis = thisKAxis * 2 * !pi 
+
 		thisSigma = 0
-		kAbs = abs(thisKAxis)>1e-5
-    	zeta=w/(kAbs*vTh)
+		kAbsMin = 1/(300/w*vTh)
+		kAbs = abs(thisKAxis)>kAbsMin
+    	zeta=w/(kAbs*vTh)<300
 		Z = kj_zfunction(zeta<300,kAbs/kAbs,Zp=Zp)
 		sum = zeta*Zp
-		for kk=0,N_-1 do begin
-    		K3 = 1d0 - wpe^2 / (w*kAbs[kk]*vTh) * sum[kk]
-    		thisSigma = thisSigma +kCoeffs[kk]*(-(K3 - 1d0)*II*w*e0)
-		endfor
-
-		SPoints_sig33_FApprox[pt] = thisSigma
-
+    	K3 = 1d0 - wpe^2 / (w*kAbs*vTh) * sum
+    	Sigma = -(K3 - 1d0)*II*w*e0
+	
+		sigma_space = fft(sigma*kcoeffs,1)/thisE
+		sPoints_sig33_FApprox[pt] = sigma_space[N_/2]
 	endfor
 
 	save, SPoints, SPoints_sig33, SPoints_sig33_cold, SPoints_sig33_FApprox, $

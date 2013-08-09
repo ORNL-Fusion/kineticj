@@ -318,9 +318,9 @@ endif
 			margin=this_margin, color='grey',thick=2)
 	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
 
-	SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
-	p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2)
-	p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='r',thick=2)
+	;SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
+	p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2,LineStyle='dash',color='black')
+	p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='maroon',thick=2,LineStyle='dash')
 
 	p=plot(xf, sig33,/over,thick=4,color='dark slate grey')
 	p=plot(xf, imaginary(sig33),/over,thick=4,color='orange red')
