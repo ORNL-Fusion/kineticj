@@ -3,7 +3,6 @@
 
 NAME := bin/kineticj
 
-LFLAGS := 
 LIBS :=  
 INCLUDEFLAGS :=  
 
@@ -23,20 +22,27 @@ CC := gcc
 CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
+VENDOR := PGI_
+
 ThisMachine := $(shell uname -n)
+
+ifneq (,$(findstring titan,$(ThisMachine)))
+ThisMachine := titan
+endif
+
 include Makefile.$(ThisMachine)
+include Makefile.flags
 
 MODULES := src include
 
-OPENMPFLAGS := -fopenmp
-DEBUGFLAGS := #-g -pg
-OPTFLAGS := -O3
+OPENMPFLAGS := $($(VENDOR)OPENMPFLAGS)
+DEBUGFLAGS := $($(VENDOR)DEBUGFLAGS)
+OPTFLAGS := $($(VENDOR)OPTFLAGS)
+
 CFLAGS := 
 CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS} 
 CPPFLAGS :=
-#NVCCFLAGS := --compiler-bindir $(GCCDIR) -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-NVCCFLAGS := -arch $(CUDA_ARCH) --ptxas-options=-v #-g -G 
-CPPFLAGS += -DDEBUGLEVEL=0
+CPPFLAGS += -DDEBUGLEVEL=1
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=1
@@ -74,7 +80,7 @@ OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildc
 
 # link the program
 $(NAME) : $(OBJ)
-	$(LINK) $(LFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(LINK) -o $@ $(OBJ) $(LIBS)
 
 # calculate include dependencies
 .dep/%.d : %.cpp
