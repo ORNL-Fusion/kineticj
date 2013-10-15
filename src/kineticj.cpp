@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "interpolation.h"
 #include <math.h>
+#include <accelmath.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -456,6 +457,15 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		return out;
 }
 
+float abs ( complex<float> arg ) {
+	return sqrt(pow(real(arg),2)+pow(imag(arg),2));
+}
+
+complex<float> exp ( complex<float> arg ) {
+	complex<float> out (exp(real(arg))*cos(imag(arg)),exp(real(arg))*sin(imag(arg)));
+	return out;
+}
+
 //// First-order orbits
 //C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 //				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
@@ -887,8 +897,6 @@ int main ( int argc, char **argv )
 				nc_b0_r.getVar(&b0_r[0]);
 				nc_b0_t.getVar(&b0_t[0]);
 				nc_b0_z.getVar(&b0_z[0]);
-
-				cout<<"CRAP"<<endl;
 
 				b0_CYL.resize(nR);
 				b0_XYZ.resize(nR);
