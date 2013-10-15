@@ -33,7 +33,7 @@ endif
 include Makefile.$(ThisMachine)
 include Makefile.flags
 
-MODULES := src include
+MODULES := src include #../alglib/cpp/src
 
 OPENMPFLAGS := $($(VENDOR)OPENMPFLAGS)
 DEBUGFLAGS := $($(VENDOR)DEBUGFLAGS)
@@ -58,7 +58,7 @@ LINK := $(CPP) ${CXXFLAGS}
 
 DIRNAME = `dirname $1`
 #MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
-MAKEDEPS = ${CC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 

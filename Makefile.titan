@@ -1,8 +1,11 @@
-CC := cc
+CC := cc 
 CPP := CC
 F90 =: ftn
 
-ALGLIB_DIR := 
+ALGLIB_DIR := $(HOME)/alglib
+INCLUDEFLAGS += -I $(ALGLIB_DIR)/cpp/src
+LIBS += -L $(ALGLIB_DIR)/cpp/src -lalglib
+
 INCLUDEFLAGS += -I $(HOME)/libconfig/libconfig_pgi/include
 LIBS += -L $(HOME)/libconfig/libconfig_pgi/lib -lconfig++
 

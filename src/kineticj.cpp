@@ -14,6 +14,10 @@
 #include <unistd.h>
 #include <assert.h>
 #include <omp.h>
+#include "grid_sizes.hpp"
+#include "stdafx.h"
+#include "interpolation.h"
+#include <math.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -138,8 +142,8 @@ class C3Vec {
 		public:
 				float c1, c2, c3;
 
-				C3Vec () {c1=0;c2=0;c3=0;};
-				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+				inline C3Vec () {c1=0;c2=0;c3=0;};
+				inline C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 
 				C3Vec& operator = (const C3Vec &rhs);
 				C3Vec& operator += (const C3Vec &rhs);
@@ -452,19 +456,77 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		return out;
 }
 
-// First-order orbits
-C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
-				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
+//// First-order orbits
+//C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
+//				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
+//
+//	C3Vec b0(0,0,0), F;
+//
+//	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
+//	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
+//	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
+//	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
+//
+//	return F*(p.q/p.m);	
+//}
 
-	C3Vec b0(0,0,0), F;
+C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int &stat ) {
 
-	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
-	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
+	float _x, x0, x1;
 
-	return F*(p.q/p.m);	
+#if _PARTICLE_BOUNDARY == 1
+	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
+			// Particle absorbing walls
+#if DEBUGLEVEL >= 1
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec[0]<<endl;
+            cout<<"xVec.back():"<<xVec[n-1]<<endl;
+#endif
+			++stat;
+			return C3Vec(0,0,0);
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+			if(x<xVec[0]) x = xVec[n-1]-(xVec[0]-x);			
+			if(x>xVec[n-1]) x = xVec[0]+(x-xVec[n-1]);			
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(x<xVec[0]) x = xVec[0]+(xVec[0]-x);			
+			if(x>xVec[n-1]) x = xVec[n-1]-(x-xVec[n-1]);			
+#endif
+	
+	if(stat>0){
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+			exit(1);
+	}
+
+	_x = (x-xVec[0])/(xVec[n-1]-xVec[0])*(n-1);
+
+	int xF = floor(_x);
+	int xC = ceil(_x);
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+	
+	// Catch for particle at point
+	if(xF==xC) {
+#if DEBUGLEVEL >= 2
+		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+#endif
+		return yVec[xF];
+	}
+	else {
+
+		C3Vec y0 = yVec[xF];
+		C3Vec y1 = yVec[xC];
+		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+
+	}
+
 }
+
 
 C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &stat ) {
 
@@ -504,8 +566,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
 	//}
 
-	x0 = floor(_x);
-	x1 = ceil(_x);
+	x0 = static_cast<int>(floor(_x));
+	x1 = static_cast<int>(ceil(_x));
 	
 	// Catch for particle at point
 	if(x0==x1) {
@@ -525,9 +587,13 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 }
 
 // Zero-order orbits
+//C3Vec rk4_evalf ( CParticle &p, const float &t, 
+//				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+//			  	const vector<float> &rVec ) {
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
-				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
-			  	const vector<float> &rVec ) {
+		const C3Vec &v_XYZ, const C3Vec &x, 
+		const C3Vec b0_CYL[],
+		const float r[] ) {
 
 	// Interpolate b0 at location in CYL
 	
@@ -541,29 +607,29 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
 #endif
 
-	C3Vec b0_CYL, b0_XYZ;
+	C3Vec thisb0_CYL, thisb0_XYZ;
 
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p.status );
+	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, _N_DATA, p.status );
 
-	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
-					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
-					0+0+1*b0_CYL.c3 );
+	thisb0_XYZ = C3Vec( cos(_p)*thisb0_CYL.c1-sin(_p)*thisb0_CYL.c2+0,
+					sin(_p)*thisb0_CYL.c1+cos(_p)*thisb0_CYL.c2+0,
+					0+0+1*thisb0_CYL.c3 );
 
-	C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
-					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
-					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
+	C3Vec thisv_x_b0 ( v_XYZ.c2*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c2, 
+					-1.0*(v_XYZ.c1*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c1), 
+					v_XYZ.c1*thisb0_XYZ.c2-v_XYZ.c2*thisb0_XYZ.c1);
 
 #if DEBUGLEVEL >= 3
-	cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << endl;
+	cout << "\tvxb0: " << thisv_x_b0.c1 << "  " << thisv_x_b0.c2 << "  " << thisv_x_b0.c3 << endl;
 	cout << "\tp.q/p.m: " << p.q/p.m << endl;
 #endif
 
-	return v_x_b0*(p.q/p.m);	
+	return thisv_x_b0*(p.q/p.m);	
 }
 
 // Zero-order orbits
 void rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const vector<C3Vec> &b0, const vector<float> &r ) {
+				const C3Vec b0[], const float r[]) {
 
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
@@ -633,32 +699,32 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 
 }
 
-// First-order orbits
-void rk4_move ( CParticle &p, float dt, float t0, 
-				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
-
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
-
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, e1, wrf ) * dt;	
-		x1 = k1 * dt;                                               
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, e1, wrf ) * dt;	
-		x2 = k2 * dt;                                               
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, e1, wrf ) * dt;	
-		x3 = k3 * dt;                                               
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
-		x4 = k4 * dt;
-
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
-
-		p.c1 = xn1.c1;
-		p.c2 = xn1.c2;
-		p.c3 = xn1.c3;
-		p.v_c1 = yn1.c1;
-		p.v_c2 = yn1.c2;
-		p.v_c3 = yn1.c3;
-}
+//// First-order orbits
+//void rk4_move ( CParticle &p, float dt, float t0, 
+//				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
+//
+//		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
+//		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
+//
+//		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, e1, wrf ) * dt;	
+//		x1 = k1 * dt;                                               
+//		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, e1, wrf ) * dt;	
+//		x2 = k2 * dt;                                               
+//		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, e1, wrf ) * dt;	
+//		x3 = k3 * dt;                                               
+//		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
+//		x4 = k4 * dt;
+//
+//		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
+//		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+//
+//		p.c1 = xn1.c1;
+//		p.c2 = xn1.c2;
+//		p.c3 = xn1.c3;
+//		p.v_c1 = yn1.c1;
+//		p.v_c2 = yn1.c2;
+//		p.v_c3 = yn1.c3;
+//}
 
 
 float maxC3VecAbs ( const vector<C3Vec> &input ) {
@@ -691,6 +757,30 @@ C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
 
 	return result;
 }
+
+C3VecI intC3VecArray ( const float x[], const vector<C3VecI> &f ) {
+
+	C3VecI result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+C3Vec intC3VecArray ( const float x[], const vector<C3Vec> &f ) {
+
+	C3Vec result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+
 
 // Calculate the jP given some know E and f(v)
 
@@ -738,7 +828,7 @@ int main ( int argc, char **argv )
 		// This needs netCDF 4.1.1 or later build with
 		// ./configure --enable-cxx-4 [plus other options]
 
-		vector<float> r, b0_r, b0_p, b0_z,
+		vector<float> r, b0_r, b0_t, b0_z,
 				e_r_re, e_p_re, e_z_re,
 				e_r_im, e_p_im, e_z_im;
 		vector<C3Vec> b0_CYL, b0_XYZ;
@@ -753,14 +843,14 @@ int main ( int argc, char **argv )
 			exit(1);
 		}
 
-
+		int nR;
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
 	
 				NcDim nc_nR(dataFile.getDim("nR"));
 				NcDim nc_scalar(dataFile.getDim("scalar"));
 	
-				int nR = nc_nR.getSize();
+				nR = nc_nR.getSize();
 	
 				cout << "\tnR: " << nR << endl;
 	
@@ -768,7 +858,7 @@ int main ( int argc, char **argv )
 				NcVar nc_freq(dataFile.getVar("freq"));
 
 				NcVar nc_b0_r(dataFile.getVar("B0_r"));
-				NcVar nc_b0_p(dataFile.getVar("B0_p"));
+				NcVar nc_b0_t(dataFile.getVar("B0_p"));
 				NcVar nc_b0_z(dataFile.getVar("B0_z"));
 
 				NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
@@ -781,7 +871,7 @@ int main ( int argc, char **argv )
 				r.resize(nR);
 
 				b0_r.resize(nR);
-				b0_p.resize(nR);
+				b0_t.resize(nR);
 				b0_z.resize(nR);
 
 				e_r_re.resize(nR);
@@ -795,13 +885,15 @@ int main ( int argc, char **argv )
 				nc_freq.getVar(&freq);
 
 				nc_b0_r.getVar(&b0_r[0]);
-				nc_b0_p.getVar(&b0_p[0]);
+				nc_b0_t.getVar(&b0_t[0]);
 				nc_b0_z.getVar(&b0_z[0]);
+
+				cout<<"CRAP"<<endl;
 
 				b0_CYL.resize(nR);
 				b0_XYZ.resize(nR);
 				for(int i=0; i<nR; i++) {
-						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
+						b0_CYL[i] = C3Vec(b0_r[i],b0_t[i],b0_z[i]);
 						b0_XYZ[i] = C3Vec(cos(0.0)*b0_CYL[i].c1-sin(0.0)*b0_CYL[i].c2+0,
 										sin(0.0)*b0_CYL[i].c1+cos(0.0)*b0_CYL[i].c2+0,
 										0+0+1*b0_CYL[i].c3);
@@ -820,23 +912,68 @@ int main ( int argc, char **argv )
 						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
 				}
 
-				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
-				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+				vector<float>::iterator min = min_element(b0_t.begin(),b0_t.end());
+				vector<float>::iterator max = max_element(b0_t.begin(),b0_t.end());
 #if DEBUGLEVEL >= 1 
 				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
 				cout << "\tfreq: " << freq << endl;
-				cout << "\tmin(b0_p): " << *min << endl;
-				cout << "\tmax(b0_p): " << *max << endl;
+				cout << "\tmin(b0_t): " << *min << endl;
+				cout << "\tmax(b0_t): " << *max << endl;
 				cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR/2]) << endl;
 				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
 				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
 #endif
 		}
 		catch(exceptions::NcException &e) {
-				cout << "NetCDF: unknown error" << endl;
+				cout << "NetCDF: unknown error reading E field file" << endl;
 				e.what();
 				exit(1);
 		}
+
+		// Interpolate input quantities to a compile-time
+		// grid so we can use in CUDA and OPENACC.
+
+		float r_kjGrid[_N_DATA];
+		C3Vec b0_CYL_kjGrid[_N_DATA];
+		//r_kjGrid.resize(_N_DATA);
+		//b0_CYL.resize(_N_DATA);
+
+		for (int i=0; i<_N_DATA; i++) {
+			r_kjGrid[i] = r[0]+i*(r.back()-r.front())/(_N_DATA-1);
+		}
+
+		alglib::spline1dinterpolant s_b0_r, s_b0_t, s_b0_z;
+		alglib::ae_int_t natural_bound_type = 2;
+
+		// Convert STL vectors into arrays
+		alglib::real_1d_array r_, b0_r_, b0_t_, b0_z_; 
+
+		r_.setlength(nR);
+		b0_r_.setlength(nR);
+		b0_t_.setlength(nR);
+		b0_z_.setlength(nR);
+
+		for (int i=0; i<nR; i++) {
+
+			r_[i] = r[i];
+
+			b0_r_[i] = b0_r[i];
+			b0_t_[i] = b0_t[i];
+			b0_z_[i] = b0_z[i];
+
+		}
+
+		alglib::spline1dbuildcubic(r_,b0_r_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_r);
+		alglib::spline1dbuildcubic(r_,b0_t_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_t);
+		alglib::spline1dbuildcubic(r_,b0_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_z);
+
+		for (int i=0; i<_N_DATA; i++) {
+
+			b0_CYL_kjGrid[i].c1 = alglib::spline1dcalc(s_b0_r,r_kjGrid[i]);	
+			b0_CYL_kjGrid[i].c2 = alglib::spline1dcalc(s_b0_t,r_kjGrid[i]);	
+			b0_CYL_kjGrid[i].c3 = alglib::spline1dcalc(s_b0_z,r_kjGrid[i]);	
+
+		}	
 
 		// Rotate the e field to XYZ
 
@@ -942,7 +1079,7 @@ int main ( int argc, char **argv )
 
 		}
 		catch(exceptions::NcException &e) {
-				cout << "NetCDF: unknown error" << endl;
+				cout << "NetCDF: unknown error reading p list file" << endl;
 				e.what();
 				exit(1);
 		}
@@ -1005,14 +1142,14 @@ int main ( int argc, char **argv )
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
 
-	float nRFCycles 		= cfg.lookup("nRFCycles");
-	int nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
+	const int nRFCycles			= _N_RF_CYCLES;//cfg.lookup("nRFCycles");
+	const int nStepsPerCycle 	= _N_STEPS_PER_CYCLE;//cfg.lookup("nStepsPerCycle"); 
 	float tRF 			= (2*_pi)/wrf;
 	float dtMin 		= -tRF/nStepsPerCycle;
-	int nSteps 			= nRFCycles*nStepsPerCycle+1;
-	int nJpCycles 		= cfg.lookup("nJpCycles");
-	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
-	int nJp 			= nJpCycles * nJpPerCycle;
+	const int nSteps	= nRFCycles*nStepsPerCycle+1;
+	const int nJpCycles 	= _N_JP_CYCLES;//cfg.lookup("nJpCycles");
+	const int nJpPerCycle 	= _N_JP_PER_CYCLE;//cfg.lookup("nJpPerCycle");
+	const int nJp 			= nJpCycles * nJpPerCycle;
 	float dtJp 			= tRF / nJpPerCycle;
 	int istat = 0;
 	int nV = particles_XYZ_0.size();
@@ -1041,17 +1178,20 @@ int main ( int argc, char **argv )
 	//	cout<<"f0: "<<particles_XYZ_0[i].weight<<" df0_dv: "<<df0_dv[i]<<endl;
 	//}
 
-	vector<float> tJp(nJp,0);
+	//vector<float> tJp(nJp,0);
+	float tJp[nJp];
 	for(int jt=0;jt<nJp;jt++) {
 		tJp[jt] = jt*dtJp;//-0.33*dtJp;
 	}
 
-	vector<float> thisT(nSteps);
+	//vector<float> thisT(nSteps);
+	float thisT[nSteps];
 	for(int i=0;i<nSteps;i++) {	
 		thisT[i]=i*dtMin;//+1.5*dtMin;
 	}
 
-	vector<float> hanningWeight(nSteps);
+	//vector<float> hanningWeight(nSteps);
+	float hanningWeight[nSteps];
 	vector<float> expWeight(nSteps);
 	vector<float> linearWeight(nSteps);
 	for(int i=0;i<nSteps;i++) {
@@ -1074,7 +1214,7 @@ int main ( int argc, char **argv )
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
 	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
 
-	#pragma omp parallel for private(istat)
+	//#pragma omp parallel for private(istat)
 	for(int iX=0;iX<nXGrid;iX++) {
 
 		j1x[iX].resize(nJp);
@@ -1102,10 +1242,19 @@ int main ( int argc, char **argv )
 		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
 		//#pragma omp parallel for private(istat)
-		for(int iP=0;iP<particles_XYZ.size();iP++) {
 
-			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
-			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
+	int iP, i, jt;
+	#pragma acc parallel \
+	private(iP,i,jt) \
+	pcopyin(thisT[0:nSteps-1]) \
+	pcopyin(tJp[0:nJp-1]) \
+	pcopyin(hanningWeight[0:nSteps-1])
+	{
+		//#pragma acc loop 
+		for(iP=0;iP<particles_XYZ.size();iP++) {
+
+			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec());
+			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec());
 
 			CParticle thisParticle_XYZ(particles_XYZ[iP]);
 			thisParticle_XYZ.c1 = xGrid[iX];
@@ -1116,14 +1265,19 @@ int main ( int argc, char **argv )
 	
 			// generate orbit and get time-harmonic e along it
 
-			vector<C3Vec> thisOrbit_XYZ(nSteps);
+			C3Vec thisOrbit_XYZ[nSteps];
 
-	 		for(int i=0;i<nSteps;i++) {	
+			//#pragma acc loop private(i)
+	 		for(i=0;i<nSteps;i++) {	
 
 				if(thisParticle_XYZ.status==0) {
 
-					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+					//thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+					thisOrbit_XYZ[i].c1 = thisParticle_XYZ.c1;
+					thisOrbit_XYZ[i].c2 = thisParticle_XYZ.c2;
+					thisOrbit_XYZ[i].c3 = thisParticle_XYZ.c3;
+
+					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid );
 
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
@@ -1139,16 +1293,18 @@ int main ( int argc, char **argv )
 			// get Jp(t) for this spatial point
 			//
 
-
-			for(int jt=0;jt<nJp;jt++) {
+			//#pragma acc loop private(jt)	
+			for(jt=0;jt<nJp;jt++) {
 
 				vector<C3Vec> thisE(nSteps,C3Vec());
 				vector<C3VecI> thisEc(nSteps,C3VecI());
 
-				for(int i=0;i<nSteps;i++) {	
+				//#pragma acc loop private(i)
+				for(i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
-					float weight = expWeight[i]*hanningWeight[i];
+					//float weight = expWeight[i]*hanningWeight[i];
+					float weight = hanningWeight[i];
 					float phs = -(wrf*tTmp);
 
 					thisE[i] = weight*(thisOrbitE_re_XYZ[i]*cos(phs)-thisOrbitE_im_XYZ[i]*sin(phs));
@@ -1172,22 +1328,36 @@ int main ( int argc, char **argv )
 				f1[iP] = -thisV1.c1*df0_dv[iP];
 				f1c[iP] = -thisV1c.c1*df0_dv[iP];
 
-				if(iP>0) {
+				//if(iP>0) {
 
 					float v0_i = particles_XYZ_0[iP].v_c1;
-					float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+					//float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+
+					// This gets a factor that is 1 for iP=0 or iP=N, 
+					// but 2 otherwise to remove the IF statement
+					// from the trapezoidal rule integration required
+					// at the endpoint (i.e., backward differencing).
+
+					int N = particles_XYZ.size() - 1;
+					float A = iP % N;
+					float B = A / N;	
+					int factor = ceil(B)+1;
 
 				//	#pragma omp atomic
 				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
 
-					#pragma omp critical // "atomic" does not work for complex numbers
-					{
-						j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
-					}
+					//#pragma omp critical // "atomic" does not work for complex numbers
+					//{
+						//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+						j1xc[iX][jt] += h/2 * ( factor * v0_i*f1c[iP]); 
 
-				}
+					//}
+
+				//}
 			}
 		}
+
+	}
 
 #else // END OF LOWMEM CODING ^^^
 
