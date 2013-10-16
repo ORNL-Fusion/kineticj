@@ -15,8 +15,6 @@
 #include <assert.h>
 #include <omp.h>
 #include "grid_sizes.hpp"
-#include "stdafx.h"
-#include "interpolation.h"
 #include <math.h>
 //#include <accelmath.h>
 
@@ -467,6 +465,70 @@ complex<float> exp ( complex<float> arg ) {
 	return out;
 }
 
+float kj_interp1D ( float x, const float xVec[], const float yVec[], int n, int &stat ) {
+
+	float _x, x0, x1;
+
+#if _PARTICLE_BOUNDARY == 1
+	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
+			// Particle absorbing walls
+#if DEBUGLEVEL >= 1
+#if !defined(_OPENACC)
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec[0]<<endl;
+            cout<<"xVec.back():"<<xVec[n-1]<<endl;
+#endif
+#endif
+			++stat;
+			return 0;
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+			if(x<xVec[0]) x = xVec[n-1]-(xVec[0]-x);			
+			if(x>xVec[n-1]) x = xVec[0]+(x-xVec[n-1]);			
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(x<xVec[0]) x = xVec[0]+(xVec[0]-x);			
+			if(x>xVec[n-1]) x = xVec[n-1]-(x-xVec[n-1]);			
+#endif
+	
+#if !defined(_OPENACC)
+	if(stat>0){
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+			exit(1);
+	}
+#endif
+
+	_x = (x-xVec[0])/(xVec[n-1]-xVec[0])*(n-1);
+
+	int xF = floor(_x);
+	int xC = ceil(_x);
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+	
+	// Catch for particle at point
+	if(xF==xC) {
+#if DEBUGLEVEL >= 2
+#if !defined(_OPENACC)
+		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+#endif
+#endif
+		return yVec[xF];
+	}
+	else {
+
+		float y0 = yVec[xF];
+		float y1 = yVec[xC];
+		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+
+	}
+
+}
+
+
 C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int &stat ) {
 
 	float _x, x0, x1;
@@ -475,10 +537,12 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
 			// Particle absorbing walls
 #if DEBUGLEVEL >= 1
+#if !defined(_OPENACC)
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec[0]<<endl;
             cout<<"xVec.back():"<<xVec[n-1]<<endl;
+#endif
 #endif
 			++stat;
 			return C3Vec(0,0,0);
@@ -492,11 +556,13 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 			if(x<xVec[0]) x = xVec[0]+(xVec[0]-x);			
 			if(x>xVec[n-1]) x = xVec[n-1]-(x-xVec[n-1]);			
 #endif
-	
+
+#if !defined(_OPENACC)	
 	if(stat>0){
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 			exit(1);
 	}
+#endif
 
 	_x = (x-xVec[0])/(xVec[n-1]-xVec[0])*(n-1);
 
@@ -509,8 +575,10 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 	// Catch for particle at point
 	if(xF==xC) {
 #if DEBUGLEVEL >= 2
+#if !defined(_OPENACC)
 		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+#endif
 #endif
 		return yVec[xF];
 	}
@@ -535,10 +603,12 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			// Particle absorbing walls
 #if DEBUGLEVEL >= 1
+#if !defined(_OPENACC)
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
+#endif
 #endif
 			++stat;
 			return C3Vec(0,0,0);
@@ -552,11 +622,13 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
 			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
 #endif
-	
+
+#if !defined(_OPENACC)	
 	if(stat>0){
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 			exit(1);
 	}
+#endif
 
 	//else
 	//{
@@ -572,8 +644,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	// Catch for particle at point
 	if(xF==xC) {
 #if DEBUGLEVEL >= 2
+#if !defined(_OPENACC)
 		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+#endif
 #endif
 		return yVec[xF];
 	}
@@ -592,7 +666,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 		const C3Vec &v_XYZ, const C3Vec &x, 
 		const C3Vec b0_CYL[],
-		const float r[] ) {
+		const float r[], 
+		const int n ) {
 
 	// Interpolate b0 at location in CYL
 	
@@ -608,7 +683,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 	C3Vec thisb0_CYL, thisb0_XYZ;
 
-	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, _N_DATA, p.status );
+	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, n, p.status );
 
 	thisb0_XYZ = C3Vec( cos(_p)*thisb0_CYL.c1-sin(_p)*thisb0_CYL.c2+0,
 					sin(_p)*thisb0_CYL.c1+cos(_p)*thisb0_CYL.c2+0,
@@ -628,20 +703,20 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 // Zero-order orbits
 void rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const C3Vec b0[], const float r[]) {
+				const C3Vec b0[], const float r[], const int n) {
 
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
 
 
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, n ) * dt;	
 		x1 = yn0 * dt;
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, n ) * dt;	
 		x2 = (yn0 + 0.5*k1) * dt;
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r ) * dt;	
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, n ) * dt;	
 		x3 = (yn0 + 0.5*k2) * dt;
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r ) * dt;	
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, n ) * dt;	
 		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
@@ -759,6 +834,13 @@ C3Vec intC3VecArray ( const float x[], const vector<C3Vec> &f ) {
 
 int main ( int argc, char **argv )
 {
+
+const int _N_RF_CYCLES=5;
+const int _N_STEPS_PER_CYCLE=4000;
+const int _N_JP_CYCLES=1;
+const int _N_JP_PER_CYCLE=1;
+const int _N_DATA=512;
+
 
 #if USEPAPI >= 1
 		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops;
@@ -1026,64 +1108,56 @@ int main ( int argc, char **argv )
 		// grid so we can use in CUDA and OPENACC.
 
 		float r_kjGrid[_N_DATA];
+		float r__[nR];
 		C3Vec b0_CYL_kjGrid[_N_DATA];
 		C3Vec e1Re_XYZ_kjGrid[_N_DATA];
 		C3Vec e1Im_XYZ_kjGrid[_N_DATA];
+
+		float e1Re_x_kjGrid[_N_DATA];
+		float e1Re_y_kjGrid[_N_DATA];
+		float e1Re_z_kjGrid[_N_DATA];
+
+		float b0_r_kjGrid[_N_DATA];
+		float b0_t_kjGrid[_N_DATA];
+		float b0_z_kjGrid[_N_DATA];
+
+		float e1Re_x_inGrid[nR];
+		float e1Re_y_inGrid[nR];
+		float e1Re_z_inGrid[nR];
+
+		float b0_r_inGrid[nR];
+		float b0_t_inGrid[nR];
+		float b0_z_inGrid[nR];
 
 		for (int i=0; i<_N_DATA; i++) {
 			r_kjGrid[i] = r[0]+i*(r.back()-r.front())/(_N_DATA-1);
 		}
 
-		alglib::spline1dinterpolant s_b0_r, s_b0_t, s_b0_z;
-		alglib::spline1dinterpolant s_e1Re_x, s_e1Re_y, s_e1Re_z;
-
-		alglib::ae_int_t natural_bound_type = 2;
-
-		// Convert STL vectors into arrays
-		alglib::real_1d_array r_, b0_r_, b0_t_, b0_z_; 
-		alglib::real_1d_array e1Re_x_, e1Re_y_, e1Re_z_; 
-
-		r_.setlength(nR);
-
-		b0_r_.setlength(nR);
-		b0_t_.setlength(nR);
-		b0_z_.setlength(nR);
-
-		e1Re_x_.setlength(nR);
-		e1Re_y_.setlength(nR);
-		e1Re_z_.setlength(nR);
-
 		for (int i=0; i<nR; i++) {
 
-			r_[i] = r[i];
+			e1Re_x_inGrid[i] = e1Re_XYZ[i].c1;
+			e1Re_y_inGrid[i] = e1Re_XYZ[i].c1;
+			e1Re_z_inGrid[i] = e1Re_XYZ[i].c1;
 
-			b0_r_[i] = b0_r[i];
-			b0_t_[i] = b0_t[i];
-			b0_z_[i] = b0_z[i];
+			b0_r_inGrid[i] = b0_CYL[i].c1;
+			b0_t_inGrid[i] = b0_CYL[i].c1;
+			b0_z_inGrid[i] = b0_CYL[i].c1;
 
-			e1Re_x_[i] = e1Re_XYZ[i].c1;
-			e1Re_y_[i] = e1Re_XYZ[i].c2;
-			e1Re_z_[i] = e1Re_XYZ[i].c3;
+			r__[i] = r[i];
 
 		}
 
-		alglib::spline1dbuildcubic(r_,b0_r_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_r);
-		alglib::spline1dbuildcubic(r_,b0_t_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_t);
-		alglib::spline1dbuildcubic(r_,b0_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_z);
-
-		alglib::spline1dbuildcubic(r_,e1Re_x_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_x);
-		alglib::spline1dbuildcubic(r_,e1Re_y_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_y);
-		alglib::spline1dbuildcubic(r_,e1Re_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_z);
-
+		int gStat;
 		for (int i=0; i<_N_DATA; i++) {
 
-			b0_CYL_kjGrid[i].c1 = alglib::spline1dcalc(s_b0_r,r_kjGrid[i]);	
-			b0_CYL_kjGrid[i].c2 = alglib::spline1dcalc(s_b0_t,r_kjGrid[i]);	
-			b0_CYL_kjGrid[i].c3 = alglib::spline1dcalc(s_b0_z,r_kjGrid[i]);	
+			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
+			b0_CYL_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, b0_t_inGrid, nR, gStat );
+			b0_CYL_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, b0_z_inGrid, nR, gStat );
 
-			e1Re_XYZ_kjGrid[i].c1 = alglib::spline1dcalc(s_e1Re_x,r_kjGrid[i]);	
-			e1Re_XYZ_kjGrid[i].c2 = alglib::spline1dcalc(s_e1Re_y,r_kjGrid[i]);	
-			e1Re_XYZ_kjGrid[i].c3 = alglib::spline1dcalc(s_e1Re_z,r_kjGrid[i]);	
+			e1Re_XYZ_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, e1Re_x_inGrid, nR, gStat );
+			e1Re_XYZ_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, e1Re_y_inGrid, nR, gStat );
+			e1Re_XYZ_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, e1Re_z_inGrid, nR, gStat );
+
 		}	
 
 
@@ -1238,6 +1312,7 @@ int main ( int argc, char **argv )
 	C3Vec thisOrbitE_im_XYZ[nSteps];
 	CParticle thisParticle_XYZ;
 	C3Vec thisOrbit_XYZ[nSteps];
+	C3Vec e1ReTmp_XYZ;
 
 	int iP, i, jt;
 	#pragma acc parallel \
@@ -1261,12 +1336,16 @@ int main ( int argc, char **argv )
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+					float x_ = thisParticle_XYZ.c1;
 
-					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid );
+					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
 
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
+						e1ReTmp_XYZ.c1 = kj_interp1D ( x_, r_kjGrid, e1Re_x_kjGrid, _N_DATA, istat );
+						e1ReTmp_XYZ.c2 = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_y_kjGrid, _N_DATA, istat );
+						e1ReTmp_XYZ.c3 = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_z_kjGrid, _N_DATA, istat );
+
 						istat = 0;
 						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
