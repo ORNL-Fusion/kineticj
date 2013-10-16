@@ -23,6 +23,7 @@ CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
 VENDOR := PGI_
+VENDOR := CRAY_
 
 ThisMachine := $(shell uname -n)
 

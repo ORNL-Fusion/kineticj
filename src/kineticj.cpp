@@ -18,7 +18,7 @@
 #include "stdafx.h"
 #include "interpolation.h"
 #include <math.h>
-#include <accelmath.h>
+//#include <accelmath.h>
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -143,8 +143,9 @@ class C3Vec {
 		public:
 				float c1, c2, c3;
 
-				inline C3Vec () {c1=0;c2=0;c3=0;};
-				inline C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+				C3Vec () {c1=0;c2=0;c3=0;};
+				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
+				C3Vec ( int _arg ) {c1=_arg;c2=_arg;c3=_arg;};
 
 				C3Vec& operator = (const C3Vec &rhs);
 				C3Vec& operator += (const C3Vec &rhs);
@@ -466,20 +467,6 @@ complex<float> exp ( complex<float> arg ) {
 	return out;
 }
 
-//// First-order orbits
-//C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
-//				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
-//
-//	C3Vec b0(0,0,0), F;
-//
-//	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
-//	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-//	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-//	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
-//
-//	return F*(p.q/p.m);	
-//}
-
 C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int &stat ) {
 
 	float _x, x0, x1;
@@ -576,24 +563,26 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
 	//}
 
-	x0 = static_cast<int>(floor(_x));
-	x1 = static_cast<int>(ceil(_x));
-	
+	int xF = floor(_x);
+	int xC = ceil(_x);
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+
 	// Catch for particle at point
-	if(x0==x1) {
+	if(xF==xC) {
 #if DEBUGLEVEL >= 2
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
 #endif
-		return yVec[x0];
+		return yVec[xF];
 	}
 	else {
-		C3Vec y0 = yVec[x0];
-		C3Vec y1 = yVec[x1];
 
+		C3Vec y0 = yVec[xF];
+		C3Vec y1 = yVec[xC];
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
 	}
-
 }
 
 // Zero-order orbits
@@ -641,9 +630,11 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 void rk4_move ( CParticle &p, const float &dt, const float &t0, 
 				const C3Vec b0[], const float r[]) {
 
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
+
+
+		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
 		x1 = yn0 * dt;
 		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
@@ -708,34 +699,6 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 #endif
 
 }
-
-//// First-order orbits
-//void rk4_move ( CParticle &p, float dt, float t0, 
-//				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
-//
-//		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-//		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
-//
-//		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, e1, wrf ) * dt;	
-//		x1 = k1 * dt;                                               
-//		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, e1, wrf ) * dt;	
-//		x2 = k2 * dt;                                               
-//		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, e1, wrf ) * dt;	
-//		x3 = k3 * dt;                                               
-//		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
-//		x4 = k4 * dt;
-//
-//		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-//		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
-//
-//		p.c1 = xn1.c1;
-//		p.c2 = xn1.c2;
-//		p.c3 = xn1.c3;
-//		p.v_c1 = yn1.c1;
-//		p.v_c2 = yn1.c2;
-//		p.v_c3 = yn1.c3;
-//}
-
 
 float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
@@ -938,51 +901,6 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
 
-		// Interpolate input quantities to a compile-time
-		// grid so we can use in CUDA and OPENACC.
-
-		float r_kjGrid[_N_DATA];
-		C3Vec b0_CYL_kjGrid[_N_DATA];
-		//r_kjGrid.resize(_N_DATA);
-		//b0_CYL.resize(_N_DATA);
-
-		for (int i=0; i<_N_DATA; i++) {
-			r_kjGrid[i] = r[0]+i*(r.back()-r.front())/(_N_DATA-1);
-		}
-
-		alglib::spline1dinterpolant s_b0_r, s_b0_t, s_b0_z;
-		alglib::ae_int_t natural_bound_type = 2;
-
-		// Convert STL vectors into arrays
-		alglib::real_1d_array r_, b0_r_, b0_t_, b0_z_; 
-
-		r_.setlength(nR);
-		b0_r_.setlength(nR);
-		b0_t_.setlength(nR);
-		b0_z_.setlength(nR);
-
-		for (int i=0; i<nR; i++) {
-
-			r_[i] = r[i];
-
-			b0_r_[i] = b0_r[i];
-			b0_t_[i] = b0_t[i];
-			b0_z_[i] = b0_z[i];
-
-		}
-
-		alglib::spline1dbuildcubic(r_,b0_r_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_r);
-		alglib::spline1dbuildcubic(r_,b0_t_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_t);
-		alglib::spline1dbuildcubic(r_,b0_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_z);
-
-		for (int i=0; i<_N_DATA; i++) {
-
-			b0_CYL_kjGrid[i].c1 = alglib::spline1dcalc(s_b0_r,r_kjGrid[i]);	
-			b0_CYL_kjGrid[i].c2 = alglib::spline1dcalc(s_b0_t,r_kjGrid[i]);	
-			b0_CYL_kjGrid[i].c3 = alglib::spline1dcalc(s_b0_z,r_kjGrid[i]);	
-
-		}	
-
 		// Rotate the e field to XYZ
 
 		vector<C3Vec> e1Re_CYL, e1Im_CYL;
@@ -1103,6 +1021,71 @@ int main ( int argc, char **argv )
 				particles_XYZ[i] = thisParticle;
 				particles_XYZ[i].number = i;
 		}
+
+		// Interpolate input quantities to a compile-time
+		// grid so we can use in CUDA and OPENACC.
+
+		float r_kjGrid[_N_DATA];
+		C3Vec b0_CYL_kjGrid[_N_DATA];
+		C3Vec e1Re_XYZ_kjGrid[_N_DATA];
+		C3Vec e1Im_XYZ_kjGrid[_N_DATA];
+
+		for (int i=0; i<_N_DATA; i++) {
+			r_kjGrid[i] = r[0]+i*(r.back()-r.front())/(_N_DATA-1);
+		}
+
+		alglib::spline1dinterpolant s_b0_r, s_b0_t, s_b0_z;
+		alglib::spline1dinterpolant s_e1Re_x, s_e1Re_y, s_e1Re_z;
+
+		alglib::ae_int_t natural_bound_type = 2;
+
+		// Convert STL vectors into arrays
+		alglib::real_1d_array r_, b0_r_, b0_t_, b0_z_; 
+		alglib::real_1d_array e1Re_x_, e1Re_y_, e1Re_z_; 
+
+		r_.setlength(nR);
+
+		b0_r_.setlength(nR);
+		b0_t_.setlength(nR);
+		b0_z_.setlength(nR);
+
+		e1Re_x_.setlength(nR);
+		e1Re_y_.setlength(nR);
+		e1Re_z_.setlength(nR);
+
+		for (int i=0; i<nR; i++) {
+
+			r_[i] = r[i];
+
+			b0_r_[i] = b0_r[i];
+			b0_t_[i] = b0_t[i];
+			b0_z_[i] = b0_z[i];
+
+			e1Re_x_[i] = e1Re_XYZ[i].c1;
+			e1Re_y_[i] = e1Re_XYZ[i].c2;
+			e1Re_z_[i] = e1Re_XYZ[i].c3;
+
+		}
+
+		alglib::spline1dbuildcubic(r_,b0_r_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_r);
+		alglib::spline1dbuildcubic(r_,b0_t_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_t);
+		alglib::spline1dbuildcubic(r_,b0_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_b0_z);
+
+		alglib::spline1dbuildcubic(r_,e1Re_x_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_x);
+		alglib::spline1dbuildcubic(r_,e1Re_y_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_y);
+		alglib::spline1dbuildcubic(r_,e1Re_z_,nR, natural_bound_type, 0.0, natural_bound_type, 0.0, s_e1Re_z);
+
+		for (int i=0; i<_N_DATA; i++) {
+
+			b0_CYL_kjGrid[i].c1 = alglib::spline1dcalc(s_b0_r,r_kjGrid[i]);	
+			b0_CYL_kjGrid[i].c2 = alglib::spline1dcalc(s_b0_t,r_kjGrid[i]);	
+			b0_CYL_kjGrid[i].c3 = alglib::spline1dcalc(s_b0_z,r_kjGrid[i]);	
+
+			e1Re_XYZ_kjGrid[i].c1 = alglib::spline1dcalc(s_e1Re_x,r_kjGrid[i]);	
+			e1Re_XYZ_kjGrid[i].c2 = alglib::spline1dcalc(s_e1Re_y,r_kjGrid[i]);	
+			e1Re_XYZ_kjGrid[i].c3 = alglib::spline1dcalc(s_e1Re_z,r_kjGrid[i]);	
+		}	
+
 
 	// Langmuir wave dispersion relation
 
@@ -1249,7 +1232,12 @@ int main ( int argc, char **argv )
 		vector<complex<float> > f1c(nV);
 		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
-		//#pragma omp parallel for private(istat)
+	// Allocate some variable prior to the accelerated region
+
+	C3Vec thisOrbitE_re_XYZ[nSteps];
+	C3Vec thisOrbitE_im_XYZ[nSteps];
+	CParticle thisParticle_XYZ;
+	C3Vec thisOrbit_XYZ[nSteps];
 
 	int iP, i, jt;
 	#pragma acc parallel \
@@ -1258,13 +1246,9 @@ int main ( int argc, char **argv )
 	pcopyin(tJp[0:nJp-1]) \
 	pcopyin(hanningWeight[0:nSteps-1])
 	{
-		//#pragma acc loop 
 		for(iP=0;iP<particles_XYZ.size();iP++) {
 
-			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec());
-			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec());
-
-			CParticle thisParticle_XYZ(particles_XYZ[iP]);
+			thisParticle_XYZ = particles_XYZ[iP];
 			thisParticle_XYZ.c1 = xGrid[iX];
 
 			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
@@ -1272,42 +1256,35 @@ int main ( int argc, char **argv )
 			float h = dv * qe;
 	
 			// generate orbit and get time-harmonic e along it
-
-			C3Vec thisOrbit_XYZ[nSteps];
-
-			//#pragma acc loop private(i)
 	 		for(i=0;i<nSteps;i++) {	
 
 				if(thisParticle_XYZ.status==0) {
 
-					//thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-					thisOrbit_XYZ[i].c1 = thisParticle_XYZ.c1;
-					thisOrbit_XYZ[i].c2 = thisParticle_XYZ.c2;
-					thisOrbit_XYZ[i].c3 = thisParticle_XYZ.c3;
+					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
 
 					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid );
 
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
 						istat = 0;
 						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
 					}
 				}
+				else {
+					thisOrbitE_re_XYZ[i] = 0;
+					thisOrbitE_im_XYZ[i] = 0;
+				}
 			}
 
 			// get Jp(t) for this spatial point
-			//
-
-			//#pragma acc loop private(jt)	
 			for(jt=0;jt<nJp;jt++) {
 
 				vector<C3Vec> thisE(nSteps,C3Vec());
 				vector<C3VecI> thisEc(nSteps,C3VecI());
 
-				//#pragma acc loop private(i)
 				for(i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];

@@ -1,7 +1,7 @@
-PGI_OPENMPFLAGS := -acc -ta=nvidia -Minline=name:C3Vec,rk4_move,rk4_evalf -Minfo=all,accel,inline
+PGI_OPENMPFLAGS := -acc -ta=nvidia -Minline=name:C3Vec,rk4_move,rk4_evalf -Minfo=accel -Mautoinline
 PGI_DEBUGFLAGS := 
 PGI_OPTFLAGS := 
 
-CRAY_OPENMPFLAGS := 
+CRAY_OPENMPFLAGS := -hpragma=acc
 CRAY_DEBUGFLAGS := 
 CRAY_OPTFLAGS := 
