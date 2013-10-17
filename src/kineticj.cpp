@@ -63,6 +63,17 @@ CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
 		name = string(_s);
 }
 
+class CParticle_PODS {
+	public:
+		float c1, c2, c3, v_c1, v_c2, v_c3;
+		int number;
+		float weight;
+		int status;
+		double m, q;
+		double amu;
+		int Z;
+};
+
 class CParticle: public CSpecies {
 		public:
 				float c1, c2, c3, v_c1, v_c2, v_c3;
@@ -663,7 +674,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 //C3Vec rk4_evalf ( CParticle &p, const float &t, 
 //				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
 //			  	const vector<float> &rVec ) {
-C3Vec rk4_evalf ( CParticle &p, const float &t, 
+C3Vec rk4_evalf ( CParticle_PODS &p, const float &t, 
 		const C3Vec &v_XYZ, const C3Vec &x, 
 		const C3Vec b0_CYL[],
 		const float r[], 
@@ -702,7 +713,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 }
 
 // Zero-order orbits
-void rk4_move ( CParticle &p, const float &dt, const float &t0, 
+void rk4_move ( CParticle_PODS &p, const float &dt, const float &t0, 
 				const C3Vec b0[], const float r[], const int n) {
 
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
@@ -1030,13 +1041,14 @@ const int _N_DATA=512;
 		vector<int> p_Z;
 		float vTh;
 		int nThermal;
+		int nP;
 		
 		try {
 				NcFile dataFile ( particleList_fName.c_str(), NcFile::read );
 	
 				NcDim nc_nP(dataFile.getDim("nP"));
 	
-				int nP = nc_nP.getSize();
+				nP = nc_nP.getSize();
 #if DEBUGLEVEL >= 1	
 				cout << "\tnP: " << nP << endl;
 #endif
@@ -1117,6 +1129,10 @@ const int _N_DATA=512;
 		float e1Re_y_kjGrid[_N_DATA];
 		float e1Re_z_kjGrid[_N_DATA];
 
+		float e1Im_x_kjGrid[_N_DATA];
+		float e1Im_y_kjGrid[_N_DATA];
+		float e1Im_z_kjGrid[_N_DATA];
+
 		float b0_r_kjGrid[_N_DATA];
 		float b0_t_kjGrid[_N_DATA];
 		float b0_z_kjGrid[_N_DATA];
@@ -1124,6 +1140,10 @@ const int _N_DATA=512;
 		float e1Re_x_inGrid[nR];
 		float e1Re_y_inGrid[nR];
 		float e1Re_z_inGrid[nR];
+
+		float e1Im_x_inGrid[nR];
+		float e1Im_y_inGrid[nR];
+		float e1Im_z_inGrid[nR];
 
 		float b0_r_inGrid[nR];
 		float b0_t_inGrid[nR];
@@ -1138,6 +1158,10 @@ const int _N_DATA=512;
 			e1Re_x_inGrid[i] = e1Re_XYZ[i].c1;
 			e1Re_y_inGrid[i] = e1Re_XYZ[i].c1;
 			e1Re_z_inGrid[i] = e1Re_XYZ[i].c1;
+
+			e1Im_x_inGrid[i] = e1Im_XYZ[i].c1;
+			e1Im_y_inGrid[i] = e1Im_XYZ[i].c1;
+			e1Im_z_inGrid[i] = e1Im_XYZ[i].c1;
 
 			b0_r_inGrid[i] = b0_CYL[i].c1;
 			b0_t_inGrid[i] = b0_CYL[i].c1;
@@ -1157,6 +1181,10 @@ const int _N_DATA=512;
 			e1Re_XYZ_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, e1Re_x_inGrid, nR, gStat );
 			e1Re_XYZ_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, e1Re_y_inGrid, nR, gStat );
 			e1Re_XYZ_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, e1Re_z_inGrid, nR, gStat );
+
+			e1Im_XYZ_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, e1Im_x_inGrid, nR, gStat );
+			e1Im_XYZ_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, e1Im_y_inGrid, nR, gStat );
+			e1Im_XYZ_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, e1Im_z_inGrid, nR, gStat );
 
 		}	
 
@@ -1181,7 +1209,7 @@ const int _N_DATA=512;
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
-	vector<float> xGrid(nXGrid);
+	float xGrid[nXGrid];
 	float xGridRng = 0;
 	float xGridStep = 0;
 	
@@ -1225,7 +1253,7 @@ const int _N_DATA=512;
     cout << "tRF: " << tRF << endl;
 #endif
 	
-	vector<float> df0_dv(particles_XYZ_0.size());
+	float df0_dv[nV];
 	for(int i=0;i<particles_XYZ_0.size();i++){
 			float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
 			if(i==0) {
@@ -1276,10 +1304,41 @@ const int _N_DATA=512;
 		//hanningWeight[i] = 1;
 	}
 
+	// Allocate some variable prior to the accelerated region
+
+	C3Vec thisOrbitE_re_XYZ[nSteps];
+	C3Vec thisOrbitE_im_XYZ[nSteps];
+	CParticle_PODS thisParticle_XYZ;
+	C3Vec thisOrbit_XYZ[nSteps];
+	C3Vec e1ReTmp_XYZ;
+
+	// Covert to PODS for particle data
+
+	CParticle_PODS particles_XYZ_PODS[nV];
+	CParticle_PODS particles_XYZ_0_PODS[nV];
+
+	for(int iP=0;iP<nV;iP++) {
+
+		particles_XYZ_PODS[iP].q = particles_XYZ[iP].q;
+		particles_XYZ_PODS[iP].m = particles_XYZ[iP].m;
+
+		particles_XYZ_PODS[iP].c1 = particles_XYZ[iP].c1;
+		particles_XYZ_PODS[iP].c2 = particles_XYZ[iP].c2;
+		particles_XYZ_PODS[iP].c3 = particles_XYZ[iP].c3;
+
+		particles_XYZ_PODS[iP].v_c1 = particles_XYZ[iP].v_c1;
+		particles_XYZ_PODS[iP].v_c2 = particles_XYZ[iP].v_c2;
+		particles_XYZ_PODS[iP].v_c3 = particles_XYZ[iP].v_c3;
+
+		particles_XYZ_PODS[iP].weight = particles_XYZ[iP].weight;
+		particles_XYZ_PODS[iP].status = particles_XYZ[iP].status;
+
+		particles_XYZ_0_PODS[iP] = particles_XYZ_PODS[iP];
+	}
+
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
 	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
 
-	//#pragma omp parallel for private(istat)
 	for(int iX=0;iX<nXGrid;iX++) {
 
 		j1x[iX].resize(nJp);
@@ -1293,8 +1352,6 @@ const int _N_DATA=512;
 
 		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
 
-		//cout << "xGrid\t" << iX << endl;
-
 #if USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -1302,28 +1359,20 @@ const int _N_DATA=512;
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
-		vector<float> f1(nV);
-		vector<complex<float> > f1c(nV);
-		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
-
-	// Allocate some variable prior to the accelerated region
-
-	C3Vec thisOrbitE_re_XYZ[nSteps];
-	C3Vec thisOrbitE_im_XYZ[nSteps];
-	CParticle thisParticle_XYZ;
-	C3Vec thisOrbit_XYZ[nSteps];
-	C3Vec e1ReTmp_XYZ;
+	complex<float> f1c;
+	float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
 	int iP, i, jt;
+	complex<float> this_j1xc(0,0);
 	#pragma acc parallel \
 	private(iP,i,jt) \
 	pcopyin(thisT[0:nSteps-1]) \
 	pcopyin(tJp[0:nJp-1]) \
 	pcopyin(hanningWeight[0:nSteps-1])
 	{
-		for(iP=0;iP<particles_XYZ.size();iP++) {
+		for(iP=0;iP<nV;iP++) {
 
-			thisParticle_XYZ = particles_XYZ[iP];
+			thisParticle_XYZ = particles_XYZ_PODS[iP];
 			thisParticle_XYZ.c1 = xGrid[iX];
 
 			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
@@ -1342,12 +1391,10 @@ const int _N_DATA=512;
 
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
-						e1ReTmp_XYZ.c1 = kj_interp1D ( x_, r_kjGrid, e1Re_x_kjGrid, _N_DATA, istat );
-						e1ReTmp_XYZ.c2 = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_y_kjGrid, _N_DATA, istat );
-						e1ReTmp_XYZ.c3 = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_z_kjGrid, _N_DATA, istat );
-
+						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
 						istat = 0;
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
+						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat );
+
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
 					}
@@ -1359,69 +1406,58 @@ const int _N_DATA=512;
 			}
 
 			// get Jp(t) for this spatial point
-			for(jt=0;jt<nJp;jt++) {
 
-				vector<C3Vec> thisE(nSteps,C3Vec());
-				vector<C3VecI> thisEc(nSteps,C3VecI());
+			C3VecI thisEc;
+			C3VecI thisV1c;
 
-				for(i=0;i<nSteps;i++) {	
+			for(i=0;i<nSteps;i++) {
 
-					float tTmp = tJp[jt]+thisT[i];
-					//float weight = expWeight[i]*hanningWeight[i];
-					float weight = hanningWeight[i];
-					float phs = -(wrf*tTmp);
+				float tTmp = thisT[i];
+				float weight = hanningWeight[i];
+				float phs = -(wrf*tTmp);
 
-					thisE[i] = weight*(thisOrbitE_re_XYZ[i]*cos(phs)-thisOrbitE_im_XYZ[i]*sin(phs));
-					thisEc[i] = C3VecI(
-									weight*complex<float>(
-											thisOrbitE_re_XYZ[i].c1*cos(phs)-thisOrbitE_im_XYZ[i].c1*sin(phs),
-											thisOrbitE_im_XYZ[i].c1*cos(phs)+thisOrbitE_re_XYZ[i].c1*sin(phs)),
-									weight*complex<float>(
-											thisOrbitE_re_XYZ[i].c2*cos(phs)-thisOrbitE_im_XYZ[i].c2*sin(phs),
-											thisOrbitE_im_XYZ[i].c2*cos(phs)+thisOrbitE_re_XYZ[i].c2*sin(phs)),
-									weight*complex<float>(
-											thisOrbitE_re_XYZ[i].c3*cos(phs)-thisOrbitE_im_XYZ[i].c3*sin(phs),
-											thisOrbitE_im_XYZ[i].c3*cos(phs)+thisOrbitE_re_XYZ[i].c3*sin(phs))
-									);	
-				}
+				thisEc = C3VecI(
+								weight*complex<float>(
+										thisOrbitE_re_XYZ[i].c1*cos(phs)-thisOrbitE_im_XYZ[i].c1*sin(phs),
+										thisOrbitE_im_XYZ[i].c1*cos(phs)+thisOrbitE_re_XYZ[i].c1*sin(phs)),
+								weight*complex<float>(
+										thisOrbitE_re_XYZ[i].c2*cos(phs)-thisOrbitE_im_XYZ[i].c2*sin(phs),
+										thisOrbitE_im_XYZ[i].c2*cos(phs)+thisOrbitE_re_XYZ[i].c2*sin(phs)),
+								weight*complex<float>(
+										thisOrbitE_re_XYZ[i].c3*cos(phs)-thisOrbitE_im_XYZ[i].c3*sin(phs),
+										thisOrbitE_im_XYZ[i].c3*cos(phs)+thisOrbitE_re_XYZ[i].c3*sin(phs))
+								);	
 
-				
-				C3Vec thisV1 = -qOverm * intC3VecArray ( thisT, thisE );
-				C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisEc );
+				int N = nSteps - 1;
+				float A = i % N;
+				float B = A / N;	
+				int factor = ceil(B)+1;
 
-				f1[iP] = -thisV1.c1*df0_dv[iP];
-				f1c[iP] = -thisV1c.c1*df0_dv[iP];
-
-				//if(iP>0) {
-
-					float v0_i = particles_XYZ_0[iP].v_c1;
-					//float v0_im1 = particles_XYZ_0[iP-1].v_c1;
-
-					// This gets a factor that is 1 for iP=0 or iP=N, 
-					// but 2 otherwise to remove the IF statement
-					// from the trapezoidal rule integration required
-					// at the endpoint (i.e., backward differencing).
-
-					int N = particles_XYZ.size() - 1;
-					float A = iP % N;
-					float B = A / N;	
-					int factor = ceil(B)+1;
-
-				//	#pragma omp atomic
-				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
-
-					//#pragma omp critical // "atomic" does not work for complex numbers
-					//{
-						//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
-						j1xc[iX][jt] += h/2 * ( factor * v0_i*f1c[iP]); 
-
-					//}
-
-				//}
+				thisV1c += dtMin/2 * ( factor * thisEc); 
+			
 			}
+
+			f1c = -thisV1c.c1*df0_dv[iP];
+
+			float v0_i = particles_XYZ_0_PODS[iP].v_c1;
+
+			// This gets a factor that is 1 for iP=0 or iP=N, 
+			// but 2 otherwise to remove the IF statement
+			// from the trapezoidal rule integration required
+			// at the endpoint (i.e., backward differencing).
+
+			int N = nV - 1;
+			float A = iP % N;
+			float B = A / N;	
+			int factor = ceil(B)+1;
+
+			this_j1xc += h/2 * ( factor * v0_i*f1c); 
+
 		}
 
 	}
+
+	j1xc[iX][0] = this_j1xc; 
 
 #else // END OF LOWMEM CODING ^^^
 

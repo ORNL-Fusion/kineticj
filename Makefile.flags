@@ -2,6 +2,6 @@ PGI_OPENMPFLAGS := -acc -ta=nvidia -Minline=name:C3Vec,rk4_move,rk4_evalf -Minfo
 PGI_DEBUGFLAGS := 
 PGI_OPTFLAGS := 
 
-CRAY_OPENMPFLAGS := -hpragma=acc
+CRAY_OPENMPFLAGS := -hpragma=acc,msgs
 CRAY_DEBUGFLAGS := 
 CRAY_OPTFLAGS := 
