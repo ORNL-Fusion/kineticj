@@ -1378,6 +1378,7 @@ int main ( int argc, char **argv )
 	#pragma acc kernels
 	{
 
+	#pragma acc loop independent
 	for(int iX=0;iX<nXGrid;iX++) {
 
 #if DEBUGLEVEL >=1
