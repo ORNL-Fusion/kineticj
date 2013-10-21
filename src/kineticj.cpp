@@ -1154,6 +1154,7 @@ int main ( int argc, char **argv )
 		for (int i=0; i<_N_DATA; i++) {
 			r_kjGrid[i] = r[0]+i*(r.back()-r.front())/(_N_DATA-1);
 		}
+		r_kjGrid[_N_DATA-1] = r.back(); // Explicitly ensure this for CRAY.
 
 		for (int i=0; i<nR; i++) {
 
@@ -1176,6 +1177,7 @@ int main ( int argc, char **argv )
 		int gStat=0;
 		for (int i=0; i<_N_DATA; i++) {
 
+			cout<<"r_kjGrid[i]: "<<r_kjGrid[i]<<endl;
 			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, b0_t_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, b0_z_inGrid, nR, gStat );
@@ -1192,8 +1194,12 @@ int main ( int argc, char **argv )
 
 		if(gStat>0) {
 			cout<<"ERROR: gStat>0"<<endl;			
+			cout<<"		gStat: "<<gStat<<endl;
+			cout<<"r[0]: "<<r[0]<<endl;
+			cout<<"r[nR-1]: "<<r[nR-1]<<endl;
 			exit(1);
 		}
+		
 	// Langmuir wave dispersion relation
 
 	double wrf = freq * 2 * _pi;
