@@ -849,12 +849,11 @@ C3Vec intC3VecArray ( const float x[], const vector<C3Vec> &f ) {
 int main ( int argc, char **argv )
 {
 
-const int _N_RF_CYCLES=5;
-const int _N_STEPS_PER_CYCLE=4000;
-const int _N_JP_CYCLES=1;
-const int _N_JP_PER_CYCLE=1;
-const int _N_DATA=12288;
-
+//const int _N_RF_CYCLES=5;
+//const int _N_STEPS_PER_CYCLE=4000;
+//const int _N_JP_CYCLES=1;
+//const int _N_JP_PER_CYCLE=1;
+//const int _N_DATA=12288;
 
 #if USEPAPI >= 1
 		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops;
@@ -1213,7 +1212,8 @@ const int _N_DATA=12288;
 #endif
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
-	int nXGrid = cfg.lookup("nXGrid");
+	//int nXGrid = cfg.lookup("nXGrid");
+	const int nXGrid = _N_XGRID;
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
 	float xGrid[nXGrid];
 	float xGridRng = 0;
@@ -1343,8 +1343,40 @@ const int _N_DATA=12288;
 
 	}
 
-	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
-	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
+#if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
+
+	complex<float> j1xc[nXGrid][nJp];
+	complex<float> j1yc[nXGrid][nJp];
+	complex<float> j1zc[nXGrid][nJp];
+
+	float j1x[nXGrid][nJp];
+	float j1y[nXGrid][nJp];
+	float j1z[nXGrid][nJp];
+
+	for(int iX=0;iX<nXGrid;iX++) {
+
+		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1yc[iX][jt] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1zc[iX][jt] = complex<float>(0,0);
+
+		for(int jt=0;jt<nJp;jt++) j1x[iX][jt] = 0;
+		for(int jt=0;jt<nJp;jt++) j1y[iX][jt] = 0;
+		for(int jt=0;jt<nJp;jt++) j1z[iX][jt] = 0;
+	}
+
+	#pragma acc data \
+	pcopy(j1xc[0:nXGrid-1][0:nJp-1]) \
+	pcopyin(thisT[0:nSteps-1]) \
+	pcopyin(tJp[0:nJp-1]) \
+	pcopyin(hanningWeight[0:nSteps-1]) \
+	pcopyin(r_kjGrid[0:_N_DATA-1]) \
+	pcopyin(e1Re_XYZ_kjGrid[0:_N_DATA]) \
+	pcopyin(e1Im_XYZ_kjGrid[0:_N_DATA]) \
+	pcopyin(particles_XYZ_PODS[0:nV-1])
+	{
+
+	#pragma acc kernels
+	{
 
 	for(int iX=0;iX<nXGrid;iX++) {
 
@@ -1353,36 +1385,11 @@ const int _N_DATA=12288;
 		cout<<"iX: "<<iX<<endl;			
 #endif
 #endif
+		complex<float> f1c;
+		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
-		j1x[iX].resize(nJp);
-		j1xc[iX].resize(nJp);
-
-		j1y[iX].resize(nJp);
-		j1yc[iX].resize(nJp);
-
-		j1z[iX].resize(nJp);
-		j1zc[iX].resize(nJp);
-
-		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
-
-#if USEPAPI >= 1
-		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-#endif	
-
-#if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
-
-	complex<float> f1c;
-	float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
-
-	int iP, i, jt;
-	complex<float> this_j1xc(0,0);
-	#pragma acc parallel \
-	private(iP,i,jt) \
-	pcopyin(thisT[0:nSteps-1]) \
-	pcopyin(tJp[0:nJp-1]) \
-	pcopyin(hanningWeight[0:nSteps-1])
-	{
+		int iP, i, jt;
+		complex<float> this_j1xc(0,0);
 		for(iP=0;iP<nV;iP++) {
 
 			thisParticle_XYZ = particles_XYZ_PODS[iP];
@@ -1412,14 +1419,6 @@ const int _N_DATA=12288;
 
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
-#if DEBUGLEVEL >=2
-						//cout<<thisOrbit_XYZ[i].c1<<endl;
-						//cout<<e1ReTmp_XYZ.c1<<endl;
-						//cout<<r_kjGrid[i]<<endl;
-						//cout<<e1Re_XYZ_kjGrid[i].c1<<endl;
-						//cout<<istat<<endl;
-						//cout<<_N_DATA<<endl;
-#endif
 					}
 				}
 			}
@@ -1453,16 +1452,6 @@ const int _N_DATA=12288;
 				int factor = ceil(B)+1;
 
 				thisV1c += -qOverm * dtMin/2 * ( factor * thisEc); 
-#if DEBUGLEVEL >= 2
-				//cout<<endl;
-				//cout<<"step: "<<i<<endl;
-				//cout<<"e1Re_XYZ_kjGrid[i]: "<<e1Re_XYZ_kjGrid[i].c1<<endl;
-				//cout<<tTmp<<endl;
-				//cout<<thisOrbitE_re_XYZ[i].c1<<endl;
-				//cout<<"thisV1c: "<<thisV1c.c1<<endl;
-				//cout<<"factor: "<<factor<<endl;
-#endif
-			
 			}
 
 			f1c = -thisV1c.c1*df0_dv[iP];
@@ -1481,11 +1470,43 @@ const int _N_DATA=12288;
 
 			this_j1xc += h/2 * ( factor * v0_i*f1c); 
 		}
-	}
 
 	j1xc[iX][0] = this_j1xc; 
 
+	} // End of xGrid loop
+
+	} // End of OPENACC kernels region
+	} // End of OPENACC data region
+
 #else // END OF LOWMEM CODING ^^^
+
+	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
+	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
+
+	for(int iX=0;iX<nXGrid;iX++) {
+
+#if DEBUGLEVEL >=1
+#if !defined(_OPENACC)
+		cout<<"iX: "<<iX<<endl;			
+#endif
+#endif
+
+		j1x[iX].resize(nJp);
+		j1xc[iX].resize(nJp);
+
+		j1y[iX].resize(nJp);
+		j1yc[iX].resize(nJp);
+
+		j1z[iX].resize(nJp);
+		j1zc[iX].resize(nJp);
+
+		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
+
+#if USEPAPI >= 1
+		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+#endif	
+
 
 		vector<CParticle> this_particles_XYZ(particles_XYZ);
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
@@ -1907,7 +1928,6 @@ const int _N_DATA=12288;
 //		}
 //		cout<<endl;
 
-#endif // END OF HIGHMEM CODING ^^^
 
 
 #if USEPAPI >= 1
@@ -2090,6 +2110,8 @@ const int _N_DATA=12288;
 #endif
 
 	} // End of xGrid loop
+
+#endif // END OF HIGHMEM CODING ^^^
 
 	// Write current(s) to file
 	

@@ -22,9 +22,9 @@ CC := gcc
 CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
-VENDOR := PGI_
+#VENDOR := PGI_
 VENDOR := CRAY_
-VENDOR := GNU_
+#VENDOR := GNU_
 
 ThisMachine := $(shell uname -n)
 
