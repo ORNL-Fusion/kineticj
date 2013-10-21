@@ -483,12 +483,13 @@ float kj_interp1D ( float x, const float xVec[], const float yVec[], int n, int 
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
 			// Particle absorbing walls
-#if DEBUGLEVEL >= 1
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec[0]<<endl;
-            cout<<"xVec.back():"<<xVec[n-1]<<endl;
+            cout<<"xVec[0]:"<<xVec[0]<<endl;
+            cout<<"xVec[n-1]:"<<xVec[n-1]<<endl;
+			cout<<"stat: "<<stat<<endl;
 #endif
 #endif
 			++stat;
@@ -521,10 +522,10 @@ float kj_interp1D ( float x, const float xVec[], const float yVec[], int n, int 
 	
 	// Catch for particle at point
 	if(xF==xC) {
-#if DEBUGLEVEL >= 2
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+		cout << "Particle at point catch" << endl;
 #endif
 #endif
 		return yVec[xF];
@@ -547,12 +548,13 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
 			// Particle absorbing walls
-#if DEBUGLEVEL >= 1
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec[0]<<endl;
-            cout<<"xVec.back():"<<xVec[n-1]<<endl;
+            cout<<"xVec[0]:"<<xVec[0]<<endl;
+            cout<<"xVec[n-1]:"<<xVec[n-1]<<endl;
+			cout<<"stat: "<<stat<<endl;
 #endif
 #endif
 			++stat;
@@ -576,7 +578,7 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 #endif
 
 	_x = (x-xVec[0])/(xVec[n-1]-xVec[0])*(n-1);
-
+	//cout<<"_x: "<<_x<<endl;
 	int xF = floor(_x);
 	int xC = ceil(_x);
 
@@ -585,10 +587,12 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 	
 	// Catch for particle at point
 	if(xF==xC) {
-#if DEBUGLEVEL >= 2
+		//cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
+
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+		cout << "Particle at point catch"<< endl;
 #endif
 #endif
 		return yVec[xF];
@@ -597,10 +601,9 @@ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int 
 
 		C3Vec y0 = yVec[xF];
 		C3Vec y1 = yVec[xC];
+		C3Vec tmpA = y0+(_x-x0)*(y1-y0)/(x1-x0);
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
-
 	}
-
 }
 
 
@@ -613,7 +616,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()||stat>0) {
 			// Particle absorbing walls
-#if DEBUGLEVEL >= 1
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
@@ -654,10 +657,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 	// Catch for particle at point
 	if(xF==xC) {
-#if DEBUGLEVEL >= 2
+#if DEBUGLEVEL >= 3
 #if !defined(_OPENACC)
 		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << xF/xC << "  "  << abs(1.0-xF/xC) << endl;
+		cout << "Particle at point catch"<< endl;
 #endif
 #endif
 		return yVec[xF];
@@ -688,7 +691,7 @@ C3Vec rk4_evalf ( CParticle_PODS &p, const float &t,
 #if DEBUGLEVEL >= 3
 	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
 	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
-	cout << "\t\t\trVec.front(): " << rVec.front() << endl;
+	cout << "\t\t\tr[0]: " << r[0] << endl;
 	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
 #endif
 
@@ -850,7 +853,7 @@ const int _N_RF_CYCLES=5;
 const int _N_STEPS_PER_CYCLE=4000;
 const int _N_JP_CYCLES=1;
 const int _N_JP_PER_CYCLE=1;
-const int _N_DATA=512;
+const int _N_DATA=12288;
 
 
 #if USEPAPI >= 1
@@ -1156,22 +1159,22 @@ const int _N_DATA=512;
 		for (int i=0; i<nR; i++) {
 
 			e1Re_x_inGrid[i] = e1Re_XYZ[i].c1;
-			e1Re_y_inGrid[i] = e1Re_XYZ[i].c1;
-			e1Re_z_inGrid[i] = e1Re_XYZ[i].c1;
+			e1Re_y_inGrid[i] = e1Re_XYZ[i].c2;
+			e1Re_z_inGrid[i] = e1Re_XYZ[i].c3;
 
 			e1Im_x_inGrid[i] = e1Im_XYZ[i].c1;
-			e1Im_y_inGrid[i] = e1Im_XYZ[i].c1;
-			e1Im_z_inGrid[i] = e1Im_XYZ[i].c1;
+			e1Im_y_inGrid[i] = e1Im_XYZ[i].c2;
+			e1Im_z_inGrid[i] = e1Im_XYZ[i].c3;
 
 			b0_r_inGrid[i] = b0_CYL[i].c1;
-			b0_t_inGrid[i] = b0_CYL[i].c1;
-			b0_z_inGrid[i] = b0_CYL[i].c1;
+			b0_t_inGrid[i] = b0_CYL[i].c2;
+			b0_z_inGrid[i] = b0_CYL[i].c3;
 
 			r__[i] = r[i];
 
 		}
 
-		int gStat;
+		int gStat=0;
 		for (int i=0; i<_N_DATA; i++) {
 
 			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
@@ -1188,7 +1191,10 @@ const int _N_DATA=512;
 
 		}	
 
-
+		if(gStat>0) {
+			cout<<"ERROR: gStat>0"<<endl;			
+			exit(1);
+		}
 	// Langmuir wave dispersion relation
 
 	double wrf = freq * 2 * _pi;
@@ -1334,12 +1340,19 @@ const int _N_DATA=512;
 		particles_XYZ_PODS[iP].status = particles_XYZ[iP].status;
 
 		particles_XYZ_0_PODS[iP] = particles_XYZ_PODS[iP];
+
 	}
 
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
 	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
 
 	for(int iX=0;iX<nXGrid;iX++) {
+
+#if DEBUGLEVEL >=1
+#if !defined(_OPENACC)
+		cout<<"iX: "<<iX<<endl;			
+#endif
+#endif
 
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
@@ -1382,13 +1395,15 @@ const int _N_DATA=512;
 			// generate orbit and get time-harmonic e along it
 	 		for(i=0;i<nSteps;i++) {	
 
+				thisOrbitE_re_XYZ[i] = 0;
+				thisOrbitE_im_XYZ[i] = 0;
+
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-					float x_ = thisParticle_XYZ.c1;
 
 					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
-
+	
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
 						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
@@ -1397,11 +1412,15 @@ const int _N_DATA=512;
 
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
+#if DEBUGLEVEL >=2
+						//cout<<thisOrbit_XYZ[i].c1<<endl;
+						//cout<<e1ReTmp_XYZ.c1<<endl;
+						//cout<<r_kjGrid[i]<<endl;
+						//cout<<e1Re_XYZ_kjGrid[i].c1<<endl;
+						//cout<<istat<<endl;
+						//cout<<_N_DATA<<endl;
+#endif
 					}
-				}
-				else {
-					thisOrbitE_re_XYZ[i] = 0;
-					thisOrbitE_im_XYZ[i] = 0;
 				}
 			}
 
@@ -1433,7 +1452,16 @@ const int _N_DATA=512;
 				float B = A / N;	
 				int factor = ceil(B)+1;
 
-				thisV1c += dtMin/2 * ( factor * thisEc); 
+				thisV1c += -qOverm * dtMin/2 * ( factor * thisEc); 
+#if DEBUGLEVEL >= 2
+				//cout<<endl;
+				//cout<<"step: "<<i<<endl;
+				//cout<<"e1Re_XYZ_kjGrid[i]: "<<e1Re_XYZ_kjGrid[i].c1<<endl;
+				//cout<<tTmp<<endl;
+				//cout<<thisOrbitE_re_XYZ[i].c1<<endl;
+				//cout<<"thisV1c: "<<thisV1c.c1<<endl;
+				//cout<<"factor: "<<factor<<endl;
+#endif
 			
 			}
 
@@ -1452,9 +1480,7 @@ const int _N_DATA=512;
 			int factor = ceil(B)+1;
 
 			this_j1xc += h/2 * ( factor * v0_i*f1c); 
-
 		}
-
 	}
 
 	j1xc[iX][0] = this_j1xc; 
