@@ -1390,6 +1390,8 @@ int main ( int argc, char **argv )
 
 		int iP, i, jt;
 		complex<float> this_j1xc(0,0);
+
+		#pragma acc loop reduction(+:this_j1xc)
 		for(iP=0;iP<nV;iP++) {
 
 			thisParticle_XYZ = particles_XYZ_PODS[iP];
@@ -1400,6 +1402,9 @@ int main ( int argc, char **argv )
 			float h = dv * qe;
 	
 			// generate orbit and get time-harmonic e along it
+			
+			C3Vec e1ReTmp_XYZ, e1ImTmp_XYZ;
+
 	 		for(i=0;i<nSteps;i++) {	
 
 				thisOrbitE_re_XYZ[i] = 0;
@@ -1413,9 +1418,9 @@ int main ( int argc, char **argv )
 	
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
+						e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
 						istat = 0;
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat );
+						e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat );
 
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
