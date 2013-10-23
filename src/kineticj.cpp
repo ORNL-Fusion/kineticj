@@ -1177,7 +1177,6 @@ int main ( int argc, char **argv )
 		int gStat=0;
 		for (int i=0; i<_N_DATA; i++) {
 
-			cout<<"r_kjGrid[i]: "<<r_kjGrid[i]<<endl;
 			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, b0_t_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, b0_z_inGrid, nR, gStat );
@@ -1352,6 +1351,8 @@ int main ( int argc, char **argv )
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
 	complex<float> j1xc[nXGrid][nJp];
+	float j1x_re[nXGrid];//[nJp];
+	float j1x_im[nXGrid];//[nJp];
 	complex<float> j1yc[nXGrid][nJp];
 	complex<float> j1zc[nXGrid][nJp];
 
@@ -1361,17 +1362,21 @@ int main ( int argc, char **argv )
 
 	for(int iX=0;iX<nXGrid;iX++) {
 
-		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
-		for(int jt=0;jt<nJp;jt++) j1yc[iX][jt] = complex<float>(0,0);
-		for(int jt=0;jt<nJp;jt++) j1zc[iX][jt] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1xc[iX][0] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1yc[iX][0] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1zc[iX][0] = complex<float>(0,0);
 
-		for(int jt=0;jt<nJp;jt++) j1x[iX][jt] = 0;
-		for(int jt=0;jt<nJp;jt++) j1y[iX][jt] = 0;
-		for(int jt=0;jt<nJp;jt++) j1z[iX][jt] = 0;
+		for(int jt=0;jt<nJp;jt++) j1x[iX][0] = 0;
+		for(int jt=0;jt<nJp;jt++) j1y[iX][0] = 0;
+		for(int jt=0;jt<nJp;jt++) j1z[iX][0] = 0;
+
+		for(int jt=0;jt<nJp;jt++) j1x_re[iX] = 0;
+		for(int jt=0;jt<nJp;jt++) j1x_im[iX] = 0;
 	}
 
 	#pragma acc data \
-	pcopy(j1xc[0:nXGrid-1][0:nJp-1]) \
+	pcopy(j1x_re[0:nXGrid-1]) \
+	pcopy(j1x_im[0:nXGrid-1]) \
 	pcopyin(thisT[0:nSteps-1]) \
 	pcopyin(tJp[0:nJp-1]) \
 	pcopyin(hanningWeight[0:nSteps-1]) \
@@ -1483,7 +1488,9 @@ int main ( int argc, char **argv )
 			this_j1xc += h/2 * ( factor * v0_i*f1c); 
 		}
 
-	j1xc[iX][0] = this_j1xc; 
+	//j1xc[iX][0] = this_j1xc; 
+	j1x_re[iX] = real(this_j1xc); 
+	j1x_im[iX] = imag(this_j1xc); 
 
 	} // End of xGrid loop
 
