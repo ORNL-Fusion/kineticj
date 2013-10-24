@@ -22,9 +22,13 @@ CC := gcc
 CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
-#VENDOR := PGI_
+VENDOR := GNU_
+ifeq ($(PE_ENV),PGI)
+VENDOR := PGI_
+endif
+ifeq ($(PE_ENV),CRAY)
 VENDOR := CRAY_
-#VENDOR := GNU_
+endif
 
 ThisMachine := $(shell uname -n)
 
@@ -44,7 +48,7 @@ OPTFLAGS := $($(VENDOR)OPTFLAGS)
 CFLAGS := 
 CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS} 
 CPPFLAGS :=
-CPPFLAGS += -DDEBUGLEVEL=2
+CPPFLAGS += -DDEBUGLEVEL=1
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=1

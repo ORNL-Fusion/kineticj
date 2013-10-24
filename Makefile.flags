@@ -1,4 +1,4 @@
-PGI_OPENMPFLAGS := -acc -ta=nvidia -Minline=name:C3Vec,rk4_move,rk4_evalf -Minfo=accel -Mautoinline
+PGI_OPENMPFLAGS := -acc -ta=nvidia -Minline=name:rk4_move,rk4_evalf,kj_interp1D -Minfo=accel,inline
 PGI_DEBUGFLAGS := 
 PGI_OPTFLAGS := 
 

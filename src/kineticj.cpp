@@ -16,7 +16,9 @@
 #include <omp.h>
 #include "grid_sizes.hpp"
 #include <math.h>
-//#include <accelmath.h>
+#ifdef __PGI
+#include <accelmath.h>
+#endif
 
 #if USEPAPI >= 1
 #include <papi.h>
@@ -443,7 +445,8 @@ vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) 
 		return out;
 }
 
-C3Vec pow ( const C3Vec &in, const int arg ) {
+// This is a "double" for compatibility with PGI accelmath.h
+C3Vec pow ( C3Vec in, double arg ) {
 		C3Vec out;
 		out.c1 = pow(in.c1,arg);
 		out.c2 = pow(in.c2,arg);
@@ -677,71 +680,165 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 //C3Vec rk4_evalf ( CParticle &p, const float &t, 
 //				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
 //			  	const vector<float> &rVec ) {
-C3Vec rk4_evalf ( CParticle_PODS &p, const float &t, 
-		const C3Vec &v_XYZ, const C3Vec &x, 
-		const C3Vec b0_CYL[],
+//C3Vec rk4_evalf ( CParticle_PODS &p, const float &t, 
+//		const C3Vec &v_XYZ, const C3Vec &x, 
+//		const C3Vec b0_CYL[],
+//		const float r[], 
+//		const int n ) {
+//
+//	// Interpolate b0 at location in CYL
+//	
+//	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
+//	float _p = atan2 ( x.c2, x.c1 );
+//
+//#if DEBUGLEVEL >= 3
+//	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
+//	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
+//	cout << "\t\t\tr[0]: " << r[0] << endl;
+//	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
+//#endif
+//
+//	C3Vec thisb0_CYL, thisb0_XYZ;
+//
+//	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, n, p.status );
+//
+//	thisb0_XYZ = C3Vec( cos(_p)*thisb0_CYL.c1-sin(_p)*thisb0_CYL.c2+0,
+//					sin(_p)*thisb0_CYL.c1+cos(_p)*thisb0_CYL.c2+0,
+//					0+0+1*thisb0_CYL.c3 );
+//
+//	C3Vec thisv_x_b0 ( v_XYZ.c2*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c2, 
+//					-1.0*(v_XYZ.c1*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c1), 
+//					v_XYZ.c1*thisb0_XYZ.c2-v_XYZ.c2*thisb0_XYZ.c1);
+//
+//#if DEBUGLEVEL >= 3
+//	cout << "\tvxb0: " << thisv_x_b0.c1 << "  " << thisv_x_b0.c2 << "  " << thisv_x_b0.c3 << endl;
+//	cout << "\tp.q/p.m: " << p.q/p.m << endl;
+//#endif
+//
+//	return thisv_x_b0*(p.q/p.m);	
+//}
+
+int rk4_evalf ( int &pStatus, float qOverm, float t, 
+		float v_x, float v_y, float v_z,  
+		float x, float y, float z,
+		const float b0_r[], const float b0_t[], const float b0_z[],
 		const float r[], 
-		const int n ) {
+		int n,
+ 		float &aOut_x, float &aOut_y, float &aOut_z ) {
 
 	// Interpolate b0 at location in CYL
 	
-	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
-	float _p = atan2 ( x.c2, x.c1 );
+	float _r = sqrt ( pow(x,2) + pow(y,2) );
+	float _p = atan2 ( y, x );
 
 #if DEBUGLEVEL >= 3
-	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
+#if !defined _OPENACC
+	cout << "\t\t\tx: " << x << " y: " << y << " z: " << z << endl;
 	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
 	cout << "\t\t\tr[0]: " << r[0] << endl;
-	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
+	cout << "\t\t\tv_XYZ: " << v_x << "  " << v_y << "  " << v_z << endl;
+#endif
 #endif
 
-	C3Vec thisb0_CYL, thisb0_XYZ;
+	//C3Vec thisb0_CYL, thisb0_XYZ;
+	float thisb0_r, thisb0_t, thisb0_z, thisb0_x, thisb0_y;
 
-	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, n, p.status );
+	thisb0_r = kj_interp1D ( _r, r, b0_r, n, pStatus );
+	thisb0_t = kj_interp1D ( _r, r, b0_t, n, pStatus );
+	thisb0_z = kj_interp1D ( _r, r, b0_z, n, pStatus );
 
-	thisb0_XYZ = C3Vec( cos(_p)*thisb0_CYL.c1-sin(_p)*thisb0_CYL.c2+0,
-					sin(_p)*thisb0_CYL.c1+cos(_p)*thisb0_CYL.c2+0,
-					0+0+1*thisb0_CYL.c3 );
+	thisb0_x = cos(_p)*thisb0_r-sin(_p)*thisb0_t;
+	thisb0_y = sin(_p)*thisb0_r+cos(_p)*thisb0_t;
 
-	C3Vec thisv_x_b0 ( v_XYZ.c2*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c2, 
-					-1.0*(v_XYZ.c1*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c1), 
-					v_XYZ.c1*thisb0_XYZ.c2-v_XYZ.c2*thisb0_XYZ.c1);
+	float thisvXb0_x, thisvXb0_y, thisvXb0_z;
+	thisvXb0_x = v_y*thisb0_z-v_z*thisb0_y; 
+	thisvXb0_y =-1.0*(v_z*thisb0_z-v_z*thisb0_x); 
+	thisvXb0_z = v_x*thisb0_y-v_y*thisb0_x;
 
 #if DEBUGLEVEL >= 3
+#if !defined _OPENACC
 	cout << "\tvxb0: " << thisv_x_b0.c1 << "  " << thisv_x_b0.c2 << "  " << thisv_x_b0.c3 << endl;
-	cout << "\tp.q/p.m: " << p.q/p.m << endl;
+#endif
 #endif
 
-	return thisv_x_b0*(p.q/p.m);	
+	aOut_x = qOverm * thisvXb0_x; 
+	aOut_y = qOverm * thisvXb0_y; 
+	aOut_z = qOverm * thisvXb0_z; 
+
+	return 0;	
 }
 
+
 // Zero-order orbits
-void rk4_move ( CParticle_PODS &p, const float &dt, const float &t0, 
-				const C3Vec b0[], const float r[], const int n) {
+void rk4_move ( CParticle_PODS &p, float dt, float t0, 
+				const float b0_r[], const float b0_t[], const float b0_z[],  
+				const float r[], int n) {
 
-		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
+		float k1_x, k2_x, k3_x, k4_x, yn1_x, x1_x, x2_x, x3_x, x4_x, xn1_x; 
+		float k1_y, k2_y, k3_y, k4_y, yn1_y, x1_y, x2_y, x3_y, x4_y, xn1_y; 
+		float k1_z, k2_z, k3_z, k4_z, yn1_z, x1_z, x2_z, x3_z, x4_z, xn1_z; 
 
+		float yn0_x = p.v_c1;
+		float yn0_y = p.v_c2;
+		float yn0_z = p.v_c3;
 
+		float xn0_x = p.c1;
+		float xn0_y = p.c2;
+		float xn0_z = p.c3;
 
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, n ) * dt;	
-		x1 = yn0 * dt;
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, n ) * dt;	
-		x2 = (yn0 + 0.5*k1) * dt;
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, n ) * dt;	
-		x3 = (yn0 + 0.5*k2) * dt;
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, n ) * dt;	
-		x4 = (yn0 + 1.0*k3) * dt;
+		//C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
+			
+		int stat;
 
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+		float this_qOverm = p.q/p.m;
 
-		p.c1 = xn1.c1;
-		p.c2 = xn1.c2;
-		p.c3 = xn1.c3;
-		p.v_c1 = yn1.c1;
-		p.v_c2 = yn1.c2;
-		p.v_c3 = yn1.c3;
+		stat = rk4_evalf ( p.status, this_qOverm, t0 + 0.0*dt, 
+				yn0_x, yn0_y, yn0_z, 
+				xn0_x, xn0_y, xn0_z, 
+				b0_r,b0_t,b0_z, r, n, k1_x,k1_y,k1_z ) * dt;	
+		x1_x = yn0_x * dt;
+		x1_y = yn0_y * dt;
+ 		x1_z = yn0_z * dt;
+
+		stat = rk4_evalf ( p.status, this_qOverm, t0 + 0.5*dt, 
+				yn0_x + 0.5*k1_x, yn0_y + 0.5*k1_y, yn0_z + 0.5*k1_z,
+				xn0_x + 0.5*x1_x, xn0_y + 0.5*x1_y, xn0_z + 0.5*x1_z,
+				b0_r,b0_t,b0_z, r, n, k2_x,k2_y,k2_z ) * dt;	
+		x2_x = (yn0_x + 0.5*k1_x) * dt; 
+		x2_y = (yn0_x + 0.5*k1_y) * dt; 
+		x2_z = (yn0_x + 0.5*k1_z) * dt; 
+
+		stat = rk4_evalf ( p.status, this_qOverm, t0 + 0.5*dt, 
+				yn0_x + 0.5*k2_x, yn0_y + 0.5*k2_y, yn0_z + 0.5*k2_z, 
+				xn0_x + 0.5*x2_x, xn0_y + 0.5*x2_y, xn0_z + 0.5*x2_z, 
+				b0_r,b0_t,b0_z, r, n, k3_x,k3_y,k3_z ) * dt;	
+		x3_x = (yn0_x + 0.5*k2_x) * dt;
+		x3_y = (yn0_y + 0.5*k2_y) * dt;
+		x3_z = (yn0_z + 0.5*k2_z) * dt;
+
+		stat = rk4_evalf ( p.status, this_qOverm, t0 + 1.0*dt, 
+				yn0_x + 1.0*k3_x, yn0_y + 1.0*k3_y, yn0_z + 1.0*k3_z, 
+				xn0_x + 1.0*x3_x, xn0_y + 1.0*x3_y, xn0_z + 1.0*x3_z, 
+				b0_r,b0_t,b0_z, r, n, k4_x,k4_y,k4_z ) * dt;	
+		x4_x = (yn0_x + 1.0*k3_x) * dt;
+		x4_y = (yn0_y + 1.0*k3_y) * dt;
+		x4_z = (yn0_z + 1.0*k3_z) * dt;
+
+		yn1_x = yn0_x + 1.0/6.0 * (k1_x+2.0*k2_x+2.0*k3_x+k4_x);
+		yn1_y = yn0_y + 1.0/6.0 * (k1_y+2.0*k2_y+2.0*k3_y+k4_y);
+		yn1_z = yn0_z + 1.0/6.0 * (k1_z+2.0*k2_z+2.0*k3_z+k4_z);
+
+		xn1_x = xn0_x + 1.0/6.0 * (x1_x+2.0*x2_x+2.0*x3_x+x4_x);
+		xn1_y = xn0_y + 1.0/6.0 * (x1_y+2.0*x2_y+2.0*x3_y+x4_y);
+		xn1_z = xn0_z + 1.0/6.0 * (x1_z+2.0*x2_z+2.0*x3_z+x4_z);
+
+		p.c1 = xn1_x;
+		p.c2 = xn1_y;
+		p.c3 = xn1_z;
+
+		p.v_c1 = yn1_x;
+		p.v_c2 = yn1_y;
+		p.v_c3 = yn1_z;
 
 #if _PARTICLE_BOUNDARY == 1
 		// Particle absorbing walls
@@ -1123,6 +1220,7 @@ int main ( int argc, char **argv )
 
 		float r_kjGrid[_N_DATA];
 		float r__[nR];
+
 		C3Vec b0_CYL_kjGrid[_N_DATA];
 		C3Vec e1Re_XYZ_kjGrid[_N_DATA];
 		C3Vec e1Im_XYZ_kjGrid[_N_DATA];
@@ -1180,6 +1278,10 @@ int main ( int argc, char **argv )
 			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, b0_t_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, b0_z_inGrid, nR, gStat );
+
+			b0_r_kjGrid[i] = b0_CYL_kjGrid[i].c1;
+			b0_t_kjGrid[i] = b0_CYL_kjGrid[i].c2;
+			b0_z_kjGrid[i] = b0_CYL_kjGrid[i].c3;
 
 			e1Re_XYZ_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, e1Re_x_inGrid, nR, gStat );
 			e1Re_XYZ_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, e1Re_y_inGrid, nR, gStat );
@@ -1256,7 +1358,7 @@ int main ( int argc, char **argv )
 	const int nJp 			= nJpCycles * nJpPerCycle;
 	float dtJp 			= tRF / nJpPerCycle;
 	int istat = 0;
-	int nV = particles_XYZ_0.size();
+	const int nV = 500;//particles_XYZ_0.size();
 
 #if DEBUGLEVEL >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -1400,11 +1502,11 @@ int main ( int argc, char **argv )
 		complex<float> f1c;
 		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
-		int iP, i, jt;
+		int i, jt;
 		complex<float> this_j1xc(0,0);
 
 		#pragma acc loop reduction(+:this_j1xc)
-		for(iP=0;iP<nV;iP++) {
+		for(int iP=0;iP<nV;iP++) {
 
 			thisParticle_XYZ = particles_XYZ_PODS[iP];
 			thisParticle_XYZ.c1 = xGrid[iX];
@@ -1419,14 +1521,23 @@ int main ( int argc, char **argv )
 
 	 		for(i=0;i<nSteps;i++) {	
 
-				thisOrbitE_re_XYZ[i] = 0;
-				thisOrbitE_im_XYZ[i] = 0;
+				thisOrbitE_re_XYZ[i].c1 = 0;
+				thisOrbitE_re_XYZ[i].c2 = 0;
+				thisOrbitE_re_XYZ[i].c3 = 0;
+
+				thisOrbitE_im_XYZ[i].c1 = 0;
+				thisOrbitE_im_XYZ[i].c2 = 0;
+				thisOrbitE_im_XYZ[i].c3 = 0;
 
 				if(thisParticle_XYZ.status==0) {
 
-					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+					thisOrbit_XYZ[i].c1 = thisParticle_XYZ.c1;
+					thisOrbit_XYZ[i].c2 = thisParticle_XYZ.c2;
+					thisOrbit_XYZ[i].c3 = thisParticle_XYZ.c3;
 
-					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
+					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], 
+						b0_r_kjGrid, b0_t_kjGrid, b0_z_kjGrid, r_kjGrid, _N_DATA );
+					//rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
 	
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;

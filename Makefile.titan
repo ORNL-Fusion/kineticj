@@ -6,8 +6,15 @@ F90 =: ftn
 #INCLUDEFLAGS += -I $(ALGLIB_DIR)/cpp/src
 #LIBS += -L $(ALGLIB_DIR)/cpp/src -lalglib-cray
 
+ifeq ($(VENDOR),CRAY_)
 INCLUDEFLAGS += -I $(HOME)/libconfig/libconfig_cray/include
 LIBS += -L $(HOME)/libconfig/libconfig_cray/lib -lconfig++
+endif
+
+ifeq ($(VENDOR),PGI_)
+INCLUDEFLAGS += -I $(HOME)/libconfig/libconfig_pgi/include
+LIBS += -L $(HOME)/libconfig/libconfig_pgi/lib -lconfig++
+endif
 
 #NETCDF_DIR := 
 INCLUDEFLAGS += -I $(NETCDF_DIR)/include
