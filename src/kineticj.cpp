@@ -6,7 +6,7 @@
 #include <netcdf>
 #include <vector>
 #include <algorithm>
-#include <complex>
+//#include <complex>
 #include "constants.hpp"
 #include <libconfig.h++>
 #include <sys/types.h>
@@ -16,6 +16,9 @@
 #include <omp.h>
 #include "grid_sizes.hpp"
 #include <math.h>
+#include "vecs.cuh"
+#include "kineticj.cuh"
+
 //#include <accelmath.h>
 
 #if USEPAPI >= 1
@@ -30,7 +33,20 @@
 #define PRINT printf
 #endif
 
-using namespace std;
+//using namespace std;
+using std::vector;
+using std::cout;
+using std::endl;
+using std::string;
+using std::ifstream;
+using std::real;
+using std::imag;
+using std::setfill;
+using std::setw;
+using std::stringstream;
+
+using cusp::complex;
+//using std::complex;
 using namespace netCDF;
 using namespace exceptions;
 
@@ -62,17 +78,6 @@ CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
 		q = Z * _e;
 		name = string(_s);
 }
-
-class CParticle_PODS {
-	public:
-		float c1, c2, c3, v_c1, v_c2, v_c3;
-		int number;
-		float weight;
-		int status;
-		double m, q;
-		double amu;
-		int Z;
-};
 
 class CParticle: public CSpecies {
 		public:
@@ -119,269 +124,6 @@ CParticle::CParticle
 CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
 }
 
-class C3VecI {
-		public:
-				complex<float> c1, c2, c3;
-
-				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
-				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
-
-				C3VecI& operator = (const C3VecI &rhs);
-				C3VecI& operator += (const C3VecI &rhs);
-				C3VecI& operator += (const float &rhs);
-				C3VecI& operator -= (const C3VecI &rhs);
-				C3VecI& operator -= (const float &rhs);
-				C3VecI& operator *= (const C3VecI &rhs);
-				C3VecI& operator *= (const float &rhs);
-				C3VecI& operator /= (const C3VecI &rhs);
-				C3VecI& operator /= (const float &rhs);
-
-
-				C3VecI operator + (const C3VecI &other);
-				C3VecI operator + (const float &other);
-				C3VecI operator - (const C3VecI &other);
-				C3VecI operator - (const float &other);
-				C3VecI operator * (const C3VecI &other);
-				C3VecI operator * (const float &other);
-				friend C3VecI operator * (const float &other, const C3VecI &rhs);
-				C3VecI operator / (const C3VecI &other);
-				C3VecI operator / (const float &other);
-};
-
-class C3Vec {
-		public:
-				float c1, c2, c3;
-
-				C3Vec () {c1=0;c2=0;c3=0;};
-				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
-				C3Vec ( int _arg ) {c1=_arg;c2=_arg;c3=_arg;};
-
-				C3Vec& operator = (const C3Vec &rhs);
-				C3Vec& operator += (const C3Vec &rhs);
-				C3Vec& operator += (const float &rhs);
-				C3Vec& operator -= (const C3Vec &rhs);
-				C3Vec& operator -= (const float &rhs);
-				C3Vec& operator *= (const C3Vec &rhs);
-				C3Vec& operator *= (const float &rhs);
-				C3Vec& operator /= (const C3Vec &rhs);
-				C3Vec& operator /= (const float &rhs);
-
-				C3Vec operator + (const C3Vec &other);
-				C3Vec operator + (const float &other);
-				C3Vec operator - (const C3Vec &other);
-				C3Vec operator - (const float &other);
-				C3Vec operator * (const C3Vec &other);
-				C3Vec operator * (const float &other);
-				friend C3Vec operator * (const float &other, const C3Vec &rhs);
-				C3Vec operator / (const C3Vec &other);
-				C3Vec operator / (const float &other);
-};
-
-C3Vec& C3Vec::operator= (const C3Vec &rhs ) {
-		if (this != &rhs) {
-				c1 = rhs.c1;
-				c2 = rhs.c2;
-				c3 = rhs.c3;
-		}
-		return *this;
-}
-C3VecI& C3VecI::operator= (const C3VecI &rhs ) {
-		if (this != &rhs) {
-				c1 = rhs.c1;
-				c2 = rhs.c2;
-				c3 = rhs.c3;
-		}
-		return *this;
-}
-C3Vec& C3Vec::operator+= (const C3Vec &rhs ) {
-		c1 += rhs.c1;
-		c2 += rhs.c2;
-		c3 += rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator+= (const float &rhs ) {
-		c1 += rhs;
-		c2 += rhs;
-		c3 += rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator-= (const C3Vec &rhs ) {
-		c1 -= rhs.c1;
-		c2 -= rhs.c2;
-		c3 -= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator-= (const float &rhs ) {
-		c1 -= rhs;
-		c2 -= rhs;
-		c3 -= rhs;
-		return *this;
-}
-C3VecI& C3VecI::operator-= (const C3VecI &rhs ) {
-		c1 -= rhs.c1;
-		c2 -= rhs.c2;
-		c3 -= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator-= (const float &rhs ) {
-		c1 -= rhs;
-		c2 -= rhs;
-		c3 -= rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator*= (const C3Vec &rhs ) {
-		c1 *= rhs.c1;
-		c2 *= rhs.c2;
-		c3 *= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator*= (const float &rhs ) {
-		c1 *= rhs;
-		c2 *= rhs;
-		c3 *= rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator/= (const C3Vec &rhs ) {
-		c1 /= rhs.c1;
-		c2 /= rhs.c2;
-		c3 /= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator/= (const float &rhs ) {
-		c1 /= rhs;
-		c2 /= rhs;
-		c3 /= rhs;
-		return *this;
-}
-
-C3VecI& C3VecI::operator/= (const C3VecI &rhs ) {
-		c1 /= rhs.c1;
-		c2 /= rhs.c2;
-		c3 /= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator/= (const float &rhs ) {
-		c1 /= rhs;
-		c2 /= rhs;
-		c3 /= rhs;
-		return *this;
-}
-C3Vec C3Vec::operator+ (const C3Vec &other) {
-		return C3Vec(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
-}
-
-C3Vec C3Vec::operator+ (const float &other) {
-		return C3Vec(*this)+=other;
-}
-
-C3Vec C3Vec::operator- (const C3Vec &other) {
-		return C3Vec(*this)-=other;
-}
-
-C3Vec C3Vec::operator- (const float &other) {
-		return C3Vec(*this)-=other;
-}
-
-C3VecI C3VecI::operator- (const C3VecI &other) {
-		return C3VecI(*this)-=other;
-}
-
-C3VecI C3VecI::operator- (const float &other) {
-		return C3VecI(*this)-=other;
-}
-
-C3Vec C3Vec::operator* (const C3Vec &other) {
-		return C3Vec(*this)*=other;
-}
-
-C3Vec C3Vec::operator* (const float &other) {
-		return C3Vec(*this)*=other;
-}
-
-C3Vec C3Vec::operator/ (const C3Vec &other) {
-		return C3Vec(*this)/=other;
-}
-
-C3Vec C3Vec::operator/ (const float &other) {
-		return C3Vec(*this)/=other;
-}
-
-C3VecI C3VecI::operator/ (const C3VecI &other) {
-		return C3VecI(*this)/=other;
-}
-
-C3VecI C3VecI::operator/ (const float &other) {
-		return C3VecI(*this)/=other;
-}
-// C3VecI 
-
-C3VecI& C3VecI::operator+= (const C3VecI &rhs ) {
-		c1 += rhs.c1;
-		c2 += rhs.c2;
-		c3 += rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator+= (const float &rhs ) {
-		c1 += rhs;
-		c2 += rhs;
-		c3 += rhs;
-		return *this;
-}
-
-C3VecI& C3VecI::operator*= (const C3VecI &rhs ) {
-		c1 *= rhs.c1;
-		c2 *= rhs.c2;
-		c3 *= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator*= (const float &rhs ) {
-		c1 *= rhs;
-		c2 *= rhs;
-		c3 *= rhs;
-		return *this;
-}
-C3VecI C3VecI::operator+ (const C3VecI &other) {
-		return C3VecI(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
-}
-
-C3VecI C3VecI::operator+ (const float &other) {
-		return C3VecI(*this)+=other;
-}
-C3VecI C3VecI::operator* (const C3VecI &other) {
-		return C3VecI(*this)*=other;
-}
-
-C3VecI C3VecI::operator* (const float &other) {
-		return C3VecI(*this)*=other;
-}
-
-// Global (not member) functions for lhs operators
-
-C3Vec operator* ( const float &other, const C3Vec &rhs ) {
-		return C3Vec(rhs)*=other;
-}
-
-C3VecI operator* ( const float &other, const C3VecI &rhs ) {
-		return C3VecI(rhs)*=other;
-}
-
-C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
-		return C3Vec(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
-}
-C3VecI operator+ ( const C3VecI &other, const C3VecI &rhs) {
-		return C3VecI(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
-}
 vector<C3Vec> operator- ( const vector<C3Vec> &other, const C3Vec &rhs) {
 		vector<C3Vec> out(other.size());
 		for(int i=0;i<other.size();i++) {
@@ -443,36 +185,12 @@ vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) 
 		return out;
 }
 
-C3Vec pow ( const C3Vec &in, const int arg ) {
-		C3Vec out;
-		out.c1 = pow(in.c1,arg);
-		out.c2 = pow(in.c2,arg);
-		out.c3 = pow(in.c3,arg);
-		return out;
-}
-
-C3Vec sqrt ( const C3Vec &in ) {
-		C3Vec out;
-		out.c1 = sqrt(in.c1);
-		out.c2 = sqrt(in.c2);
-		out.c3 = sqrt(in.c3);
-		return out;
-}
-
-C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
-		C3Vec out;
-		out.c1 = atan2(Y.c1,X.c1);
-		out.c2 = atan2(Y.c2,X.c2);
-		out.c3 = atan2(Y.c3,X.c3);
-		return out;
-}
-
 float abs ( complex<float> arg ) {
-	return sqrt(pow(real(arg),2)+pow(imag(arg),2));
+	return sqrt(pow(arg.real(),2)+pow(arg.imag(),2));
 }
 
 complex<float> exp ( complex<float> arg ) {
-	complex<float> out (exp(real(arg))*cos(imag(arg)),exp(real(arg))*sin(imag(arg)));
+	complex<float> out (exp(arg.real())*cos(arg.imag()),exp(arg.real())*sin(arg.imag()));
 	return out;
 }
 
@@ -540,73 +258,6 @@ float kj_interp1D ( float x, const float xVec[], const float yVec[], int n, int 
 
 }
 
-
-C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int &stat ) {
-
-	float _x, x0, x1;
-
-#if _PARTICLE_BOUNDARY == 1
-	if(x<xVec[0]||x>xVec[n-1]||stat>0) {
-			// Particle absorbing walls
-#if DEBUGLEVEL >= 3
-#if !defined(_OPENACC)
-			cout<<"Particle absorbed at "<<x<<endl;
-            cout<<"x:"<<x<<endl;
-            cout<<"xVec[0]:"<<xVec[0]<<endl;
-            cout<<"xVec[n-1]:"<<xVec[n-1]<<endl;
-			cout<<"stat: "<<stat<<endl;
-#endif
-#endif
-			++stat;
-			return C3Vec(0,0,0);
-	}
-#elif _PARTICLE_BOUNDARY == 2
-			// Periodic 
-			if(x<xVec[0]) x = xVec[n-1]-(xVec[0]-x);			
-			if(x>xVec[n-1]) x = xVec[0]+(x-xVec[n-1]);			
-#elif _PARTICLE_BOUNDARY == 3
-			// Particle reflecting walls
-			if(x<xVec[0]) x = xVec[0]+(xVec[0]-x);			
-			if(x>xVec[n-1]) x = xVec[n-1]-(x-xVec[n-1]);			
-#endif
-
-#if !defined(_OPENACC)	
-	if(stat>0){
-			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
-			exit(1);
-	}
-#endif
-
-	_x = (x-xVec[0])/(xVec[n-1]-xVec[0])*(n-1);
-	//cout<<"_x: "<<_x<<endl;
-	int xF = floor(_x);
-	int xC = ceil(_x);
-
-	x0 = floor(_x);
-	x1 = ceil(_x);
-	
-	// Catch for particle at point
-	if(xF==xC) {
-		//cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
-
-#if DEBUGLEVEL >= 3
-#if !defined(_OPENACC)
-		cout << "xF: " << xF << " xC: " <<xC<< " _x: "<<_x << endl;
-		cout << "Particle at point catch"<< endl;
-#endif
-#endif
-		return yVec[xF];
-	}
-	else {
-
-		C3Vec y0 = yVec[xF];
-		C3Vec y1 = yVec[xC];
-		C3Vec tmpA = y0+(_x-x0)*(y1-y0)/(x1-x0);
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
-	}
-}
-
-
 C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &stat ) {
 
 	float _x, x0, x1;
@@ -672,176 +323,6 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
 	}
 }
-
-// Zero-order orbits
-//C3Vec rk4_evalf ( CParticle &p, const float &t, 
-//				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
-//			  	const vector<float> &rVec ) {
-C3Vec rk4_evalf ( CParticle_PODS &p, const float &t, 
-		const C3Vec &v_XYZ, const C3Vec &x, 
-		const C3Vec b0_CYL[],
-		const float r[], 
-		const int n ) {
-
-	// Interpolate b0 at location in CYL
-	
-	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
-	float _p = atan2 ( x.c2, x.c1 );
-
-#if DEBUGLEVEL >= 3
-	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
-	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
-	cout << "\t\t\tr[0]: " << r[0] << endl;
-	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
-#endif
-
-	C3Vec thisb0_CYL, thisb0_XYZ;
-
-	thisb0_CYL = kj_interp1D ( _r, r, b0_CYL, n, p.status );
-
-	thisb0_XYZ = C3Vec( cos(_p)*thisb0_CYL.c1-sin(_p)*thisb0_CYL.c2+0,
-					sin(_p)*thisb0_CYL.c1+cos(_p)*thisb0_CYL.c2+0,
-					0+0+1*thisb0_CYL.c3 );
-
-	C3Vec thisv_x_b0 ( v_XYZ.c2*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c2, 
-					-1.0*(v_XYZ.c1*thisb0_XYZ.c3-v_XYZ.c3*thisb0_XYZ.c1), 
-					v_XYZ.c1*thisb0_XYZ.c2-v_XYZ.c2*thisb0_XYZ.c1);
-
-#if DEBUGLEVEL >= 3
-	cout << "\tvxb0: " << thisv_x_b0.c1 << "  " << thisv_x_b0.c2 << "  " << thisv_x_b0.c3 << endl;
-	cout << "\tp.q/p.m: " << p.q/p.m << endl;
-#endif
-
-	return thisv_x_b0*(p.q/p.m);	
-}
-
-// Zero-order orbits
-void rk4_move ( CParticle_PODS &p, const float &dt, const float &t0, 
-				const C3Vec b0[], const float r[], const int n) {
-
-		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
-
-
-
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, n ) * dt;	
-		x1 = yn0 * dt;
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, n ) * dt;	
-		x2 = (yn0 + 0.5*k1) * dt;
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, n ) * dt;	
-		x3 = (yn0 + 0.5*k2) * dt;
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, n ) * dt;	
-		x4 = (yn0 + 1.0*k3) * dt;
-
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
-
-		p.c1 = xn1.c1;
-		p.c2 = xn1.c2;
-		p.c3 = xn1.c3;
-		p.v_c1 = yn1.c1;
-		p.v_c2 = yn1.c2;
-		p.v_c3 = yn1.c3;
-
-#if _PARTICLE_BOUNDARY == 1
-		// Particle absorbing walls
-#elif _PARTICLE_BOUNDARY == 2
-		// Periodic 
-		if(p.c1<r.front())
-		{	
-#if DEBUGLEVEL >= 1
-			cout<<"Particle went left"<<endl;
-#endif
-			p.c1 = r.back()-(r.front()-p.c1);
-		}
-		if(p.c1>r.back())
-		{
-#if DEBUGLEVEL >= 1
-			cout<<"Particle went right"<<endl;
-#endif
-			p.c1 = r.front()+(p.c1-r.back());
-		}
-#elif _PARTICLE_BOUNDARY == 3
-		// Particle reflecting walls
-		if(p.c1<r.front())
-		{
-			cout<<"Particle hit the left wall"<<endl;
-			cout<<"r.front(): "<<r.front()<<endl;
-			p.c1 = r.front()+(r.front()-p.c1);
-			p.v_c1 = -p.v_c1;
-		}
-		if(p.c1>r.back())
-		{
-			cout<<"Particle hit the right wall"<<endl;
-			cout<<"r.back(): "<<r.back()<<endl;
-			p.c1 = r.back()-(p.c1-r.back());
-			p.v_c1 = -p.v_c1;
-		}
-#endif
-
-#if DEBUGLEVEL >= 3
-		cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << endl;
-		cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << endl;
-		cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << endl;
-		cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << endl;
-		cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << endl;
-#endif
-
-}
-
-float maxC3VecAbs ( const vector<C3Vec> &input ) {
-
-	vector<float> inputAbs(input.size());
-	for(int i=0;i<input.size();i++) {
-		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
-	}
-	return *max_element(inputAbs.begin(),inputAbs.end());
-}
-
-C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
-
-	C3Vec result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
-
-C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
-
-	C3VecI result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
-
-C3VecI intC3VecArray ( const float x[], const vector<C3VecI> &f ) {
-
-	C3VecI result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
-
-C3Vec intC3VecArray ( const float x[], const vector<C3Vec> &f ) {
-
-	C3Vec result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
-
 
 
 // Calculate the jP given some know E and f(v)
@@ -1008,12 +489,12 @@ int main ( int argc, char **argv )
 
 		for(int i=0;i<e_r.size();i++) {
 
-			e1Re_CYL[i].c1 = real(e_r[i]);
-			e1Re_CYL[i].c2 = real(e_p[i]);
-			e1Re_CYL[i].c3 = real(e_z[i]);
-			e1Im_CYL[i].c1 = imag(e_r[i]);
-			e1Im_CYL[i].c2 = imag(e_p[i]);
-			e1Im_CYL[i].c3 = imag(e_z[i]);
+			e1Re_CYL[i].c1 = e_r[i].real();
+			e1Re_CYL[i].c2 = e_p[i].real();
+			e1Re_CYL[i].c3 = e_z[i].real();
+			e1Im_CYL[i].c1 = e_r[i].imag();
+			e1Im_CYL[i].c2 = e_p[i].imag();
+			e1Im_CYL[i].c3 = e_z[i].imag();
 
 			float _p = 0.0;
 
@@ -1177,7 +658,6 @@ int main ( int argc, char **argv )
 		int gStat=0;
 		for (int i=0; i<_N_DATA; i++) {
 
-			cout<<"r_kjGrid[i]: "<<r_kjGrid[i]<<endl;
 			b0_CYL_kjGrid[i].c1 = kj_interp1D ( r_kjGrid[i], r__, b0_r_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c2 = kj_interp1D ( r_kjGrid[i], r__, b0_t_inGrid, nR, gStat );
 			b0_CYL_kjGrid[i].c3 = kj_interp1D ( r_kjGrid[i], r__, b0_z_inGrid, nR, gStat );
@@ -1351,7 +831,7 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
-	complex<float> j1xc[nXGrid][nJp];
+	complex<float> j1xc[nXGrid*nJp];
 	complex<float> j1yc[nXGrid][nJp];
 	complex<float> j1zc[nXGrid][nJp];
 
@@ -1361,7 +841,7 @@ int main ( int argc, char **argv )
 
 	for(int iX=0;iX<nXGrid;iX++) {
 
-		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
+		for(int jt=0;jt<nJp;jt++) j1xc[iX*nJp+jt] = complex<float>(0,0);
 		for(int jt=0;jt<nJp;jt++) j1yc[iX][jt] = complex<float>(0,0);
 		for(int jt=0;jt<nJp;jt++) j1zc[iX][jt] = complex<float>(0,0);
 
@@ -1370,125 +850,26 @@ int main ( int argc, char **argv )
 		for(int jt=0;jt<nJp;jt++) j1z[iX][jt] = 0;
 	}
 
-	#pragma acc data \
-	pcopy(j1xc[0:nXGrid-1][0:nJp-1]) \
-	pcopyin(thisT[0:nSteps-1]) \
-	pcopyin(tJp[0:nJp-1]) \
-	pcopyin(hanningWeight[0:nSteps-1]) \
-	pcopyin(r_kjGrid[0:_N_DATA-1]) \
-	pcopyin(e1Re_XYZ_kjGrid[0:_N_DATA]) \
-	pcopyin(e1Im_XYZ_kjGrid[0:_N_DATA]) \
-	pcopyin(particles_XYZ_PODS[0:nV-1])
-	{
+	params sim_params;
+	gpu_mem gmem;
 
-	#pragma acc kernels
-	{
+	sim_params.nXGrid = nXGrid;
+	sim_params.dv  = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
+	sim_params.nSteps = nSteps;
+	sim_params.nV = nV;
+	sim_params.dtMin = dtMin;
+	sim_params.wrf = wrf;
+	sim_params.nJp = nJp;
 
-	#pragma acc loop independent
-	for(int iX=0;iX<nXGrid;iX++) {
+        copyToDevice(j1xc, thisT, tJp, hanningWeight, r_kjGrid,e1Re_XYZ_kjGrid,
+                      e1Im_XYZ_kjGrid, particles_XYZ_PODS, particles_XYZ_0_PODS,  xGrid, b0_CYL_kjGrid,
+                      df0_dv, &sim_params, &gmem);
 
-#if DEBUGLEVEL >=1
-#if !defined(_OPENACC)
-		cout<<"iX: "<<iX<<endl;			
-#endif
-#endif
-		complex<float> f1c;
-		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
+        launchKernel(&sim_params, &gmem);
 
-		int iP, i, jt;
-		complex<float> this_j1xc(0,0);
-
-		#pragma acc loop reduction(+:this_j1xc)
-		for(iP=0;iP<nV;iP++) {
-
-			thisParticle_XYZ = particles_XYZ_PODS[iP];
-			thisParticle_XYZ.c1 = xGrid[iX];
-
-			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
-			float qe = thisParticle_XYZ.q;
-			float h = dv * qe;
+        copyToHost(j1xc, &sim_params, &gmem);
 	
-			// generate orbit and get time-harmonic e along it
-			
-			C3Vec e1ReTmp_XYZ, e1ImTmp_XYZ;
 
-	 		for(i=0;i<nSteps;i++) {	
-
-				thisOrbitE_re_XYZ[i] = 0;
-				thisOrbitE_im_XYZ[i] = 0;
-
-				if(thisParticle_XYZ.status==0) {
-
-					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-
-					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
-	
-					if(thisParticle_XYZ.status==0) {
-						istat = 0;
-						e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat );
-						istat = 0;
-						e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat );
-
-						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
-						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
-					}
-				}
-			}
-
-			// get Jp(t) for this spatial point
-
-			C3VecI thisEc;
-			C3VecI thisV1c;
-
-			for(i=0;i<nSteps;i++) {
-
-				float tTmp = thisT[i];
-				float weight = hanningWeight[i];
-				float phs = -(wrf*tTmp);
-
-				thisEc = C3VecI(
-								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c1*cos(phs)-thisOrbitE_im_XYZ[i].c1*sin(phs),
-										thisOrbitE_im_XYZ[i].c1*cos(phs)+thisOrbitE_re_XYZ[i].c1*sin(phs)),
-								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c2*cos(phs)-thisOrbitE_im_XYZ[i].c2*sin(phs),
-										thisOrbitE_im_XYZ[i].c2*cos(phs)+thisOrbitE_re_XYZ[i].c2*sin(phs)),
-								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c3*cos(phs)-thisOrbitE_im_XYZ[i].c3*sin(phs),
-										thisOrbitE_im_XYZ[i].c3*cos(phs)+thisOrbitE_re_XYZ[i].c3*sin(phs))
-								);	
-
-				int N = nSteps - 1;
-				float A = i % N;
-				float B = A / N;	
-				int factor = ceil(B)+1;
-
-				thisV1c += -qOverm * dtMin/2 * ( factor * thisEc); 
-			}
-
-			f1c = -thisV1c.c1*df0_dv[iP];
-
-			float v0_i = particles_XYZ_0_PODS[iP].v_c1;
-
-			// This gets a factor that is 1 for iP=0 or iP=N, 
-			// but 2 otherwise to remove the IF statement
-			// from the trapezoidal rule integration required
-			// at the endpoint (i.e., backward differencing).
-
-			int N = nV - 1;
-			float A = iP % N;
-			float B = A / N;	
-			int factor = ceil(B)+1;
-
-			this_j1xc += h/2 * ( factor * v0_i*f1c); 
-		}
-
-	j1xc[iX][0] = this_j1xc; 
-
-	} // End of xGrid loop
-
-	} // End of OPENACC kernels region
-	} // End of OPENACC data region
 
 #else // END OF LOWMEM CODING ^^^
 
@@ -2175,8 +1556,8 @@ int main ( int argc, char **argv )
 		nc_j1y.putVar(startp,countp,&j1y[iX][0]);
 		nc_j1z.putVar(startp,countp,&j1z[iX][0]);
 
-		float tmpJxRe = real(j1xc[iX][0]);
-		float tmpJxIm = imag(j1xc[iX][0]);
+		float tmpJxRe = j1xc[iX*nJp+0].real();
+		float tmpJxIm = j1xc[iX*nJp+0].imag();
 
 		nc_j1xc_re.putVar(&tmpJxRe);
 		nc_j1xc_im.putVar(&tmpJxIm);

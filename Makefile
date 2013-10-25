@@ -18,17 +18,21 @@ PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
-CC := gcc
-CPP := g++
-NVCC := $(CUDADIR)/bin/nvcc
+#CC := gcc
+#CPP := g++
+CPP :=nvcc
+NVCC := nvcc
 
 #VENDOR := PGI_
-VENDOR := CRAY_
-#VENDOR := GNU_
+#VENDOR := CRAY_
+VENDOR := GNU_
 
 ThisMachine := $(shell uname -n)
 
 ifneq (,$(findstring titan,$(ThisMachine)))
+ThisMachine := titan
+endif
+ifneq (,$(findstring chester,$(ThisMachine)))
 ThisMachine := titan
 endif
 
@@ -60,7 +64,7 @@ LINK := $(CPP) ${CXXFLAGS}
 
 DIRNAME = `dirname $1`
 #MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
-MAKEDEPS = gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = nvcc --compiler-options "-MM -MG" $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 
@@ -72,6 +76,9 @@ INCLUDEFLAGS += $(patsubst %, -I%, $(MODULES))
 CFLAGS += $(INCLUDEFLAGS)
 CXXFLAGS += $(INCLUDEFLAGS) 
 NVCCFLAGS += $(INCLUDEFLAGS) 
+CXXFLAGS += $(NVCCFLAGS)
+
+USECUDA=1
 
 # determine the object files
 SRCTYPES := c cpp 
@@ -82,7 +89,7 @@ OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildc
 
 # link the program
 $(NAME) : $(OBJ)
-	$(LINK) -o $@ $(OBJ) $(LIBS)
+	$(LINK) $(NVCCFLAGS) -o $@ $(OBJ) $(LIBS)
 
 # calculate include dependencies
 .dep/%.d : %.cpp
@@ -91,7 +98,7 @@ $(NAME) : $(OBJ)
 
 obj/%.o : %.cpp
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.o$$||'`
-	$(CPP) $(CXXFLAGS) ${CPPFLAGS} -c -o $@ $<
+	$(CPP) $(CXXFLAGS) ${CPPFLAGS} -dc -o $@ $<
 
 .dep/%.d : %.c
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.d$$||'`
@@ -107,7 +114,7 @@ obj/%.o : %.c
 
 obj/%.o : %.cu
 	@mkdir -p `echo '$@' | sed -e 's|/[^/]*.o$$||'`
-	$(NVCC) $(NVCCFLAGS) ${CPPFLAGS} -c -o $@ $<
+	$(NVCC) $(NVCCFLAGS) ${CPPFLAGS} -dc -o $@ $<
 
 
 # include the C include dependencies

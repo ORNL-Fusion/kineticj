@@ -1,0 +1,4873 @@
+Makefile:116: .dep/src/kineticj.d: No such file or directory
+gcc -MM -MG   -I /ccs/home/atj/kineticj/libconfig/libconfig_cray/include -I /opt/cray/netcdf/4.3.0/CRAY/81/include  -Isrc  -Iinclude -x c  src/kineticj.cpp | sed -e "s@^\(.*\)\.o:@.dep/`dirname  src/kineticj.cpp`/\1.d obj/`dirname  src/kineticj.cpp`/\1.o:@" > .dep/src/kineticj.d
+CC -hpragma=acc,msgs     -I /ccs/home/atj/kineticj/libconfig/libconfig_cray/include -I /opt/cray/netcdf/4.3.0/CRAY/81/include  -Isrc  -Iinclude   -DDEBUGLEVEL=1 -DUSEPAPI=0 -D__SAVE_ORBITS__=0 -DLOWMEM=1 -D_PARTICLE_BOUNDARY=1  -DCOMPLEX_WRF=0 -c -o obj/src/kineticj.o src/kineticj.cpp
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 747
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 747
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 773
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 773
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 784
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 784
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 785
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_iterator.h, Line = 858
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 278
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny routine "__b" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny routine "__b" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 433
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 466
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 545
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 545
+  A loop was unrolled 4 times.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 545
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 546
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 592
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 592
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 592
+  The call to tiny leaf routine "__copy_move_b<complex<float> *, complex<float>
+          *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 592
+  The call to tiny routine "__copy_move_b<C3Vec *, C3Vec *>" was textually
+          inlined and flattened.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny routine "__copy_move_backward_a<false, complex<float> *,
+          complex<float> *>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 602
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 638
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 690
+  A loop was unrolled 4 times.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 690
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 691
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 701
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 701
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 701
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 701
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  A loop was vectorized.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__fill_a<float *, value_type>" was textually
+          inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__fill_a<complex<float> *, value_type>" was
+          textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__fill_a<int *, value_type>" was textually
+          inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 737
+  The call to tiny routine "__fill_a<C3Vec *, value_type>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__fill_n_a<int *, unsigned long, value_type>"
+          was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__fill_n_a<float *, unsigned long, value_type>"
+          was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__b" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algobase.h, Line = 790
+  The call to tiny leaf routine "__fill_n_a<_Bit_type *, unsigned long,
+          value_type>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 86
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/ext/new_allocator.h, Line = 105
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/iomanip, Line = 172
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/iomanip, Line = 172
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<C3Vec *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<C3VecI *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<float *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<complex<float> *>" was textually
+          inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<int *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 116
+  The call to tiny leaf routine "__destroy<size_t *>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<C3Vec *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<C3VecI *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<float *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<complex<float> *>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<int *>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_construct.h, Line = 142
+  The call to tiny routine "_Destroy<size_t *>" was textually inlined and
+          flattened.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  The call to tiny routine "operator!=<const_pointer, vector<CParticle,
+          allocator<CParticle>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  The call to tiny routine "operator!=<const_pointer, vector<CParticle,
+          allocator<CParticle>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  The call to tiny routine "operator!=<const_pointer, vector<complex<float>,
+          allocator<complex<float>>>>" was textually inlined and flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  The call to tiny routine "operator!=<const_pointer, vector<complex<float>,
+          allocator<complex<float>>>>" was textually inlined and flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  Loop has been flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 73
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 74
+  The call to tiny leaf routine "operator new" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 80
+  The call to tiny routine "_Destroy<complex<float> *>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 80
+  The call to tiny routine "_Destroy<C3Vec *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 80
+  The call to tiny routine "_Destroy<complex<float> *>" was textually inlined
+          and flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 186
+  Loop has been flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 186
+  Loop has been flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 186
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 187
+  The call to tiny routine "_Construct<C3Vec, value_type>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 187
+  The call to tiny routine "_Construct<C3VecI, value_type>" was textually
+          inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 187
+  The call to tiny routine "_Construct<complex<float>, value_type>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 191
+  The call to tiny routine "_Destroy<C3Vec *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 191
+  The call to tiny routine "_Destroy<C3VecI *>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 191
+  The call to tiny routine "_Destroy<complex<float> *>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 204
+  The call to tiny routine "fill_n<float *, unsigned long, value_type>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 204
+  The call to tiny routine "fill_n<size_t *, unsigned long, value_type>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 204
+  The call to tiny routine "fill_n<int *, unsigned long, value_type>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 223
+  The call to tiny routine "uninitialized_fill_n<int *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 223
+  The call to tiny routine "uninitialized_fill_n<float *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 223
+  The call to tiny routine "uninitialized_fill_n<size_t *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 318
+  The call to tiny routine "uninitialized_fill_n<int *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 318
+  The call to tiny routine "uninitialized_fill_n<float *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_uninitialized.h, Line = 318
+  The call to tiny routine "uninitialized_fill_n<size_t *, unsigned long,
+          value_type>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 105
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 105
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 105
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 105
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 105
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 108
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 111
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 208
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 208
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 208
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 208
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 208
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 242
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 243
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 299
+  The call to tiny routine "<unnamed>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<C3VecI *, C3VecI>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<float *, float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<size_t *, size_t>" was textually inlined
+          and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<C3Vec *, C3Vec>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 313
+  The call to tiny routine "_Destroy<int *, int>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 426
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 426
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 426
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 426
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 426
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 435
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 435
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 435
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 444
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 444
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 444
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 444
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 444
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 453
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 453
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 453
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 538
+  The call to tiny leaf routine "max_size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 554
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 554
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 554
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 554
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 554
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 555
+  The call to tiny routine "_M_erase_at_end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 555
+  The call to tiny routine "_M_erase_at_end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 555
+  The call to tiny routine "_M_erase_at_end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 555
+  The call to tiny routine "_M_erase_at_end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 557
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 680
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 680
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 688
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 688
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 696
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 696
+  The call to tiny routine "operator-" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 696
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 704
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 704
+  The call to tiny routine "operator-" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 704
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 737
+  The call to tiny routine "construct" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 741
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny routine "__uninitialized_fill_n_a<float *, unsigned long,
+          value_type, float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny routine "__uninitialized_fill_n_a<size_t *, unsigned long,
+          value_type, size_t>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1035
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1136
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "max<size_t>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "max<size_t>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "max<size_t>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "max<size_t>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1139
+  The call to tiny leaf routine "max<size_t>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1140
+  The call to tiny routine "max_size" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny routine "_Destroy<C3Vec *, C3Vec>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny routine "_Destroy<int *, int>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny routine "_Destroy<float *, float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_vector.h, Line = 1150
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 301
+  The call to tiny routine "construct" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 308
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 312
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 321
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 321
+  The call to tiny routine "operator-<pointer, vector<complex<float>,
+          allocator<complex<float>>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 330
+  The call to tiny routine "construct" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 338
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 338
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 344
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 344
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 353
+  The call to tiny leaf routine "destroy" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 355
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 355
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 359
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 359
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "operator-<pointer, vector<int, allocator<int>>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "operator-<pointer, vector<CParticle,
+          allocator<CParticle>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "operator-<pointer, vector<float, allocator<float>>>"
+          was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "operator-<pointer, vector<complex<float>,
+          allocator<complex<float>>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 381
+  The call to tiny routine "operator-<pointer, vector<C3Vec, allocator<C3Vec>>>"
+          was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 385
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 385
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 385
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 385
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 385
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 390
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 390
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 390
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 390
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 390
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny routine "fill<int *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny routine "fill<float *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny routine "fill<complex<float> *, value_type>" was textually
+          inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 392
+  The call to tiny routine "fill<C3Vec *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny routine "__uninitialized_fill_n_a<int *, unsigned long,
+          value_type, int>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny routine "__uninitialized_fill_n_a<float *, unsigned long,
+          value_type, float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 397
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 402
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was unrolled 4 times.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was vectorized.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny routine "fill<int *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny routine "fill<float *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny routine "fill<complex<float> *, value_type>" was textually
+          inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 406
+  The call to tiny routine "fill<C3Vec *, value_type>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "operator-<pointer, vector<int, allocator<int>>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "operator-<pointer, vector<CParticle,
+          allocator<CParticle>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "operator-<pointer, vector<float, allocator<float>>>"
+          was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "operator-<pointer, vector<complex<float>,
+          allocator<complex<float>>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 413
+  The call to tiny routine "operator-<pointer, vector<C3Vec, allocator<C3Vec>>>"
+          was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny routine "__uninitialized_fill_n_a<int *, unsigned long,
+          value_type, int>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny routine "__uninitialized_fill_n_a<float *, unsigned long,
+          value_type, float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 419
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 424
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "base" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 431
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny routine "_Destroy<C3Vec *, C3Vec>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny routine "_Destroy<int *, int>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny routine "_Destroy<float *, float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 440
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny routine "_Destroy<C3Vec *, C3Vec>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny routine "_Destroy<int *, int>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny routine "_Destroy<float *, float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 444
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny routine "_Destroy<C3Vec *, C3Vec>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny routine "_Destroy<int *, int>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny routine "_Destroy<float *, float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny leaf routine "_M_get_Tp_allocator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/vector.tcc, Line = 449
+  The call to tiny routine "_Destroy<complex<float> *, complex<float>>" was
+          textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5994
+  The call to tiny routine "operator==<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  The call to tiny routine "operator!=<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5997
+  The call to tiny routine "operator!=<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5998
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 5998
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6050
+  The call to tiny routine "operator==<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-6005 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  A loop was unrolled 4 times.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  The call to tiny routine "operator!=<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-3182 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  The call to tiny leaf routine "operator++" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6053
+  The call to tiny routine "operator!=<pointer, vector<float,
+          allocator<float>>>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6054
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/bits/stl_algo.h, Line = 6054
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 382
+  The call to tiny routine "operator*=<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 390
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 391
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 400
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 445
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 445
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 445
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 544
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 554
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1097
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1118
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1119
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1127
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1128
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1137
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1138
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1148
+  The call to tiny leaf routine "real" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1149
+  The call to tiny leaf routine "imag" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = ../../../opt/gcc/4.4.4/snos/include/g++/complex, Line = 1150
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 126
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 127
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 127
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 127
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 231
+  The call to tiny leaf routine "operator-=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 232
+  The call to tiny leaf routine "operator-=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 233
+  The call to tiny leaf routine "operator-=" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 266
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 266
+  The call to tiny routine "operator/=<float>" was textually inlined and
+          flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 267
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 267
+  The call to tiny routine "operator/=<float>" was textually inlined and
+          flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 268
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 268
+  The call to tiny routine "operator/=<float>" was textually inlined and
+          flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 273
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 273
+  The call to tiny leaf routine "operator/=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 274
+  The call to tiny leaf routine "operator/=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 275
+  The call to tiny leaf routine "operator/=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 279
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 283
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 287
+  The call to tiny leaf routine "operator-=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 291
+  The call to tiny leaf routine "operator-=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 303
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 307
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 311
+  The call to tiny leaf routine "operator/=" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 315
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 315
+  The call to tiny leaf routine "operator/=" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 323
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 323
+  The call to tiny routine "operator/=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 335
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 336
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 337
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 342
+  The call to tiny routine "operator*=<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 343
+  The call to tiny routine "operator*=<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 344
+  The call to tiny routine "operator*=<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 349
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 350
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 351
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 366
+  The call to tiny routine "operator*=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 372
+  The call to tiny leaf routine "operator*=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 376
+  The call to tiny routine "operator*=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 380
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 386
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 386
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 387
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 387
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 387
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 388
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 388
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 389
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 389
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 390
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 390
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 396
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 396
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 396
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 397
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 397
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 397
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 398
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 398
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 399
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 399
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 400
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 400
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 405
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 406
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 406
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 406
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 407
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 407
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 407
+  The call to tiny routine "operator+<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 408
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 408
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 408
+  The call to tiny routine "operator+<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 409
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 409
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 409
+  The call to tiny routine "operator+<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 414
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 414
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 415
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 415
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 416
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 416
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 416
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 417
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 417
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 417
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 418
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 418
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 418
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 419
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 419
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 419
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 425
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 425
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 426
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 426
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 427
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 427
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 427
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 428
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 428
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 428
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 429
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 429
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 429
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 430
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 430
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 430
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 436
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 436
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 437
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 437
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 438
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 438
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 438
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 439
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 439
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 439
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 440
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 440
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 440
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 441
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 441
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 441
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 447
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 448
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 449
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 450
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 455
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 456
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 457
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 458
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 463
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 464
+  The call to tiny leaf routine "atan2" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 465
+  The call to tiny leaf routine "atan2" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 466
+  The call to tiny leaf routine "atan2" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 471
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 471
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 471
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 471
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 471
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny leaf routine "exp" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny leaf routine "exp" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 475
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 516
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 517
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 519
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 520
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 559
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 580
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 581
+  The call to tiny leaf routine "__normal_iterator" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 581
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 583
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 584
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 600
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 600
+  The call to tiny routine "operator-" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 600
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 600
+  The call to tiny routine "operator/" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 600
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 614
+  The call to tiny routine "front" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 614
+  The call to tiny routine "back" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 625
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 646
+  The call to tiny routine "front" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 646
+  The call to tiny routine "back" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 646
+  The call to tiny routine "front" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 646
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 649
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 650
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 652
+  The call to tiny leaf routine "floor" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 653
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 663
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 667
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 668
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 669
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 669
+  The call to tiny routine "operator-" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 669
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 669
+  The call to tiny routine "operator/" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 669
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 685
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 685
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 685
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 686
+  The call to tiny leaf routine "atan2" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 695
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 695
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 697
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 699
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 703
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 712
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 719
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 723
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 723
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 723
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 724
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 724
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 725
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 725
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 726
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 727
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 727
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 727
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 727
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 728
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 729
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 729
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 729
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 729
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 730
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 731
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 731
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 731
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 731
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 733
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 734
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 791
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 792
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 792
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 792
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "sqrt" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 793
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 795
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 795
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 795
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 800
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 801
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 801
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 802
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 802
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 802
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 803
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 803
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 803
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 803
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 803
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 812
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 812
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 813
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 813
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 813
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 814
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 814
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 814
+  The call to routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 814
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 814
+  The call to tiny routine "operator+=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 824
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 824
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 824
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 825
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 825
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 825
+  The call to routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 825
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 825
+  The call to tiny routine "operator+=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 833
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 834
+  The call to tiny routine "_Vector_base" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 834
+  The call to tiny leaf routine "_Vector_impl" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 835
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 835
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 835
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 836
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 836
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 836
+  The call to tiny routine "operator+" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 836
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 836
+  The call to tiny leaf routine "operator+=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 950
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 953
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 954
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 955
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 957
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 958
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 959
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 960
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 961
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 966
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 967
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 968
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 969
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 970
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 971
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 974
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 974
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 974
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 975
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 975
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 975
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 976
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 976
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 976
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 979
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 979
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 980
+  The call to tiny routine "begin" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 980
+  The call to tiny routine "end" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 982
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 982
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 982
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 984
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 985
+  The call to tiny leaf routine "operator*" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 986
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 986
+  The call to tiny routine "abs" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 987
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 987
+  The call to tiny routine "abs" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 988
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 988
+  The call to tiny routine "abs" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1000
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1000
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1001
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1001
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1004
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1004
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1005
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1005
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1007
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1007
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1007
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1009
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1009
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1009
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1010
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1010
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1010
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1011
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1011
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1011
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1012
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1012
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1012
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1013
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1013
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1013
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1014
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1014
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1014
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1018
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1023
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1084
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1085
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1086
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1088
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1089
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1090
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1092
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1094
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1095
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1108
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1110
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1110
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1112
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1115
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1116
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = src/kineticj.cpp, Line = 1152
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = src/kineticj.cpp, Line = 1152
+  A loop was vectorized.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1152
+  Loop has been flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1153
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1153
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1153
+  The call to tiny routine "back" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1153
+  The call to tiny routine "front" was textually inlined and flattened.
+
+
+CC-6005 crayc++: SCALAR File = src/kineticj.cpp, Line = 1156
+  A loop was unrolled 8 times.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1156
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1158
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1159
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1160
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1162
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1163
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1164
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1166
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1167
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1168
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1170
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1175
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1177
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1178
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1179
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1181
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1182
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1183
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1185
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1186
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1187
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1195
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1195
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1196
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1196
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1196
+  The call to tiny leaf routine "pow" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1198
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-6005 crayc++: SCALAR File = src/kineticj.cpp, Line = 1221
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = src/kineticj.cpp, Line = 1221
+  A loop was vectorized.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1241
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1248
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1257
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1257
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1257
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1258
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1258
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1260
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1260
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1260
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1260
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1262
+  The call to tiny leaf routine "size" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1263
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1263
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1263
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1266
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1266
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-6008 crayc++: SCALAR File = src/kineticj.cpp, Line = 1276
+  A loop was unwound.
+
+
+CC-6005 crayc++: SCALAR File = src/kineticj.cpp, Line = 1282
+  A loop was unrolled 4 times.
+
+
+CC-6204 crayc++: VECTOR File = src/kineticj.cpp, Line = 1282
+  A loop was vectorized.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1290
+  Loop has been flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1292
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-6009 crayc++: SCALAR File = src/kineticj.cpp, Line = 1292
+  A floating point expression involving an induction variable was strength
+          reduced by optimization.  This may cause numerical differences.
+
+
+CC-6231 crayc++: VECTOR File = src/kineticj.cpp, Line = 1296
+  A statement was replaced by a library call.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1299
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1300
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny routine "operator-<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny routine "exp" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1301
+  The call to tiny routine "abs" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1313
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-6005 crayc++: SCALAR File = src/kineticj.cpp, Line = 1320
+  A loop was unrolled 8 times.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1320
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1322
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1323
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1325
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1326
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1327
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1329
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1330
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1331
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1333
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1334
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1344
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1345
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1345
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1347
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1348
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1348
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1350
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1351
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1351
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-6008 crayc++: SCALAR File = src/kineticj.cpp, Line = 1353
+  A loop was unwound.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1353
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1353
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1353
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1353
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1362
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1363
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1363
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1366
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-6405 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  A region starting at line 1372 and ending at line 1458 was placed on the
+          accelerator.
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy user shaped variable
+          "hanningWeight" to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy user shaped variable "tJp" to
+          accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy user shaped variable "thisT"
+          to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array
+          "particles_XYZ_PODS" to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy variable "thisParticle_XYZ"
+          to accelerator, copy back at line 1458 (acc_copy).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "xGrid" to
+          accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "thisOrbit_XYZ"
+          to accelerator, copy back at line 1458 (acc_copy).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "r_kjGrid" to
+          accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array
+          "thisOrbitE_re_XYZ" to accelerator, copy back at line 1458
+          (acc_copy).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array
+          "thisOrbitE_im_XYZ" to accelerator, copy back at line 1458
+          (acc_copy).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "df0_dv" to
+          accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy variable "f1c" to
+          accelerator, copy back at line 1458 (acc_copy).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array
+          "particles_XYZ_0_PODS" to accelerator, free at line 1458
+          (acc_copyin).
+
+
+CC-6416 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy variable "this_j1xc" to
+          accelerator, copy back at line 1458 (acc_copy).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "b0_CYL_kjGrid"
+          to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "e1Re_XYZ_kjGrid"
+          to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6418 crayc++: ACCEL File = src/kineticj.cpp, Line = 1372
+  If not already present: allocate memory and copy whole array "e1Im_XYZ_kjGrid"
+          to accelerator, free at line 1458 (acc_copyin).
+
+
+CC-6411 crayc++: ACCEL File = src/kineticj.cpp, Line = 1373
+  A loop will be serially executed.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1373
+  Loop has been flattened.
+
+
+CC-6411 crayc++: ACCEL File = src/kineticj.cpp, Line = 1383
+  A loop will be serially executed.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1383
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1387
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1387
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1390
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1390
+  The call to routine "rk4_move" was textually inlined and flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1394
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1394
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-6010 crayc++: SCALAR File = src/kineticj.cpp, Line = 1396
+  A divide was turned into a multiply by a reciprocal
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1396
+  The call to tiny routine "kj_interp1D" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1398
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1399
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1403
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1403
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1404
+  The call to tiny leaf routine "C3Vec" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1404
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1410
+  The call to tiny routine "C3VecI" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1411
+  The call to tiny routine "C3VecI" was textually inlined and flattened.
+
+
+CC-6411 crayc++: ACCEL File = src/kineticj.cpp, Line = 1413
+  A loop will be serially executed.
+
+
+CC-3182 crayc++: IPA File = src/kineticj.cpp, Line = 1413
+  Loop has been flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "cos" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "sin" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "complex" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny routine "C3VecI" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1419
+  The call to tiny leaf routine "operator=" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1434
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1436
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1436
+  The call to tiny routine "operator*" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1436
+  The call to tiny routine "operator+=" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1440
+  The call to tiny routine "operator-<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1440
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1452
+  The call to tiny leaf routine "ceil" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1454
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1454
+  The call to tiny routine "operator*<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1454
+  The call to tiny routine "operator+=<float>" was textually inlined and
+          flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1460
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 1460
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2074
+  The call to tiny leaf routine "operator|" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2083
+  The call to tiny leaf routine "setw" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2083
+  The call to tiny leaf routine "setfill<char>" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2114
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2114
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2115
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2115
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2116
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2116
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2118
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2118
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2118
+  The call to tiny routine "real<float>" was textually inlined and flattened.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2119
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2119
+  The call to tiny leaf routine "operator[]" was textually inlined.
+
+
+CC-3001 crayc++: IPA File = src/kineticj.cpp, Line = 2119
+  The call to tiny routine "imag<float>" was textually inlined and flattened.
+
+CC -hpragma=acc,msgs     -o bin/kineticj     obj/src/kineticj.o  -L /ccs/home/atj/kineticj/libconfig/libconfig_cray/lib -lconfig++ -L /opt/cray/netcdf/4.3.0/CRAY/81/lib -lnetcdf_c++4  
