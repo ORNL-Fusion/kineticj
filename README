@@ -1,0 +1,6 @@
+module swap PrgEnv-pgi PrgEnv-gnu
+module load netcdf libconfig cudatoolkit
+module load gcc/4.6.3
+make clean
+make
+
