@@ -1,6 +1,38 @@
+Titan Module Configuration
+--------------------------
+
+This is also in the env.sh script in the top-level-directory.
+
+source env.sh
+
+or ...
+
 module swap PrgEnv-pgi PrgEnv-gnu
-module load netcdf libconfig cudatoolkit
+module load libconfig cudatoolkit
 module load gcc/4.6.3
+module load cray-netcdf/4.2.1.1
+export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+export HDF5_DISABLE_VERSION_CHECK=2
+
+
+and then ...
+
 make clean
 make
 
+
+Interactive Job Sumbission 
+--------------------------
+
+qsub -I -A fus047 -q debug -X -V -l nodes=1,walltime=30:00
+
+NOTE: also source env.sh at runtime
+
+
+LibConfig Compilation on Titan
+------------------------------
+
+module switch xtpe-interlagos xtpe-target-native
+./configure --prefix=/ccs/home/dg6/libconfig/libconfig_gnu CC=cc CXX=CC --enable-shared=no
+make
+make install

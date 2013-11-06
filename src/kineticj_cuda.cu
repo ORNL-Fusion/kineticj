@@ -212,6 +212,9 @@ __device__ void rk4_move ( CParticle_PODS &p, const float &dt, const float &t0,
 		k4 = rk4_evalf ( p, t0 + 1.0f*dt, yn0 + 1.0f*k3, xn0 + 1.0f*x3, b0, r, n ) * dt;	
 		x4 = (yn0 + 1.0f*k3) * dt;
 
+		//printf("dt: %f\n",dt);
+		//printf("k1: %f, k2: %f, k3: %f, k4: %f\n", k1.c1, k2.c1, k3.c1, k4.c1);
+
 		yn1 = yn0 + 1.0f/6.0f * (k1+2.0f*k2+2.0f*k3+k4);
 		xn1 = xn0 + 1.0f/6.0f * (x1+2.0f*x2+2.0f*x3+x4);
 
@@ -237,9 +240,11 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
     float dv = p.dv;
     int nSteps = p.nSteps;
     int nV = p.nV;
-    int dtMin = p.dtMin;
+    double dtMin = p.dtMin;
     double wrf = p.wrf;
     int nJp = p.nJp;
+
+	printf("dv: %f, nSteps: %i, nV: %i, dtMin: %e, wrf: %f, nJp: %i\n", dv, nSteps, nV, dtMin, wrf, nJp);
 
     int iP, i, istat, offset;
     complex<float> this_j1xc;
@@ -252,8 +257,13 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
 	// Can pad these arrays probably for coelesced access
 	offset = iP*nV+iX;        
 
+
         thisParticle_XYZ = particles_XYZ_PODS[iP];
         thisParticle_XYZ.c1 = xGrid[iX];
+
+
+		//printf("particle: %i, c1: %f, v1: %f\n", iP, thisParticle_XYZ.c1, thisParticle_XYZ.v_c1);
+
         
         double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
         float qe = thisParticle_XYZ.q;
@@ -272,11 +282,12 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
                 thisOrbit_XYZ[offset+i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 
                 rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
-                
+                //printf("i: %i, thisParticle_XYZ: %f\n", i, thisParticle_XYZ.c1);
+   
                 if(thisParticle_XYZ.status==0) {
-		    istat = 0;
+		    		istat = 0;
                     e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[offset+i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
-		    istat = 0;
+		    		istat = 0;
                     e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[offset+i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
                     
                     thisOrbitE_re_XYZ[offset+i] = e1ReTmp_XYZ;
@@ -313,6 +324,8 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
             int factor = ceilf(B)+1;
             
             thisV1c += -qOverm * dtMin/2 * ( factor * thisEc);
+		    //printf("i: %i, thisV1c: %f\n", i, thisV1c.c1.real());
+
         }
       
         f1c = -thisV1c.c1*df0_dv[iP];
@@ -325,6 +338,8 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
         int factor = ceilf(B)+1;
         
         this_j1xc += h/2 * ( factor * v0_i*f1c);
+		//printf("iP: %i, this_j1xc: %f\n", iP, this_j1xc.real());
+
     }
     
     //[iX][0]

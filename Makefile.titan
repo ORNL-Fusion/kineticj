@@ -9,8 +9,8 @@ NVCCFLAGS := --compiler-bindir `which CC`  -arch=sm_35 -O3
 #INCLUDEFLAGS += -I $(ALGLIB_DIR)/cpp/src
 #LIBS += -L $(ALGLIB_DIR)/cpp/src -lalglib-cray
 
-INCLUDEFLAGS += -I $(HOME)/kineticj_cuda/libconfig/libconfig_gnu/include -I/ccs/home/atj/cusplibrary
-LIBS += -L $(HOME)/kineticj_cuda/libconfig/libconfig_gnu/lib -lconfig++
+INCLUDEFLAGS += -I $(HOME)/libconfig/libconfig_gnu/include -I/ccs/home/atj/cusplibrary
+LIBS += -L $(HOME)/libconfig/libconfig_gnu/lib -lconfig++
 
 #NETCDF_DIR := 
 INCLUDEFLAGS += -I $(NETCDF_DIR)/include

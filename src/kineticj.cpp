@@ -870,6 +870,10 @@ int main ( int argc, char **argv )
         copyToHost(j1xc, &sim_params, &gmem);
 	
 
+	for(int iX=0;iX<nXGrid;iX++) {
+		cout<<"iX: "<<iX<<" j1xc[iX]: "<<j1xc[iX].real()<<endl;
+	}
+
 
 #else // END OF LOWMEM CODING ^^^
 

@@ -10,7 +10,7 @@ typedef struct PARAMS_
   float dv;
   int nSteps;
   int nV;
-  float dtMin;
+  double dtMin;
   double wrf;
   int nJp;
 
