@@ -68,13 +68,13 @@ void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanning
     cudaMemcpy(gmem->df0_dv, df0_dv,  bytes,  cudaMemcpyHostToDevice);
 
     // Create following local arrays
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV;
+    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
     cudaMalloc((void**)&(gmem->thisOrbitE_re_XYZ), bytes);
 
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV;
+    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
     cudaMalloc((void**)&(gmem->thisOrbitE_im_XYZ), bytes);
 
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV;
+    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
     cudaMalloc((void**)&(gmem->thisOrbit_XYZ), bytes);
 
     // check for error
@@ -244,7 +244,7 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
     double wrf = p.wrf;
     int nJp = p.nJp;
 
-	printf("dv: %f, nSteps: %i, nV: %i, dtMin: %e, wrf: %f, nJp: %i\n", dv, nSteps, nV, dtMin, wrf, nJp);
+	//printf("dv: %f, nSteps: %i, nV: %i, dtMin: %e, wrf: %f, nJp: %i\n", dv, nSteps, nV, dtMin, wrf, nJp);
 
     int iP, i, istat, offset;
     complex<float> this_j1xc;
@@ -255,7 +255,7 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
     for(iP=0;iP<nV;iP++) {
 	// Offset for thisOrbit* arrays
 	// Can pad these arrays probably for coelesced access
-	offset = iP*nV+iX;        
+	offset = iP*nV+iX*nV*nSteps;        
 
 
         thisParticle_XYZ = particles_XYZ_PODS[iP];

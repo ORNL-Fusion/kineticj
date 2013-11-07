@@ -6,6 +6,6 @@
 #define _N_JP_CYCLES 1
 #define _N_JP_PER_CYCLE 1
 #define _N_DATA 4096
-#define _N_XGRID 8
+#define _N_XGRID 16 
 
 #endif

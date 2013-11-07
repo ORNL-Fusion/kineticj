@@ -35,6 +35,9 @@ endif
 ifneq (,$(findstring chester,$(ThisMachine)))
 ThisMachine := titan
 endif
+ifneq (,$(findstring lens,$(ThisMachine)))
+ThisMachine := lens 
+endif
 
 include Makefile.$(ThisMachine)
 include Makefile.flags
