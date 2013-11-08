@@ -831,6 +831,8 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
+	complex<float> all_j1xc[nXGrid*nV];
+
 	complex<float> j1xc[nXGrid*nJp];
 	complex<float> j1yc[nXGrid][nJp];
 	complex<float> j1zc[nXGrid][nJp];
@@ -848,6 +850,9 @@ int main ( int argc, char **argv )
 		for(int jt=0;jt<nJp;jt++) j1x[iX][jt] = 0;
 		for(int jt=0;jt<nJp;jt++) j1y[iX][jt] = 0;
 		for(int jt=0;jt<nJp;jt++) j1z[iX][jt] = 0;
+
+		for(int iP=0;iP<nV;iP++) all_j1xc[iX*nV+iP] = complex<float>(0,0);
+
 	}
 
 	params sim_params;
@@ -863,14 +868,20 @@ int main ( int argc, char **argv )
 
         copyToDevice(j1xc, thisT, tJp, hanningWeight, r_kjGrid,e1Re_XYZ_kjGrid,
                       e1Im_XYZ_kjGrid, particles_XYZ_PODS, particles_XYZ_0_PODS,  xGrid, b0_CYL_kjGrid,
-                      df0_dv, &sim_params, &gmem);
+                      df0_dv, all_j1xc, &sim_params, &gmem);
 
         launchKernel(&sim_params, &gmem);
 
-        copyToHost(j1xc, &sim_params, &gmem);
+        copyToHost(j1xc, all_j1xc, &sim_params, &gmem);
 	
 
+	// Complete the integral sum now that we are
+	// back on the CPU
 	for(int iX=0;iX<nXGrid;iX++) {
+		j1xc[iX] = complex<float>(0,0);
+		for(int iP=0;iP<nV;iP++) {
+			j1xc[iX] += all_j1xc[iX*nV+iP];
+		}
 		cout<<"iX: "<<iX<<" j1xc[iX]: "<<j1xc[iX].real()<<endl;
 	}
 

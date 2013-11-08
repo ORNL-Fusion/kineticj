@@ -13,7 +13,7 @@ using namespace cusp;
 // Host wrapper functions
 void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,
                   C3Vec *e1Im_XYZ_kjGrid, CParticle_PODS *particles_XYZ_PODS, CParticle_PODS *particles_XYZ_0_PODS,  float *xGrid, C3Vec *b0_CYL_kjGrid,
-                  float *df0_dv, params *p, gpu_mem *gmem)
+                  float *df0_dv, complex<float> *all_j1xc, params *p, gpu_mem *gmem)
 {
     std::cout <<"copying memory"<<std::endl;
 
@@ -68,14 +68,18 @@ void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanning
     cudaMemcpy(gmem->df0_dv, df0_dv,  bytes,  cudaMemcpyHostToDevice);
 
     // Create following local arrays
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
-    cudaMalloc((void**)&(gmem->thisOrbitE_re_XYZ), bytes);
+    bytes = sizeof(complex<float>)*p->nV*p->nXGrid;
+    cudaMalloc((void**)&(gmem->all_j1xc), bytes);
+    cudaMemcpy(gmem->all_j1xc, all_j1xc,  bytes,  cudaMemcpyHostToDevice);
 
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
-    cudaMalloc((void**)&(gmem->thisOrbitE_im_XYZ), bytes);
+    //bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
+    //cudaMalloc((void**)&(gmem->thisOrbitE_re_XYZ), bytes);
 
-    bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
-    cudaMalloc((void**)&(gmem->thisOrbit_XYZ), bytes);
+    //bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
+    //cudaMalloc((void**)&(gmem->thisOrbitE_im_XYZ), bytes);
+
+    //bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
+    //cudaMalloc((void**)&(gmem->thisOrbit_XYZ), bytes);
 
     // check for error
     cudaError_t error = cudaGetLastError();
@@ -95,7 +99,7 @@ void launchKernel(params *p, gpu_mem *gmem)
 
   // Blarg
   int block_size = 32;
-  int num_blocks = ceilf(p->nXGrid/(float)block_size);
+  int num_blocks = ceilf((p->nXGrid*p->nV)/(float)block_size);
   
   std::cout<<"nxGrid: "<<p->nXGrid<<std::endl;
   std::cout<<"num blocks: "<<num_blocks<<std::endl;
@@ -104,7 +108,7 @@ void launchKernel(params *p, gpu_mem *gmem)
 
   low_mem_kernel<<<num_blocks, block_size>>>(gmem->j1xc, gmem->thisT, gmem->tJp, gmem->hanningWeight, gmem->r_kjGrid, gmem->e1Re_XYZ_kjGrid,
                                gmem->e1Im_XYZ_kjGrid, gmem->particles_XYZ_PODS, gmem->particles_XYZ_0_PODS,  gmem->xGrid, gmem->b0_CYL_kjGrid,
-                               gmem->df0_dv, gmem->thisOrbitE_re_XYZ, gmem->thisOrbitE_im_XYZ, gmem->thisOrbit_XYZ ,*p);
+                               gmem->df0_dv, gmem->all_j1xc, *p);
 
     // check for error
     cudaDeviceSynchronize();
@@ -118,7 +122,7 @@ void launchKernel(params *p, gpu_mem *gmem)
 
 }
 
-void copyToHost(complex<float> *j1xc, params *p, gpu_mem *gmem)
+void copyToHost(complex<float> *j1xc, complex<float> *all_j1xc, params *p, gpu_mem *gmem)
 {
 
     std::cout <<"copying memory"<<std::endl;
@@ -126,6 +130,9 @@ void copyToHost(complex<float> *j1xc, params *p, gpu_mem *gmem)
     size_t bytes;
     bytes = sizeof(complex<float>)*p->nXGrid*p->nJp;
     cudaMemcpy(j1xc, gmem->j1xc,  bytes,  cudaMemcpyDeviceToHost);
+
+    bytes = sizeof(complex<float>)*p->nXGrid*p->nV;
+    cudaMemcpy(all_j1xc, gmem->all_j1xc,  bytes,  cudaMemcpyDeviceToHost);
 
     // check for error
     cudaError_t error = cudaGetLastError();
@@ -229,42 +236,38 @@ __device__ void rk4_move ( CParticle_PODS &p, const float &dt, const float &t0,
 // Need to find correct memory space for these. Constant cache, shared, etc...
 __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,
 			       C3Vec *e1Im_XYZ_kjGrid, CParticle_PODS *particles_XYZ_PODS, CParticle_PODS *particles_XYZ_0_PODS,  float *xGrid, C3Vec *b0_CYL_kjGrid, 
-			       float *df0_dv, C3Vec *thisOrbitE_re_XYZ, C3Vec *thisOrbitE_im_XYZ, C3Vec *thisOrbit_XYZ,  const __restrict params p)
+			       float *df0_dv, complex<float> *all_j1xc, const __restrict params p)
 {
 
-    int iX = blockIdx.x * blockDim.x + threadIdx.x; 
-    int nXGrid = p.nXGrid;
-
-    if(iX < nXGrid ) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x; 
+    //int nXGrid = p.nXGrid;
 
     float dv = p.dv;
     int nSteps = p.nSteps;
     int nV = p.nV;
     double dtMin = p.dtMin;
     double wrf = p.wrf;
-    int nJp = p.nJp;
+    //int nJp = p.nJp;
 
+	int iX = tid / nV;
+	int iP = tid % nV;
+
+    //if(iX < nXGrid ) {
+
+	//printf("tid: %i, iX: %i, iP: %i\n", tid, iX, iP);
 	//printf("dv: %f, nSteps: %i, nV: %i, dtMin: %e, wrf: %f, nJp: %i\n", dv, nSteps, nV, dtMin, wrf, nJp);
 
-    int iP, i, istat, offset;
+    int i, istat;
     complex<float> this_j1xc;
     complex<float> f1c;
 
     CParticle_PODS thisParticle_XYZ;
 
-    for(iP=0;iP<nV;iP++) {
-	// Offset for thisOrbit* arrays
-	// Can pad these arrays probably for coelesced access
-	offset = iP*nV+iX*nV*nSteps;        
-
+    //for(iP=0;iP<nV;iP++) {
 
         thisParticle_XYZ = particles_XYZ_PODS[iP];
         thisParticle_XYZ.c1 = xGrid[iX];
 
-
-		//printf("particle: %i, c1: %f, v1: %f\n", iP, thisParticle_XYZ.c1, thisParticle_XYZ.v_c1);
-
-        
         double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
         float qe = thisParticle_XYZ.q;
         float h = dv * qe;
@@ -272,50 +275,41 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
         // generate orbit and get time-harmonic e along it
         C3Vec e1ReTmp_XYZ, e1ImTmp_XYZ;
        
-        for(i=0;i<nSteps;i++) {
-            
-            thisOrbitE_re_XYZ[offset+i] = 0.0f;
-            thisOrbitE_im_XYZ[offset+i] = 0.0f;
-            
-            if(thisParticle_XYZ.status==0) {
-                
-                thisOrbit_XYZ[offset+i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-                
-                rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
-                //printf("i: %i, thisParticle_XYZ: %f\n", i, thisParticle_XYZ.c1);
-   
-                if(thisParticle_XYZ.status==0) {
-		    		istat = 0;
-                    e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[offset+i].c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
-		    		istat = 0;
-                    e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[offset+i].c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
-                    
-                    thisOrbitE_re_XYZ[offset+i] = e1ReTmp_XYZ;
-                    thisOrbitE_im_XYZ[offset+i] = e1ImTmp_XYZ;
-                }
-            }
-        }
-
         // get Jp(t) for this spatial point
         C3VecI thisEc;
         C3VecI thisV1c;
        
         for(i=0;i<nSteps;i++) {
-            
+
+			e1ReTmp_XYZ = C3Vec(0,0,0);
+ 			e1ImTmp_XYZ = C3Vec(0,0,0);
+
+            if(thisParticle_XYZ.status==0) {
+                
+                rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
+   
+                if(thisParticle_XYZ.status==0) {
+		    		istat = 0;
+                    e1ReTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
+		    		istat = 0;
+                    e1ImTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
+                }
+            }           
+
             float tTmp = thisT[i];
             float weight = hanningWeight[i];
             float phs = -(wrf*tTmp);
             
             thisEc = C3VecI(
                             weight*complex<float>(
-                                                  thisOrbitE_re_XYZ[offset+i].c1*cosf(phs)-thisOrbitE_im_XYZ[offset+i].c1*sinf(phs),
-                                                  thisOrbitE_im_XYZ[offset+i].c1*cosf(phs)+thisOrbitE_re_XYZ[offset+i].c1*sinf(phs)),
+                                                  e1ReTmp_XYZ.c1*cosf(phs)-e1ImTmp_XYZ.c1*sinf(phs),
+                                                  e1ImTmp_XYZ.c1*cosf(phs)+e1ReTmp_XYZ.c1*sinf(phs)),
                             weight*complex<float>(
-                                                  thisOrbitE_re_XYZ[offset+i].c2*cosf(phs)-thisOrbitE_im_XYZ[offset+i].c2*sinf(phs),
-                                                  thisOrbitE_im_XYZ[offset+i].c2*cosf(phs)+thisOrbitE_re_XYZ[offset+i].c2*sinf(phs)),
+                                                  e1ReTmp_XYZ.c2*cosf(phs)-e1ImTmp_XYZ.c2*sinf(phs),
+                                                  e1ImTmp_XYZ.c2*cosf(phs)+e1ReTmp_XYZ.c2*sinf(phs)),
                             weight*complex<float>( 
-                                                  thisOrbitE_re_XYZ[offset+i].c3*cosf(phs)-thisOrbitE_im_XYZ[offset+i].c3*sinf(phs),
-                                                  thisOrbitE_im_XYZ[offset+i].c3*cosf(phs)+thisOrbitE_re_XYZ[offset+i].c3*sinf(phs))
+                                                  e1ReTmp_XYZ.c3*cosf(phs)-e1ImTmp_XYZ.c3*sinf(phs),
+                                                  e1ImTmp_XYZ.c3*cosf(phs)+e1ReTmp_XYZ.c3*sinf(phs))
                             );
             
             int N = nSteps - 1;
@@ -324,8 +318,6 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
             int factor = ceilf(B)+1;
             
             thisV1c += -qOverm * dtMin/2 * ( factor * thisEc);
-		    //printf("i: %i, thisV1c: %f\n", i, thisV1c.c1.real());
-
         }
       
         f1c = -thisV1c.c1*df0_dv[iP];
@@ -337,13 +329,12 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
         float B = A / N;
         int factor = ceilf(B)+1;
         
-        this_j1xc += h/2 * ( factor * v0_i*f1c);
-		//printf("iP: %i, this_j1xc: %f\n", iP, this_j1xc.real());
-
-    }
+        //this_j1xc += h/2 * ( factor * v0_i*f1c);
+		all_j1xc[iX*nV+iP] = h/2 * ( factor * v0_i*f1c);
+    //}
     
     //[iX][0]
-    j1xc[iX*nJp] = this_j1xc;
+    //j1xc[iX*nJp] = this_j1xc;
 
-    }
+    //}
 }

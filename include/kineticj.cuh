@@ -30,18 +30,16 @@ typedef struct GPU_MEM_
     float *xGrid;
     C3Vec *b0_CYL_kjGrid;
     float *df0_dv;
-    C3Vec *thisOrbitE_re_XYZ;
-    C3Vec *thisOrbitE_im_XYZ;
-    C3Vec *thisOrbit_XYZ;
+    complex<float> *all_j1xc;
 } gpu_mem;
 
 void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,
                   C3Vec *e1Im_XYZ_kjGrid, CParticle_PODS *particles_XYZ_PODS, CParticle_PODS *particles_XYZ_0_PODS,  float *xGrid, C3Vec *b0_CYL_kjGrid,
-                  float *df0_dv, params *p, gpu_mem *gmem);
+                  float *df0_dv, complex<float> *all_j1xc, params *p, gpu_mem *gmem);
 
 void launchKernel(params *p, gpu_mem *gmem);
 
-void copyToHost(complex<float> *j1xc, params *p, gpu_mem *gmem);
+void copyToHost(complex<float> *j1xc, complex<float> *all_j1xc, params *p, gpu_mem *gmem);
 
 __device__ C3Vec kj_interp1D ( float x, const float xVec[], const C3Vec yVec[], int n, int &stat );
 
@@ -56,6 +54,6 @@ __device__ void rk4_move  ( CParticle_PODS &p, const float &dt, const float &t0,
 
 __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,
                                C3Vec *e1Im_XYZ_kjGrid, CParticle_PODS *particles_XYZ_PODS, CParticle_PODS *particles_XYZ_0_PODS,  float *xGrid, C3Vec *b0_CYL_kjGrid,
-                               float *df0_dv, C3Vec *thisOrbitE_re_XYZ, C3Vec *thisOrbitE_im_XYZ, C3Vec *thisOrbit_XYZ, const __restrict params p);
+                               float *df0_dv, complex<float> *all_j1xc, const __restrict params p);
 
 #endif
