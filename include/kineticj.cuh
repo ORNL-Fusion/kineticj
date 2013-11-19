@@ -31,6 +31,7 @@ typedef struct GPU_MEM_
     C3Vec *b0_CYL_kjGrid;
     float *df0_dv;
     complex<float> *all_j1xc;
+  	cudaArray *e1Re_XYZ_kjGrid_cudaArray, *e1Im_XYZ_kjGrid_cudaArray;
 } gpu_mem;
 
 void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,

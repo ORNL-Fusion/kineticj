@@ -10,6 +10,8 @@
 // usinfg namespace is probably not a good idea here...lazy
 using namespace cusp;
 
+texture<float, 1, cudaReadModeElementType> e1Re_XYZ_kjGrid_tex, e1Im_XYZ_kjGrid_tex;
+
 // Host wrapper functions
 void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanningWeight, float *r_kjGrid, C3Vec *e1Re_XYZ_kjGrid,
                   C3Vec *e1Im_XYZ_kjGrid, CParticle_PODS *particles_XYZ_PODS, CParticle_PODS *particles_XYZ_0_PODS,  float *xGrid, C3Vec *b0_CYL_kjGrid,
@@ -81,6 +83,27 @@ void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanning
     //bytes = sizeof(C3Vec)*p->nSteps*p->nV*p->nXGrid;
     //cudaMalloc((void**)&(gmem->thisOrbit_XYZ), bytes);
 
+   	// Setup texture memory for e1 field
+	cudaChannelFormatDesc e1Re_channelDesc = cudaCreateChannelDesc<float>();
+	cudaChannelFormatDesc e1Im_channelDesc = cudaCreateChannelDesc<float>();
+
+	cudaMallocArray(&(gmem->e1Re_XYZ_kjGrid_cudaArray), &e1Re_channelDesc, _N_DATA, 1); 
+	cudaMallocArray(&(gmem->e1Im_XYZ_kjGrid_cudaArray), &e1Im_channelDesc, _N_DATA, 1); 
+
+	cudaMemcpyToArray(gmem->e1Re_XYZ_kjGrid_cudaArray, 0, 0, e1Re_XYZ_kjGrid, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpyToArray(gmem->e1Im_XYZ_kjGrid_cudaArray, 0, 0, e1Im_XYZ_kjGrid, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
+
+	e1Re_XYZ_kjGrid_tex.addressMode[0] = cudaAddressModeClamp;
+	e1Re_XYZ_kjGrid_tex.filterMode = cudaFilterModeLinear;
+	e1Re_XYZ_kjGrid_tex.normalized = false;
+
+	e1Im_XYZ_kjGrid_tex.addressMode[0] = cudaAddressModeClamp;
+	e1Im_XYZ_kjGrid_tex.filterMode = cudaFilterModeLinear;
+	e1Im_XYZ_kjGrid_tex.normalized = false;
+
+	cudaBindTextureToArray(e1Re_XYZ_kjGrid_tex, gmem->e1Re_XYZ_kjGrid_cudaArray, e1Re_channelDesc);
+	cudaBindTextureToArray(e1Im_XYZ_kjGrid_tex, gmem->e1Im_XYZ_kjGrid_cudaArray, e1Im_channelDesc);
+
     // check for error
     cudaError_t error = cudaGetLastError();
     if(error != cudaSuccess)
@@ -98,7 +121,7 @@ void launchKernel(params *p, gpu_mem *gmem)
   std::cout <<"kernel"<<std::endl;
 
   // Blarg
-  int block_size = 32;
+  int block_size = 128;
   int num_blocks = ceilf((p->nXGrid*p->nV)/(float)block_size);
   
   std::cout<<"nxGrid: "<<p->nXGrid<<std::endl;
@@ -278,6 +301,9 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
         // get Jp(t) for this spatial point
         C3VecI thisEc;
         C3VecI thisV1c;
+
+		float xMin = r_kjGrid[0];
+		float xMax = r_kjGrid[_N_DATA-1];
        
         for(i=0;i<nSteps;i++) {
 
@@ -289,10 +315,14 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
                 rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL_kjGrid, r_kjGrid, _N_DATA );
    
                 if(thisParticle_XYZ.status==0) {
+
+					float thisX =(thisParticle_XYZ.c1-xMin)/(xMax-xMin)*(_N_DATA-1);
 		    		istat = 0;
                     e1ReTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
+					e1ReTmp_XYZ = tex1D(e1Re_XYZ_kjGrid_tex, thisX);
 		    		istat = 0;
                     e1ImTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
+					e1ImTmp_XYZ = tex1D(e1Im_XYZ_kjGrid_tex, thisX);
                 }
             }           
 
