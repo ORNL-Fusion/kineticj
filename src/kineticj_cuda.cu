@@ -90,8 +90,19 @@ void copyToDevice(complex<float> *j1xc, float *thisT, float *tJp, float *hanning
 	cudaMallocArray(&(gmem->e1Re_XYZ_kjGrid_cudaArray), &e1Re_channelDesc, _N_DATA, 1); 
 	cudaMallocArray(&(gmem->e1Im_XYZ_kjGrid_cudaArray), &e1Im_channelDesc, _N_DATA, 1); 
 
-	cudaMemcpyToArray(gmem->e1Re_XYZ_kjGrid_cudaArray, 0, 0, e1Re_XYZ_kjGrid, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
-	cudaMemcpyToArray(gmem->e1Im_XYZ_kjGrid_cudaArray, 0, 0, e1Im_XYZ_kjGrid, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
+	float *tmpFloatArr;
+	tmpFloatArr = new float[_N_DATA];
+
+	for (int i=0; i<_N_DATA; i++ ) {
+		tmpFloatArr[i] = e1Re_XYZ_kjGrid[i].c1;
+	}
+	cudaMemcpyToArray(gmem->e1Re_XYZ_kjGrid_cudaArray, 0, 0, tmpFloatArr, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
+
+	for (int i=0; i<_N_DATA; i++ ) {
+		tmpFloatArr[i] = e1Im_XYZ_kjGrid[i].c1;
+	}
+	cudaMemcpyToArray(gmem->e1Im_XYZ_kjGrid_cudaArray, 0, 0, tmpFloatArr, _N_DATA*sizeof(float), cudaMemcpyHostToDevice);
+	delete [] tmpFloatArr;
 
 	e1Re_XYZ_kjGrid_tex.addressMode[0] = cudaAddressModeClamp;
 	e1Re_XYZ_kjGrid_tex.filterMode = cudaFilterModeLinear;
@@ -121,7 +132,7 @@ void launchKernel(params *p, gpu_mem *gmem)
   std::cout <<"kernel"<<std::endl;
 
   // Blarg
-  int block_size = 128;
+  int block_size = _CUDA_BLOCK_SIZE;
   int num_blocks = ceilf((p->nXGrid*p->nV)/(float)block_size);
   
   std::cout<<"nxGrid: "<<p->nXGrid<<std::endl;
@@ -316,13 +327,21 @@ __global__ void low_mem_kernel(complex<float> *j1xc, float *thisT, float *tJp, f
    
                 if(thisParticle_XYZ.status==0) {
 
-					float thisX =(thisParticle_XYZ.c1-xMin)/(xMax-xMin)*(_N_DATA-1);
-		    		istat = 0;
-                    e1ReTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
-					e1ReTmp_XYZ = tex1D(e1Re_XYZ_kjGrid_tex, thisX);
-		    		istat = 0;
-                    e1ImTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
-					e1ImTmp_XYZ = tex1D(e1Im_XYZ_kjGrid_tex, thisX);
+					float thisX =(thisParticle_XYZ.c1-xMin)/(xMax-xMin)*(_N_DATA-1) + 0.5;
+		    		//istat = 0;
+                    //e1ReTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Re_XYZ_kjGrid, _N_DATA, istat);
+					//printf("tid: %i, i: %i, e1Re(kj): %f, thisX: %f\n",tid, i, e1ReTmp_XYZ.c1, thisX);
+					e1ReTmp_XYZ.c1 = tex1D(e1Re_XYZ_kjGrid_tex, thisX);
+					//printf("tid: %i, i: %i, e1Re(cu): %f, thisX: %f\n",tid, i, e1ReTmp_XYZ.c1, thisX);
+					//printf("e1Re[floor]: %f, e1Re[ceil]: %f\n", 
+					//	e1Re_XYZ_kjGrid[(int)floor(thisX)].c1, e1Re_XYZ_kjGrid[(int)ceil(thisX)].c1);
+
+		    		//istat = 0;
+                    //e1ImTmp_XYZ = kj_interp1D ( thisParticle_XYZ.c1, r_kjGrid, e1Im_XYZ_kjGrid, _N_DATA, istat);
+					//printf("tid: %i, i: %i, e1Im(kj): %f, thisX: %f\n",tid, i, e1ImTmp_XYZ.c1, thisX);
+					e1ImTmp_XYZ.c1 = tex1D(e1Im_XYZ_kjGrid_tex, thisX);
+					//printf("tid: %i, i: %i, e1Im(cu): %f, thisX: %f\n",tid, i, e1ImTmp_XYZ.c1, thisX);
+
                 }
             }           
 

@@ -18,6 +18,7 @@
 #include <math.h>
 #include "vecs.cuh"
 #include "kineticj.cuh"
+#include <ctime>
 
 //#include <accelmath.h>
 
@@ -870,7 +871,14 @@ int main ( int argc, char **argv )
                       e1Im_XYZ_kjGrid, particles_XYZ_PODS, particles_XYZ_0_PODS,  xGrid, b0_CYL_kjGrid,
                       df0_dv, all_j1xc, &sim_params, &gmem);
 
+	std::clock_t start;
+	double duration;
+	start = std::clock();
+
         launchKernel(&sim_params, &gmem);
+
+	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	cout<<"Kernel duration: "<< duration << endl;
 
         copyToHost(j1xc, all_j1xc, &sim_params, &gmem);
 	
@@ -882,7 +890,9 @@ int main ( int argc, char **argv )
 		for(int iP=0;iP<nV;iP++) {
 			j1xc[iX] += all_j1xc[iX*nV+iP];
 		}
+#if DEBUGLEVEL >= 2
 		cout<<"iX: "<<iX<<" j1xc[iX]: "<<j1xc[iX].real()<<endl;
+#endif
 	}
 
 
@@ -1536,9 +1546,9 @@ int main ( int argc, char **argv )
 			int mkDirStat = mkdir(ncjPFileName.str().c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 		}
 		ncjPFileName << "/jP_";
-		ncjPFileName << setw(3) << setfill('0') << iX;
+		ncjPFileName << setw(4) << setfill('0') << iX;
 		ncjPFileName << ".nc"; 	
-#if DEBUGLEVEL >= 1
+#if DEBUGLEVEL >= 2
 		cout<<ncjPFileName.str().c_str()<<endl;
 #endif
 
