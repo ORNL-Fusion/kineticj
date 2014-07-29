@@ -524,6 +524,66 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 }
 
+C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, CParticle &p ) {
+
+	float _x, x0, x1;
+	float xTmp;
+	xTmp = x;
+
+#if _PARTICLE_BOUNDARY == 1
+	if(x<xVec.front()||x>xVec.back()||p.status>0) {
+			// Particle absorbing walls
+#if DEBUGLEVEL >= 1
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"Particle number: "<<p.number<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec.front()<<endl;
+            cout<<"xVec.back():"<<xVec.back()<<endl;
+#endif
+			++p.status;
+			return C3Vec(0,0,0);
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+#endif
+	
+	if(p.status>0){
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+			exit(1);
+	}
+
+	//else
+	//{
+		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+	//}
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+	
+	// Catch for particle at point
+	if(x0==x1) {
+#if DEBUGLEVEL >= 2
+		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+#endif
+		return yVec[x0];
+	}
+	else {
+		C3Vec y0 = yVec[x0];
+		C3Vec y1 = yVec[x1];
+
+		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+	}
+
+}
+
+
 // Zero-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
@@ -543,11 +603,13 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p.status );
+	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
 					0+0+1*b0_CYL.c3 );
+
+    //cout << "\tb0_XYZ: " << b0_XYZ.c1 <<"  "<< b0_XYZ.c2 <<"  "<< b0_XYZ.c3 << endl;
 
 	C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
 					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
@@ -570,12 +632,19 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 
 		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
 		x1 = yn0 * dt;
+        //cout << "dx1: " << x1.c1 << endl;
+
 		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
 		x2 = (yn0 + 0.5*k1) * dt;
+        //cout << "dx2: " << x2.c1 << endl;
+
 		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r ) * dt;	
 		x3 = (yn0 + 0.5*k2) * dt;
+        //cout << "dx3: " << x3.c1 << endl;
+
 		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r ) * dt;	
 		x4 = (yn0 + 1.0*k3) * dt;
+        //cout << "dx4: " << x4.c1 << endl;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
@@ -624,6 +693,9 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 #endif
 
 #if DEBUGLEVEL >= 3
+        cout << "\tdt: " << dt << endl;
+        cout << "\tr.front(): " << r.front() << endl;
+        cout << "\tr.back(): " << r.back() << endl;
 		cout << "\tx0_XYZ: " << xn0.c1 << "  " << xn0.c2 << "  " << xn0.c3 << endl;
 		cout << "\tv0_XYZ: " << yn0.c1 << "  " << yn0.c2 << "  " << yn0.c3 << endl;
 		cout << "\tx1_XYZ: " << xn1.c1 << "  " << xn1.c2 << "  " << xn1.c3 << endl;
@@ -1133,6 +1205,10 @@ int main ( int argc, char **argv )
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
 					}
+
+ 	                //cout << "\tPosition 0: "<< thisOrbit_XYZ[i].c1 << endl;
+ 	                //cout << "\tPosition 1: "<< thisParticle_XYZ.c1 << endl;
+
 				}
 			}
 

@@ -22,7 +22,8 @@ CC := gcc
 CPP := g++
 NVCC := $(CUDADIR)/bin/nvcc
 
-VENDOR := PGI_
+VENDOR := #PGI_
+VENDOR := GCC_
 
 ThisMachine := $(shell uname -n)
 
@@ -40,7 +41,7 @@ DEBUGFLAGS := $($(VENDOR)DEBUGFLAGS)
 OPTFLAGS := $($(VENDOR)OPTFLAGS)
 
 CFLAGS := 
-CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTGLAGS} 
+CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTFLAGS} 
 CPPFLAGS :=
 CPPFLAGS += -DDEBUGLEVEL=1
 CPPFLAGS += -DUSEPAPI=0
@@ -49,7 +50,7 @@ CPPFLAGS += -DLOWMEM=1
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
 
-LINK := $(CPP) ${CXXFLAGS} 
+LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
 # You shouldn't have to go below here
 #
@@ -117,16 +118,4 @@ endif
 
 clean:
 	-@rm $(NAME) $(OBJ) $(DEP) .dep/src/*
-
-allclean: 
-	-@rm $(NAME) $(OBJ) $(DEP) .dep/src/* webFace.wt src_webFace/*.o
-
-webFace.wt: src_webFace/webFaceApp.o
-	g++ -o $@ $< -L ~/code/wt/lib -lwt -lwthttp -lboost_signals-mt -lboost_filesystem-mt -lboost_system-mt \
-			-L$(LIBCONFIGDIR)/lib -lconfig++
-	@echo 'Run webApp using ...'
-	@echo 'WT_TMP_DIR=/home/dg6/code/sMC/tmp ./webFace.wt --docroot ./ --http-address 0.0.0.0 --http-port 8080 -c ./wt_config.xml'
-
-src_webFace/webFaceApp.o: src_webFace/webFaceApp.cpp
-	g++ -c $< -I ~/code/wt/include -o $@ -I$(LIBCONFIGDIR)/include
 
