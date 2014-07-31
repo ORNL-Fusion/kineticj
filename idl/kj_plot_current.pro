@@ -304,6 +304,10 @@ if not keyword_set(noIterate) then begin
 
 endif
 
+    p=plot(xf,j1)
+    p=plot(xf,imaginary(j1),/over,color='r')
+
+
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
 

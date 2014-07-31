@@ -583,6 +583,53 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 }
 
+float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec ) {
+
+	float _x, x0, x1;
+	float xTmp;
+	xTmp = x;
+
+#if _PARTICLE_BOUNDARY == 1
+	if(x<xVec.front()||x>xVec.back()) {
+#if DEBUGLEVEL >= 1
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec.front()<<endl;
+            cout<<"xVec.back():"<<xVec.back()<<endl;
+#endif
+			return 0;
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+#endif
+	
+    _x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+	
+	// Catch for particle at point
+	if(x0==x1) {
+#if DEBUGLEVEL >= 2
+		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+#endif
+		return yVec[x0];
+	}
+	else {
+		float y0 = yVec[x0];
+		float y1 = yVec[x1];
+
+		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+	}
+}
+
+
 
 // Zero-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
@@ -764,6 +811,56 @@ C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
 	return result;
 }
 
+vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, int nPx, int nPy, int nPz, int nThermal, float &dv) {
+
+        vector<CParticle> pList;
+
+        int nP = nPx * nPy * nPz;
+        pList.resize(nP);
+
+        float m = amu * _mi;
+        float q = Z * _e;
+        float kT_joule = T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
+        float vTh = sqrt ( 2.0*kT_joule / m );
+
+		float vxRange = vTh * nThermal * 2;
+		float vxMin	= -vxRange / 2e0;
+		float dvx = vxRange / (nPx-1); 
+
+		float vyRange = vTh * nThermal * 2;
+		float vyMin	= -vyRange / 2e0;
+		float dvy = vyRange / (nPy-1);
+
+		float vzRange = vTh * nThermal * 2;
+		float vzMin	= -vzRange / 2e0;
+		float dvz = vzRange / (nPz-1);
+
+        dv = dvx*dvy*dvz; // Return the Jacobian (volume element for integration later)
+
+        int cnt = 0;
+        for(int i=0;i<nPx;i++) {
+            for(int j=0;j<nPy;j++) {
+                for(int k=0;k<nPz;k++) {
+
+                    float thisvx = vxMin+i*dvx;
+                    float thisvy = vyMin+j*dvy;
+                    float thisvz = vzMin+k*dvz;
+
+		            float v = sqrt ( pow(thisvx,2) + pow(thisvy,2) + pow(thisvz,2) );
+		            float weight = 1 / (vTh*sqrt(_pi)) * exp ( -pow(v,2) / pow(vTh,2) );
+    	            CParticle p (x,0,0,thisvx,thisvy,thisvz,amu,Z,weight);
+
+                    pList[cnt] = p;
+                    pList[cnt].number = cnt;
+                    cnt++;
+                }
+            }
+        } 
+
+        return pList;
+}
+
+
 // Calculate the jP given some know E and f(v)
 
 int main ( int argc, char **argv )
@@ -801,6 +898,7 @@ int main ( int argc, char **argv )
 		cfg.readFile(cfgName.c_str());
 
 		string runIdent = cfg.lookup("runIdent");	
+	    int species_number = cfg.lookup("species_number");
 
 		// Read E
 		string eField_fName = cfg.lookup("eField_fName");	
@@ -812,7 +910,7 @@ int main ( int argc, char **argv )
 
 		vector<float> r, b0_r, b0_p, b0_z,
 				e_r_re, e_p_re, e_z_re,
-				e_r_im, e_p_im, e_z_im;
+				e_r_im, e_p_im, e_z_im, n_m3;
 		vector<C3Vec> b0_CYL, b0_XYZ;
 		
 		float freq;
@@ -830,9 +928,16 @@ int main ( int argc, char **argv )
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
 	
 				NcDim nc_nR(dataFile.getDim("nR"));
+				NcDim nc_nSpec(dataFile.getDim("nSpec"));
 				NcDim nc_scalar(dataFile.getDim("scalar"));
 	
 				int nR = nc_nR.getSize();
+				int nSpec = nc_nSpec.getSize();
+
+                if(species_number>nSpec-1) {
+                        cout << "ERROR: Asking for species that does not exist in density data" << endl;
+                        exit(1);
+                }
 	
 				cout << "\tnR: " << nR << endl;
 	
@@ -850,6 +955,8 @@ int main ( int argc, char **argv )
 				NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
 				NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
 
+				NcVar nc_density(dataFile.getVar("density_m3"));
+
 				r.resize(nR);
 
 				b0_r.resize(nR);
@@ -863,12 +970,27 @@ int main ( int argc, char **argv )
 				e_p_im.resize(nR);
 				e_z_im.resize(nR);
 
+                n_m3.resize(nR);
+
 				nc_r.getVar(&r[0]);
 				nc_freq.getVar(&freq);
 
 				nc_b0_r.getVar(&b0_r[0]);
 				nc_b0_p.getVar(&b0_p[0]);
 				nc_b0_z.getVar(&b0_z[0]);
+
+                // Here im reading a single species' density from a multi species array, 
+                // i.e., density[nSpec,nR] and I only want density[1,*] for example where
+                // the species is specified by "species_number" in the cfg file
+                vector<size_t> start, count;
+                start.resize(2);
+                count.resize(2);
+                start[1] = 0;
+                start[0] = species_number;
+                count[1] = nR;
+                count[0] = 1;
+
+				nc_density.getVar(start, count, &n_m3[0]);
 
 				b0_CYL.resize(nR);
 				b0_XYZ.resize(nR);
@@ -943,115 +1065,122 @@ int main ( int argc, char **argv )
 		}
 
 
-		// Read particle list
-		string particleList_fName = cfg.lookup ("particleList_fName");	
-		cout << "Reading particle list " << particleList_fName << endl;
+//		// Read particle list
+//		string particleList_fName = cfg.lookup ("particleList_fName");	
+//		cout << "Reading particle list " << particleList_fName << endl;
+//
+//		ifstream file2(particleList_fName.c_str());
+//		if(!file.good()) {
+//			cout << "ERROR: Cannot find file " << particleList_fName << endl;
+//			exit(1);
+//		}
+//
+//		vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight, p_df0_dv;
+//		vector<int> p_Z;
+//		float vTh;
+//		int nThermal;
+//		
+//		try {
+//				NcFile dataFile ( particleList_fName.c_str(), NcFile::read );
+//	
+//				NcDim nc_nP(dataFile.getDim("nP"));
+//	
+//				int nP = nc_nP.getSize();
+//#if DEBUGLEVEL >= 1	
+//				cout << "\tnP: " << nP << endl;
+//#endif
+//				NcVar nc_p_amu(dataFile.getVar("amu"));
+//				NcVar nc_p_Z(dataFile.getVar("Z"));
+//
+//				NcVar nc_p_x(dataFile.getVar("x"));
+//				NcVar nc_p_y(dataFile.getVar("y"));
+//				NcVar nc_p_z(dataFile.getVar("z"));
+//				
+//				NcVar nc_p_vx(dataFile.getVar("vx"));
+//				NcVar nc_p_vy(dataFile.getVar("vy"));
+//				NcVar nc_p_vz(dataFile.getVar("vz"));
+//
+//				NcVar nc_p_weight(dataFile.getVar("weight"));
+//
+//				NcVar nc_nThermal(dataFile.getVar("nThermal"));
+//				NcVar nc_vTh(dataFile.getVar("vTh"));
+//
+//				NcVar nc_p_df0_dv(dataFile.getVar("df0_dv"));
+//
+//
+//				p_x.resize(nP);
+//				p_y.resize(nP);
+//				p_z.resize(nP);
+//
+//				p_vx.resize(nP);
+//				p_vy.resize(nP);
+//				p_vz.resize(nP);
+//
+//				p_weight.resize(nP);
+//
+//				p_amu.resize(nP);
+//				p_Z.resize(nP);
+//
+//                p_df0_dv.resize(nP);
+//
+//				nc_p_x.getVar(&p_x[0]);
+//				nc_p_y.getVar(&p_y[0]);
+//				nc_p_z.getVar(&p_z[0]);
+//
+//				nc_p_vx.getVar(&p_vx[0]);
+//				nc_p_vy.getVar(&p_vy[0]);
+//				nc_p_vz.getVar(&p_vz[0]);
+//
+//				nc_p_weight.getVar(&p_weight[0]);
+//
+//				nc_p_amu.getVar(&p_amu[0]);
+//				nc_p_Z.getVar(&p_Z[0]);
+//
+//				nc_nThermal.getVar(&nThermal);
+//				nc_vTh.getVar(&vTh);
+//
+//				nc_p_df0_dv.getVar(&p_df0_dv[0]);
+//
+//		}
+//		catch(exceptions::NcException &e) {
+//				cout << "NetCDF: unknown error" << endl;
+//				e.what();
+//				exit(1);
+//		}
+//
+//		vector<CParticle> particles_XYZ;
+//		particles_XYZ.resize(p_x.size());
+//
+//		for(int i=0;i<particles_XYZ.size();i++){
+//
+//				CParticle thisParticle (p_x[i],p_y[i],p_z[i],
+//								p_vx[i],p_vy[i],p_vz[i],
+//								p_amu[i],p_Z[i],p_weight[i]);
+//				particles_XYZ[i] = thisParticle;
+//				particles_XYZ[i].number = i;
+//		}
 
-		ifstream file2(particleList_fName.c_str());
-		if(!file.good()) {
-			cout << "ERROR: Cannot find file " << particleList_fName << endl;
-			exit(1);
-		}
-
-		vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight;
-		vector<int> p_Z;
-		float vTh;
-		int nThermal;
-		
-		try {
-				NcFile dataFile ( particleList_fName.c_str(), NcFile::read );
-	
-				NcDim nc_nP(dataFile.getDim("nP"));
-	
-				int nP = nc_nP.getSize();
-#if DEBUGLEVEL >= 1	
-				cout << "\tnP: " << nP << endl;
-#endif
-				NcVar nc_p_amu(dataFile.getVar("amu"));
-				NcVar nc_p_Z(dataFile.getVar("Z"));
-
-				NcVar nc_p_x(dataFile.getVar("x"));
-				NcVar nc_p_y(dataFile.getVar("y"));
-				NcVar nc_p_z(dataFile.getVar("z"));
-				
-				NcVar nc_p_vx(dataFile.getVar("vx"));
-				NcVar nc_p_vy(dataFile.getVar("vy"));
-				NcVar nc_p_vz(dataFile.getVar("vz"));
-
-				NcVar nc_p_weight(dataFile.getVar("weight"));
-
-				NcVar nc_nThermal(dataFile.getVar("nThermal"));
-				NcVar nc_vTh(dataFile.getVar("vTh"));
-
-				p_x.resize(nP);
-				p_y.resize(nP);
-				p_z.resize(nP);
-
-				p_vx.resize(nP);
-				p_vy.resize(nP);
-				p_vz.resize(nP);
-
-				p_weight.resize(nP);
-
-				p_amu.resize(nP);
-				p_Z.resize(nP);
-
-				nc_p_x.getVar(&p_x[0]);
-				nc_p_y.getVar(&p_y[0]);
-				nc_p_z.getVar(&p_z[0]);
-
-				nc_p_vx.getVar(&p_vx[0]);
-				nc_p_vy.getVar(&p_vy[0]);
-				nc_p_vz.getVar(&p_vz[0]);
-
-				nc_p_weight.getVar(&p_weight[0]);
-
-				nc_p_amu.getVar(&p_amu[0]);
-				nc_p_Z.getVar(&p_Z[0]);
-
-				nc_nThermal.getVar(&nThermal);
-				nc_vTh.getVar(&vTh);
-
-		}
-		catch(exceptions::NcException &e) {
-				cout << "NetCDF: unknown error" << endl;
-				e.what();
-				exit(1);
-		}
-
-		vector<CParticle> particles_XYZ;
-		particles_XYZ.resize(p_x.size());
-
-		for(int i=0;i<particles_XYZ.size();i++){
-
-				CParticle thisParticle (p_x[i],p_y[i],p_z[i],
-								p_vx[i],p_vy[i],p_vz[i],
-								p_amu[i],p_Z[i],p_weight[i]);
-				particles_XYZ[i] = thisParticle;
-				particles_XYZ[i].number = i;
-		}
-
-	// Langmuir wave dispersion relation
-
-	double wrf = freq * 2 * _pi;
-	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
-	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
-	double kPar = sqrt ( kParSq );
-	double vPhase = wrf / kPar;
-	double lambdaPar = 2*_pi/kPar;
-#if DEBUGLEVEL >= 1
-	cout << "freq [Hz]: " << freq << endl;
-	cout << "kParSq [m^-2]: " << kParSq << endl;
-	cout << "kPar [m^-1]: " << kPar << endl;
-	cout << "lambdaPar [m]: " << lambdaPar << endl;
-	cout << "vPhase [m/s]: " << vPhase << endl;
-	cout << "vTh [m/s]: " << vTh << endl;
-#endif
+//	// Langmuir wave dispersion relation
+//
+//	double wrf = freq * 2 * _pi;
+//	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
+//	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
+//	double kPar = sqrt ( kParSq );
+//	double vPhase = wrf / kPar;
+//	double lambdaPar = 2*_pi/kPar;
+//#if DEBUGLEVEL >= 1
+//	cout << "freq [Hz]: " << freq << endl;
+//	cout << "kParSq [m^-2]: " << kParSq << endl;
+//	cout << "kPar [m^-1]: " << kPar << endl;
+//	cout << "lambdaPar [m]: " << lambdaPar << endl;
+//	cout << "vPhase [m/s]: " << vPhase << endl;
+//	cout << "vTh [m/s]: " << vTh << endl;
+//#endif
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
-	vector<float> xGrid(nXGrid);
+	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
 	
@@ -1062,6 +1191,8 @@ int main ( int argc, char **argv )
 
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
+        density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
 	vector<CParticle> particles_XYZ_0(particles_XYZ);
@@ -1087,7 +1218,13 @@ int main ( int argc, char **argv )
 	int nJp 			= nJpCycles * nJpPerCycle;
 	float dtJp 			= tRF / nJpPerCycle;
 	int istat = 0;
-	int nV = particles_XYZ_0.size();
+    int nPx = cfg.lookup("nPx");
+    int nPy = cfg.lookup("nPy");
+    int nPz = cfg.lookup("nPz");
+    float amu = cfg.lookup("species_amu");
+    float Z = cfg.lookup("species_Z");
+    int nThermal = cfg.lookup("nThermal");
+	int nV = nPx*nPy*nPz;
 
 #if DEBUGLEVEL >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -1097,16 +1234,17 @@ int main ( int argc, char **argv )
 	
 	vector<float> df0_dv(particles_XYZ_0.size());
 	for(int i=0;i<particles_XYZ_0.size();i++){
-			float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
-			if(i==0) {
-					df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
-			}
-			else if(i==particles_XYZ_0.size()-1){
-					df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
-			}
-			else {
-					df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
-			}
+            df0_dv[i] = p_df0_dv[i]; // This is now created in the particle list input file.
+			//float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
+			//if(i==0) {
+			//		df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
+			//}
+			//else if(i==particles_XYZ_0.size()-1){
+			//		df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
+			//}
+			//else {
+			//		df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
+			//}
 	}
 
 	//for(int i=0;i<df0_dv.size();i++){
@@ -1149,6 +1287,9 @@ int main ( int argc, char **argv )
 	#pragma omp parallel for private(istat)
 	for(int iX=0;iX<nXGrid;iX++) {
 
+        float dv;
+        vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],nPx,nPy,nPz,nThermal,dv));
+
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
 
@@ -1171,16 +1312,17 @@ int main ( int argc, char **argv )
 
 		vector<float> f1(nV);
 		vector<complex<float> > f1c(nV);
-		float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
+		//float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
 		//#pragma omp parallel for private(istat)
-		for(int iP=0;iP<particles_XYZ.size();iP++) {
+		for(int iP=0;iP<nV;iP++) {
 
 			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
 
-			CParticle thisParticle_XYZ(particles_XYZ[iP]);
-			thisParticle_XYZ.c1 = xGrid[iX];
+			//CParticle thisParticle_XYZ(particles_XYZ[iP]);
+			CParticle thisParticle_XYZ(ThisParticleList[iP]);
+			//thisParticle_XYZ.c1 = xGrid[iX];
 
 			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
 			float qe = thisParticle_XYZ.q;
@@ -1251,14 +1393,15 @@ int main ( int argc, char **argv )
 				if(iP>0) {
 
 					float v0_i = particles_XYZ_0[iP].v_c1;
-					float v0_im1 = particles_XYZ_0[iP-1].v_c1;
+					//float v0_im1 = particles_XYZ_0[iP-1].v_c1;
 
 				//	#pragma omp atomic
 				//	j1x[jt] += h/2 * ( v0_im1*f1[iP-1] + v0_i*f1[iP]); 
 
 					#pragma omp critical // "atomic" does not work for complex numbers
 					{
-						j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]); 
+						//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]) * density_m3[iX]; 
+						j1xc[iX][jt] += h * ( v0_im1*f1c[iP] ) * density_m3[iX]; 
 					}
 
 				}
