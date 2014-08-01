@@ -66,6 +66,7 @@ class CParticle: public CSpecies {
 				int number;
 				float weight;
 				int status;
+                float df0_dvx, df0_dvy, df0_dvz;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -510,6 +511,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUGLEVEL >= 2
+        cout << "Stat version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -569,6 +571,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUGLEVEL >= 2
+        cout << "Particle version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -592,6 +595,7 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()) {
 #if DEBUGLEVEL >= 1
+            cout<<"Non-particle interpolator"<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
@@ -616,6 +620,7 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUGLEVEL >= 2
+        cout << "Non-particle version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -811,6 +816,16 @@ C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
 	return result;
 }
 
+float maxwellian ( float vx, float vy, float vz, float vTh ) {
+
+    float weight_x = 1.0 / (vTh*sqrt(_pi)) * exp ( -pow(vx,2) / pow(vTh,2) );
+    float weight_y = 1.0 / (vTh*sqrt(_pi)) * exp ( -pow(vy,2) / pow(vTh,2) );
+    float weight_z = 1.0 / (vTh*sqrt(_pi)) * exp ( -pow(vz,2) / pow(vTh,2) );
+    
+    return weight_x * weight_y * weight_z;
+
+}
+
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, int nPx, int nPy, int nPz, int nThermal, float &dv) {
 
         vector<CParticle> pList;
@@ -824,18 +839,20 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, i
         float vTh = sqrt ( 2.0*kT_joule / m );
 
 		float vxRange = vTh * nThermal * 2;
-		float vxMin	= -vxRange / 2e0;
+		float vxMin	= -vxRange / 2.0;
 		float dvx = vxRange / (nPx-1); 
 
 		float vyRange = vTh * nThermal * 2;
-		float vyMin	= -vyRange / 2e0;
+		float vyMin	= -vyRange / 2.0;
 		float dvy = vyRange / (nPy-1);
 
 		float vzRange = vTh * nThermal * 2;
-		float vzMin	= -vzRange / 2e0;
+		float vzMin	= -vzRange / 2.0;
 		float dvz = vzRange / (nPz-1);
 
         dv = dvx*dvy*dvz; // Return the Jacobian (volume element for integration later)
+
+        float TestIntegratedValue = 0;
 
         int cnt = 0;
         for(int i=0;i<nPx;i++) {
@@ -846,16 +863,48 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, i
                     float thisvy = vyMin+j*dvy;
                     float thisvz = vzMin+k*dvz;
 
-		            float v = sqrt ( pow(thisvx,2) + pow(thisvy,2) + pow(thisvz,2) );
-		            float weight = 1 / (vTh*sqrt(_pi)) * exp ( -pow(v,2) / pow(vTh,2) );
-    	            CParticle p (x,0,0,thisvx,thisvy,thisvz,amu,Z,weight);
+                    float weight = maxwellian(thisvx,thisvy,thisvz,vTh);
 
+                    TestIntegratedValue += weight * dv;
+
+    	            CParticle p (x,0,0,thisvx,thisvy,thisvz,amu,Z,weight);
                     pList[cnt] = p;
                     pList[cnt].number = cnt;
+
+                    // Get the 3 components of df0_dv at this point in velocity space
+			        float h = dvx/10.0;
+                    float vxL = thisvx-h;
+                    float vxR = thisvx+h;
+		            float fL = maxwellian(vxL,thisvy,thisvz,vTh);
+		            float fR = maxwellian(vxR,thisvy,thisvz,vTh);
+			        float df0_dv = (-fL + fR)/(2*h); 
+
+                    pList[cnt].df0_dvx = df0_dv;
+
+			        h = dvy/10.0;
+                    float vyL = thisvy-h;
+                    float vyR = thisvy+h;
+		            fL = maxwellian(thisvx,vyL,thisvz,vTh);
+		            fR = maxwellian(thisvx,vyR,thisvz,vTh);
+			        df0_dv = (-fL + fR)/(2*h); 
+
+                    pList[cnt].df0_dvy = df0_dv;
+
+			        h = dvz/10.0;
+                    float vzL = thisvz-h;
+                    float vzR = thisvz+h;
+		            fL = maxwellian(thisvx,thisvy,vzL,vTh);
+		            fR = maxwellian(thisvx,thisvy,vzR,vTh);
+			        df0_dv = (-fL + fR)/(2*h); 
+
+                    pList[cnt].df0_dvz = df0_dv;
+
                     cnt++;
                 }
             }
         } 
+
+        //cout << "TestIntegratedValue: " << TestIntegratedValue << endl;
 
         return pList;
 }
@@ -1162,7 +1211,7 @@ int main ( int argc, char **argv )
 
 //	// Langmuir wave dispersion relation
 //
-//	double wrf = freq * 2 * _pi;
+	double wrf = freq * 2 * _pi;
 //	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
 //	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
 //	double kPar = sqrt ( kParSq );
@@ -1181,6 +1230,7 @@ int main ( int argc, char **argv )
 	int nXGrid = cfg.lookup("nXGrid");
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
 	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid);
+    vector<C3Vec> b0_T_at_xGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
 	
@@ -1192,10 +1242,12 @@ int main ( int argc, char **argv )
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3);
+        int iStat = 0;
+        b0_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
         T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
-
-	vector<CParticle> particles_XYZ_0(particles_XYZ);
+    float MaxB0 = maxC3VecAbs(b0_T_at_xGrid);
+	//vector<CParticle> particles_XYZ_0(particles_XYZ);
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
@@ -1211,8 +1263,6 @@ int main ( int argc, char **argv )
 	float nRFCycles 		= cfg.lookup("nRFCycles");
 	int nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
 	float tRF 			= (2*_pi)/wrf;
-	float dtMin 		= -tRF/nStepsPerCycle;
-	int nSteps 			= nRFCycles*nStepsPerCycle+1;
 	int nJpCycles 		= cfg.lookup("nJpCycles");
 	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
 	int nJp 			= nJpCycles * nJpPerCycle;
@@ -1224,7 +1274,13 @@ int main ( int argc, char **argv )
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
-	int nV = nPx*nPy*nPz;
+	int nP = nPx*nPy*nPz;
+    float wc = Z*_e*MaxB0/(amu*_mi);
+    float cyclotronPeriod = 2*_pi / wc;
+	//float dtMin 	= -tRF/nStepsPerCycle;
+    float dtMin 	= -cyclotronPeriod/nStepsPerCycle;
+	//int nSteps 	= nRFCycles*nStepsPerCycle+1;
+	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
 
 #if DEBUGLEVEL >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -1232,20 +1288,20 @@ int main ( int argc, char **argv )
     cout << "tRF: " << tRF << endl;
 #endif
 	
-	vector<float> df0_dv(particles_XYZ_0.size());
-	for(int i=0;i<particles_XYZ_0.size();i++){
-            df0_dv[i] = p_df0_dv[i]; // This is now created in the particle list input file.
-			//float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
-			//if(i==0) {
-			//		df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
-			//}
-			//else if(i==particles_XYZ_0.size()-1){
-			//		df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
-			//}
-			//else {
-			//		df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
-			//}
-	}
+	//vector<float> df0_dv(nP);
+	//for(int p=0;p<nP;p++){
+    //        df0_dv[p] = p_df0_dv[p]; // This is now created in the particle list input file.
+	//		//float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
+	//		//if(i==0) {
+	//		//		df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
+	//		//}
+	//		//else if(i==particles_XYZ_0.size()-1){
+	//		//		df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
+	//		//}
+	//		//else {
+	//		//		df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
+	//		//}
+	//}
 
 	//for(int i=0;i<df0_dv.size();i++){
 	//	cout<<"f0: "<<particles_XYZ_0[i].weight<<" df0_dv: "<<df0_dv[i]<<endl;
@@ -1275,7 +1331,7 @@ int main ( int argc, char **argv )
 
 		complex<float> _i (0.0,1.0);	
 		complex<float> wrf_c (wrf,wrf*0.00);
-		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
+		//expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
 
 		//cout << expWeight[i] << "  "<< hanningWeight[i] << endl;
 		//hanningWeight[i] = 1;
@@ -1310,12 +1366,12 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
-		vector<float> f1(nV);
-		vector<complex<float> > f1c(nV);
+		vector<float> f1(nP);
+		vector<complex<float> > f1c(nP);
 		//float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
 		//#pragma omp parallel for private(istat)
-		for(int iP=0;iP<nV;iP++) {
+		for(int iP=0;iP<nP;iP++) {
 
 			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
@@ -1366,7 +1422,8 @@ int main ( int argc, char **argv )
 				for(int i=0;i<nSteps;i++) {	
 
 					float tTmp = tJp[jt]+thisT[i];
-					float weight = expWeight[i]*hanningWeight[i];
+					//float weight = expWeight[i]*hanningWeight[i];
+					float weight = hanningWeight[i];
 					float phs = -(wrf*tTmp);
 
 					thisE[i] = weight*(thisOrbitE_re_XYZ[i]*cos(phs)-thisOrbitE_im_XYZ[i]*sin(phs));
@@ -1387,12 +1444,13 @@ int main ( int argc, char **argv )
 				C3Vec thisV1 = -qOverm * intC3VecArray ( thisT, thisE );
 				C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisEc );
 
-				f1[iP] = -thisV1.c1*df0_dv[iP];
-				f1c[iP] = -thisV1c.c1*df0_dv[iP];
+				//f1[iP] = -thisV1.c1*df0_dv[iP];
+				//f1c[iP] = -thisV1c.c1*df0_dv[iP];
+				f1c[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
 
 				if(iP>0) {
 
-					float v0_i = particles_XYZ_0[iP].v_c1;
+					float v0_i = ThisParticleList[iP].v_c1;
 					//float v0_im1 = particles_XYZ_0[iP-1].v_c1;
 
 				//	#pragma omp atomic
@@ -1401,7 +1459,7 @@ int main ( int argc, char **argv )
 					#pragma omp critical // "atomic" does not work for complex numbers
 					{
 						//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]) * density_m3[iX]; 
-						j1xc[iX][jt] += h * ( v0_im1*f1c[iP] ) * density_m3[iX]; 
+						j1xc[iX][jt] += h * ( v0_i*f1c[iP] ) * density_m3[iX]; 
 					}
 
 				}
@@ -1472,7 +1530,7 @@ int main ( int argc, char **argv )
 		}
 
 		//// -- HACK DEBUGGING HERE --
-		//for(int p=0;p<nV;p++) {
+		//for(int p=0;p<nP;p++) {
 		//		cout<<"p: "<<p<<" last x: "<<orbits_XYZ[p][nSteps-1].c1<<endl;
 		//}	
 
