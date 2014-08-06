@@ -1081,6 +1081,79 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
 
+		// Read the guiding center terms from file
+		string gc_fName = cfg.lookup("gc_fName");	
+		cout << "Reading GC terms data file " << gc_fName << endl;
+
+		vector<float> r_gc, curv_r, curv_p, curv_z,
+            grad_r, grad_p, grad_z, bDotGradB;
+		vector<C3Vec> curv_CYL, grad_CYL;
+		
+		ifstream gc_file(gc_fName.c_str());
+		if(!gc_file.good()) {
+			cout << "ERROR: Cannot find file " << gc_fName << endl;
+			exit(1);
+		}
+
+		try {
+				NcFile dataFile ( gc_fName.c_str(), NcFile::read );
+	
+				NcDim gc_nc_nR(dataFile.getDim("nR"));
+				NcDim gc_nc_scalar(dataFile.getDim("scalar"));
+	
+				int nR_gc = gc_nc_nR.getSize();
+
+				NcVar gc_nc_r(dataFile.getVar("r"));
+
+				NcVar gc_nc_curv_r(dataFile.getVar("curv_r"));
+				NcVar gc_nc_curv_p(dataFile.getVar("curv_t"));
+				NcVar gc_nc_curv_z(dataFile.getVar("curv_z"));
+
+				NcVar gc_nc_grad_r(dataFile.getVar("grad_r"));
+				NcVar gc_nc_grad_p(dataFile.getVar("grad_t"));
+				NcVar gc_nc_grad_z(dataFile.getVar("grad_z"));
+
+				NcVar gc_nc_bDotGradB(dataFile.getVar("bDotGradB"));
+
+				r_gc.resize(nR_gc);
+
+				curv_r.resize(nR_gc);
+				curv_p.resize(nR_gc);
+				curv_z.resize(nR_gc);
+
+				grad_r.resize(nR_gc);
+				grad_p.resize(nR_gc);
+				grad_z.resize(nR_gc);
+
+				bDotGradB.resize(nR_gc);
+
+				gc_nc_r.getVar(&r_gc[0]);
+
+				gc_nc_curv_r.getVar(&curv_r[0]);
+				gc_nc_curv_p.getVar(&curv_p[0]);
+				gc_nc_curv_z.getVar(&curv_z[0]);
+
+				gc_nc_grad_r.getVar(&grad_r[0]);
+				gc_nc_grad_p.getVar(&grad_p[0]);
+				gc_nc_grad_z.getVar(&grad_z[0]);
+
+                gc_nc_bDotGradB.getVar(&bDotGradB[0]);
+
+				curv_CYL.resize(nR_gc);
+				grad_CYL.resize(nR_gc);
+				for(int i=0; i<nR_gc; i++) {
+						curv_CYL[i] = C3Vec(curv_r[i],curv_p[i],curv_z[i]);
+		                grad_CYL[i] = C3Vec(grad_r[i],grad_p[i],grad_z[i]);
+				}
+
+		}
+		catch(exceptions::NcException &e) {
+				cout << "NetCDF: unknown error." << endl;
+				e.what();
+				exit(1);
+		}
+
+
 		// Rotate the e field to XYZ
 
 		vector<C3Vec> e1Re_CYL, e1Im_CYL;

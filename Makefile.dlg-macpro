@@ -10,4 +10,6 @@ INCLUDEFLAGS += -I${NETCDF_DIR}/include
 LFLAGS += -L${NETCDF_DIR}/lib
 LIBS += -lnetcdf_c++4 
 
-
+GPERFTOOLS_DIR := ${HOME}/code/gperftools/gnu_4.8
+LFLAGS += -L${GPERFTOOLS_DIR}/lib
+LIBS += -lprofiler
