@@ -49,6 +49,7 @@ CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=1
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
+CPPFLAGS += -DDEBUG_GC=1
 
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 

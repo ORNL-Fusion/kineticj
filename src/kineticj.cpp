@@ -67,6 +67,7 @@ class CParticle: public CSpecies {
 				float weight;
 				int status;
                 float df0_dvx, df0_dvy, df0_dvz;
+                float vPar, vPer, u;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -139,6 +140,7 @@ class C3Vec {
 		public:
 				float c1, c2, c3;
 
+                C3Vec (int _const) {c1=_const;c2=_const;c3=_const;};
 				C3Vec () {c1=0;c2=0;c3=0;};
 				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 
@@ -429,6 +431,10 @@ vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) 
 		return out;
 }
 
+float mag ( const C3Vec &in ) {
+		return sqrt(pow(in.c1,2)+pow(in.c2,2)+pow(in.c3,2));
+}
+
 C3Vec pow ( const C3Vec &in, const int arg ) {
 		C3Vec out;
 		out.c1 = pow(in.c1,arg);
@@ -526,7 +532,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 }
 
-C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, CParticle &p ) {
+template<class TYPE>
+TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p ) {
 
 	float _x, x0, x1;
 	float xTmp;
@@ -543,7 +550,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
             cout<<"xVec.back():"<<xVec.back()<<endl;
 #endif
 			++p.status;
-			return C3Vec(0,0,0);
+			return TYPE(0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
@@ -578,8 +585,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 		return yVec[x0];
 	}
 	else {
-		C3Vec y0 = yVec[x0];
-		C3Vec y1 = yVec[x1];
+		TYPE y0 = yVec[x0];
+		TYPE y1 = yVec[x1];
 
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
 	}
@@ -757,6 +764,77 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 
 }
 
+// Parallel acceleration
+float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB ) {
+
+    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, p );
+    return -p.u / p.m * This_bDotGradB;
+}
+
+// Perpendicular velocity
+float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL ) {
+
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p );
+    return sqrt ( 2.0 * p.u * mag(This_b0_CYL) / p.m );
+}
+
+// Guiding center veclocity
+C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar, 
+                const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, 
+                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL ) {
+
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p );
+	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, p );
+	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, p );
+
+    C3Vec UnitB_CYL = This_b0_CYL / mag(This_b0_CYL);
+
+    C3Vec vGC = vPar * UnitB_CYL  +  pow(vPer,2) * This_grad_CYL  +  pow(vPar,2) * This_curv_CYL;
+    return vGC; 
+}
+
+// Guiding center orbit
+void rk4_move_gc ( CParticle &p, const float &dt, const float &t0, 
+				const vector<float> &r_GC, const vector<C3Vec> &b0_CYL, const vector<float> &r_b0, 
+                const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, 
+                const vector<float> &bDotGradB ) {
+
+                C3Vec xn0(p.c1, p.c2, p.c3);
+
+		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL );
+		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB );
+		    	C3Vec k1_vgc  = dt * This_vGC;
+		
+		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB ); 
+		    	C3Vec k2_vgc  = dt * This_vGC;
+ 
+		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB ); 
+		    	C3Vec k3_vgc  = dt * This_vGC;
+
+		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB );
+		    	C3Vec k4_vgc  = dt * This_vGC; 
+		
+		    	float vPar1 = p.vPar + ( k1_vPar + 2.0 * k2_vPar + 2.0 * k3_vPar + k4_vPar ) / 6.0;
+		    	C3Vec xn1 = xn0 + ( k1_vgc + 2.0 * k2_vgc + 2.0 * k3_vgc + k4_vgc ) / 6.0;
+
+                // Update particle with moved position and new vPar & vPer
+
+                p.c1 = xn1.c1; 
+		        p.c2 = xn1.c2;
+		        p.c3 = xn1.c3;
+
+                p.vPar = vPar1;
+                p.vPer = eval_vPer ( p, xn1, r_b0, b0_CYL );
+}
+
+
 // First-order orbits
 void rk4_move ( CParticle &p, float dt, float t0, 
 				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
@@ -826,7 +904,8 @@ float maxwellian ( float vx, float vy, float vz, float vTh ) {
 
 }
 
-vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, int nPx, int nPy, int nPz, int nThermal, float &dv) {
+vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, 
+                int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ) {
 
         vector<CParticle> pList;
 
@@ -898,6 +977,29 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, i
 			        df0_dv = (-fL + fR)/(2*h); 
 
                     pList[cnt].df0_dvz = df0_dv;
+
+                    // Get vPar, vPer and mu for guiding center integration
+
+                    float bMag = sqrt ( pow(b0_XYZ.c1,2) + pow(b0_XYZ.c2,2) + pow(b0_XYZ.c3,2) );
+                    float vMag = sqrt ( pow(thisvx,2) + pow(thisvy,2) + pow(thisvz,2) );
+
+                    float vPar = (thisvx*b0_XYZ.c1 + thisvy*b0_XYZ.c2 + thisvz*b0_XYZ.c3) / bMag;
+		            float vPer = sqrt ( pow(vMag,2) - pow(vPar,2) );
+
+                    pList[cnt].vPar = vPar;
+                    pList[cnt].vPer = vPer;
+                    pList[cnt].u = pList[cnt].m * pow(vPer,2) / ( 2.0 * bMag );
+
+#if DEBUG_GC >=1 
+                    cout<<"ThisVx: "<<thisvx<<endl;
+                    cout<<"ThisVy: "<<thisvy<<endl;
+                    cout<<"ThisVz: "<<thisvz<<endl;
+                    cout<<"vMag: "<<vMag<<endl;
+                    cout<<"vPer: "<<pList[cnt].vPer<<endl;
+                    cout<<"vPar: "<<pList[cnt].vPar<<endl;
+                    cout<<"u: "<<pList[cnt].u<<endl<<endl;
+                    if(isnan(pList[cnt].u)) exit(1);
+#endif                    
 
                     cnt++;
                 }
@@ -1303,7 +1405,7 @@ int main ( int argc, char **argv )
 	int nXGrid = cfg.lookup("nXGrid");
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
 	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid);
-    vector<C3Vec> b0_T_at_xGrid(nXGrid);
+    vector<C3Vec> b0_XYZ_T_at_xGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
 	
@@ -1316,10 +1418,10 @@ int main ( int argc, char **argv )
 		xGrid[iX] = xGridMin+iX*xGridStep;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3);
         int iStat = 0;
-        b0_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
+        b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
         T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
-    float MaxB0 = maxC3VecAbs(b0_T_at_xGrid);
+    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
 	//vector<CParticle> particles_XYZ_0(particles_XYZ);
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
@@ -1417,7 +1519,7 @@ int main ( int argc, char **argv )
 	for(int iX=0;iX<nXGrid;iX++) {
 
         float dv;
-        vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],nPx,nPy,nPz,nThermal,dv));
+        vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
 
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
@@ -1467,6 +1569,7 @@ int main ( int argc, char **argv )
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
 					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+                    rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB );
 
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;

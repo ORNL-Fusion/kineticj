@@ -4,5 +4,5 @@ PGI_OPTFLAGS :=
 
 GCC_OPENMPFLAGS := 
 GCC_DEBUGFLAGS :=  
-GCC_OPTFLAGS := -O3 -fopenmp
+GCC_OPTFLAGS := -O3 #-fopenmp
 
