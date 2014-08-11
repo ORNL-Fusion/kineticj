@@ -458,6 +458,62 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		out.c3 = atan2(Y.c3,X.c3);
 		return out;
 }
+float maxC3VecAbs ( const vector<C3Vec> &input ) {
+
+	vector<float> inputAbs(input.size());
+	for(int i=0;i<input.size();i++) {
+		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
+	}
+	return *max_element(inputAbs.begin(),inputAbs.end());
+}
+
+C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
+
+	C3Vec result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
+
+	C3VecI result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+void kj_print ( const C3Vec arg, string name ) {
+    cout << name<<".c1: " << arg.c1 << "  "<< name<<".c2: " << arg.c2 << "  "<<name<<".c3: " << arg.c3 << endl;
+    return;
+}
+
+void kj_print ( const float arg, string name ) {
+    cout << name <<": "<< arg << endl;
+    return;
+}
+
+int isnan ( const C3Vec arg ) {
+    int answer = 0;
+    if(isnan(arg.c1)) answer = 1;
+    if(isnan(arg.c2)) answer = 1;
+    if(isnan(arg.c3)) answer = 1;
+    return answer;
+}
+
+int isinf ( const C3Vec arg ) {
+    int answer = 0;
+    if(isinf(arg.c1)) answer = 1;
+    if(isinf(arg.c2)) answer = 1;
+    if(isinf(arg.c3)) answer = 1;
+    return answer;
+}
 
 // First-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
@@ -473,22 +529,23 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 	return F*(p.q/p.m);	
 }
 
-C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &stat ) {
+C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
 
+    status = 0;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()||stat>0) {
+	if(x<xVec.front()||x>xVec.back()||status>0) {
 			// Particle absorbing walls
-#if DEBUGLEVEL >= 1
+#if DEBUG_INTERP >= 1
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
 #endif
-			++stat;
+			++status;
 			return C3Vec(0,0,0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
@@ -501,7 +558,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
 #endif
 	
-	if(stat>0){
+	if(status>0){
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 			exit(1);
 	}
@@ -516,8 +573,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	
 	// Catch for particle at point
 	if(x0==x1) {
-#if DEBUGLEVEL >= 2
-        cout << "Stat version of kj_interp1D" << endl;
+#if DEBUG_INTERP >= 1
+        cout << "status version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -533,8 +590,9 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 }
 
 template<class TYPE>
-TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p ) {
+TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
 
+    status = 0;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -542,7 +600,13 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()||p.status>0) {
 			// Particle absorbing walls
-#if DEBUGLEVEL >= 1
+#if DEBUG_INTERP >= 2
+            if(xVec.size()!=yVec.size()) {
+                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+                ++p.status;
+                status = 1;
+                exit(1);
+            }
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"Particle number: "<<p.number<<endl;
             cout<<"x:"<<x<<endl;
@@ -564,6 +628,7 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	
 	if(p.status>0){
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+            status = 1;
 			exit(1);
 	}
 
@@ -577,7 +642,7 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	
 	// Catch for particle at point
 	if(x0==x1) {
-#if DEBUGLEVEL >= 2
+#if DEBUG_INTERP >= 2
         cout << "Particle version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
@@ -587,14 +652,53 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	else {
 		TYPE y0 = yVec[x0];
 		TYPE y1 = yVec[x1];
+#if DEBUG_INTERP >=2
+        cout << "kj_interp1D: " << endl;
+        if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
+        if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
+        kj_print(x0,"x0");
+        kj_print(x1,"x1");
+        kj_print(y0,"y0");
+        kj_print(y1,"y1");
+        cout << endl;
+        if(x0>yVec.size()-1||x0<0||x1>yVec.size()-1||x1<1) {
+                cout<<"ERROR: interpolation point off the end of array"<<endl;
+                cout<<"x.front: "<<xVec.front()<<endl;
+                cout<<"x.back: "<<xVec.back()<<endl;
+                cout<<"x: "<<x<<endl;
+                cout<<"xVec.size(): "<<xVec.size()<<endl;
+                cout<<"yVec.size(): "<<yVec.size()<<endl;
+                ++p.status;
+                status = 1;
+                exit(1);
+        }
+#endif
+        TYPE result = y0+(_x-x0)*(y1-y0)/(x1-x0);
 
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+#if DEBUG_INTERP >=1
+        if(isnan(result)) {
+                cout<<"ERROR: interpolation produced a NaN"<<endl;
+                ++p.status;
+                status = 1;
+                exit(1);
+        } 
+        if(isinf(result)) {
+                cout<<"ERROR: interpolation produced a INF"<<endl;
+                ++p.status;
+                status = 1;
+                exit(1);
+        }
+#endif
+		return result;
 	}
 
 }
 
-float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec ) {
 
+
+float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
+
+    status = 0;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -607,6 +711,7 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
 #endif
+            status = 1;
 			return 0;
 	}
 #elif _PARTICLE_BOUNDARY == 2
@@ -646,7 +751,7 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 // Zero-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
-			  	const vector<float> &rVec ) {
+			  	const vector<float> &rVec, int &status ) {
 
 	// Interpolate b0 at location in CYL
 	
@@ -662,7 +767,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p );
+	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p, status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -683,25 +788,26 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 }
 
 // Zero-order orbits
-void rk4_move ( CParticle &p, const float &dt, const float &t0, 
+int rk4_move ( CParticle &p, const float &dt, const float &t0, 
 				const vector<C3Vec> &b0, const vector<float> &r ) {
 
+        int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, status ) * dt;	
 		x1 = yn0 * dt;
         //cout << "dx1: " << x1.c1 << endl;
 
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, status ) * dt;	
 		x2 = (yn0 + 0.5*k1) * dt;
         //cout << "dx2: " << x2.c1 << endl;
 
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r ) * dt;	
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, status ) * dt;	
 		x3 = (yn0 + 0.5*k2) * dt;
         //cout << "dx3: " << x3.c1 << endl;
 
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r ) * dt;	
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, status ) * dt;	
 		x4 = (yn0 + 1.0*k3) * dt;
         //cout << "dx4: " << x4.c1 << endl;
 
@@ -761,31 +867,78 @@ void rk4_move ( CParticle &p, const float &dt, const float &t0,
 		cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << endl;
 		cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << endl;
 #endif
-
+        return status;
 }
 
 // Parallel acceleration
-float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB ) {
+float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB, int &status ) {
 
-    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, p );
-    return -p.u / p.m * This_bDotGradB;
+    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, p, status );
+#if DEBUG_EVAL_APAR >= 1
+    if(status>0) {
+            cout<<"ERROR 1 in eval_aPar"<<endl;
+            exit(1);
+    }
+#endif
+    float aPar = -p.u / p.m * This_bDotGradB;
+#if DEBUG_EVAL_APRA >= 1
+    if(isnan(aPar)||isinf(aPar)) {
+            status = 1;
+            cout<<"ERROR 2 in eval_aPar"<<endl;
+            exit(1);
+    }
+#endif
+    return aPar;
 }
 
 // Perpendicular velocity
-float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL ) {
+float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p );
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
     return sqrt ( 2.0 * p.u * mag(This_b0_CYL) / p.m );
 }
 
 // Guiding center veclocity
 C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar, 
                 const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, 
-                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL ) {
+                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p );
-	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, p );
-	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, p );
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
+#if DEBUG_EVAL_VGC >= 1
+    if(status>0) {
+            cout<<"ERROR 1 in eval_vGC"<<endl;
+            exit(1);
+    }
+#endif
+
+	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, p, status );
+#if DEBUG_EVAL_VGC >= 1
+    if(status>0) {
+            cout<<"ERROR 2 in eval_vGC"<<endl;
+            exit(1);
+    }
+#endif
+
+	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, p, status );
+#if DEBUG_EVAL_VGC >= 1
+    if(status>0) {
+            cout<<"ERROR 3 in eval_vGC"<<endl;
+            exit(1);
+    }
+#endif
+
+#if DEBUG_EVAL_VGC >= 1
+
+    cout << "r.c1: " << r.c1 << endl;
+    cout << "p.c1: " << p.c1 << endl;
+    cout << "vPar: " << vPar << endl;
+    cout << "vPer: " << vPer << endl;
+    cout << "b0_CYL: " << This_b0_CYL.c1 << "  " << This_b0_CYL.c2 << "  " << This_b0_CYL.c3 << endl;
+    cout << "curv_CYL: " << This_curv_CYL.c1 << "  " << This_curv_CYL.c2 << "  " << This_curv_CYL.c3 << endl;
+    cout << "grad_CYL: " << This_grad_CYL.c1 << "  " << This_grad_CYL.c2 << "  " << This_grad_CYL.c3 << endl << endl;
+    cout << "max(grad_CYL): " << maxC3VecAbs(grad_CYL) << endl;
+
+#endif
 
     C3Vec UnitB_CYL = This_b0_CYL / mag(This_b0_CYL);
 
@@ -794,33 +947,65 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
 }
 
 // Guiding center orbit
-void rk4_move_gc ( CParticle &p, const float &dt, const float &t0, 
-				const vector<float> &r_GC, const vector<C3Vec> &b0_CYL, const vector<float> &r_b0, 
+int rk4_move_gc ( CParticle &p, const float &dt, const float &t0, 
+				const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, const vector<float> &r_GC, 
                 const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, 
                 const vector<float> &bDotGradB ) {
 
+                int status=0;
                 C3Vec xn0(p.c1, p.c2, p.c3);
 
-		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL );
-		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
-		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB );
+		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL, status );
+#if DEBUG_GC >= 2 
+                cout << "p.vPer: " << p.vPer << endl;
+                cout << "p.vPar: " << p.vPar << endl;
+                cout << "This_vPer: " << This_vPer << endl;
+#endif
+		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
+		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB, status );
 		    	C3Vec k1_vgc  = dt * This_vGC;
-		
-		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL );
-		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
-		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB ); 
+#if DEBUG_GC >= 2
+                kj_print(k1_vgc,"k1_vgc");
+                kj_print(xn0,"xn0");
+                cout<<"Status: "<<status<<endl;
+                if(isnan(k1_vgc)||isinf(k1_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
+                        status = 1;
+                        return status;
+                }
+#endif    
+		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL, status );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
+		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB, status ); 
 		    	C3Vec k2_vgc  = dt * This_vGC;
- 
-		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
-		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB ); 
+#if DEBUG_GC >= 2
+                kj_print(k2_vgc,"k2_vgc");
+                if(isnan(k2_vgc)||isinf(k2_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
+                        status = 1;
+                        return status;
+                }
+#endif 
+		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL, status ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
+		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB, status ); 
 		    	C3Vec k3_vgc  = dt * This_vGC;
-
-		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
-		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB );
+#if DEBUG_GC >= 2
+                kj_print(k3_vgc,"k3_vgc");
+                if(isnan(k3_vgc)||isinf(k3_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
+                        status = 1;
+                        return status;
+                }
+#endif 
+		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL, status ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
+		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB, status );
 		    	C3Vec k4_vgc  = dt * This_vGC; 
-		
+#if DEBUG_GC >= 2
+                kj_print(k4_vgc,"k4_vgc");
+                if(isnan(k4_vgc)||isinf(k4_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
+                        status = 1;
+                        return status;
+                }
+#endif 	
 		    	float vPar1 = p.vPar + ( k1_vPar + 2.0 * k2_vPar + 2.0 * k3_vPar + k4_vPar ) / 6.0;
 		    	C3Vec xn1 = xn0 + ( k1_vgc + 2.0 * k2_vgc + 2.0 * k3_vgc + k4_vgc ) / 6.0;
 
@@ -830,8 +1015,17 @@ void rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 		        p.c2 = xn1.c2;
 		        p.c3 = xn1.c3;
 
+#if DEBUG_GC >=1 
+                if(isnan(xn1)||isinf(xn1)) {
+                        status = 1;
+                        return status;
+                }
+#endif
+
                 p.vPar = vPar1;
-                p.vPer = eval_vPer ( p, xn1, r_b0, b0_CYL );
+                p.vPer = eval_vPer ( p, xn1, r_b0, b0_CYL, status );
+
+                return status;
 }
 
 
@@ -863,36 +1057,7 @@ void rk4_move ( CParticle &p, float dt, float t0,
 }
 
 
-float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
-	vector<float> inputAbs(input.size());
-	for(int i=0;i<input.size();i++) {
-		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
-	}
-	return *max_element(inputAbs.begin(),inputAbs.end());
-}
-
-C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
-
-	C3Vec result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
-
-C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
-
-	C3VecI result;
-	float h = x[1]-x[0];
-	for(int i=1;i<f.size();i++) {
-		result += h/2.0*(f[i-1]+f[i]);
-	}
-
-	return result;
-}
 
 float maxwellian ( float vx, float vy, float vz, float vTh ) {
 
@@ -980,7 +1145,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
 
                     // Get vPar, vPer and mu for guiding center integration
 
-                    float bMag = sqrt ( pow(b0_XYZ.c1,2) + pow(b0_XYZ.c2,2) + pow(b0_XYZ.c3,2) );
+                    float bMag = mag (b0_XYZ);
                     float vMag = sqrt ( pow(thisvx,2) + pow(thisvy,2) + pow(thisvz,2) );
 
                     float vPar = (thisvx*b0_XYZ.c1 + thisvy*b0_XYZ.c2 + thisvz*b0_XYZ.c3) / bMag;
@@ -991,14 +1156,14 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
                     pList[cnt].u = pList[cnt].m * pow(vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_GC >=1 
-                    cout<<"ThisVx: "<<thisvx<<endl;
-                    cout<<"ThisVy: "<<thisvy<<endl;
-                    cout<<"ThisVz: "<<thisvz<<endl;
-                    cout<<"vMag: "<<vMag<<endl;
-                    cout<<"vPer: "<<pList[cnt].vPer<<endl;
-                    cout<<"vPar: "<<pList[cnt].vPar<<endl;
-                    cout<<"u: "<<pList[cnt].u<<endl<<endl;
-                    if(isnan(pList[cnt].u)) exit(1);
+                    //cout<<"ThisVx: "<<thisvx<<endl;
+                    //cout<<"ThisVy: "<<thisvy<<endl;
+                    //cout<<"ThisVz: "<<thisvz<<endl;
+                    //cout<<"vMag: "<<vMag<<endl;
+                    //cout<<"vPer: "<<pList[cnt].vPer<<endl;
+                    //cout<<"vPar: "<<pList[cnt].vPar<<endl;
+                    //cout<<"u: "<<pList[cnt].u<<endl<<endl;
+                    //if(isnan(pList[cnt].u)) exit(1);
 #endif                    
 
                     cnt++;
@@ -1204,6 +1369,7 @@ int main ( int argc, char **argv )
 				NcDim gc_nc_scalar(dataFile.getDim("scalar"));
 	
 				int nR_gc = gc_nc_nR.getSize();
+                cout << "nR_gc: " << nR_gc << endl;
 
 				NcVar gc_nc_r(dataFile.getVar("r"));
 
@@ -1416,8 +1582,9 @@ int main ( int argc, char **argv )
 
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
-        density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3);
         int iStat = 0;
+        density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
+        iStat = 0;
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
         T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
@@ -1568,9 +1735,16 @@ int main ( int argc, char **argv )
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
-                    rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB );
-
+					//rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+                    int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB );
+#if DEBUG_GC >=1 
+                    cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
+                    if(MoveStatus>0) {
+                        cout<<"ERROR: rk4_move_gc threw an error"<<endl;
+                        cout<<"MoveStatus: "<<MoveStatus<<endl;
+                        exit(1); 
+                    }
+#endif
 					if(thisParticle_XYZ.status==0) {
 						istat = 0;
 						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
