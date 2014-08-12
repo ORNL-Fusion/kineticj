@@ -15,9 +15,18 @@
 #include <assert.h>
 #include <omp.h>
 
+#if CLOCK >= 1 
+#include <ctime>
+#endif
+
 #if USEPAPI >= 1
 #include <papi.h>
 #endif
+
+#if LOWMEM_USEPAPI >= 1
+#include <papi.h>
+#endif
+
 
 //#include <google/profiler.h>
 
@@ -67,6 +76,7 @@ class CParticle: public CSpecies {
 				float weight;
 				int status;
                 float df0_dvx, df0_dvy, df0_dvz;
+                float dvx, dvy, dvz;
                 float vPar, vPer, u;
 
 				CParticle ();
@@ -499,7 +509,7 @@ void kj_print ( const float arg, string name ) {
     return;
 }
 
-int isnan ( const C3Vec arg ) {
+int _isnan ( const C3Vec arg ) {
     int answer = 0;
     if(isnan(arg.c1)) answer = 1;
     if(isnan(arg.c2)) answer = 1;
@@ -507,7 +517,7 @@ int isnan ( const C3Vec arg ) {
     return answer;
 }
 
-int isinf ( const C3Vec arg ) {
+int _isinf ( const C3Vec arg ) {
     int answer = 0;
     if(isinf(arg.c1)) answer = 1;
     if(isinf(arg.c2)) answer = 1;
@@ -1124,6 +1134,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
 			        float df0_dv = (-fL + fR)/(2*h); 
 
                     pList[cnt].df0_dvx = df0_dv;
+                    pList[cnt].dvx = dvx;
 
 			        h = dvy/10.0;
                     float vyL = thisvy-h;
@@ -1133,6 +1144,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
 			        df0_dv = (-fL + fR)/(2*h); 
 
                     pList[cnt].df0_dvy = df0_dv;
+                    pList[cnt].dvy = dvy;
 
 			        h = dvz/10.0;
                     float vzL = thisvz-h;
@@ -1142,6 +1154,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
 			        df0_dv = (-fL + fR)/(2*h); 
 
                     pList[cnt].df0_dvz = df0_dv;
+                    pList[cnt].dvz = dvz;
 
                     // Get vPar, vPer and mu for guiding center integration
 
@@ -1176,21 +1189,40 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
         return pList;
 }
 
-
 // Calculate the jP given some know E and f(v)
 
 int main ( int argc, char **argv )
 {
 
-#if USEPAPI >= 1
-		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops;
-		long_long flpIns0, flpIns=0;
+#if CLOCK >= 1
+        clock_t ProgramTime = clock();
+#endif
+	
+#if (USEPAPI >= 1 || LOWMEM_USEPAPI >=1 )
+		float realTime0, cpuTime0, realTime=0, cpuTime=0, mFlops=0;
+		long long flpIns0, flpIns=0;
 		int papiReturn;
 
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+        if(papiReturn<0) {
+                cout<<"ERROR: PAPI Failed to initialize with error code: "<<papiReturn<<endl;
+                cout<<"ERROR: See papi.h for error code explanations "<<endl;
+                exit(1);
+        }
 		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
-					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+					   realTime, cpuTime, flpIns, mFlops);
+
+		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+        if(papiReturn<0) {
+                cout<<"ERROR: PAPI Failed to initialize with error code: "<<papiReturn<<endl;
+                cout<<"ERROR: See papi.h for error code explanations "<<endl;
+                exit(1);
+        } else {
+                cout<<"PAPI called successfully with return code: "<<papiReturn<<endl;
+        }
+		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime, cpuTime, flpIns, mFlops);
 #endif
 
 		libconfig::Config cfg;
@@ -1586,7 +1618,7 @@ int main ( int argc, char **argv )
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         iStat = 0;
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = 0.001;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
 	//vector<CParticle> particles_XYZ_0(particles_XYZ);
@@ -1603,7 +1635,7 @@ int main ( int argc, char **argv )
 #endif
 
 	float nRFCycles 		= cfg.lookup("nRFCycles");
-	int nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
+	float nStepsPerCycle 	= cfg.lookup("nStepsPerCycle"); 
 	float tRF 			= (2*_pi)/wrf;
 	int nJpCycles 		= cfg.lookup("nJpCycles");
 	int nJpPerCycle 	= cfg.lookup("nJpPerCycle");
@@ -1624,7 +1656,7 @@ int main ( int argc, char **argv )
 	//int nSteps 	= nRFCycles*nStepsPerCycle+1;
 	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
 
-#if DEBUGLEVEL >= 1
+#if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
     cout << "nSteps: " << nSteps << endl;
     cout << "tRF: " << tRF << endl;
@@ -1682,9 +1714,16 @@ int main ( int argc, char **argv )
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
 	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
 
+#if defined(_OPENMP)
+        int nThreads;
+#endif
+ 
 	#pragma omp parallel for private(istat)
 	for(int iX=0;iX<nXGrid;iX++) {
 
+#if defined(_OPENMP)
+        nThreads = omp_get_num_threads();
+#endif
         float dv;
         vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
 
@@ -1697,11 +1736,18 @@ int main ( int argc, char **argv )
 		j1z[iX].resize(nJp);
 		j1zc[iX].resize(nJp);
 
-		for(int jt=0;jt<nJp;jt++) j1xc[iX][jt] = complex<float>(0,0);
+#if CLOCK >= 1
+        clock_t startTime = clock();
+#endif
+		for(int jt=0;jt<nJp;jt++) {
+            j1xc[iX][jt] = complex<float>(0,0);
+            j1yc[iX][jt] = complex<float>(0,0);
+            j1zc[iX][jt] = complex<float>(0,0);
+        }
 
 		//cout << "xGrid\t" << iX << endl;
 
-#if USEPAPI >= 1
+#if LOWMEM_USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif	
@@ -1709,7 +1755,7 @@ int main ( int argc, char **argv )
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
 		vector<float> f1(nP);
-		vector<complex<float> > f1c(nP);
+		vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
 		//float dv = particles_XYZ_0[1].v_c1-particles_XYZ_0[0].v_c1;
 
 		//#pragma omp parallel for private(istat)
@@ -1724,7 +1770,6 @@ int main ( int argc, char **argv )
 
 			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
 			float qe = thisParticle_XYZ.q;
-			float h = dv * qe;
 	
 			// generate orbit and get time-harmonic e along it
 
@@ -1735,8 +1780,11 @@ int main ( int argc, char **argv )
 				if(thisParticle_XYZ.status==0) {
 
 					thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-					//rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+#if GC_ORBITS >=1 
                     int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB );
+#else
+					rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+#endif
 #if DEBUG_GC >=1 
                     cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
                     if(MoveStatus>0) {
@@ -1746,9 +1794,7 @@ int main ( int argc, char **argv )
                     }
 #endif
 					if(thisParticle_XYZ.status==0) {
-						istat = 0;
 						C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-						istat = 0;
 						C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
 						thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ;
 						thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ;
@@ -1762,7 +1808,6 @@ int main ( int argc, char **argv )
 
 			// get Jp(t) for this spatial point
 			//
-
 
 			for(int jt=0;jt<nJp;jt++) {
 
@@ -1796,11 +1841,20 @@ int main ( int argc, char **argv )
 
 				//f1[iP] = -thisV1.c1*df0_dv[iP];
 				//f1c[iP] = -thisV1c.c1*df0_dv[iP];
-				f1c[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
+				f1xc[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
+				f1yc[iP] = -thisV1c.c2 * thisParticle_XYZ.df0_dvy;
+				f1zc[iP] = -thisV1c.c3 * thisParticle_XYZ.df0_dvz;
 
 				if(iP>0) {
 
-					float v0_i = ThisParticleList[iP].v_c1;
+					float v0x_i = ThisParticleList[iP].v_c1;
+					float v0y_i = ThisParticleList[iP].v_c2;
+					float v0z_i = ThisParticleList[iP].v_c3;
+
+			        float hx = ThisParticleList[iP].dvx * qe;
+			        float hy = ThisParticleList[iP].dvy * qe;
+			        float hz = ThisParticleList[iP].dvz * qe;
+
 					//float v0_im1 = particles_XYZ_0[iP-1].v_c1;
 
 				//	#pragma omp atomic
@@ -1809,12 +1863,32 @@ int main ( int argc, char **argv )
 					#pragma omp critical // "atomic" does not work for complex numbers
 					{
 						//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]) * density_m3[iX]; 
-						j1xc[iX][jt] += h * ( v0_i*f1c[iP] ) * density_m3[iX]; 
+						j1xc[iX][jt] += hx * ( v0x_i*f1xc[iP] ) * density_m3[iX]; 
+						j1yc[iX][jt] += hy * ( v0y_i*f1yc[iP] ) * density_m3[iX]; 
+						j1zc[iX][jt] += hz * ( v0z_i*f1zc[iP] ) * density_m3[iX]; 
+
 					}
 
 				}
 			}
 		}
+
+#if CLOCK >= 1
+#if not defined(_OPENMP)
+        clock_t endTime = clock();
+        double timeInSeconds = (endTime-startTime)/(double) CLOCKS_PER_SEC;
+        cout<<"Time for this spatial point: "<<timeInSeconds<<endl;
+        cout<<"Time per particle: "<<timeInSeconds/nP<<endl;  
+#endif
+#endif
+
+#if LOWMEM_USEPAPI >= 1
+		    cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
+		    papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
+		    printf("\nLOWMEM Oribit calculation performance ...\n");
+		    printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
+					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
+#endif
 
 #else // END OF LOWMEM CODING ^^^
 
@@ -2460,6 +2534,12 @@ int main ( int argc, char **argv )
 		NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re",ncFloat,nc_scalar);
 		NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im",ncFloat,nc_scalar);
 
+		NcVar nc_j1yc_re = ncjPFile.addVar("j1yc_re",ncFloat,nc_scalar);
+		NcVar nc_j1yc_im = ncjPFile.addVar("j1yc_im",ncFloat,nc_scalar);
+
+		NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re",ncFloat,nc_scalar);
+		NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im",ncFloat,nc_scalar);
+
 		nc_x.putVar(&xGrid[iX]);
 		nc_freq.putVar(&freq);
 
@@ -2474,14 +2554,35 @@ int main ( int argc, char **argv )
 
 		float tmpJxRe = real(j1xc[iX][0]);
 		float tmpJxIm = imag(j1xc[iX][0]);
-
 		nc_j1xc_re.putVar(&tmpJxRe);
 		nc_j1xc_im.putVar(&tmpJxIm);
+
+		float tmpJyRe = real(j1yc[iX][0]);
+		float tmpJyIm = imag(j1yc[iX][0]);
+		nc_j1yc_re.putVar(&tmpJyRe);
+		nc_j1yc_im.putVar(&tmpJyIm);
+
+	    float tmpJzRe = real(j1zc[iX][0]);
+		float tmpJzIm = imag(j1zc[iX][0]);
+		nc_j1zc_re.putVar(&tmpJzRe);
+		nc_j1zc_im.putVar(&tmpJzIm);
+	
 	}
 
 	//ProfilerStop();
 
 	cout << "DONE" << endl;
 
+#if CLOCK >= 1
+        clock_t ProgramTime_ = clock();
+        double ProgramTimeInSeconds = (ProgramTime_-ProgramTime)/(double) CLOCKS_PER_SEC;
+#if defined(_OPENMP)
+        ProgramTimeInSeconds = ProgramTimeInSeconds / nThreads;
+        cout<<"nThreads: "<<nThreads<<endl;
+#endif
+        cout<<"Total Time [s]: "<<ProgramTimeInSeconds<<endl;
+        cout<<"Total Time [m]: "<<ProgramTimeInSeconds/60.0<<endl;
+        cout<<"Total Time [h]: "<<ProgramTimeInSeconds/3600.0<<endl;
+#endif
 	return EXIT_SUCCESS;
 }

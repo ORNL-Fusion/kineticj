@@ -6,8 +6,6 @@ NAME := bin/kineticj
 LIBS :=  
 INCLUDEFLAGS :=  
 
-GCCDIR :=  
-
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
@@ -18,12 +16,19 @@ PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
+GCCDIR :=  
+PGIDIR := /opt/pgi/osx86-64/14.7/bin
+
 CC := gcc
 CPP := g++
+
+CC := ${PGIDIR}/pgcc
+CPP := ${PGIDIR}/pgcpp
+
 NVCC := $(CUDADIR)/bin/nvcc
 
-VENDOR := #PGI_
-VENDOR := GCC_
+VENDOR := PGI_
+VENDOR := #GCC_
 
 ThisMachine := $(shell uname -n)
 
@@ -43,16 +48,20 @@ OPTFLAGS := $($(VENDOR)OPTFLAGS)
 CFLAGS := 
 CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTFLAGS} 
 CPPFLAGS :=
-CPPFLAGS += -DDEBUGLEVEL=1
-CPPFLAGS += -DDEBUG_INTERP=1
+CPPFLAGS += -DDEBUGLEVEL=0
+CPPFLAGS += -DDEBUG_INTERP=0
 CPPFLAGS += -DUSEPAPI=0
 CPPFLAGS += -D__SAVE_ORBITS__=0
 CPPFLAGS += -DLOWMEM=1
+CPPFLAGS += -DLOWMEM_USEPAPI=0
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
-CPPFLAGS += -DDEBUG_GC=2
-CPPFLAGS += -DDEBUG_EVAL_VGC=1
-CPPFLAGS += -DDEBUG_EVAL_APAR=1
+CPPFLAGS += -DDEBUG_GC=0
+CPPFLAGS += -DDEBUG_EVAL_VGC=0
+CPPFLAGS += -DDEBUG_EVAL_APAR=0
+CPPFLAGS += -DCLOCK=1
+CPPFLAGS += -DPRINT_INFO=1
+CPPFLAGS += -DGC_ORBITS=0
 
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
@@ -62,8 +71,8 @@ LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 # 		the .cu files will work too :)
 
 DIRNAME = `dirname $1`
-#MAKEDEPS = $(GCCDIR)/gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
-MAKEDEPS = ${CC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+#MAKEDEPS = ${CC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 

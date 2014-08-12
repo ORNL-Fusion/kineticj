@@ -13,3 +13,8 @@ LIBS += -lnetcdf_c++4
 GPERFTOOLS_DIR := ${HOME}/code/gperftools/gnu_4.8
 LFLAGS += -L${GPERFTOOLS_DIR}/lib
 LIBS += -lprofiler
+
+PAPI_DIR := ${HOME}/code/papi/gnu_4.8
+LFLAGS += -L${PAPI_DIR}/lib
+INCLUDEFLAGS += -I${PAPI_DIR}/include
+LIBS += ${PAPI_DIR}/lib/libpapi.a # couldn't get the dylib version to work

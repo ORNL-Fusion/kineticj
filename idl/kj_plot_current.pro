@@ -77,8 +77,15 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 	nF = n_elements(fileList)
 
 	j1x = fltArr ( nT, nF )
+
 	j1xc = complexArr ( nF )
-	j1 = complexArr ( nF )
+	j1yc = complexArr ( nF )
+	j1zc = complexArr ( nF )
+
+	j1x = complexArr ( nF )
+	j1y = complexArr ( nF )
+	j1z = complexArr ( nF )
+
 	xF = fltArr ( nF )
 
 	;hanWindow = hanning (nT, alpha=0.5 )
@@ -99,11 +106,20 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 			ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
 			ncdf_varget, cdfId, 'j1xc_im', j1xc_im
 
+			ncdf_varget, cdfId, 'j1yc_re', j1yc_re 
+			ncdf_varget, cdfId, 'j1yc_im', j1yc_im
+
+			ncdf_varget, cdfId, 'j1zc_re', j1zc_re 
+			ncdf_varget, cdfId, 'j1zc_im', j1zc_im
+
+
 		nCdf_close,	cdfId 
 
 		xF[f] = x
 
 		j1xc[f] = complex(j1xc_re,j1xc_im)
+		j1yc[f] = complex(j1yc_re,j1yc_im)
+		j1zc[f] = complex(j1zc_re,j1zc_im)
 
 		if not keyword_set(noTimeDep) then begin
 
@@ -137,10 +153,12 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 			print, 'Re: ', rpL, rpR, rpL+rpR
 			print, 'Im: ', ipL, ipR, ipL+ipR
 
-			j1[f] = complex ( rpL+rpR, ipL+ipR )
+			j1x[f] = complex ( rpL+rpR, ipL+ipR )
 
 		endif else begin
-            j1[f] = j1xc[f]
+            j1x[f] = j1xc[f]
+            j1y[f] = j1yc[f]
+            j1z[f] = j1zc[f]
         endelse
 	
 	endfor
@@ -163,8 +181,8 @@ if not keyword_set(noIterate) then begin
 
 		; Create a jP for rsfcw_1d
 
-		jROut  = complex(spline(xf,real_part(j1),r,spline_sigma),spline(xf,imaginary(j1),r,spline_sigma))
-		jROut_ = complex(spline(xf,real_part(j1),r_,spline_sigma),spline(xf,imaginary(j1),r_,spline_sigma))
+		jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
+		jROut_ = complex(spline(xf,real_part(j1x),r_,spline_sigma),spline(xf,imaginary(j1x),r_,spline_sigma))
 
 		jTOut = jROut*0
 		jTOut_ = jROut_*0
@@ -177,8 +195,8 @@ if not keyword_set(noIterate) then begin
 	endif else begin
 
 
-		jROut  = complex(spline(xf,real_part(j1),r,spline_sigma),spline(xf,imaginary(j1),r,spline_sigma))
-		jROut_ = complex(spline(xf,real_part(j1),r_,spline_sigma),spline(xf,imaginary(j1),r_,spline_sigma))
+		jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
+		jROut_ = complex(spline(xf,real_part(j1x),r_,spline_sigma),spline(xf,imaginary(j1x),r_,spline_sigma))
 
 		jTOut = jROut*0
 		jTOut_ = jROut_*0
@@ -237,11 +255,11 @@ if not keyword_set(noIterate) then begin
 		c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
 	endif	
 	if(sheath)then begin
-		pk_re=plot(xF/lambda_D,j1,thick=3.0,name='kj_re',color='black')
-		pk_im=plot(xF/lambda_D,imaginary(j1),/over,color='black',thick=2.0,name='kj_im')
+		pk_re=plot(xF/lambda_D,j1x,thick=3.0,name='kj_re',color='black')
+		pk_im=plot(xF/lambda_D,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
 	endif else begin
-		pk_re=plot(xF,j1,thick=3.0,name='kj_re',color='black',/over)
-		pk_im=plot(xF,imaginary(j1),/over,color='black',thick=2.0,name='kj_im')
+		pk_re=plot(xF,j1x,thick=3.0,name='kj_re',color='black',/over)
+		pk_im=plot(xF,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
 	endelse
 
 	if(not sheath)then begin
@@ -304,14 +322,17 @@ if not keyword_set(noIterate) then begin
 
 endif
 
-    p=plot(xf,j1)
-    p=plot(xf,imaginary(j1),/over,color='r')
-
+    p=plot(xf,j1x,layout=[1,3,1])
+    p=plot(xf,imaginary(j1x),/over,color='r')
+    p=plot(xf,j1y,layout=[1,3,2],/current)
+    p=plot(xf,imaginary(j1y),/over,color='r')
+    p=plot(xf,j1z,layout=[1,3,3],/current)
+    p=plot(xf,imaginary(j1z),/over,color='r')
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
 
-	sig33 = j1/E_at_Jp
+	sig33 = j1x/E_at_Jp
 
     print, 'Sig33: ', sig33
 
