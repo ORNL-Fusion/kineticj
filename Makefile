@@ -19,16 +19,15 @@ CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 GCCDIR :=  
 PGIDIR := /opt/pgi/osx86-64/14.7/bin
 
+VENDOR := GCC_
 CC := gcc
 CPP := g++
 
-CC := ${PGIDIR}/pgcc
-CPP := ${PGIDIR}/pgcpp
+#VENDOR := PGI_
+#CC := ${PGIDIR}/pgcc
+#CPP := ${PGIDIR}/pgcpp
 
 NVCC := $(CUDADIR)/bin/nvcc
-
-VENDOR := PGI_
-VENDOR := #GCC_
 
 ThisMachine := $(shell uname -n)
 
@@ -61,7 +60,8 @@ CPPFLAGS += -DDEBUG_EVAL_VGC=0
 CPPFLAGS += -DDEBUG_EVAL_APAR=0
 CPPFLAGS += -DCLOCK=1
 CPPFLAGS += -DPRINT_INFO=1
-CPPFLAGS += -DGC_ORBITS=0
+CPPFLAGS += -DGC_ORBITS=1
+CPPFLAGS += -DDEBUG_MAXWELLIAN=0
 
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
