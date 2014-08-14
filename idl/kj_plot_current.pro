@@ -322,11 +322,12 @@ if not keyword_set(noIterate) then begin
 
 endif
 
-    p=plot(xf,j1x,layout=[1,3,1])
+    jpRange = max(abs([j1x,j1y,j1z]))
+    p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x')
     p=plot(xf,imaginary(j1x),/over,color='r')
-    p=plot(xf,j1y,layout=[1,3,2],/current)
+    p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y')
     p=plot(xf,imaginary(j1y),/over,color='r')
-    p=plot(xf,j1z,layout=[1,3,3],/current)
+    p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1z')
     p=plot(xf,imaginary(j1z),/over,color='r')
 
 	; Interpolate the E field to the Jp locations to calculated sig33

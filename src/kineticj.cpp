@@ -468,6 +468,16 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		out.c3 = atan2(Y.c3,X.c3);
 		return out;
 }
+
+C3VecI cross ( const C3Vec A, const C3VecI B ) {
+
+        C3VecI answer;
+        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
+        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
+        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
+        return answer;
+}
+
 float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
 	vector<float> inputAbs(input.size());
@@ -509,7 +519,7 @@ void kj_print ( const float arg, string name ) {
     return;
 }
 
-int _isnan ( const C3Vec arg ) {
+int isnan ( const C3Vec arg ) {
     int answer = 0;
     if(isnan(arg.c1)) answer = 1;
     if(isnan(arg.c2)) answer = 1;
@@ -517,7 +527,7 @@ int _isnan ( const C3Vec arg ) {
     return answer;
 }
 
-int _isinf ( const C3Vec arg ) {
+int isinf ( const C3Vec arg ) {
     int answer = 0;
     if(isinf(arg.c1)) answer = 1;
     if(isinf(arg.c2)) answer = 1;
@@ -549,7 +559,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()) {
 			// Particle absorbing walls
-#if DEBUG_INTERP >= 1
+#if DEBUG_INTERP >= 2
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
@@ -570,8 +580,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 #if DEBUG_INTERP >= 1    
 	if(status>0){
+#if DEBUG_INTERP >= 2
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
-			exit(1);
+#endif
+			return C3Vec(0,0,0);
 	}
 #endif
 	//else
@@ -584,7 +596,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	
 	// Catch for particle at point
 	if(x0==x1) {
-#if DEBUG_INTERP >= 1
+#if DEBUG_INTERP >= 2
         cout << "status version of kj_interp1D" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
@@ -611,18 +623,22 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()) {
 			// Particle absorbing walls
-#if DEBUG_INTERP >= 2
+#if DEBUG_INTERP >= 1
             if(xVec.size()!=yVec.size()) {
+#if DEBUG_INTERP >= 2
                 cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+#endif
                 p.status = 1;
                 status = 1;
-                exit(1);
+                return TYPE(0);
             }
+#if DEBUG_INTERP >= 2
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"Particle number: "<<p.number<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
+#endif
 #endif
             status = 1;
 			p.status = 1;
@@ -640,9 +656,11 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 
 #if DEBUG_INTERP >= 1    
 	if(p.status>0){
+#if DEBUG_INTERP >= 2
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+#endif
             status = 1;
-			exit(1);
+			return TYPE(0);
 	}
 #endif
 	//else
@@ -666,14 +684,14 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 		TYPE y0 = yVec[x0];
 		TYPE y1 = yVec[x1];
 #if DEBUG_INTERP >=2
-        cout << "kj_interp1D: " << endl;
-        if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
-        if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
-        kj_print(x0,"x0");
-        kj_print(x1,"x1");
-        kj_print(y0,"y0");
-        kj_print(y1,"y1");
-        cout << endl;
+        //cout << "kj_interp1D: " << endl;
+        //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
+        //if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
+        //kj_print(x0,"x0");
+        //kj_print(x1,"x1");
+        //kj_print(y0,"y0");
+        //kj_print(y1,"y1");
+        //cout << endl;
         if(x0>yVec.size()-1||x0<0||x1>yVec.size()-1||x1<1) {
                 cout<<"ERROR: interpolation point off the end of array"<<endl;
                 cout<<"x.front: "<<xVec.front()<<endl;
@@ -683,23 +701,27 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
                 cout<<"yVec.size(): "<<yVec.size()<<endl;
                 ++p.status;
                 status = 1;
-                exit(1);
+                return TYPE(0);
         }
 #endif
         TYPE result = y0+(_x-x0)*(y1-y0)/(x1-x0);
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
+#if DEBUG_INTERP >= 2
                 cout<<"ERROR: interpolation produced a NaN"<<endl;
+#endif
                 ++p.status;
                 status = 1;
-                exit(1);
+                return TYPE(0);
         } 
         if(isinf(result)) {
+#if DEBUG_INTERP >= 2
                 cout<<"ERROR: interpolation produced a INF"<<endl;
+#endif
                 ++p.status;
                 status = 1;
-                exit(1);
+                return TYPE(0);
         }
 #endif
 		return result;
@@ -1095,6 +1117,14 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
         float kT_joule = T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
         float vTh = sqrt ( 2.0*kT_joule / m );
 
+# if DEBUG_MAXWELLIAN >= 1
+        cout <<"amu: "<< amu<<endl;
+        cout <<"Z: "<< Z<<endl;
+        cout <<"m: "<< m<<endl;
+        cout <<"q: "<< q<<endl;
+        cout <<"vTh: "<< vTh<<endl;
+#endif
+
 		float vxRange = vTh * nThermal * 2;
 		float vxMin	= -vxRange / 2.0;
 		float dvx = vxRange / (nPx-1); 
@@ -1183,7 +1213,6 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
                     cout<<"u: "<<pList[cnt].u<<endl<<endl;
                     if(isnan(pList[cnt].u)) exit(1);
 #endif                    
-
                     cnt++;
                 }
             }
@@ -1264,12 +1293,15 @@ int main ( int argc, char **argv )
 
 		vector<float> r, b0_r, b0_p, b0_z,
 				e_r_re, e_p_re, e_z_re,
-				e_r_im, e_p_im, e_z_im, n_m3;
+				e_r_im, e_p_im, e_z_im, n_m3,
+				b_r_re, b_p_re, b_z_re,
+				b_r_im, b_p_im, b_z_im;
 		vector<C3Vec> b0_CYL, b0_XYZ;
 		
 		float freq;
 
 		vector<complex<float> > e_r, e_p, e_z;	
+		vector<complex<float> > b_r, b_p, b_z;	
 
 		ifstream file(eField_fName.c_str());
 		if(!file.good()) {
@@ -1309,6 +1341,13 @@ int main ( int argc, char **argv )
 				NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
 				NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
 
+				NcVar nc_b_r_re(dataFile.getVar("b_r_re"));
+				NcVar nc_b_p_re(dataFile.getVar("b_p_re"));
+				NcVar nc_b_z_re(dataFile.getVar("b_z_re"));
+				NcVar nc_b_r_im(dataFile.getVar("b_r_im"));
+				NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
+				NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
+
 				NcVar nc_density(dataFile.getVar("density_m3"));
 
 				r.resize(nR);
@@ -1323,6 +1362,13 @@ int main ( int argc, char **argv )
 				e_r_im.resize(nR);
 				e_p_im.resize(nR);
 				e_z_im.resize(nR);
+
+				b_r_re.resize(nR);
+				b_p_re.resize(nR);
+				b_z_re.resize(nR);
+				b_r_im.resize(nR);
+				b_p_im.resize(nR);
+				b_z_im.resize(nR);
 
                 n_m3.resize(nR);
 
@@ -1362,10 +1408,23 @@ int main ( int argc, char **argv )
 				nc_e_p_im.getVar(&e_p_im[0]);
 				nc_e_z_im.getVar(&e_z_im[0]);
 
+				nc_b_r_re.getVar(&b_r_re[0]);
+				nc_b_p_re.getVar(&b_p_re[0]);
+				nc_b_z_re.getVar(&b_z_re[0]);
+				nc_b_r_im.getVar(&b_r_im[0]);
+				nc_b_p_im.getVar(&b_p_im[0]);
+				nc_b_z_im.getVar(&b_z_im[0]);
+
 				for(int i=0; i<nR; i++){
 						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
 						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
 						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
+				}
+
+				for(int i=0; i<nR; i++){
+						b_r.push_back(complex<float>( b_r_re[i], b_r_im[i] ) );
+						b_p.push_back(complex<float>( b_p_re[i], b_p_im[i] ) );
+						b_z.push_back(complex<float>( b_z_re[i], b_z_im[i] ) );
 				}
 
 				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
@@ -1460,15 +1519,19 @@ int main ( int argc, char **argv )
 		}
 
 
-		// Rotate the e field to XYZ
+		// Rotate the e & b fields to XYZ
 
-		vector<C3Vec> e1Re_CYL, e1Im_CYL;
+		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
 		e1Re_CYL.resize(e_r.size());
 		e1Im_CYL.resize(e_r.size());
+		b1Re_CYL.resize(e_r.size());
+		b1Im_CYL.resize(e_r.size());
 
-		vector<C3Vec> e1Re_XYZ, e1Im_XYZ;
+		vector<C3Vec> e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
 		e1Re_XYZ.resize(e_r.size());
 		e1Im_XYZ.resize(e_r.size());
+		b1Re_XYZ.resize(e_r.size());
+		b1Im_XYZ.resize(e_r.size());
 
 		for(int i=0;i<e_r.size();i++) {
 
@@ -1479,7 +1542,14 @@ int main ( int argc, char **argv )
 			e1Im_CYL[i].c2 = imag(e_p[i]);
 			e1Im_CYL[i].c3 = imag(e_z[i]);
 
-			float _p = 0.0;
+			b1Re_CYL[i].c1 = real(b_r[i]);
+			b1Re_CYL[i].c2 = real(b_p[i]);
+			b1Re_CYL[i].c3 = real(b_z[i]);
+			b1Im_CYL[i].c1 = imag(b_r[i]);
+			b1Im_CYL[i].c2 = imag(b_p[i]);
+			b1Im_CYL[i].c3 = imag(b_z[i]);
+
+			float _p = 0;
 
 			e1Re_XYZ[i] = C3Vec( 
 				cos(_p)*e1Re_CYL[i].c1-sin(_p)*e1Re_CYL[i].c2+0,
@@ -1490,103 +1560,19 @@ int main ( int argc, char **argv )
 				cos(_p)*e1Im_CYL[i].c1-sin(_p)*e1Im_CYL[i].c2+0,
 				sin(_p)*e1Im_CYL[i].c1+cos(_p)*e1Im_CYL[i].c2+0,
 				0+0+1*e1Im_CYL[i].c3 );
+
+			b1Re_XYZ[i] = C3Vec( 
+				cos(_p)*b1Re_CYL[i].c1-sin(_p)*b1Re_CYL[i].c2+0,
+				sin(_p)*b1Re_CYL[i].c1+cos(_p)*b1Re_CYL[i].c2+0,
+				0+0+1*b1Re_CYL[i].c3 );
+
+			b1Im_XYZ[i] = C3Vec( 
+				cos(_p)*b1Im_CYL[i].c1-sin(_p)*b1Im_CYL[i].c2+0,
+				sin(_p)*b1Im_CYL[i].c1+cos(_p)*b1Im_CYL[i].c2+0,
+				0+0+1*b1Im_CYL[i].c3 );
+	
 		}
 
-
-//		// Read particle list
-//		string particleList_fName = cfg.lookup ("particleList_fName");	
-//		cout << "Reading particle list " << particleList_fName << endl;
-//
-//		ifstream file2(particleList_fName.c_str());
-//		if(!file.good()) {
-//			cout << "ERROR: Cannot find file " << particleList_fName << endl;
-//			exit(1);
-//		}
-//
-//		vector<float> p_x, p_y, p_z, p_vx, p_vy, p_vz, p_amu, p_weight, p_df0_dv;
-//		vector<int> p_Z;
-//		float vTh;
-//		int nThermal;
-//		
-//		try {
-//				NcFile dataFile ( particleList_fName.c_str(), NcFile::read );
-//	
-//				NcDim nc_nP(dataFile.getDim("nP"));
-//	
-//				int nP = nc_nP.getSize();
-//#if DEBUGLEVEL >= 1	
-//				cout << "\tnP: " << nP << endl;
-//#endif
-//				NcVar nc_p_amu(dataFile.getVar("amu"));
-//				NcVar nc_p_Z(dataFile.getVar("Z"));
-//
-//				NcVar nc_p_x(dataFile.getVar("x"));
-//				NcVar nc_p_y(dataFile.getVar("y"));
-//				NcVar nc_p_z(dataFile.getVar("z"));
-//				
-//				NcVar nc_p_vx(dataFile.getVar("vx"));
-//				NcVar nc_p_vy(dataFile.getVar("vy"));
-//				NcVar nc_p_vz(dataFile.getVar("vz"));
-//
-//				NcVar nc_p_weight(dataFile.getVar("weight"));
-//
-//				NcVar nc_nThermal(dataFile.getVar("nThermal"));
-//				NcVar nc_vTh(dataFile.getVar("vTh"));
-//
-//				NcVar nc_p_df0_dv(dataFile.getVar("df0_dv"));
-//
-//
-//				p_x.resize(nP);
-//				p_y.resize(nP);
-//				p_z.resize(nP);
-//
-//				p_vx.resize(nP);
-//				p_vy.resize(nP);
-//				p_vz.resize(nP);
-//
-//				p_weight.resize(nP);
-//
-//				p_amu.resize(nP);
-//				p_Z.resize(nP);
-//
-//                p_df0_dv.resize(nP);
-//
-//				nc_p_x.getVar(&p_x[0]);
-//				nc_p_y.getVar(&p_y[0]);
-//				nc_p_z.getVar(&p_z[0]);
-//
-//				nc_p_vx.getVar(&p_vx[0]);
-//				nc_p_vy.getVar(&p_vy[0]);
-//				nc_p_vz.getVar(&p_vz[0]);
-//
-//				nc_p_weight.getVar(&p_weight[0]);
-//
-//				nc_p_amu.getVar(&p_amu[0]);
-//				nc_p_Z.getVar(&p_Z[0]);
-//
-//				nc_nThermal.getVar(&nThermal);
-//				nc_vTh.getVar(&vTh);
-//
-//				nc_p_df0_dv.getVar(&p_df0_dv[0]);
-//
-//		}
-//		catch(exceptions::NcException &e) {
-//				cout << "NetCDF: unknown error" << endl;
-//				e.what();
-//				exit(1);
-//		}
-//
-//		vector<CParticle> particles_XYZ;
-//		particles_XYZ.resize(p_x.size());
-//
-//		for(int i=0;i<particles_XYZ.size();i++){
-//
-//				CParticle thisParticle (p_x[i],p_y[i],p_z[i],
-//								p_vx[i],p_vy[i],p_vz[i],
-//								p_amu[i],p_Z[i],p_weight[i]);
-//				particles_XYZ[i] = thisParticle;
-//				particles_XYZ[i].number = i;
-//		}
 
 //	// Langmuir wave dispersion relation
 //
@@ -1623,7 +1609,7 @@ int main ( int argc, char **argv )
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        T_keV[iX] = 0.001;//kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = 0.01;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
 	//vector<CParticle> particles_XYZ_0(particles_XYZ);
@@ -1663,29 +1649,12 @@ int main ( int argc, char **argv )
 
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
+    cout << "Cyclotron Period: "<< cyclotronPeriod<<endl;
+    cout << "RF Period: " << tRF << endl;
     cout << "nSteps: " << nSteps << endl;
-    cout << "tRF: " << tRF << endl;
+    cout << "freq: " << freq << endl;
 #endif
 	
-	//vector<float> df0_dv(nP);
-	//for(int p=0;p<nP;p++){
-    //        df0_dv[p] = p_df0_dv[p]; // This is now created in the particle list input file.
-	//		//float h = particles_XYZ_0[1].v_c1 - particles_XYZ_0[0].v_c1;
-	//		//if(i==0) {
-	//		//		df0_dv[i] = (-3*particles_XYZ_0[i].weight + 4*particles_XYZ_0[i+1].weight - 1*particles_XYZ_0[i+2].weight)/(2*h); 
-	//		//}
-	//		//else if(i==particles_XYZ_0.size()-1){
-	//		//		df0_dv[i] = ( 3*particles_XYZ_0[i].weight - 4*particles_XYZ_0[i-1].weight + 1*particles_XYZ_0[i-2].weight)/(2*h);
-	//		//}
-	//		//else {
-	//		//		df0_dv[i] = (-particles_XYZ_0[i-1].weight + particles_XYZ_0[i+1].weight)/(2*h); 
-	//		//}
-	//}
-
-	//for(int i=0;i<df0_dv.size();i++){
-	//	cout<<"f0: "<<particles_XYZ_0[i].weight<<" df0_dv: "<<df0_dv[i]<<endl;
-	//}
-
 #if !(LOWMEM >= 1)
 	vector<float> tJp(nJp,0);
 	for(int jt=0;jt<nJp;jt++) {
@@ -1712,8 +1681,6 @@ int main ( int argc, char **argv )
 		complex<float> _i (0.0,1.0);	
 		complex<float> wrf_c (wrf,wrf*0.00);
 		//expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
-
-		//cout << expWeight[i] << "  "<< hanningWeight[i] << endl;
 		//hanningWeight[i] = 1;
 	}
 
@@ -1773,8 +1740,11 @@ int main ( int argc, char **argv )
 
 		for(int iP=0;iP<nP;iP++) {
 
-			vector<C3Vec> thisOrbitE_re_XYZ(nSteps,C3Vec(0,0,0));
-			vector<C3Vec> thisOrbitE_im_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitE1_im_XYZ(nSteps,C3Vec(0,0,0));
+
+			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
 
 			CParticle thisParticle_XYZ(ThisParticleList[iP]);
 
@@ -1784,7 +1754,9 @@ int main ( int argc, char **argv )
 			// generate orbit and get time-harmonic e along it
 
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
-			vector<C3VecI> thisEc(nSteps,C3VecI());
+			vector<C3VecI> thisE1c(nSteps,C3VecI());
+			vector<C3VecI> thisB1c(nSteps,C3VecI());
+			vector<C3VecI> this_E1_VxB1(nSteps,C3VecI());
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -1795,7 +1767,7 @@ int main ( int argc, char **argv )
 				int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
-#if DEBUG_GC >=1 
+#if DEBUG_MOVE >=1 
                 cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
                 if(MoveStatus>0) {
                     cout<<"ERROR: rk4_move_gc threw an error"<<endl;
@@ -1803,24 +1775,46 @@ int main ( int argc, char **argv )
                     exit(1); 
                 }
 #endif
+            
+                C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+                C3Vec thisVel(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
+
 				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
 				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				thisOrbitE_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
-				thisOrbitE_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
+				C3Vec b1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+	
+				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
+				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
+				thisOrbitB1_re_XYZ[i] = b1ReTmp_XYZ*(1-OverallStatus);
+				thisOrbitB1_im_XYZ[i] = b1ImTmp_XYZ*(1-OverallStatus);
 
 				float tTmp = thisT[i];
 				float weight = hanningWeight[i];
                 float phs = -(wrf * tTmp); 
-				thisEc[i] = C3VecI(
+
+				thisE1c[i] = C3VecI(
 								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c1*cos(phs)-thisOrbitE_im_XYZ[i].c1*sin(phs),
-										thisOrbitE_im_XYZ[i].c1*cos(phs)+thisOrbitE_re_XYZ[i].c1*sin(phs)),
+										thisOrbitE1_re_XYZ[i].c1*cos(phs)-thisOrbitE1_im_XYZ[i].c1*sin(phs),
+										thisOrbitE1_im_XYZ[i].c1*cos(phs)+thisOrbitE1_re_XYZ[i].c1*sin(phs)),
 								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c2*cos(phs)-thisOrbitE_im_XYZ[i].c2*sin(phs),
-										thisOrbitE_im_XYZ[i].c2*cos(phs)+thisOrbitE_re_XYZ[i].c2*sin(phs)),
+										thisOrbitE1_re_XYZ[i].c2*cos(phs)-thisOrbitE1_im_XYZ[i].c2*sin(phs),
+										thisOrbitE1_im_XYZ[i].c2*cos(phs)+thisOrbitE1_re_XYZ[i].c2*sin(phs)),
 								weight*complex<float>(
-										thisOrbitE_re_XYZ[i].c3*cos(phs)-thisOrbitE_im_XYZ[i].c3*sin(phs),
-										thisOrbitE_im_XYZ[i].c3*cos(phs)+thisOrbitE_re_XYZ[i].c3*sin(phs))
+										thisOrbitE1_re_XYZ[i].c3*cos(phs)-thisOrbitE1_im_XYZ[i].c3*sin(phs),
+										thisOrbitE1_im_XYZ[i].c3*cos(phs)+thisOrbitE1_re_XYZ[i].c3*sin(phs))
+								);	
+
+				thisB1c[i] = C3VecI(
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c1*cos(phs)-thisOrbitB1_im_XYZ[i].c1*sin(phs),
+										thisOrbitB1_im_XYZ[i].c1*cos(phs)+thisOrbitB1_re_XYZ[i].c1*sin(phs)),
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c2*cos(phs)-thisOrbitB1_im_XYZ[i].c2*sin(phs),
+										thisOrbitB1_im_XYZ[i].c2*cos(phs)+thisOrbitB1_re_XYZ[i].c2*sin(phs)),
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c3*cos(phs)-thisOrbitB1_im_XYZ[i].c3*sin(phs),
+										thisOrbitB1_im_XYZ[i].c3*cos(phs)+thisOrbitB1_re_XYZ[i].c3*sin(phs))
 								);	
 
                 //complex<float> _i(0,1);
@@ -1829,11 +1823,42 @@ int main ( int argc, char **argv )
                 //complex<float> amp2(thisOrbitE_re_XYZ[i].c2,thisOrbitE_im_XYZ[i].c2);
                 //complex<float> amp3(thisOrbitE_re_XYZ[i].c3,thisOrbitE_im_XYZ[i].c3);
                 //complex<float> expPart = exp(phs);
-                //thisEc[i] = weight*C3VecI(amp1*expPart,amp2*expPart,amp3*expPart); 
+                //thisE1c[i] = weight*C3VecI(amp1*expPart,amp2*expPart,amp3*expPart); 
+
+#if DEBUG_MOVE >= 2
+                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
+
+                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
+#endif
+ 
+
+#if DEBUG_FORCE_TERM >= 1
+                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
+
+                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
+
+                cout << "thisVel.c1: "<<thisVel.c1<<endl;
+                cout << "thisVel.c2: "<<thisVel.c2<<endl;
+                cout << "thisVel.c3: "<<thisVel.c3<<endl;
+
+                C3VecI tmp = cross(thisVel,thisB1c[i]);
+                cout << "this_cross.c1: "<<tmp.c1<<endl;
+                cout << "this_cross.c2: "<<tmp.c2<<endl;
+                cout << "this_cross.c3: "<<tmp.c3<<endl;
+#endif
+                this_E1_VxB1[i] = thisE1c[i] + cross(thisVel,thisB1c[i]);
 			}
 
-			
-			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisEc );
+			//C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisE1c );
+			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_E1_VxB1 );
 
 			f1xc[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
 			f1yc[iP] = -thisV1c.c2 * thisParticle_XYZ.df0_dvy;
@@ -1851,9 +1876,7 @@ int main ( int argc, char **argv )
 				j1xc[iX] += h * ( v0x_i*f1xc[iP] ) * density_m3[iX]; 
 				j1yc[iX] += h * ( v0y_i*f1yc[iP] ) * density_m3[iX]; 
 				j1zc[iX] += h * ( v0z_i*f1zc[iP] ) * density_m3[iX]; 
-
 			}
-
 		}
 
 #if CLOCK >= 1
