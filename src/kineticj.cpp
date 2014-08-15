@@ -1750,7 +1750,15 @@ int main ( int argc, char **argv )
 
 			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
 			float Ze = thisParticle_XYZ.q;
-	
+#if LOWMEM_ORBIT_WRITE >= 1
+            ofstream OrbitFile;
+            int write_iX = 0;
+            int write_iP = 75;
+            if(iX==write_iX && iP==write_iP) {
+                OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
+                OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+            }
+#endif    
 			// generate orbit and get time-harmonic e along it
 
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
@@ -1835,6 +1843,28 @@ int main ( int argc, char **argv )
                 cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
 #endif
  
+#if LOWMEM_ORBIT_WRITE >= 1
+                if(iX==write_iX && iP==write_iP) {
+                    OrbitFile<<scientific;
+                    OrbitFile<< thisT[i]
+                            <<"    "<< thisPos.c1
+                            <<"    "<< thisPos.c2
+                            <<"    "<< thisPos.c3 
+                            <<"    "<< real(thisE1c[i].c1)
+                            <<"    "<< imag(thisE1c[i].c1)
+                            <<"    "<< real(thisE1c[i].c2)
+                            <<"    "<< imag(thisE1c[i].c2)
+                            <<"    "<< real(thisE1c[i].c3)
+                            <<"    "<< imag(thisE1c[i].c3)
+                            <<"    "<< real(thisB1c[i].c1)
+                            <<"    "<< imag(thisB1c[i].c1)
+                            <<"    "<< real(thisB1c[i].c2)
+                            <<"    "<< imag(thisB1c[i].c2)
+                            <<"    "<< real(thisB1c[i].c3)
+                            <<"    "<< imag(thisB1c[i].c3)
+                            << endl;
+                }
+#endif
 
 #if DEBUG_FORCE_TERM >= 1
                 cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
@@ -1856,7 +1886,11 @@ int main ( int argc, char **argv )
 #endif
                 this_E1_VxB1[i] = thisE1c[i] + cross(thisVel,thisB1c[i]);
 			}
-
+#if LOWMEM_ORBIT_WRITE >= 1
+            if(iX==write_iX && iP==write_iP) {
+                OrbitFile.close();
+            }
+#endif
 			//C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisE1c );
 			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_E1_VxB1 );
 
