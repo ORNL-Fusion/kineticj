@@ -12,7 +12,6 @@ function kj_mpe, x
 	c = make_array(k+1,type=type)
 
 	c[0:k-1] = la_least_squares(-transpose(U),-uk,method=3,status=stat,/double)
-
 	; Check least squares solution
 	;p=plot(-uk)
 	;!null=plot(transpose(U)##c[0:k-1],/over,color='b')

@@ -478,6 +478,15 @@ C3VecI cross ( const C3Vec A, const C3VecI B ) {
         return answer;
 }
 
+C3Vec cross ( const C3Vec A, const C3Vec B ) {
+
+        C3Vec answer;
+        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
+        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
+        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
+        return answer;
+}
+
 float maxC3VecAbs ( const vector<C3Vec> &input ) {
 
 	vector<float> inputAbs(input.size());
@@ -792,6 +801,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
+    _p = 0; // Really need to do something about this.
 
 #if DEBUGLEVEL >= 3
 	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
@@ -810,9 +820,10 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
     //cout << "\tb0_XYZ: " << b0_XYZ.c1 <<"  "<< b0_XYZ.c2 <<"  "<< b0_XYZ.c3 << endl;
 
-	C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
-					-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
-					v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
+	//C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
+	//				-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
+	//				v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
+    C3Vec v_x_b0 = cross(v_XYZ,b0_XYZ);
 
 #if DEBUGLEVEL >= 3
 	cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << endl;
@@ -1752,11 +1763,15 @@ int main ( int argc, char **argv )
 			float Ze = thisParticle_XYZ.q;
 #if LOWMEM_ORBIT_WRITE >= 1
             ofstream OrbitFile;
+            ofstream v1File;
+
             int write_iX = 0;
-            int write_iP = 75;
+            int write_iP = 25;
             if(iX==write_iX && iP==write_iP) {
                 OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
                 OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+                v1File.open("output/orbit_v1.txt", ios::out | ios::trunc);
+                v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
             }
 #endif    
 			// generate orbit and get time-harmonic e along it
@@ -1842,7 +1857,26 @@ int main ( int argc, char **argv )
                 cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
                 cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
 #endif
- 
+#if DEBUG_FORCE_TERM >= 1
+                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
+
+                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
+
+                cout << "thisVel.c1: "<<thisVel.c1<<endl;
+                cout << "thisVel.c2: "<<thisVel.c2<<endl;
+                cout << "thisVel.c3: "<<thisVel.c3<<endl;
+
+                C3VecI tmp = cross(thisVel,thisB1c[i]);
+                cout << "this_cross.c1: "<<tmp.c1<<endl;
+                cout << "this_cross.c2: "<<tmp.c2<<endl;
+                cout << "this_cross.c3: "<<tmp.c3<<endl;
+#endif
+                this_E1_VxB1[i] = thisE1c[i] + cross(thisVel,thisB1c[i]);
+
 #if LOWMEM_ORBIT_WRITE >= 1
                 if(iX==write_iX && iP==write_iP) {
                     OrbitFile<<scientific;
@@ -1865,26 +1899,6 @@ int main ( int argc, char **argv )
                             << endl;
                 }
 #endif
-
-#if DEBUG_FORCE_TERM >= 1
-                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
-                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
-                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
-
-                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
-                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
-                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
-
-                cout << "thisVel.c1: "<<thisVel.c1<<endl;
-                cout << "thisVel.c2: "<<thisVel.c2<<endl;
-                cout << "thisVel.c3: "<<thisVel.c3<<endl;
-
-                C3VecI tmp = cross(thisVel,thisB1c[i]);
-                cout << "this_cross.c1: "<<tmp.c1<<endl;
-                cout << "this_cross.c2: "<<tmp.c2<<endl;
-                cout << "this_cross.c3: "<<tmp.c3<<endl;
-#endif
-                this_E1_VxB1[i] = thisE1c[i] + cross(thisVel,thisB1c[i]);
 			}
 #if LOWMEM_ORBIT_WRITE >= 1
             if(iX==write_iX && iP==write_iP) {
@@ -1893,7 +1907,24 @@ int main ( int argc, char **argv )
 #endif
 			//C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisE1c );
 			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_E1_VxB1 );
+#if LOWMEM_ORBIT_WRITE >= 1
+            if(iX==write_iX && iP==write_iP) {
 
+                C3VecI tmp(0,0,0);
+                for(int i=0;i<nSteps;i++) {
+                        tmp += this_E1_VxB1[i];
+                        v1File<<thisT[i]
+                                <<"    "<< real(tmp.c1)
+                                <<"    "<< imag(tmp.c1)
+                                <<"    "<< real(tmp.c2)
+                                <<"    "<< imag(tmp.c2)
+                                <<"    "<< real(tmp.c3)
+                                <<"    "<< imag(tmp.c3)
+                                <<"    "<< real(tmp.c1)
+                                << endl;
+                }
+            }
+#endif
 			f1xc[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
 			f1yc[iP] = -thisV1c.c2 * thisParticle_XYZ.df0_dvy;
 			f1zc[iP] = -thisV1c.c3 * thisParticle_XYZ.df0_dvz;
