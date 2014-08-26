@@ -75,7 +75,7 @@ class CParticle: public CSpecies {
 				int number;
 				float weight;
 				int status;
-                float df0_dvx, df0_dvy, df0_dvz;
+                //float df0_dvx, df0_dvy, df0_dvz;
                 float dvx, dvy, dvz, d3v;
                 float vPar, vPer, u;
 
@@ -467,6 +467,24 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		out.c2 = atan2(Y.c2,X.c2);
 		out.c3 = atan2(Y.c3,X.c3);
 		return out;
+}
+
+C3VecI cross ( const C3VecI A, const C3Vec B ) {
+
+        C3VecI answer;
+        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
+        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
+        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
+        return answer;
+}
+
+C3VecI cross ( const C3VecI A, const C3VecI B ) {
+
+        C3VecI answer;
+        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
+        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
+        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
+        return answer;
 }
 
 C3VecI cross ( const C3Vec A, const C3VecI B ) {
@@ -1115,6 +1133,57 @@ float maxwellian ( float vx, float vy, float vz, float vTh ) {
 
 }
 
+float get_vTh ( const float _amu, const float _Z, const float _T_keV ) {
+
+    float m = _amu * _mi;
+    float q = _Z * _e;
+    float kT_joule = _T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
+    float vTh = sqrt ( 2.0*kT_joule / m );
+
+	return vTh;
+
+}
+
+C3Vec maxwellian_df0_dv (const C3Vec _v, const float _T_keV, const float _amu, const float _Z ) {
+
+	C3Vec df0_dv;
+
+	float vTh = get_vTh ( _amu, _Z, _T_keV );
+
+	float _vx = _v.c1;
+	float _vy = _v.c2;
+	float _vz = _v.c3;
+
+    // Get the 3 components of df0_dv at this point in velocity space
+
+    float h = vTh/1000.0;
+    float vxL = _vx-h;
+    float vxR = _vx+h;
+    float fL = maxwellian(vxL,_vy,_vz,vTh);
+    float fR = maxwellian(vxR,_vy,_vz,vTh);
+    float _df0_dv = (-fL + fR)/(2*h); 
+
+    df0_dv.c1 = _df0_dv;
+
+    float vyL = _vy-h;
+    float vyR = _vy+h;
+    fL = maxwellian(_vx,vyL,_vz,vTh);
+    fR = maxwellian(_vx,vyR,_vz,vTh);
+    _df0_dv = (-fL + fR)/(2*h); 
+
+    df0_dv.c2 = _df0_dv;
+
+    float vzL = _vz-h;
+    float vzR = _vz+h;
+    fL = maxwellian(_vx,_vy,vzL,vTh);
+    fR = maxwellian(_vx,_vy,vzR,vTh);
+    _df0_dv = (-fL + fR)/(2*h); 
+
+    df0_dv.c3 = _df0_dv;
+
+	return df0_dv;
+}
+
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, 
                 int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ) {
 
@@ -1124,15 +1193,16 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
         pList.resize(nP);
 
         float m = amu * _mi;
-        float q = Z * _e;
-        float kT_joule = T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
-        float vTh = sqrt ( 2.0*kT_joule / m );
+        //float q = Z * _e;
+        //float kT_joule = T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
+        //float vTh = sqrt ( 2.0*kT_joule / m );
+		float vTh = get_vTh ( amu, Z, T_keV );
 
 # if DEBUG_MAXWELLIAN >= 1
         cout <<"amu: "<< amu<<endl;
         cout <<"Z: "<< Z<<endl;
-        cout <<"m: "<< m<<endl;
-        cout <<"q: "<< q<<endl;
+        //cout <<"m: "<< m<<endl;
+        //cout <<"q: "<< q<<endl;
         cout <<"vTh: "<< vTh<<endl;
 #endif
 
@@ -1171,36 +1241,10 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV,
 
                     pList[cnt].d3v = dv;
 
-                    // Get the 3 components of df0_dv at this point in velocity space
-			        float h = dvx/10.0;
-                    float vxL = thisvx-h;
-                    float vxR = thisvx+h;
-		            float fL = maxwellian(vxL,thisvy,thisvz,vTh);
-		            float fR = maxwellian(vxR,thisvy,thisvz,vTh);
-			        float df0_dv = (-fL + fR)/(2*h); 
+                    //// Get the 3 components of df0_dv at this point in velocity space
 
-                    pList[cnt].df0_dvx = df0_dv;
-                    pList[cnt].dvx = dvx;
-
-			        h = dvy/10.0;
-                    float vyL = thisvy-h;
-                    float vyR = thisvy+h;
-		            fL = maxwellian(thisvx,vyL,thisvz,vTh);
-		            fR = maxwellian(thisvx,vyR,thisvz,vTh);
-			        df0_dv = (-fL + fR)/(2*h); 
-
-                    pList[cnt].df0_dvy = df0_dv;
-                    pList[cnt].dvy = dvy;
-
-			        h = dvz/10.0;
-                    float vzL = thisvz-h;
-                    float vzR = thisvz+h;
-		            fL = maxwellian(thisvx,thisvy,vzL,vTh);
-		            fR = maxwellian(thisvx,thisvy,vzR,vTh);
-			        df0_dv = (-fL + fR)/(2*h); 
-
-                    pList[cnt].df0_dvz = df0_dv;
-                    pList[cnt].dvz = dvz;
+					//C3Vec thisVel(thisvx,thisvy,thisvz);
+					//C3Vec _df0_dv = maxwellian_df0_dv ( thisVel, T_keV, amu, Z );
 
                     // Get vPar, vPer and mu for guiding center integration
 
@@ -1605,7 +1649,7 @@ int main ( int argc, char **argv )
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
 	//float xGridPtSize = cfg.lookup("xGridPtSize");
-	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid);
+	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid), wrf_wc(nXGrid);
     vector<C3Vec> b0_XYZ_T_at_xGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
@@ -1614,7 +1658,7 @@ int main ( int argc, char **argv )
 		xGridRng = xGridMax-xGridMin;
 		xGridStep = xGridRng/(nXGrid-1);
 	}
-
+	
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
         int iStat;
@@ -1622,8 +1666,8 @@ int main ( int argc, char **argv )
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
         T_keV[iX] = 0.01;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
+
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
-	//vector<CParticle> particles_XYZ_0(particles_XYZ);
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
@@ -1657,6 +1701,14 @@ int main ( int argc, char **argv )
     float dtMin 	= -cyclotronPeriod/nStepsPerCycle;
 	//int nSteps 	= nRFCycles*nStepsPerCycle+1;
 	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
+
+	for(int iX=0;iX<nXGrid;iX++) {
+		float this_wc =	Z*_e*mag(b0_XYZ_T_at_xGrid[iX])/(amu*_mi);
+		wrf_wc[iX] =  wrf / this_wc;
+	}
+
+	//vector<CParticle> particles_XYZ_0(particles_XYZ);
+
 
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -1764,14 +1816,18 @@ int main ( int argc, char **argv )
 #if LOWMEM_ORBIT_WRITE >= 1
             ofstream OrbitFile;
             ofstream v1File;
+			ofstream e1_dot_grad_File;
 
-            int write_iX = 0;
+            int write_iX = 150;
             int write_iP = 25;
             if(iX==write_iX && iP==write_iP) {
                 OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
+				OrbitFile<<"wc / wrf: "<< wrf_wc[iX]<<endl;
                 OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
                 v1File.open("output/orbit_v1.txt", ios::out | ios::trunc);
                 v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
+                e1_dot_grad_File.open("output/orbit_e1_dot_grad_df0_dv.txt", ios::out | ios::trunc);
+                e1_dot_grad_File<<" t  re(v1xb01)  im(v1xb01)  re(v1xb02)  im(v1xb02)  re(v1xb03)  im(v1xb03)"<<endl;
             }
 #endif    
 			// generate orbit and get time-harmonic e along it
@@ -1779,7 +1835,8 @@ int main ( int argc, char **argv )
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
 			vector<C3VecI> thisE1c(nSteps,C3VecI());
 			vector<C3VecI> thisB1c(nSteps,C3VecI());
-			vector<C3VecI> this_E1_VxB1(nSteps,C3VecI());
+			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
+			vector<C3VecI> this_e1_dot_df0dv(nSteps,C3VecI());
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -1801,6 +1858,9 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
+				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+
+				C3Vec thisdf0_dv = maxwellian_df0_dv ( thisVel, T_keV[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
 				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
 				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
@@ -1870,12 +1930,11 @@ int main ( int argc, char **argv )
                 cout << "thisVel.c2: "<<thisVel.c2<<endl;
                 cout << "thisVel.c3: "<<thisVel.c3<<endl;
 
-                C3VecI tmp = cross(thisVel,thisB1c[i]);
-                cout << "this_cross.c1: "<<tmp.c1<<endl;
-                cout << "this_cross.c2: "<<tmp.c2<<endl;
-                cout << "this_cross.c3: "<<tmp.c3<<endl;
 #endif
-                this_E1_VxB1[i] = thisE1c[i] + cross(thisVel,thisB1c[i]);
+
+				this_e1_dot_df0dv[i].c1 = thisE1c[i].c1 * thisdf0_dv.c1;  
+				this_e1_dot_df0dv[i].c2 = thisE1c[i].c2 * thisdf0_dv.c2;  
+				this_e1_dot_df0dv[i].c3 = thisE1c[i].c3 * thisdf0_dv.c3;  
 
 #if LOWMEM_ORBIT_WRITE >= 1
                 if(iX==write_iX && iP==write_iP) {
@@ -1898,6 +1957,17 @@ int main ( int argc, char **argv )
                             <<"    "<< imag(thisB1c[i].c3)
                             << endl;
                 }
+                if(iX==write_iX && iP==write_iP) {
+                    e1_dot_grad_File<<scientific;
+                    e1_dot_grad_File<< thisT[i]
+                            <<"    "<< real(this_e1_dot_df0dv[i].c1)
+                            <<"    "<< imag(this_e1_dot_df0dv[i].c1)
+                            <<"    "<< real(this_e1_dot_df0dv[i].c2)
+                            <<"    "<< imag(this_e1_dot_df0dv[i].c2)
+                            <<"    "<< real(this_e1_dot_df0dv[i].c3)
+                            <<"    "<< imag(this_e1_dot_df0dv[i].c3)
+                            << endl;
+                }
 #endif
 			}
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -1906,13 +1976,14 @@ int main ( int argc, char **argv )
             }
 #endif
 			//C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisE1c );
-			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_E1_VxB1 );
+			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_e1_dot_df0dv );
 #if LOWMEM_ORBIT_WRITE >= 1
             if(iX==write_iX && iP==write_iP) {
 
                 C3VecI tmp(0,0,0);
                 for(int i=0;i<nSteps;i++) {
-                        tmp += this_E1_VxB1[i];
+						//float tmp_vTh = get_vTh ( thisParticle_XYZ.amu, thisParticle_XYZ.Z, T_keV[iX] );
+                        tmp += -qOverm * this_e1_dot_df0dv[i] * dtMin;
                         v1File<<thisT[i]
                                 <<"    "<< real(tmp.c1)
                                 <<"    "<< imag(tmp.c1)
@@ -1920,14 +1991,15 @@ int main ( int argc, char **argv )
                                 <<"    "<< imag(tmp.c2)
                                 <<"    "<< real(tmp.c3)
                                 <<"    "<< imag(tmp.c3)
-                                <<"    "<< real(tmp.c1)
                                 << endl;
                 }
+				//cout<<"tmp: "<<tmp.c1<<"  "<<tmp.c2<<"  "<<tmp.c3<<endl;
+				//cout<<"thisV1c: "<<thisV1c.c1<<"  "<<thisV1c.c2<<"  "<<thisV1c.c3<<endl;
             }
 #endif
-			f1xc[iP] = -thisV1c.c1 * thisParticle_XYZ.df0_dvx;
-			f1yc[iP] = -thisV1c.c2 * thisParticle_XYZ.df0_dvy;
-			f1zc[iP] = -thisV1c.c3 * thisParticle_XYZ.df0_dvz;
+			f1xc[iP] = -thisV1c.c1;// * thisParticle_XYZ.df0_dvx;
+			f1yc[iP] = -thisV1c.c2;// * thisParticle_XYZ.df0_dvy;
+			f1zc[iP] = -thisV1c.c3;// * thisParticle_XYZ.df0_dvz;
 
 			float v0x_i = ThisParticleList[iP].v_c1;
 			float v0y_i = ThisParticleList[iP].v_c2;

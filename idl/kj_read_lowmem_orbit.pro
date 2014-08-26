@@ -4,7 +4,7 @@ pro kj_read_lowmem_orbit
     nLines = file_lines(fileName)
     openr, lun, fileName, /get_lun
 
-    offset = 1
+    offset = 2
 
     t = fltArr(nLines-offset)
     x = fltArr(nLines-offset)
@@ -39,8 +39,8 @@ pro kj_read_lowmem_orbit
         b2[l] = complex(_b2_rb,_b2_im)
         b3[l] = complex(_b3_rb,_b3_im)
 
-
     endfor
+	free_lun, lun
 
     fileName = 'output/orbit_v1.txt'
     nLines = file_lines(fileName)
@@ -63,17 +63,45 @@ pro kj_read_lowmem_orbit
         v3[l] = complex(_v3_re,_v3_im)
 
     endfor
-
     free_lun, lun
+
+    fileName = 'output/orbit_e1_dot_grad_df0_dv.txt'
+    nLines = file_lines(fileName)
+    openr, lun, fileName, /get_lun
+
+    offset = 1
+
+    e1_dot_grad_1 = complexArr(nLines-offset)
+    e1_dot_grad_2 = complexArr(nLines-offset)
+    e1_dot_grad_3 = complexArr(nLines-offset)
+
+    skip_lun, lun, offset, /lines
+    for l=0,nLines-1-offset do begin
+
+        readf, lun, _t, $
+                _v1_re, _v1_im, _v2_re, _v2_im, _v3_re, _v3_im
+
+        e1_dot_grad_1[l] = complex(_v1_re,_v1_im)
+        e1_dot_grad_2[l] = complex(_v2_re,_v2_im)
+        e1_dot_grad_3[l] = complex(_v3_re,_v3_im)
+
+    endfor
+	free_lun, lun
+
     p=plot3d(x,y,z,aspect_ratio=1.0,aspect_z=1.0)
 
-    p=plot(t,e1,layout=[1,3,1])
-    p=plot(t,e2,layout=[1,3,2],/current)
-    p=plot(t,e3,layout=[1,3,3],/current)
+	fs = 12
+    p=plot(t,e1,layout=[1,3,1], title="e1(t')", font_size=fs)
+    p=plot(t,e2,layout=[1,3,2],/current, font_size=fs)
+    p=plot(t,e3,layout=[1,3,3],/current, font_size=fs)
 
-    p=plot(t,v1,layout=[1,3,1])
-    p=plot(t,v2,layout=[1,3,2],/current)
-    p=plot(t,v3,layout=[1,3,3],/current)
+    p=plot(t,e1_dot_grad_1,layout=[1,3,1], title="e1 . gradv f0 (t')", font_size=fs)
+    p=plot(t,e1_dot_grad_2,layout=[1,3,2],/current, font_size=fs)
+    p=plot(t,e1_dot_grad_3,layout=[1,3,3],/current, font_size=fs)
+
+    p=plot(t,v1,layout=[1,3,1], title='dv1(t)', font_size=fs)
+    p=plot(t,v2,layout=[1,3,2],/current, font_size=fs)
+    p=plot(t,v3,layout=[1,3,3],/current, font_size=fs)
  
 stop
 end
