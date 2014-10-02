@@ -1318,11 +1318,11 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ ) {
 
         C3Vec pu_xyz = bUnit_XYZ;
 
-        C3Vec a_xyz = cross(zu_rtz,pu_xyz)
-        C3Vec au_xyz = a_xyz/mag(a_xyz)
+        C3Vec a_xyz = cross(zu_xyz,pu_xyz);
+        C3Vec au_xyz = a_xyz/mag(a_xyz);
 
-        C3Vec b_xyz = cross(pu_xyz,au_xyz)
-        C3Vec bu_xyz = b_xyz/mag(b_xyz)
+        C3Vec b_xyz = cross(pu_xyz,au_xyz);
+        C3Vec bu_xyz = b_xyz/mag(b_xyz);
 
 
         return A_abp;
