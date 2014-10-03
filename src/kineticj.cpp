@@ -77,7 +77,7 @@ class CParticle: public CSpecies {
 				int status;
                 //float df0_dvx, df0_dvy, df0_dvz;
                 float dvx, dvy, dvz, d3v;
-                float vPar, vPer, phi, u, vTh;
+                float vPar, vPer, gyroPhase, u, vTh;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -388,6 +388,18 @@ C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
 C3VecI operator+ ( const C3VecI &other, const C3VecI &rhs) {
 		return C3VecI(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
 }
+
+ostream& operator<< ( ostream &os, const C3Vec &v ) {
+        os << v.c1 << ", "<< v.c2 << ", " << v.c3;
+        return os;
+}
+
+ostream& operator<< ( ostream &os, const C3VecI &v ) {
+        os << v.c1 << ", "<< v.c2 << ", " << v.c3;
+        return os;
+}
+
+
 vector<C3Vec> operator- ( const vector<C3Vec> &other, const C3Vec &rhs) {
 		vector<C3Vec> out(other.size());
 		for(int i=0;i<other.size();i++) {
@@ -572,6 +584,22 @@ int isinf ( const C3Vec arg ) {
     if(isinf(arg.c2)) answer = 1;
     if(isinf(arg.c3)) answer = 1;
     return answer;
+}
+
+C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
+        C3Vec cyl;
+        cyl.c1 = sqrt(pow(xyz.c1,2)+pow(xyz.c2,2));
+        cyl.c2 = atan2(xyz.c2,xyz.c1);
+        cyl.c3 = xyz.c3;
+        return cyl;
+}
+
+C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
+        C3Vec xyz;
+        xyz.c1 = cyl.c1*cos(cyl.c2);
+        xyz.c2 = cyl.c1*sin(cyl.c2);
+        xyz.c3 = cyl.c3;
+        return xyz;
 }
 
 // First-order orbits
@@ -820,6 +848,172 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 	}
 }
 
+C3Vec operator* ( const float A[][3], const C3Vec x ) {
+        C3Vec B;
+        B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
+        B.c2 = A[1][0]*x.c1 + A[1][1]*x.c2 + A[1][2]*x.c3;
+        B.c3 = A[2][0]*x.c1 + A[2][1]*x.c2 + A[2][2]*x.c3;
+        return B;
+}
+
+void transpose ( float A[][3] ) {
+
+        float B[3][3];
+        
+        B[0][0] = A[0][0];
+        B[1][0] = A[0][1];
+        B[2][0] = A[0][2];
+
+        B[0][1] = A[0][0];
+        B[1][1] = A[0][1];
+        B[2][1] = A[1][2];
+
+        B[0][2] = A[2][0];
+        B[1][2] = A[2][1];
+        B[2][2] = A[2][2];
+
+        A = B;
+}
+
+C3Vec rot_CYL_to_XYZ ( const float t, const C3Vec vec, const int direction ) {
+
+    // t here is the the cylindrical angle position in rtz (radians)        
+
+    float rot[3][3];
+
+    rot[0][0] =  cos(t);
+    rot[0][1] = -sin(t);
+    rot[0][2] = 0;
+
+    rot[1][0] =  sin(t);
+    rot[1][1] =  cos(t);
+    rot[1][2] = 0;
+
+    rot[2][0] = 0;
+    rot[2][1] = 0;
+    rot[2][2] = 1;
+
+    if(direction<0) {
+        transpose(rot);
+    }
+    
+    return rot * vec;
+}
+
+C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direction ) {
+
+        // If direction<1 then the inverse rotation is applied, i.e., abp_to_XYZ
+
+        C3Vec A_abp;
+
+        C3Vec xu_xyz (1,0,0);
+        C3Vec yu_xyz (0,1,0);
+        C3Vec zu_xyz (0,0,1);
+
+        C3Vec pu_xyz = bUnit_XYZ;
+
+        C3Vec a_xyz = cross(zu_xyz,pu_xyz);
+        C3Vec au_xyz = a_xyz/mag(a_xyz);
+
+        C3Vec b_xyz = cross(pu_xyz,au_xyz);
+        C3Vec bu_xyz = b_xyz/mag(b_xyz);
+
+#if DEBUG_ROTATION >=1 
+        C3Vec au_xyz2 = au_xyz;
+        C3Vec bu_xyz2 = bu_xyz;
+        C3Vec pu_xyz2 = pu_xyz;
+
+        cout<<"au_xyz: "<<au_xyz<<endl;
+        cout<<"bu_xyz: "<<bu_xyz<<endl;
+        cout<<"pu_xyz: "<<pu_xyz<<endl;
+#endif
+
+    // Rotation 1
+
+    float theta = acos( dot(xu_xyz,au_xyz) );
+
+#if DEBUG_ROTATION >=1 
+        cout<<"theta: "<< theta*180.0/_pi<<endl;
+#endif
+
+    float q0  = cos ( theta / 2.0 );
+    float q1  = sin ( theta / 2.0 ) * (-zu_xyz.c1); 
+    float q2  = sin ( theta / 2.0 ) * (-zu_xyz.c2);  
+    float q3  = sin ( theta / 2.0 ) * (-zu_xyz.c3); 
+
+    // Construct the rotation matrix
+
+    float rot1[3][3];
+
+    rot1[0][0] = pow(q0,2)+pow(q1,2)-pow(q2,2)-pow(q3,2);
+    rot1[0][1] = 2*(q1*q2-q0*q3);
+    rot1[0][2] = 2*(q1*q3+q0*q2);
+    rot1[1][0] = 2*(q2*q1+q0*q3);
+    rot1[1][1] = pow(q0,2)-pow(q1,2)+pow(q2,2)-pow(q3,2);
+    rot1[1][2] = 2*(q2*q3-q0*q1);
+    rot1[2][0] = 2*(q3*q1-q0*q2);
+    rot1[2][1] = 2*(q3*q2+q0*q1);
+    rot1[2][2] = pow(q0,2)-pow(q1,2)-pow(q2,2)+pow(q3,2);
+
+    if(direction<0) {
+        transpose(rot1);
+    }
+
+    au_xyz = rot1 * au_xyz;
+    bu_xyz = rot1 * bu_xyz;
+    pu_xyz = rot1 * pu_xyz;
+
+#if DEBUG_ROTATION >=1 
+    cout<<"au_rtz 1: "<<au_xyz<<endl;
+    cout<<"bu_rtz 1: "<<bu_xyz<<endl;
+    cout<<"pu_rtz 1: "<<pu_xyz<<endl;
+#endif
+
+    // Rotation 2
+
+    theta = acos( dot(zu_xyz,pu_xyz) );
+
+#if DEBUG_ROTATION >=1
+    cout<<"theta: "<<theta * 180.0/_pi << endl;
+#endif
+    q0  = cos ( theta / 2.0 );
+    q1  = sin ( theta / 2.0 ) * (-xu_xyz.c1); 
+    q2  = sin ( theta / 2.0 ) * (-xu_xyz.c2);  
+    q3  = sin ( theta / 2.0 ) * (-xu_xyz.c3); 
+
+    // Construct the rotation matrix
+
+    float rot2[3][3];
+
+    rot2[0][0] = pow(q0,2)+pow(q1,2)-pow(q2,2)-pow(q3,2);
+    rot2[0][1] = 2*(q1*q2-q0*q3);
+    rot2[0][2] = 2*(q1*q3+q0*q2);
+    rot2[1][0] = 2*(q2*q1+q0*q3);
+    rot2[1][1] = pow(q0,2)-pow(q1,2)+pow(q2,2)-pow(q3,2);
+    rot2[1][2] = 2*(q2*q3-q0*q1);
+    rot2[2][0] = 2*(q3*q1-q0*q2);
+    rot2[2][1] = 2*(q3*q2+q0*q1);
+    rot2[2][2] = pow(q0,2)-pow(q1,2)-pow(q2,2)+pow(q3,2);
+
+    if(direction<0) {
+        transpose(rot2);
+    }
+
+    au_xyz = rot2 * au_xyz;
+    bu_xyz = rot2 * bu_xyz;
+    pu_xyz = rot2 * pu_xyz;
+
+#if DEBUG_ROTATION >=1 
+    cout<<"au_xyz 2: "<<au_xyz<<endl;
+    cout<<"bu_xyz 2: "<<bu_xyz<<endl;
+    cout<<"pu_xyz 2: "<<pu_xyz<<endl;
+#endif
+
+    A_abp = rot2 * ( rot1 * A_XYZ );
+
+    return A_abp;
+}
+
 
 
 // Zero-order orbits
@@ -1029,7 +1223,8 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 const vector<float> &bDotGradB, const float wrf ) {
 
                 int status=0;
-                C3Vec xn0(p.c1, p.c2, p.c3);
+                C3Vec xn0_XYZ(p.c1, p.c2, p.c3);
+                C3Vec xn0 = XYZ_to_CYL(xn0_XYZ);
 
 		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL, status );
 #if DEBUG_GC >= 2 
@@ -1085,19 +1280,6 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 		    	float vPar1 = p.vPar + ( k1_vPar + 2.0 * k2_vPar + 2.0 * k3_vPar + k4_vPar ) / 6.0;
 		    	C3Vec xn1 = xn0 + ( k1_vgc + 2.0 * k2_vgc + 2.0 * k3_vgc + k4_vgc ) / 6.0;
 
-                // Update particle with moved position and new vPar & vPer
-
-                p.c1 = xn1.c1; 
-		        p.c2 = xn1.c2;
-		        p.c3 = xn1.c3;
-
-                // Update the XYZ velocity also
-
-		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
-                float v_gc_1 = vPar1;
-                float v_gc_2 = vPer1 * sin(wrf*t0+p.phi);
-                float v_gc_3 = vPer1 * cos(wrf*t0+p.phi);
-
 #if DEBUG_GC >=1 
                 if(isnan(xn1)||isinf(xn1)) {
                         status = 1;
@@ -1105,8 +1287,32 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 }
 #endif
 
+                // Update particle with moved position and new vPar & vPer
+
                 p.vPar = vPar1;
                 p.vPer = eval_vPer ( p, xn1, r_b0, b0_CYL, status );
+
+                C3Vec xn1_XYZ = CYL_to_XYZ(xn1);
+
+                p.c1 = xn1_XYZ.c1; 
+		        p.c2 = xn1_XYZ.c2;
+		        p.c3 = xn1_XYZ.c3;
+
+                // Update the XYZ velocity also
+
+		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
+                C3Vec v_abp;
+                v_abp.c1 = vPer1 * sin(wrf*t0+p.gyroPhase);
+                v_abp.c2 = vPer1 * cos(wrf*t0+p.gyroPhase);
+                v_abp.c3 = vPar1;
+
+                C3Vec this_b0_CYL = kj_interp1D ( xn1.c1, r_b0, b0_CYL, status );
+                C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
+                C3Vec this_v_XYZ = rot_XYZ_to_abp ( v_abp, this_b0_XYZ, -1 );
+
+                p.v_c1 = this_v_XYZ.c1;
+                p.v_c2 = this_v_XYZ.c2;
+                p.v_c3 = this_v_XYZ.c3;
 
                 return status;
 }
@@ -1203,6 +1409,7 @@ C3Vec maxwellian_df0_dv (const C3Vec _v, const float _T_keV, const float _n_m3, 
 	return df0_dv;
 }
 
+
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, float n_m3, 
                 int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ) {
 
@@ -1265,27 +1472,19 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 
                     // Get vPar, vPer and mu for guiding center integration
 
-                    float bMag = mag (b0_XYZ);
-                    float vMag = sqrt ( pow(thisvx,2) + pow(thisvy,2) + pow(thisvz,2) );
-
-                    float vPar = (thisvx*b0_XYZ.c1 + thisvy*b0_XYZ.c2 + thisvz*b0_XYZ.c3) / bMag;
-		            float vPer = sqrt ( pow(vMag,2) - pow(vPar,2) );
-
-                    pList[cnt].vPar = vPar;
-                    pList[cnt].vPer = vPer;
-
-                    // Parallel coordinate system to get and track gyro-phase
-                    C3Vec gcUnit_1_XYZ = b0_XYZ / bMag; // Parallel
-                    C3Vec gcUnit_2_XYZ = cross(gcUnit_1_XYZ,C3Vec(1,0,0)); // Perp 1 is B cross X
-                    C3Vec gcUnit_3_XYZ = cross(gcUnit_1_XYZ,gcUnit_2_XYZ); // Perp 2 is B cross Perp 1
-                   
                     C3Vec thisV_XYZ(thisvx,thisvy,thisvz); 
-                    float v_gc1 = dot(gcUnit_1_XYZ,thisV_XYZ);
-                    float v_gc2 = dot(gcUnit_2_XYZ,thisV_XYZ);
-                    float v_gc3 = dot(gcUnit_3_XYZ,thisV_XYZ);
-                    pList[cnt].phi = atan2(v_gc2, v_gc3); 
+                    float bMag = mag (b0_XYZ);
+                    float vMag = mag (thisV_XYZ);
 
-                    pList[cnt].u = pList[cnt].m * pow(vPer,2) / ( 2.0 * bMag );
+                    //float vPar = (thisvx*b0_XYZ.c1 + thisvy*b0_XYZ.c2 + thisvz*b0_XYZ.c3) / bMag;
+		            //float vPer = sqrt ( pow(vMag,2) - pow(vPar,2) );
+
+                    C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+
+                    pList[cnt].vPar = thisV_abp.c3;
+                    pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+                    pList[cnt].gyroPhase = atan2(thisV_abp.c2, thisV_abp.c1); 
+                    pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_MAXWELLIAN >=2 
                     cout<<"ThisVx: "<<thisvx<<endl;
@@ -1306,26 +1505,6 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
         cout << "TestIntegratedValue: " << TestIntegratedValue << endl;
 #endif
         return pList;
-}
-
-C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ ) {
-
-        C3Vec A_abp;
-
-        C3Vec xu_xyz (1,0,0);
-        C3Vec yu_xyz (0,1,0);
-        C3Vec zu_xyz (0,0,1);
-
-        C3Vec pu_xyz = bUnit_XYZ;
-
-        C3Vec a_xyz = cross(zu_xyz,pu_xyz);
-        C3Vec au_xyz = a_xyz/mag(a_xyz);
-
-        C3Vec b_xyz = cross(pu_xyz,au_xyz);
-        C3Vec bu_xyz = b_xyz/mag(b_xyz);
-
-
-        return A_abp;
 }
 
 
@@ -1501,9 +1680,7 @@ int main ( int argc, char **argv )
 				b0_XYZ.resize(nR);
 				for(int i=0; i<nR; i++) {
 						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
-						b0_XYZ[i] = C3Vec(cos(0.0)*b0_CYL[i].c1-sin(0.0)*b0_CYL[i].c2+0,
-										sin(0.0)*b0_CYL[i].c1+cos(0.0)*b0_CYL[i].c2+0,
-										0+0+1*b0_CYL[i].c3);
+                        b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
 				}
 
 				nc_e_r_re.getVar(&e_r_re[0]);
@@ -1873,8 +2050,8 @@ int main ( int argc, char **argv )
             ofstream v1File;
 			ofstream e1_dot_grad_File;
 
-            int write_iX = 0;//150;
-            int write_iP = 55;
+            int write_iX = 150;
+            int write_iP = 56;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
                 cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
