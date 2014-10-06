@@ -78,6 +78,7 @@ class CParticle: public CSpecies {
                 //float df0_dvx, df0_dvy, df0_dvz;
                 float dvx, dvy, dvz, d3v;
                 float vPar, vPer, gyroPhase, u, vTh;
+                float vAlp, vBet, phs;
 
 				CParticle ();
 				CParticle ( double _amu, int _Z);
@@ -1300,15 +1301,22 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update the XYZ velocity also
 
-		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
-                C3Vec v_abp;
-                v_abp.c1 = vPer1 * sin(wrf*t0+p.gyroPhase);
-                v_abp.c2 = vPer1 * cos(wrf*t0+p.gyroPhase);
-                v_abp.c3 = vPar1;
-
                 C3Vec this_b0_CYL = kj_interp1D ( xn1.c1, r_b0, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
-                C3Vec this_v_XYZ = rot_XYZ_to_abp ( v_abp, this_b0_XYZ, -1 );
+ 
+		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
+                C3Vec v_abp;
+
+                float this_wc = p.q * mag(this_b0_CYL) / p.m;
+                p.phs = this_wc*t0+p.gyroPhase;
+                v_abp.c1 = vPer1 * sin(p.phs);
+                v_abp.c2 = vPer1 * cos(p.phs);
+                v_abp.c3 = vPar1;
+
+                p.vAlp = v_abp.c1;
+                p.vBet = v_abp.c2;
+
+               C3Vec this_v_XYZ = rot_XYZ_to_abp ( v_abp, this_b0_XYZ, -1 );
 
                 p.v_c1 = this_v_XYZ.c1;
                 p.v_c2 = this_v_XYZ.c2;
@@ -1891,7 +1899,7 @@ int main ( int argc, char **argv )
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        T_keV[iX] = 0.001;//kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
@@ -2049,8 +2057,9 @@ int main ( int argc, char **argv )
             ofstream OrbitFile;
             ofstream v1File;
 			ofstream e1_dot_grad_File;
+			ofstream df0dv_File;
 
-            int write_iX = 150;
+            int write_iX = 10;
             int write_iP = 56;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
@@ -2066,6 +2075,8 @@ int main ( int argc, char **argv )
                 v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
                 e1_dot_grad_File.open("output/orbit_e1_dot_grad_df0_dv.txt", ios::out | ios::trunc);
                 e1_dot_grad_File<<" t  re(v1xb01)  im(v1xb01)  re(v1xb02)  im(v1xb02)  re(v1xb03)  im(v1xb03)"<<endl;
+                df0dv_File.open("output/df0dv.txt", ios::out | ios::trunc);
+                df0dv_File<<" t  vx  vy  vz  valp  vbet  vpar  vper  gyroAngle  df0dv_x  df0dv_y  df0dv_z"<<endl;
             }
 #endif    
 			// generate orbit and get time-harmonic e along it
@@ -2190,6 +2201,23 @@ int main ( int argc, char **argv )
                 //cout<<dv<<"        "<<thisdf0_dv.c1<<endl;
                 //cout<<dv*thisdf0_dv.c1<<endl;
 #if LOWMEM_ORBIT_WRITE >= 1
+                if(iX==write_iX && iP==write_iP) {
+                    df0dv_File<<scientific;
+                    df0dv_File<< thisT[i]
+                            <<"    "<< thisVel_XYZ.c1
+                            <<"    "<< thisVel_XYZ.c2
+                            <<"    "<< thisVel_XYZ.c3 
+                            <<"    "<< thisParticle_XYZ.vAlp
+                            <<"    "<< thisParticle_XYZ.vBet
+                            <<"    "<< thisParticle_XYZ.vPar
+                            <<"    "<< thisParticle_XYZ.vPer
+                            <<"    "<< thisParticle_XYZ.phs
+                            <<"    "<< thisdf0_dv.c1 
+                            <<"    "<< thisdf0_dv.c2 
+                            <<"    "<< thisdf0_dv.c3 
+                            << endl;
+                }
+ 
                 if(iX==write_iX && iP==write_iP) {
                     OrbitFile<<scientific;
                     OrbitFile<< thisT[i]
