@@ -486,6 +486,10 @@ float dot ( const C3Vec &Y, const C3Vec &X ) {
 		return Y.c1*X.c1 + Y.c2*X.c2 + Y.c3*X.c3;
 }
 
+complex<float> dot ( const C3VecI &Y, const C3Vec &X ) {
+		return Y.c1*X.c1 + Y.c2*X.c2 + Y.c3*X.c3;
+}
+
 C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		C3Vec out;
 		out.c1 = atan2(Y.c1,X.c1);
@@ -539,7 +543,18 @@ float maxC3VecAbs ( const vector<C3Vec> &input ) {
 	return *max_element(inputAbs.begin(),inputAbs.end());
 }
 
-C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
+complex<float> intVecArray ( const vector<float> &x, const vector<complex<float> > &f ) {
+
+	complex<float> result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0f*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+C3Vec intVecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 
 	C3Vec result;
 	float h = x[1]-x[0];
@@ -550,7 +565,7 @@ C3Vec intC3VecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
 	return result;
 }
 
-C3VecI intC3VecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
+C3VecI intVecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
 
 	C3VecI result;
 	float h = x[1]-x[0];
@@ -1521,6 +1536,17 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 int main ( int argc, char **argv )
 {
 
+        // Make sure the "output/" directory exists
+		stringstream outputDirName;
+		outputDirName << "output/";
+		// check directory exists
+		struct stat st;
+        int dirTest = stat(outputDirName.str().c_str(),&st);
+		if( dirTest != 0 ) {
+            cout<<"Had to create output/ directory"<<endl;
+			int mkDirStat = mkdir(outputDirName.str().c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+		}
+	
 #if CLOCK >= 1
         clock_t ProgramTime = clock();
 #endif
@@ -1841,49 +1867,18 @@ int main ( int argc, char **argv )
 
 			float _p = 0;
 
-			e1Re_XYZ[i] = C3Vec( 
-				cos(_p)*e1Re_CYL[i].c1-sin(_p)*e1Re_CYL[i].c2+0,
-				sin(_p)*e1Re_CYL[i].c1+cos(_p)*e1Re_CYL[i].c2+0,
-				0+0+1*e1Re_CYL[i].c3 );
+            e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
+            e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
+            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
+            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
 
-			e1Im_XYZ[i] = C3Vec( 
-				cos(_p)*e1Im_CYL[i].c1-sin(_p)*e1Im_CYL[i].c2+0,
-				sin(_p)*e1Im_CYL[i].c1+cos(_p)*e1Im_CYL[i].c2+0,
-				0+0+1*e1Im_CYL[i].c3 );
-
-			b1Re_XYZ[i] = C3Vec( 
-				cos(_p)*b1Re_CYL[i].c1-sin(_p)*b1Re_CYL[i].c2+0,
-				sin(_p)*b1Re_CYL[i].c1+cos(_p)*b1Re_CYL[i].c2+0,
-				0+0+1*b1Re_CYL[i].c3 );
-
-			b1Im_XYZ[i] = C3Vec( 
-				cos(_p)*b1Im_CYL[i].c1-sin(_p)*b1Im_CYL[i].c2+0,
-				sin(_p)*b1Im_CYL[i].c1+cos(_p)*b1Im_CYL[i].c2+0,
-				0+0+1*b1Im_CYL[i].c3 );
-	
 		}
 
 
-//	// Langmuir wave dispersion relation
-//
 	float wrf = freq * 2 * _pi;
-//	double wpe = sqrt ( 1e14*pow(_e,2)/(_me*_e0) );
-//	double kParSq = (pow(wrf,2)-pow(wpe,2))/(2*pow(vTh,2));
-//	double kPar = sqrt ( kParSq );
-//	double vPhase = wrf / kPar;
-//	double lambdaPar = 2*_pi/kPar;
-//#if DEBUGLEVEL >= 1
-//	cout << "freq [Hz]: " << freq << endl;
-//	cout << "kParSq [m^-2]: " << kParSq << endl;
-//	cout << "kPar [m^-1]: " << kPar << endl;
-//	cout << "lambdaPar [m]: " << lambdaPar << endl;
-//	cout << "vPhase [m/s]: " << vPhase << endl;
-//	cout << "vTh [m/s]: " << vTh << endl;
-//#endif
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
-	//float xGridPtSize = cfg.lookup("xGridPtSize");
 	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid), wrf_wc(nXGrid);
     vector<C3Vec> b0_XYZ_T_at_xGrid(nXGrid);
 	float xGridRng = 0;
@@ -1899,6 +1894,7 @@ int main ( int argc, char **argv )
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
+        //T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
         T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
@@ -2038,7 +2034,8 @@ int main ( int argc, char **argv )
 #if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
 		vector<float> f1(nP);
-		vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
+		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
+		vector<complex<float> > f1c(nP);
 
 		for(int iP=0;iP<nP;iP++) {
 
@@ -2050,7 +2047,7 @@ int main ( int argc, char **argv )
 
 			CParticle thisParticle_XYZ(ThisParticleList[iP]);
 
-			double qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
+			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
 			float Ze = thisParticle_XYZ.q;
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -2059,8 +2056,8 @@ int main ( int argc, char **argv )
 			ofstream e1_dot_grad_File;
 			ofstream df0dv_File;
 
-            int write_iX = 10;
-            int write_iP = 56;
+            int write_iX = 156;
+            int write_iP = 1;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
                 cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
@@ -2082,10 +2079,11 @@ int main ( int argc, char **argv )
 			// generate orbit and get time-harmonic e along it
 
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
-			vector<C3VecI> thisE1c(nSteps,C3VecI());
-			vector<C3VecI> thisB1c(nSteps,C3VecI());
+			vector<C3VecI> thisE1c_XYZ(nSteps,C3VecI());
+			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
-			vector<C3VecI> this_e1_dot_df0dv(nSteps,C3VecI());
+			//vector<C3VecI> this_e1_dot_df0dv(nSteps,C3VecI());
+            vector<complex<float> > this_e1_dot_gradvf0(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -2113,7 +2111,7 @@ int main ( int argc, char **argv )
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
-				C3Vec thisdf0_dv = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
+				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 #if LOWMEM_ORBIT_WRITE >= 1
                 //if(iX==write_iX && iP==write_iP) {
                 //        cout<<"This df0_dv1: "<<thisdf0_dv.c1<<endl;
@@ -2138,7 +2136,7 @@ int main ( int argc, char **argv )
                 complex<float> _i(0,1);
                 complex<float> exp_inphi = exp(_i*(float)nPhi*this_Theta);
 
-				thisE1c[i] = exp_inphi * C3VecI(
+				thisE1c_XYZ[i] = exp_inphi * C3VecI(
 								weight*complex<float>(
 										thisOrbitE1_re_XYZ[i].c1*cos(phs)-thisOrbitE1_im_XYZ[i].c1*sin(phs),
 										thisOrbitE1_im_XYZ[i].c1*cos(phs)+thisOrbitE1_re_XYZ[i].c1*sin(phs)),
@@ -2150,7 +2148,7 @@ int main ( int argc, char **argv )
 										thisOrbitE1_im_XYZ[i].c3*cos(phs)+thisOrbitE1_re_XYZ[i].c3*sin(phs))
 								);	
 
-				thisB1c[i] = exp_inphi * C3VecI(
+				thisB1c_XYZ[i] = exp_inphi * C3VecI(
 								weight*complex<float>(
 										thisOrbitB1_re_XYZ[i].c1*cos(phs)-thisOrbitB1_im_XYZ[i].c1*sin(phs),
 										thisOrbitB1_im_XYZ[i].c1*cos(phs)+thisOrbitB1_re_XYZ[i].c1*sin(phs)),
@@ -2171,35 +2169,34 @@ int main ( int argc, char **argv )
                 //thisE1c[i] = weight*C3VecI(amp1*expPart,amp2*expPart,amp3*expPart); 
 
 #if DEBUG_MOVE >= 2
-                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
-                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
-                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
+                cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c_XYZ[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c_XYZ[i].c3<<endl;
 
-                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
-                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
-                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
+                cout << "thisB1c[i].c1: "<<thisB1c_XYZ[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c_XYZ[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c_XYZ[i].c3<<endl;
 #endif
 #if DEBUG_FORCE_TERM >= 1
-                cout << "thisE1c[i].c1: "<<thisE1c[i].c1<<endl;
-                cout << "thisE1c[i].c2: "<<thisE1c[i].c2<<endl;
-                cout << "thisE1c[i].c3: "<<thisE1c[i].c3<<endl;
+                cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c_XYZ[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c_XYZ[i].c3<<endl;
 
-                cout << "thisB1c[i].c1: "<<thisB1c[i].c1<<endl;
-                cout << "thisB1c[i].c2: "<<thisB1c[i].c2<<endl;
-                cout << "thisB1c[i].c3: "<<thisB1c[i].c3<<endl;
+                cout << "thisB1c[i].c1: "<<thisB1c_XYZ[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c_XYZ[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c_XYZ[i].c3<<endl;
 
                 cout << "thisVel_XYZ.c1: "<<thisVel_XYZ.c1<<endl;
                 cout << "thisVel_XYZ.c2: "<<thisVel_XYZ.c2<<endl;
                 cout << "thisVel_XYZ.c3: "<<thisVel_XYZ.c3<<endl;
 
 #endif
+                this_e1_dot_gradvf0[i] = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
 
-				this_e1_dot_df0dv[i].c1 = thisE1c[i].c1 * thisdf0_dv.c1;  
-				this_e1_dot_df0dv[i].c2 = thisE1c[i].c2 * thisdf0_dv.c2;  
-				this_e1_dot_df0dv[i].c3 = thisE1c[i].c3 * thisdf0_dv.c3;  
+				//this_e1_dot_df0dv[i].c1 = thisE1c[i].c1 * thisdf0_dv.c1;  
+				//this_e1_dot_df0dv[i].c2 = thisE1c[i].c2 * thisdf0_dv.c2;  
+				//this_e1_dot_df0dv[i].c3 = thisE1c[i].c3 * thisdf0_dv.c3;  
 
-                //cout<<dv<<"        "<<thisdf0_dv.c1<<endl;
-                //cout<<dv*thisdf0_dv.c1<<endl;
 #if LOWMEM_ORBIT_WRITE >= 1
                 if(iX==write_iX && iP==write_iP) {
                     df0dv_File<<scientific;
@@ -2212,9 +2209,9 @@ int main ( int argc, char **argv )
                             <<"    "<< thisParticle_XYZ.vPar
                             <<"    "<< thisParticle_XYZ.vPer
                             <<"    "<< thisParticle_XYZ.phs
-                            <<"    "<< thisdf0_dv.c1 
-                            <<"    "<< thisdf0_dv.c2 
-                            <<"    "<< thisdf0_dv.c3 
+                            <<"    "<< gradv_f0_XYZ.c1 
+                            <<"    "<< gradv_f0_XYZ.c2 
+                            <<"    "<< gradv_f0_XYZ.c3 
                             << endl;
                 }
  
@@ -2224,29 +2221,25 @@ int main ( int argc, char **argv )
                             <<"    "<< thisPos.c1
                             <<"    "<< thisPos.c2
                             <<"    "<< thisPos.c3 
-                            <<"    "<< real(thisE1c[i].c1)
-                            <<"    "<< imag(thisE1c[i].c1)
-                            <<"    "<< real(thisE1c[i].c2)
-                            <<"    "<< imag(thisE1c[i].c2)
-                            <<"    "<< real(thisE1c[i].c3)
-                            <<"    "<< imag(thisE1c[i].c3)
-                            <<"    "<< real(thisB1c[i].c1)
-                            <<"    "<< imag(thisB1c[i].c1)
-                            <<"    "<< real(thisB1c[i].c2)
-                            <<"    "<< imag(thisB1c[i].c2)
-                            <<"    "<< real(thisB1c[i].c3)
-                            <<"    "<< imag(thisB1c[i].c3)
+                            <<"    "<< real(thisE1c_XYZ[i].c1)
+                            <<"    "<< imag(thisE1c_XYZ[i].c1)
+                            <<"    "<< real(thisE1c_XYZ[i].c2)
+                            <<"    "<< imag(thisE1c_XYZ[i].c2)
+                            <<"    "<< real(thisE1c_XYZ[i].c3)
+                            <<"    "<< imag(thisE1c_XYZ[i].c3)
+                            <<"    "<< real(thisB1c_XYZ[i].c1)
+                            <<"    "<< imag(thisB1c_XYZ[i].c1)
+                            <<"    "<< real(thisB1c_XYZ[i].c2)
+                            <<"    "<< imag(thisB1c_XYZ[i].c2)
+                            <<"    "<< real(thisB1c_XYZ[i].c3)
+                            <<"    "<< imag(thisB1c_XYZ[i].c3)
                             << endl;
                 }
                 if(iX==write_iX && iP==write_iP) {
                     e1_dot_grad_File<<scientific;
                     e1_dot_grad_File<< thisT[i]
-                            <<"    "<< real(this_e1_dot_df0dv[i].c1)
-                            <<"    "<< imag(this_e1_dot_df0dv[i].c1)
-                            <<"    "<< real(this_e1_dot_df0dv[i].c2)
-                            <<"    "<< imag(this_e1_dot_df0dv[i].c2)
-                            <<"    "<< real(this_e1_dot_df0dv[i].c3)
-                            <<"    "<< imag(this_e1_dot_df0dv[i].c3)
+                            <<"    "<< real(this_e1_dot_gradvf0[i])
+                            <<"    "<< imag(this_e1_dot_gradvf0[i])
                             << endl;
                 }
 #endif
@@ -2256,31 +2249,28 @@ int main ( int argc, char **argv )
                 OrbitFile.close();
             }
 #endif
-			//C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, thisE1c );
-			C3VecI thisV1c = -qOverm * intC3VecArray ( thisT, this_e1_dot_df0dv );
+			complex<float> this_f1c = -qOverm * intVecArray ( thisT, this_e1_dot_gradvf0 );
+
 #if LOWMEM_ORBIT_WRITE >= 1
             if(iX==write_iX && iP==write_iP) {
 
-                C3VecI tmp(0,0,0);
+                complex<float> tmp = 0.0;
                 for(int i=0;i<nSteps;i++) {
 						//float tmp_vTh = get_vTh ( thisParticle_XYZ.amu, thisParticle_XYZ.Z, T_keV[iX] );
-                        tmp += -qOverm * this_e1_dot_df0dv[i] * dtMin;
+                        tmp += -qOverm * this_e1_dot_gradvf0[i] * dtMin;
                         v1File<<thisT[i]
-                                <<"    "<< real(tmp.c1)
-                                <<"    "<< imag(tmp.c1)
-                                <<"    "<< real(tmp.c2)
-                                <<"    "<< imag(tmp.c2)
-                                <<"    "<< real(tmp.c3)
-                                <<"    "<< imag(tmp.c3)
+                                <<"    "<< real(tmp)
+                                <<"    "<< imag(tmp)
                                 << endl;
                 }
 				//cout<<"tmp: "<<tmp.c1<<"  "<<tmp.c2<<"  "<<tmp.c3<<endl;
 				//cout<<"thisV1c: "<<thisV1c.c1<<"  "<<thisV1c.c2<<"  "<<thisV1c.c3<<endl;
             }
 #endif
-			f1xc[iP] = -thisV1c.c1;
-			f1yc[iP] = -thisV1c.c2;
-			f1zc[iP] = -thisV1c.c3;
+			f1c[iP] = -this_f1c;
+			//f1xc[iP] = -thisV1c.c1;
+			//f1yc[iP] = -thisV1c.c2;
+			//f1zc[iP] = -thisV1c.c3;
 
 			float v0x_i = ThisParticleList[iP].v_c1;
 			float v0y_i = ThisParticleList[iP].v_c2;
@@ -2290,10 +2280,13 @@ int main ( int argc, char **argv )
 
 			#pragma omp critical // "atomic" does not work for complex numbers
 			{
-				//j1xc[iX][jt] += h/2 * ( v0_im1*f1c[iP-1] + v0_i*f1c[iP]) * density_m3[iX]; 
-				j1xc[iX] += h * ( v0x_i*f1xc[iP] );// * density_m3[iX]; 
-				j1yc[iX] += h * ( v0y_i*f1yc[iP] );// * density_m3[iX]; 
-				j1zc[iX] += h * ( v0z_i*f1zc[iP] );// * density_m3[iX]; 
+				//j1xc[iX] += h * ( v0x_i*f1xc[iP] ); 
+				//j1yc[iX] += h * ( v0y_i*f1yc[iP] ); 
+				//j1zc[iX] += h * ( v0z_i*f1zc[iP] ); 
+
+				j1xc[iX] += h * ( v0x_i*f1c[iP] ); 
+				j1yc[iX] += h * ( v0y_i*f1c[iP] ); 
+				j1zc[iX] += h * ( v0z_i*f1c[iP] ); 
 			}
 		}
 

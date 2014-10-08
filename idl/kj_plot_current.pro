@@ -30,7 +30,8 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 		if(strMatch(eField_fName,'*sheath*') $
 				or strMatch(eField_fName,'*mets*') $
                 or strMatch(eField_fName,'*single*') $
-                or strMatch(eField_fName,'*upshift*') )then begin
+                or strMatch(eField_fName,'*upshift*') $
+                or strMatch(eField_fName,'*ar2_kj*') )then begin
 			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
@@ -323,6 +324,7 @@ if not keyword_set(noIterate) then begin
 endif
 
     jpRange = max(abs([j1x,j1y,j1z]))
+    jpRange = 1.0
     p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x')
     p=plot(xf,imaginary(j1x),/over,color='r')
     p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y')

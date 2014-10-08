@@ -48,19 +48,15 @@ pro kj_read_lowmem_orbit
 
     offset = 1
 
-    v1 = complexArr(nLines-offset)
-    v2 = complexArr(nLines-offset)
-    v3 = complexArr(nLines-offset)
+    f1 = complexArr(nLines-offset)
 
     skip_lun, lun, offset, /lines
     for l=0,nLines-1-offset do begin
 
         readf, lun, _t, $
-                _v1_re, _v1_im, _v2_re, _v2_im, _v3_re, _v3_im
+                _v1_re, _v1_im
 
-        v1[l] = complex(_v1_re,_v1_im)
-        v2[l] = complex(_v2_re,_v2_im)
-        v3[l] = complex(_v3_re,_v3_im)
+        f1[l] = complex(_v1_re,_v1_im)
 
     endfor
     free_lun, lun
@@ -71,19 +67,15 @@ pro kj_read_lowmem_orbit
 
     offset = 1
 
-    e1_dot_grad_1 = complexArr(nLines-offset)
-    e1_dot_grad_2 = complexArr(nLines-offset)
-    e1_dot_grad_3 = complexArr(nLines-offset)
+    e1_dot_grad = complexArr(nLines-offset)
 
     skip_lun, lun, offset, /lines
     for l=0,nLines-1-offset do begin
 
         readf, lun, _t, $
-                _v1_re, _v1_im, _v2_re, _v2_im, _v3_re, _v3_im
+                _v1_re, _v1_im
 
-        e1_dot_grad_1[l] = complex(_v1_re,_v1_im)
-        e1_dot_grad_2[l] = complex(_v2_re,_v2_im)
-        e1_dot_grad_3[l] = complex(_v3_re,_v3_im)
+        e1_dot_grad[l] = complex(_v1_re,_v1_im)
 
     endfor
 	free_lun, lun
@@ -142,13 +134,8 @@ pro kj_read_lowmem_orbit
     p=plot(t,e3,layout=[1,3,3],/current, font_size=fs)
     p=plot(t,imaginary(e3),/over,color='r')
 
-    p=plot(t,e1_dot_grad_1,layout=[1,3,1], title="e1 . gradv f0 (t')", font_size=fs)
-    p=plot(t,e1_dot_grad_2,layout=[1,3,2],/current, font_size=fs)
-    p=plot(t,e1_dot_grad_3,layout=[1,3,3],/current, font_size=fs)
-
-    p=plot(t,v1,layout=[1,3,1], title='dv1(t)', font_size=fs)
-    p=plot(t,v2,layout=[1,3,2],/current, font_size=fs)
-    p=plot(t,v3,layout=[1,3,3],/current, font_size=fs)
+    p=plot(t,e1_dot_grad,layout=[1,3,1], title="e1 . gradv f0 (t')", font_size=fs)
+    p=plot(t,f1,layout=[1,3,2],/current, title='f1', font_size=fs)
 
     p=plot(t,vx,layout=[1,3,1], title='vx,vy,vz(t)', font_size=fs)
     p=plot(t,vy,layout=[1,3,2],/current, font_size=fs)
