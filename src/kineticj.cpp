@@ -880,8 +880,8 @@ void transpose ( float A[][3] ) {
         B[1][0] = A[0][1];
         B[2][0] = A[0][2];
 
-        B[0][1] = A[0][0];
-        B[1][1] = A[0][1];
+        B[0][1] = A[1][0];
+        B[1][1] = A[1][1];
         B[2][1] = A[1][2];
 
         B[0][2] = A[2][0];
@@ -928,7 +928,10 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direc
 
         C3Vec pu_xyz = bUnit_XYZ;
 
-        C3Vec a_xyz = cross(zu_xyz,pu_xyz);
+        // alp is mostly in the +/- x / r direction depending on B toroidal direction
+        // bet is mostly z direction
+
+        C3Vec a_xyz = cross(zu_xyz,pu_xyz); 
         C3Vec au_xyz = a_xyz/mag(a_xyz);
 
         C3Vec b_xyz = cross(pu_xyz,au_xyz);
@@ -1029,6 +1032,28 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direc
 
     return A_abp;
 }
+
+float GetGyroPhase ( const C3Vec v_abp ) {
+
+        // alp is mostly in the x / r direction
+        // bet is mostly z direction
+
+        float alp = v_abp.c1;
+        float bet = v_abp.c2;
+
+        return atan2(alp,bet);
+}
+
+float GetAlpComp ( const float vPer, const float phs ) {
+
+        return vPer * sin(phs);
+}
+
+float GetBetComp ( const float vPer, const float phs ) {
+
+        return vPer * cos(phs);
+}
+
 
 
 
@@ -1305,8 +1330,10 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update particle with moved position and new vPar & vPer
 
+		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
+
                 p.vPar = vPar1;
-                p.vPer = eval_vPer ( p, xn1, r_b0, b0_CYL, status );
+                p.vPer = vPer1;
 
                 C3Vec xn1_XYZ = CYL_to_XYZ(xn1);
 
@@ -1319,19 +1346,18 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 C3Vec this_b0_CYL = kj_interp1D ( xn1.c1, r_b0, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
-		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
                 C3Vec v_abp;
 
                 float this_wc = p.q * mag(this_b0_CYL) / p.m;
                 p.phs = this_wc*t0+p.gyroPhase;
-                v_abp.c1 = vPer1 * sin(p.phs);
-                v_abp.c2 = vPer1 * cos(p.phs);
+                v_abp.c1 = GetAlpComp(vPer1,p.phs); 
+                v_abp.c2 = GetBetComp(vPer1,p.phs);
                 v_abp.c3 = vPar1;
 
                 p.vAlp = v_abp.c1;
                 p.vBet = v_abp.c2;
 
-               C3Vec this_v_XYZ = rot_XYZ_to_abp ( v_abp, this_b0_XYZ, -1 );
+                C3Vec this_v_XYZ = rot_XYZ_to_abp ( v_abp, this_b0_XYZ, -1 ); 
 
                 p.v_c1 = this_v_XYZ.c1;
                 p.v_c2 = this_v_XYZ.c2;
@@ -1433,6 +1459,7 @@ C3Vec maxwellian_df0_dv (const C3Vec _v, const float _T_keV, const float _n_m3, 
 }
 
 
+
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, float n_m3, 
                 int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ) {
 
@@ -1506,7 +1533,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 
                     pList[cnt].vPar = thisV_abp.c3;
                     pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
-                    pList[cnt].gyroPhase = atan2(thisV_abp.c2, thisV_abp.c1); 
+                    pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
                     pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_MAXWELLIAN >=2 
@@ -1894,8 +1921,8 @@ int main ( int argc, char **argv )
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        //T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
         T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
+        //T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
@@ -1974,9 +2001,9 @@ int main ( int argc, char **argv )
 		//if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
 
 		complex<float> _i (0.0,1.0);	
-		complex<float> wrf_c (wrf,wrf*0.00);
-		//expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
-		//hanningWeight[i] = 1;
+		complex<float> wrf_c (wrf,wrf*0.001);
+		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
+		hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
 
 
@@ -2082,7 +2109,6 @@ int main ( int argc, char **argv )
 			vector<C3VecI> thisE1c_XYZ(nSteps,C3VecI());
 			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
-			//vector<C3VecI> this_e1_dot_df0dv(nSteps,C3VecI());
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
@@ -2105,20 +2131,12 @@ int main ( int argc, char **argv )
 #endif
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
-                // How does the following line work for the GC calculation?
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
 				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
-#if LOWMEM_ORBIT_WRITE >= 1
-                //if(iX==write_iX && iP==write_iP) {
-                //        cout<<"This df0_dv1: "<<thisdf0_dv.c1<<endl;
-                //        cout<<"This df0_dv2: "<<thisdf0_dv.c2<<endl;
-                //        cout<<"This df0_dv3: "<<thisdf0_dv.c3<<endl;
-                //}
-#endif               
 
 				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
 				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
