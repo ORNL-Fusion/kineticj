@@ -1619,13 +1619,11 @@ int main ( int argc, char **argv )
 		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
 		//root.add("eField_fName", libconfig::Setting::TypeString) = "data/kj_aorsa_1d.nc";
 		//root.add("particleList_fName", libconfig::Setting::TypeString) = "data/f.nc";
-		//root.add("runIdent", libconfig::Setting::TypeString) = "thisRun";
 		//cfg.writeFile(cfgName.c_str());
 		
 		// Open the config file
 		cfg.readFile(cfgName.c_str());
 
-		string runIdent = cfg.lookup("runIdent");	
 	    int species_number = cfg.lookup("species_number");
 
 		// Read E
@@ -2939,7 +2937,6 @@ int main ( int argc, char **argv )
 
 		stringstream ncjPFileName;
 		ncjPFileName << "output/";
-		ncjPFileName << runIdent.c_str();
 		// check directory exists
 		struct stat st;
 		if(stat(ncjPFileName.str().c_str(),&st) != 1) {

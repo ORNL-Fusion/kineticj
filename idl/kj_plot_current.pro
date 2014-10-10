@@ -4,35 +4,19 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 
 	cd, current=currentDir
 
-	runFile = 'kj.cfg'
-	cfg = kj_read_cfg (runFile)	
+	cfg = kj_read_cfg (currentDir)	
 
-	openr, lun, runFile, /get_lun
-	runFileArray = ''
-	line = ''
-	while not eof(lun) do begin
-		readf, lun, line
-		runFileArray = [runFileArray,line]
-	endwhile
-	free_lun, lun
-	for f=0,n_elements(runFileArray)-1 do begin
-		if(strMatch(runFileArray[f],'*eField_fName*'))then $
-				eField_fName=(strSplit(runFileArray[f],'"',/extract))[1]
-	endfor
-
-	print, 'eField_fName: ', eField_fName
-
-	cdfId = ncdf_open(eField_fName)
+	cdfId = ncdf_open(cfg['eField_fName'])
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
 		sheath = 0
-		if(strMatch(eField_fName,'*sheath*') $
-				or strMatch(eField_fName,'*mets*') $
-                or strMatch(eField_fName,'*single*') $
-                or strMatch(eField_fName,'*upshift*') $
-                or strMatch(eField_fName,'*ar2_kj*') )then begin
-			if(strMatch(eField_fName,'*sheath*'))then sheath = 1
+		if(strMatch(cfg['eField_fName'],'*sheath*') $
+				or strMatch(cfg['eField_fName'],'*mets*') $
+                or strMatch(cfg['eField_fName'],'*single*') $
+                or strMatch(cfg['eField_fName'],'*upshift*') $
+                or strMatch(cfg['eField_fName'],'*ar2_kj*') )then begin
+			if(strMatch(cfg['eField_fName'],'*sheath*'))then sheath = 1
 			r_ = r[0:-2]+(r[1]-r[0])/2.0
 		endif else begin
 			ncdf_varget, cdfId, 'r_', r_
@@ -68,7 +52,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 	jPt_prevIterate_ = complex(spline(r,jPt_re,r_,spline_sigma),spline(r,jPt_im,r_,spline_sigma))
 	jPz_prevIterate_ = complex(spline(r,jPz_re,r_,spline_sigma),spline(r,jPz_im,r_,spline_sigma))
 
-	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
+	fileList = file_search ( 'output/jP*' )
 
 	cdfId = ncdf_open(fileList[0])
 	ncdf_varget, cdfId, 't', t
@@ -219,7 +203,7 @@ if not keyword_set(noIterate) then begin
 
 	; Write the iteration error to a file for analysis
 
-	nc_id = nCdf_create ('output/kj_itErr_'+cfg.runIdent+'.nc', /clobber )
+	nc_id = nCdf_create ('output/kj_itErr.nc', /clobber )
 
 		nCdf_control, nc_id, /verbose
 
@@ -272,7 +256,7 @@ if not keyword_set(noIterate) then begin
 
 	; Write kj_jP in file for next iterate
 
-	nc_id = nCdf_create ('output/kj_jP_'+cfg.runIdent+'.nc', /clobber )
+	nc_id = nCdf_create ('output/kj_jP.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
@@ -335,58 +319,58 @@ endif
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
 
-	sig33 = j1x/E_at_Jp
+	;sig33 = j1x/E_at_Jp
 
-    print, 'Sig33: ', sig33
+    ;print, 'Sig33: ', sig33
 
-	restore, 'AnalyticSig33.sav'
-	this_margin = 0.2
-	p=plot(SPoints, SPoints_sig33,Layout=[1,3,1],title='sig33',$
-			xRange=[min(SPoints),max(SPoints)],$
-			margin=this_margin, color='grey',thick=2)
-	p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
+	;restore, 'AnalyticSig33.sav'
+	;this_margin = 0.2
+	;p=plot(SPoints, SPoints_sig33,Layout=[1,3,1],title='sig33',$
+	;		xRange=[min(SPoints),max(SPoints)],$
+	;		margin=this_margin, color='grey',thick=2)
+	;p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
 
-	;SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
-	p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2,LineStyle='dash',color='black')
-	p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='maroon',thick=2,LineStyle='dash')
+	;;SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
+	;p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2,LineStyle='dash',color='black')
+	;p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='maroon',thick=2,LineStyle='dash')
 
-	p=plot(xf, sig33,/over,thick=4,color='dark slate grey')
-	p=plot(xf, imaginary(sig33),/over,thick=4,color='orange red')
-	p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='local kPrl',$
-			xRange=[min(SPoints),max(SPoints)],margin=this_margin)
-	p=plot(s_Coord, Eb, Layout=[1,3,3], /current, thick=2, title='ePrl',$
-			xRange=[min(SPoints),max(SPoints)],$
-			margin = this_margin)
-	p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r',margin=this_margin)
+	;p=plot(xf, sig33,/over,thick=4,color='dark slate grey')
+	;p=plot(xf, imaginary(sig33),/over,thick=4,color='orange red')
+	;p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='local kPrl',$
+	;		xRange=[min(SPoints),max(SPoints)],margin=this_margin)
+	;p=plot(s_Coord, Eb, Layout=[1,3,3], /current, thick=2, title='ePrl',$
+	;		xRange=[min(SPoints),max(SPoints)],$
+	;		margin = this_margin)
+	;p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r',margin=this_margin)
 
-	p.save, 'kj_sig33_analytic_comparison.png', resolution=128
-	p.save, 'kj_sig33_analytic_comparison.pdf', /close
+	;p.save, 'kj_sig33_analytic_comparison.png', resolution=128
+	;p.save, 'kj_sig33_analytic_comparison.pdf', /close
 
 
-	; try to reconstruct some Z-function data
+	;; try to reconstruct some Z-function data
 
-   	wpe  = sqrt(n_e*_e^2/(me*e0))
-	k_ = interpol(kb,s_coord,xF,/spline) 
-	K3 = -sig33/(II*wrf*e0)+1	
-	Zeta_Zp = -(K3-1)/(wpe^2)*wrf*k_*vTh
- 	zeta = wrf/(k_*vTh)
-	Zp = Zeta_Zp / zeta
+   	;wpe  = sqrt(n_e*_e^2/(me*e0))
+	;k_ = interpol(kb,s_coord,xF,/spline) 
+	;K3 = -sig33/(II*wrf*e0)+1	
+	;Zeta_Zp = -(K3-1)/(wpe^2)*wrf*k_*vTh
+ 	;zeta = wrf/(k_*vTh)
+	;Zp = Zeta_Zp / zeta
 
-	Z_ = ComplexArr(n_elements(zeta))
-	Zp_ = ComplexArr(n_elements(zeta))	
-	for i=0,n_elements(zeta)-1 do begin
-		Z_[i] = kj_zfunction(zeta[i],k_[i]/abs(k_[i]),Zp=tmp)
-		Zp_[i] = tmp
-	endfor
+	;Z_ = ComplexArr(n_elements(zeta))
+	;Zp_ = ComplexArr(n_elements(zeta))	
+	;for i=0,n_elements(zeta)-1 do begin
+	;	Z_[i] = kj_zfunction(zeta[i],k_[i]/abs(k_[i]),Zp=tmp)
+	;	Zp_[i] = tmp
+	;endfor
 
-	xrange=[-5,5]
-	p=plot(zeta,zP,LineStyle=6,Symbol="o",xrange=xrange)
-	p=plot(zeta,imaginary(zP),LineStyle=6,Symbol="o",sym_color="r",/over)
+	;xrange=[-5,5]
+	;p=plot(zeta,zP,LineStyle=6,Symbol="o",xrange=xrange)
+	;p=plot(zeta,imaginary(zP),LineStyle=6,Symbol="o",sym_color="r",/over)
 
-	iiSorted = sort(zeta)
+	;iiSorted = sort(zeta)
 
-	p=plot(zeta[iiSorted],Zp_[iiSorted],/over,thick=2,transparency=50)
-	p=plot(zeta[iiSorted],imaginary(Zp_[iiSorted]),/over,thick=2,transparency=50,color='r')
-stop
+	;p=plot(zeta[iiSorted],Zp_[iiSorted],/over,thick=2,transparency=50)
+	;p=plot(zeta[iiSorted],imaginary(Zp_[iiSorted]),/over,thick=2,transparency=50,color='r')
+
 
 end
