@@ -124,7 +124,7 @@ pro kj_read_lowmem_orbit
 	free_lun, lun
 
 
-    p=plot3d(x,y,z,aspect_ratio=1.0,aspect_z=1.0)
+    p=plot3d(x,y,z,aspect_ratio=1.0,aspect_z=1.0, xRange=[0.95,1.7], yRange=[-0.5,0.5], zRange=[-0.5,0.5], thick=3, color='b')
 
 	fs = 12
     p=plot(t,e1,layout=[1,3,1], title="e1(t')", font_size=fs)

@@ -1,14 +1,19 @@
-pro kj_write_rsfwc_cfg, cfg, it
+pro kj_write_rsfwc_cfg, cfg, RunDir 
 
-	itStr = string(it+1-1,format='(i+4.3)')
-	;if(it gt 0) then $
-		spawn, 'mv data/rsfwc_input.pro data/rsfwc_input'+itStr+'.pro'
-	openw, lun, 'data/rsfwc_input.pro', /get_lun 	
+    fName = 'rsfwc_input.pro'
+    file_delete, RunDir+fName
+	openw, lun, RunDir+fName, /get_lun 	
 
-		printf, lun, 'kjInput = ', strTrim(string(cfg.kjInput),2)
-		printf, lun, 'kj_jP_fileName = ', "'",cfg.kj_jP_fileName,"'"
-		printf, lun, 'runIdent = ', "'",cfg.runIdent,"'"
-		printf, lun, 'jAmp = ', "'",cfg.jAmp,"'"
+        keys = cfg.keys()
+        for f=0,n_elements(cfg)-1 do begin
+                key = keys[f]
+                value = cfg[keys[f]]
+                if size(value,/type) eq 7 then begin ; just wrap ' ' around string types
+                    printf, lun, key, ' = ', "'",value,"'"
+                endif else begin
+                    printf, lun, key, ' = ', value
+                endelse
+        endfor
 
 	free_lun, lun
 

@@ -1,6 +1,8 @@
-function kj_read_rsfwc_cfg, runFile
+function kj_read_rsfwc_cfg, RunDir
 
-	;runFile = 'data/rsfwc_input.pro'
+    cd, RunDir, current = OldDir
+    RunFile = 'rsfwc_input.pro'
+
 	openr, lun, runFile, /get_lun
 	runFileArray = ''
 	line = ''
@@ -9,30 +11,33 @@ function kj_read_rsfwc_cfg, runFile
 		runFileArray = [runFileArray,line]
 	endwhile
 	free_lun, lun
+    runFileArray = runFileArray[1:-1]
 
-	for f=0,n_elements(runFileArray)-1 do begin
-		if(strMatch(runFileArray[f],'*kj_jP_fileName*'))then begin
-				tmp = strSplit(runFileArray[f],"'",/extract)
-				if n_elements(tmp) ge 2 then begin
-						kj_jP_fileName=(tmp)[1]
-				endif else begin
-						kj_jP_fileName=''
-				endelse
+    h = hash()
+    StrData = StrSplit(RunFileArray,'=',/extract)
+    for f=0,n_elements(StrData)-1 do begin
+        ThisStr = StrData[f]
+        ThisKey = StrTrim(ThisStr[0],2)
+        ThisValue = StrTrim(ThisStr[1],2)
+        ; Determine type of value
+        i = StRegEx(ThisValue,'^[-+]?[0-9]+$',/bool) ; integer
+        d = StRegEx(ThisValue,'^[-+]?[0-9]+\.?[0-9]+$',/bool) ; decimal
 
-		endif
-		if(strMatch(runFileArray[f],'*runIdent*'))then runIdent=(strSplit(runFileArray[f],"'",/extract))[1]
-		if(strMatch(runFileArray[f],'*kjInput*'))then kjInput=fix((strSplit(runFileArray[f],'=',/extract))[1])
-		if(strMatch(runFileArray[f],'*jAmp*'))then jAmp=float((strSplit(runFileArray[f],'=',/extract))[1])
-	endfor
+        if i eq 1 then begin
+                h = h + hash(ThisKey,fix(ThisValue))
+        endif else if d eq 1 then begin
+                h = h + hash(ThisKey,float(ThisValue))
+        endif else begin
+                len = StrLen(ThisValue)
+                str = StrMid(ThisValue,1,len-2)
+                h = h + hash(ThisKey,str)
+        endelse
 
-	cfg = create_struct ( name='rsfwcCfg', $
-			'kj_jP_fileName', kj_jP_fileName, $
-		   	'runIdent', runIdent, $
-			'kjInput', kjInput, $
-		    'jAmp', jAmp )
+    endfor
 
-	return, cfg
+    cd, OldDir
 
+	return, h
 
 end
 

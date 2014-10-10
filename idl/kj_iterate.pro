@@ -3,61 +3,104 @@
 pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
-	if keyword_set(nIterations) then nIt=nIterations else nIt=20
+	if keyword_set(nIterations) then nIt=nIterations else nIt=2
 
-	cd, current=runDir
-	runIdent = file_baseName(runDir)
-	rsfwcCfg = kj_read_rsfwc_cfg('data/rsfwc_input.pro')
-	kjCfg = kj_read_cfg('kj.cfg')
+    KJ_BINRARY = '~/code/kineticj/bin/kineticj'
+    KJ_BINARY_GC = '~/code/kineticj/bin/kineticj-gc'
+ 
+	cd, current=RootRunDir
+    RootRunDir = RootRunDir+'/'
+    RunDir0 = 'mpe_0/k_0/'
+    RsDir = 'rsfwc/'
+    RsRunDir0 = RootRunDir+RunDir0+RsDir
+	RsCfg = kj_read_rsfwc_cfg(RsRunDir0)
 
-	jAmpMax = 50.0
-	jAmpStep = 50.0 
+    kj_jP_FileName = 'kj_jp.nc'
+    rs_FileName = 'rsfwc_1d.nc'
+
+    kjSpecies = ['spec_e','spec_D','spec_H']
+    ElectronSpecStr = kjSpecies[0]
+
+    kjConfigs = []
+    nS = n_elements(kjSpecies)
+    for s=0,nS-1 do begin
+	    kjCfg = kj_read_cfg(RunDir0+kjSpecies[s]+'/')
+        kjConfigs = [kjConfigs,kjCfg]
+    endfor
+
+	jAmpMax = 1.0
+	jAmpStep = 1.0 
 
 	nk = 10 
 	jGuessFileList = strArr(nk)
+
+    if nk gt 10 then stop ; Filenames cannot handle this
+    if nIt+itStart gt 10 then stop ; Filenames cannot handle this either
+
+    ThisRunFolder = ''
 
 	for it=itStart,itStart+nIt-1 do begin
 
 		for k=0,nk-1 do begin
 
-			print, 'Iteration: ', string(it,format='(i3.3)'),' of ', $
-					string(itStart+nIt-1,format='(i3.3)'), ' and sub-it: ', $
+			print, 'MPE Iteration: ', string(it,format='(i3.3)'),' of ', $
+					string(itStart+nIt-1,format='(i3.3)'), ' and Picard iteration: ', $
 					string(k,format='(i3.3)'), ' of ', string(nk-1,format='(i3.3)')
 
-			thisIdent = runIdent+'_'+string(k+1,format='(i3.3)')
-			lastIdent = runIdent+'_'+string(k+1-1,format='(i3.3)')
+            LastRunFoler = ThisRunFolder
+            ThisRunFolder = RootRunDir+'/mpe_'+string(it,format='(i1.1)')+'/k_'+string(k,format='(i1.1)')+'/'
+            ThisRsRunFolder = ThisRunFolder+RsDir
 
-			rsfwcCfg.runIdent = thisIdent 
-			rsfwcCfg.jAmp = ((k+1)*jAmpStep)<jAmpMax
+            if k gt 0 then begin
+                stop 
+                file_delete, ThisRunFolder, /recursive, /allow_nonexistent
+                file_copy, LastRunFolder, ThisRunFolder, /recursive 
+            endif
+
+			RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
 
 			if(k eq 0 and not keyword_set(jPFile) ) then begin
-				rsfwcCfg.kjInput=0 
-				rsfwcCfg.kj_jP_fileName = ''
+				RsCfg['kjInput']=0 
+				RsCfg['kj_jP_fileName'] = ''
 			endif else if(k eq 0 and keyword_set(jPFile) ) then begin
 				print, 'Continuing withh file ... ', jPFile
-				rsfwcCfg.kjInput=1 
-				rsfwcCfg.kj_jP_fileName = jPFile
+				RsCfg['kjInput']=1 
+				RsCfg['kj_jP_fileName'] = jPFile
 			endif else begin
-				rsfwcCfg.kjInput=1
-				rsfwcCfg.kj_jP_fileName = 'kj_jP_'+lastIdent+'.nc'
+				RsCfg['kjInput']=1
+				RsCfg['kj_jP_fileName'] = 'kj_jP.nc'
 			endelse
 
-			kj_write_rsfwc_cfg, rsfwcCfg, k
+			kj_write_rsfwc_cfg, RsCfg, ThisRsRunFolder
 
-			cd, 'data'
+			cd, ThisRsRunFolder
 			spawn, 'idl -quiet run_rsfwc'
-			cd, runDir
+			cd, RootRunDir
 
-			kjCfg.eField_fName = 'data/rsfwc_1d_'+rsfwcCfg.runIdent+'.nc'
-			kjCfg.runIdent = thisIdent 
-			jGuessFileList[k] = 'data/kj_jP_'+kjCfg.runIdent+'.nc'
+            for s=0,nS-1 do begin
 
-			kj_write_kj_cfg, kjCfg, k
+                kjCfg = kjConfigs[s]        
+                ThisKJRunFolder = ThisRunFolder+kjSpecies[s]+'/'
 
-			spawn, '~/code/kineticj/bin/kineticj'
-			spawn, 'idl -quiet run_kj_plot_current'
-			spawn, 'cp output/kj_jP_'+thisIdent+'.nc data/'
+			    kjCfg['eField_fName'] = 'data/'+rs_FileName
 
+			    kj_write_kj_cfg, kjCfg, ThisKJRunFolder 
+
+                file_copy, ThisRsRunFolder+rs_FileName, ThisKJRunFolder+'data/'
+
+                cd, ThisKJRunFolder
+                if StrCmp(kjSpecies[s],ElectronSpecStr) then begin
+			        spawn, KJ_BINARY_GC
+                endif else begin
+			        spawn, KJ_BINARY
+               endelse
+			    spawn, 'idl -quiet run_kj_plot_current'
+            endfor
+
+            ; Sum over the kJ species and then create the list below
+
+			;jGuessFileList[k] = ThisKJRunFolder+'output/kj_jP_'+kjCfg.runIdent+'.nc'
+stop
 		endfor
 
 		; Read the previous n guesses and apply vector extrapolation

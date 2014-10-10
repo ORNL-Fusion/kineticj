@@ -1,6 +1,8 @@
-function kj_read_cfg, runFile
+function kj_read_cfg, RunDir
 
-	;runFile = 'kj.cfg'
+    cd, RunDir, current = OldDir
+    RunFile = 'kj.cfg'
+
 	openr, lun, runFile, /get_lun
 	runFileArray = ''
 	line = ''
@@ -9,33 +11,34 @@ function kj_read_cfg, runFile
 		runFileArray = [runFileArray,line]
 	endwhile
 	free_lun, lun
+    runFileArray = runFileArray[1:-1]
 
-	for f=0,n_elements(runFileArray)-1 do begin
-		if(strMatch(runFileArray[f],'*eField_fName*'))then eField_fName=(strSplit(runFileArray[f],'"',/extract))[1]
-		;if(strMatch(runFileArray[f],'*particleList_fName*'))then particleList_fName=(strSplit(runFileArray[f],'"',/extract))[1]
-		if(strMatch(runFileArray[f],'*runIdent*'))then runIdent=(strSplit(runFileArray[f],'"',/extract))[1] 
-		if(strMatch(runFileArray[f],'*xGridMin*'))then xGridMin=float((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*xGridMax*'))then xGridMax=float((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*nXGrid*'))then nXGrid=fix((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*nRFCycles*'))then nRFCycles=fix((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*nStepsPerCycle*'))then nStepsPerCycle=fix((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*nJpCycles*'))then nJpCycles=fix((strSplit(runFileArray[f],'=,;',/extract))[1])
-		if(strMatch(runFileArray[f],'*nJpPerCycle*'))then nJpPerCycle=fix((strSplit(runFileArray[f],'=,;',/extract))[1])
-	endfor
+    h = hash()
+    StrData = StrSplit(RunFileArray,'=,;',/extract)
+    for f=0,n_elements(StrData)-1 do begin
+        ThisStr = StrData[f]
+        ThisKey = StrTrim(ThisStr[0],2)
+        ThisValue = StrTrim(ThisStr[1],2)
+        ; Determine type of value
+        i = StRegEx(ThisValue,'^[-+]?[0-9]+$',/bool) ; integer
+        d = StRegEx(ThisValue,'^[-+]?[0-9]+\.?[0-9]+$',/bool) ; decimal
 
-	cfg = create_struct ( name='kjCfg', $
-			'xGridMin', xGridMin, $
-			'xGridMax', xGridMax, $
-			'nXGrid', nXGrid, $
-			'nRFCycles', nRFCycles, $
-			'nStepsPerCycle', nStepsPerCycle, $
-			'nJpCycles', nJpCycles, $
-			'nJpPerCycle', nJpPerCycle, $
-			;'particleList_fName', particleList_fName, $
-			'runIdent', runIdent, $
-			'eField_fName', eField_fName )
+        if i eq 1 then begin
+                h = h + hash(ThisKey,fix(ThisValue))
+        endif else if d eq 1 then begin
+                h = h + hash(ThisKey,float(ThisValue))
+        endif else begin
+                len = StrLen(ThisValue)
+                str = StrMid(ThisValue,1,len-2)
+                h = h + hash(ThisKey,str)
+        endelse
 
-	return, cfg
+    endfor
+
+    cd, OldDir
+
+	return, h
+
 end 
 
 

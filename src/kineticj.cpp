@@ -1921,8 +1921,8 @@ int main ( int argc, char **argv )
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        T_keV[iX] = 0.0001;//kj_interp1D(xGrid[iX],r,n_m3);
-        //T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
+        //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
@@ -2001,7 +2001,7 @@ int main ( int argc, char **argv )
 		//if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
 
 		complex<float> _i (0.0,1.0);	
-		complex<float> wrf_c (wrf,wrf*0.001);
+		complex<float> wrf_c (wrf,wrf*0.0025);
 		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
 		hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
