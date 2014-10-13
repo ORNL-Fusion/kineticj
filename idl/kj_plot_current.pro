@@ -183,11 +183,11 @@ if not keyword_set(noIterate) then begin
 		jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
 		jROut_ = complex(spline(xf,real_part(j1x),r_,spline_sigma),spline(xf,imaginary(j1x),r_,spline_sigma))
 
-		jTOut = jROut*0
-		jTOut_ = jROut_*0
+		jTOut  = complex(spline(xf,real_part(j1y),r,spline_sigma),spline(xf,imaginary(j1y),r,spline_sigma))    
+		jTOut_ = complex(spline(xf,real_part(j1y),r_,spline_sigma),spline(xf,imaginary(j1y),r_,spline_sigma))  
 
-		jZOut = jROut*0
-		jZOut_ = jROut_*0
+		jZOut  = complex(spline(xf,real_part(j1z),r,spline_sigma),spline(xf,imaginary(j1z),r,spline_sigma))    
+		jZOut_ = complex(spline(xf,real_part(j1z),r_,spline_sigma),spline(xf,imaginary(j1z),r_,spline_sigma))  
 
 	endelse
 
@@ -223,36 +223,36 @@ if not keyword_set(noIterate) then begin
 	nCdf_close, nc_id
 
 
-	; Plot comparison with previous iterate
+	;; Plot comparison with previous iterate
 
-	xrange = [min(r),max(r)]
+	;xrange = [min(r),max(r)]
 
-	if not keyword_set(sig33) then begin
-	if(not sheath)then begin
-		c_pb_re=plot(r_prevIterate,jPr_prevIterate,$
-				thick=3.0,$
-				xrange=xRange,$
-				name='prevIterate_re',$
-				color='b',$
-				window_title='kj',$
-				buffer=1,$
-				dimensions=[1200,400])
-		c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
-	endif	
-	if(sheath)then begin
-		pk_re=plot(xF/lambda_D,j1x,thick=3.0,name='kj_re',color='black')
-		pk_im=plot(xF/lambda_D,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
-	endif else begin
-		pk_re=plot(xF,j1x,thick=3.0,name='kj_re',color='black',/over)
-		pk_im=plot(xF,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
-	endelse
+	;if not keyword_set(sig33) then begin
+	;if(not sheath)then begin
+	;	c_pb_re=plot(r_prevIterate,jPr_prevIterate,$
+	;			thick=3.0,$
+	;			xrange=xRange,$
+	;			name='prevIterate_re',$
+	;			color='b',$
+	;			window_title='kj',$
+	;			buffer=1,$
+	;			dimensions=[1200,400])
+	;	c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
+	;endif	
+	;if(sheath)then begin
+	;	pk_re=plot(xF/lambda_D,j1x,thick=3.0,name='kj_re',color='black')
+	;	pk_im=plot(xF/lambda_D,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
+	;endif else begin
+	;	pk_re=plot(xF,j1x,thick=3.0,name='kj_re',color='black',/over)
+	;	pk_im=plot(xF,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
+	;endelse
 
-	if(not sheath)then begin
-	l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
-			position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
-	endif
-	c_pb_re.save, 'kj_jP.png', resolution=72
-	endif
+	;if(not sheath)then begin
+	;l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
+	;		position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
+	;endif
+	;c_pb_re.save, 'kj_jP.png', resolution=72
+	;endif
 
 	; Write kj_jP in file for next iterate
 
@@ -318,59 +318,5 @@ endif
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
-
-	;sig33 = j1x/E_at_Jp
-
-    ;print, 'Sig33: ', sig33
-
-	;restore, 'AnalyticSig33.sav'
-	;this_margin = 0.2
-	;p=plot(SPoints, SPoints_sig33,Layout=[1,3,1],title='sig33',$
-	;		xRange=[min(SPoints),max(SPoints)],$
-	;		margin=this_margin, color='grey',thick=2)
-	;p=plot(SPoints, imaginary(SPoints_sig33),/over,color='r',thick=2)
-
-	;;SPoints_sig33_FApprox = SPoints_sig33_FApprox/1e6
-	;p=plot(SPoints, SPoints_sig33_FApprox,/over,thick=2,LineStyle='dash',color='black')
-	;p=plot(SPoints, imaginary(SPoints_sig33_FApprox),/over,color='maroon',thick=2,LineStyle='dash')
-
-	;p=plot(xf, sig33,/over,thick=4,color='dark slate grey')
-	;p=plot(xf, imaginary(sig33),/over,thick=4,color='orange red')
-	;p=plot(s_Coord, kb, Layout=[1,3,2], /current, thick=2, color='g',title='local kPrl',$
-	;		xRange=[min(SPoints),max(SPoints)],margin=this_margin)
-	;p=plot(s_Coord, Eb, Layout=[1,3,3], /current, thick=2, title='ePrl',$
-	;		xRange=[min(SPoints),max(SPoints)],$
-	;		margin = this_margin)
-	;p=plot(s_Coord, imaginary(Eb), /over, thick=2, color='r',margin=this_margin)
-
-	;p.save, 'kj_sig33_analytic_comparison.png', resolution=128
-	;p.save, 'kj_sig33_analytic_comparison.pdf', /close
-
-
-	;; try to reconstruct some Z-function data
-
-   	;wpe  = sqrt(n_e*_e^2/(me*e0))
-	;k_ = interpol(kb,s_coord,xF,/spline) 
-	;K3 = -sig33/(II*wrf*e0)+1	
-	;Zeta_Zp = -(K3-1)/(wpe^2)*wrf*k_*vTh
- 	;zeta = wrf/(k_*vTh)
-	;Zp = Zeta_Zp / zeta
-
-	;Z_ = ComplexArr(n_elements(zeta))
-	;Zp_ = ComplexArr(n_elements(zeta))	
-	;for i=0,n_elements(zeta)-1 do begin
-	;	Z_[i] = kj_zfunction(zeta[i],k_[i]/abs(k_[i]),Zp=tmp)
-	;	Zp_[i] = tmp
-	;endfor
-
-	;xrange=[-5,5]
-	;p=plot(zeta,zP,LineStyle=6,Symbol="o",xrange=xrange)
-	;p=plot(zeta,imaginary(zP),LineStyle=6,Symbol="o",sym_color="r",/over)
-
-	;iiSorted = sort(zeta)
-
-	;p=plot(zeta[iiSorted],Zp_[iiSorted],/over,thick=2,transparency=50)
-	;p=plot(zeta[iiSorted],imaginary(Zp_[iiSorted]),/over,thick=2,transparency=50,color='r')
-
 
 end

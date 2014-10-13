@@ -5,7 +5,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
 
-    KJ_BINRARY = '~/code/kineticj/bin/kineticj'
+    KJ_BINARY = '~/code/kineticj/bin/kineticj'
     KJ_BINARY_GC = '~/code/kineticj/bin/kineticj-gc'
  
 	cd, current=RootRunDir
@@ -47,14 +47,17 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 					string(itStart+nIt-1,format='(i3.3)'), ' and Picard iteration: ', $
 					string(k,format='(i3.3)'), ' of ', string(nk-1,format='(i3.3)')
 
-            LastRunFoler = ThisRunFolder
-            ThisRunFolder = RootRunDir+'/mpe_'+string(it,format='(i1.1)')+'/k_'+string(k,format='(i1.1)')+'/'
+            LastRunFolder = ThisRunFolder
+            ThisMPEDir = 'mpe_'+string(it,format='(i1.1)')+'/'
+            ThisPicardDir = 'k_'+string(k,format='(i1.1)')+'/'
+            ThisRunFolder = RootRunDir+ThisMPEDir+ThisPicardDir
             ThisRsRunFolder = ThisRunFolder+RsDir
 
             if k gt 0 then begin
                 stop 
                 file_delete, ThisRunFolder, /recursive, /allow_nonexistent
                 file_copy, LastRunFolder, ThisRunFolder, /recursive 
+                file_copy, jGuessFileList[k-1], ThisRsRunFolder
             endif
 
 			RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
@@ -86,7 +89,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 
 			    kj_write_kj_cfg, kjCfg, ThisKJRunFolder 
 
-                file_copy, ThisRsRunFolder+rs_FileName, ThisKJRunFolder+'data/'
+                file_copy, ThisRsRunFolder+rs_FileName, ThisKJRunFolder+'data/', /overwrite
 
                 cd, ThisKJRunFolder
                 if StrCmp(kjSpecies[s],ElectronSpecStr) then begin
@@ -97,9 +100,13 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 			    spawn, 'idl -quiet run_kj_plot_current'
             endfor
 
+            cd, RootRunDir+ThisMPEDir+ThisPicardDir
+
             ; Sum over the kJ species and then create the list below
 
-			;jGuessFileList[k] = ThisKJRunFolder+'output/kj_jP_'+kjCfg.runIdent+'.nc'
+            kj_sum_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName
+
+			jGuessFileList[k] = RootRunDir+ThisMPEDir+ThisPicardDir+kj_jP_FileName 
 stop
 		endfor
 
