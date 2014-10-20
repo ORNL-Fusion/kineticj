@@ -8,6 +8,19 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
 
     nS = n_elements(FilesToSum)
 
+    kjTmp = kj_read_kj_jp(FilesToSum[0])
+
+    nR = n_elements(kjTmp.jPr)
+    nR_ = n_elements(kjTmp.jPr_)
+
+    jPr_spec  = ComplexArr(nR,nS)
+    jPr_spec_ = ComplexArr(nR_,nS)
+    jPt_spec  = ComplexArr(nR,nS)
+    jPt_spec_ = ComplexArr(nR_,nS)
+    jPz_spec  = ComplexArr(nR,nS)
+    jPz_spec_ = ComplexArr(nR_,nS)
+
+
     for s=0,nS-1 do begin
 
         kj = kj_read_kj_jp(FilesToSum[s])
@@ -34,6 +47,14 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
 
         endelse
 
+        jPr_spec[*,s]  = kj.jPr
+        jPr_spec_[*,s] = kj.jPr_
+        jPt_spec[*,s]  = kj.jPt
+        jPt_spec_[*,s] = kj.jPt_
+        jPz_spec[*,s]  = kj.jPz
+        jPz_spec_[*,s] = kj.jPz_
+
+
         yRange = [-4,4]
         p=plot(kj.r, kj.jPr, yRange=yRange, layout=[nS,3,s+1], /current, title=FilesToSum[s])
         p=plot(kj.r, imaginary(kj.jPr), color='r',/over,yRange=yRange)
@@ -47,7 +68,6 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
     endfor
 
 
-
 	; Write kj_jP in file for next iterate
 
 	nc_id = nCdf_create (OutFileName, /clobber )
@@ -57,6 +77,7 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
 	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(kj.r) )
 	nrH_id = nCdf_dimDef ( nc_id, 'nR_', n_elements(kj.r_) )
 	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
+    nS_id = nCdf_dimDef( nc_id, 'nSpec', nS)
 
 	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
 	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
@@ -75,6 +96,21 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
 	jP_p_im_id_ = nCdf_varDef ( nc_id, 'jP_p_im_', nrH_id, /float )
 	jP_z_re_id_ = nCdf_varDef ( nc_id, 'jP_z_re_', nrH_id, /float )
 	jP_z_im_id_ = nCdf_varDef ( nc_id, 'jP_z_im_', nrH_id, /float )
+
+	jP_r_re_spec_id = nCdf_varDef ( nc_id, 'jP_r_re_spec', [nr_id,nS_id], /float )
+	jP_r_im_spec_id = nCdf_varDef ( nc_id, 'jP_r_im_spec', [nr_id,nS_id], /float )
+	jP_p_re_spec_id = nCdf_varDef ( nc_id, 'jP_p_re_spec', [nr_id,nS_id], /float )
+	jP_p_im_spec_id = nCdf_varDef ( nc_id, 'jP_p_im_spec', [nr_id,nS_id], /float )
+	jP_z_re_spec_id = nCdf_varDef ( nc_id, 'jP_z_re_spec', [nr_id,nS_id], /float )
+	jP_z_im_spec_id = nCdf_varDef ( nc_id, 'jP_z_im_spec', [nr_id,nS_id], /float )
+
+	jP_r_re_spec_id_ = nCdf_varDef ( nc_id, 'jP_r_re_spec_', [nrH_id,nS_id], /float )
+	jP_r_im_spec_id_ = nCdf_varDef ( nc_id, 'jP_r_im_spec_', [nrH_id,nS_id], /float )
+	jP_p_re_spec_id_ = nCdf_varDef ( nc_id, 'jP_p_re_spec_', [nrH_id,nS_id], /float )
+	jP_p_im_spec_id_ = nCdf_varDef ( nc_id, 'jP_p_im_spec_', [nrH_id,nS_id], /float )
+	jP_z_re_spec_id_ = nCdf_varDef ( nc_id, 'jP_z_re_spec_', [nrH_id,nS_id], /float )
+	jP_z_im_spec_id_ = nCdf_varDef ( nc_id, 'jP_z_im_spec_', [nrH_id,nS_id], /float )
+
 
 	nCdf_control, nc_id, /enDef
 
@@ -96,6 +132,21 @@ pro kj_sum_spec_jp, FilesToSum, SumFileName = SumFileName
 	nCdf_varPut, nc_id, jP_p_im_id_, imaginary(jPSum_t_) 
 	nCdf_varPut, nc_id, jP_z_re_id_, real_part(jPSum_z_)
 	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jPSum_z_) 
+
+	nCdf_varPut, nc_id, jP_r_re_spec_id, real_part(jPr_spec)
+	nCdf_varPut, nc_id, jP_r_im_spec_id, imaginary(jPr_spec) 
+	nCdf_varPut, nc_id, jP_p_re_spec_id, real_part(jPt_spec)
+	nCdf_varPut, nc_id, jP_p_im_spec_id, imaginary(jPt_spec) 
+	nCdf_varPut, nc_id, jP_z_re_spec_id, real_part(jPz_spec)
+	nCdf_varPut, nc_id, jP_z_im_spec_id, imaginary(jPz_spec) 
+
+	nCdf_varPut, nc_id, jP_r_re_spec_id_, real_part(jPr_spec_)
+	nCdf_varPut, nc_id, jP_r_im_spec_id_, imaginary(jPr_spec_) 
+	nCdf_varPut, nc_id, jP_p_re_spec_id_, real_part(jPt_spec_)
+	nCdf_varPut, nc_id, jP_p_im_spec_id_, imaginary(jPt_spec_) 
+	nCdf_varPut, nc_id, jP_z_re_spec_id_, real_part(jPz_spec_)
+	nCdf_varPut, nc_id, jP_z_im_spec_id_, imaginary(jPz_spec_) 
+
 
 	nCdf_close, nc_id
 
