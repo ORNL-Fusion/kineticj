@@ -18,7 +18,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
     kj_jP_FileName = 'kj_jp.nc'
     rs_FileName = 'rsfwc_1d.nc'
 
-    kjSpecies = ['spec_e','spec_D','spec_H']
+    kjSpecies = ['spec_D','spec_H','spec_e'] ; The order here MUST match the RSFWC spec order (i.e., electrons last)
     ElectronSpecStr = kjSpecies[0]
 
     kjConfigs = []
