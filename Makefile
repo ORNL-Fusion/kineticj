@@ -134,5 +134,5 @@ include $(DEP)
 endif
 
 clean:
-	-@rm $(NAME) $(OBJ) $(DEP) .dep/src/*
+	-@rm -f $(NAME) $(OBJ) $(DEP) .dep/src/*
 

@@ -1,7 +1,9 @@
 pro kj_plot_orbit
 
 	runFile = 'kj.cfg'
-	cfg = kj_read_cfg (runFile)	
+    RunDir = '.'
+	;cfg = kj_read_cfg (runFile)
+    cfg = kj_read_cfg (runDir)
 
 	; Read particle list
 
