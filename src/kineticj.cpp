@@ -122,6 +122,8 @@ class C3VecI {
 		public:
 				complex<float> c1, c2, c3;
 
+
+                C3VecI (int _const) {c1=_const;c2=_const;c3=_const;};
 				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
 				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 
@@ -618,20 +620,6 @@ C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
         return xyz;
 }
 
-// First-order orbits
-C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
-				const vector<C3Vec> &b0Vec, const vector<C3VecI> &e1, const float wrf ) {
-
-	C3Vec b0(0,0,0), F;
-
-	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
-	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
-
-	return F*(p.q/p.m);	
-}
-
 C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
 
     status = 0;
@@ -694,6 +682,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	}
 
 }
+
 
 template<class TYPE>
 TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
@@ -811,8 +800,6 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	}
 
 }
-
-
 
 float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
 
@@ -1055,15 +1042,10 @@ float GetBetComp ( const float vPer, const float phs ) {
 }
 
 
-
-
-// Zero-order orbits
-C3Vec rk4_evalf ( CParticle &p, const float &t, 
-				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
+				const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
 			  	const vector<float> &rVec, int &status ) {
 
-	// Interpolate b0 at location in CYL
-	
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
     _p = 0; // Really need to do something about this.
@@ -1095,7 +1077,16 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 	cout << "\tp.q/p.m: " << p.q/p.m << endl;
 #endif
 
-	return v_x_b0*(p.q/p.m);	
+	return v_x_b0*(p.q/p.m);
+
+}
+
+// Zero-order orbits
+C3Vec rk4_evalf ( CParticle &p, const float &t, 
+				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+			  	const vector<float> &rVec, int &status ) {
+
+        return GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
 }
 
 // Zero-order orbits
@@ -1178,6 +1169,72 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 		cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << endl;
 		cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << endl;
 #endif
+        return status;
+}
+
+// First-order orbits
+C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec &x,
+				const vector<C3Vec> &b0Vec_CYL,const vector<float> &rVec,
+                 const vector<C3Vec> &e1REVec_XYZ,const vector<C3Vec> &e1IMVec_XYZ,
+                  const float wrf, int &status ) {
+
+    C3Vec Fb0 = GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
+
+	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
+	float _p = atan2 ( x.c2, x.c1 );
+    _p = 0; // Really need to do something about this.
+
+    C3Vec Fe1, e1RE_XYZ, e1IM_XYZ, e1_XYZ;
+    
+    float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
+    
+	e1RE_XYZ = kj_interp1D ( _r, rVec, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp1D ( _r, rVec, e1IMVec_XYZ, p, status );
+    
+    ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
+    ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
+    ez_a = sqrt( pow( e1RE_XYZ.c3,2) + pow( e1IM_XYZ.c3,2));
+    
+    ex_p = atan2(e1IM_XYZ.c1,e1RE_XYZ.c1);
+    ey_p = atan2(e1IM_XYZ.c2,e1RE_XYZ.c2);
+    ez_p = atan2(e1IM_XYZ.c3,e1RE_XYZ.c3);
+    
+	e1_XYZ = C3Vec(ex_a*cos(ex_p) , ey_a*cos(ey_p), ez_a*cos(ez_p) );
+    
+    Fe1 = (p.q/p.m)*e1_XYZ;
+
+	return Fb0;
+	//return Fb0 + Fe1;
+}
+
+// First-order orbits
+int rk4_move ( CParticle &p, float dt, float t0, 
+				const vector<C3Vec> &b0, const vector<float> &r,
+                 const vector<C3Vec> &e1Re,  const vector<C3Vec> &e1Im, const float wrf ) {
+
+        int status = 0;
+		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
+		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
+
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, r, e1Re, e1Im, wrf, status ) * dt;
+		x1 = k1 * dt;                                               
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		x2 = k2 * dt;                                               
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		x3 = k3 * dt;                                               
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		x4 = k4 * dt;
+
+		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
+		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+
+		p.c1 = xn1.c1;
+		p.c2 = xn1.c2;
+		p.c3 = xn1.c3;
+		p.v_c1 = yn1.c1;
+		p.v_c2 = yn1.c2;
+		p.v_c3 = yn1.c3;
+
         return status;
 }
 
@@ -1366,37 +1423,6 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 return status;
 }
 
-
-// First-order orbits
-int rk4_move ( CParticle &p, float dt, float t0, 
-				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
-
-        int status = 0;
-		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
-		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
-
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, e1, wrf ) * dt;	
-		x1 = k1 * dt;                                               
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, e1, wrf ) * dt;	
-		x2 = k2 * dt;                                               
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, e1, wrf ) * dt;	
-		x3 = k3 * dt;                                               
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
-		x4 = k4 * dt;
-
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
-
-		p.c1 = xn1.c1;
-		p.c2 = xn1.c2;
-		p.c3 = xn1.c3;
-		p.v_c1 = yn1.c1;
-		p.v_c2 = yn1.c2;
-		p.v_c3 = yn1.c3;
-
-        return status;
-}
-
 float maxwellian ( float vx, float vy, float vz, float vTh ) {
 
     float weight_x = 1.0 / (vTh*sqrt(_pi)) * exp ( -pow(vx,2) / pow(vTh,2) );
@@ -1490,7 +1516,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
         else{
         
             float vxRange = vTh * nThermal * 2;
-             vxMin	= -vxRange / 2.0;
+             vxMin	=  -vxRange / 2.0;
              dvx = vxRange / (nPx-1);
         }
 
@@ -1947,7 +1973,9 @@ int main ( int argc, char **argv )
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
         b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
         //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
-        T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
+        //T_keV[iX] = 2.0;
+        T_keV[iX] = 0.01;
+        //kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
     float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
@@ -1983,8 +2011,8 @@ int main ( int argc, char **argv )
     float cyclotronPeriod = 2*_pi / wc;
 	//float dtMin 	= -tRF/nStepsPerCycle;
     float dtMin 	= -cyclotronPeriod/nStepsPerCycle;
-	//int nSteps 	= nRFCycles*nStepsPerCycle+1;
-	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
+	int nSteps 	= nRFCycles*nStepsPerCycle;
+	//int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
     bool SaveSingleOrbit = cfg.lookup("SaveSingleOribt");
 
 	for(int iX=0;iX<nXGrid;iX++) {
@@ -2161,7 +2189,10 @@ int main ( int argc, char **argv )
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
                                 r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
 #else
-				int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+				//int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+
+                int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
+                
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
 #if DEBUG_MOVE >=1 
@@ -2309,7 +2340,7 @@ int main ( int argc, char **argv )
                     
                 }
                 else{
-                        if ( i % (int)floor(nSteps/1000) == 0){
+                        if ( i % (int)floor(nSteps/nRFCycles) == 0){
                         OrbitFile<<scientific;
                         OrbitFile<< thisT[i]
                                 <<"    "<< thisPos.c1
