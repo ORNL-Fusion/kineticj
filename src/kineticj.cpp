@@ -80,6 +80,7 @@ class CParticle: public CSpecies {
                 float vPar, vPer, gyroPhase, u, vTh;
                 float vAlp, vBet, phs;
 
+//////// These are function declarations that need to be specified?
 				CParticle ();
 				CParticle ( double _amu, int _Z);
 				CParticle (float c1, float c2, float c3, 
@@ -1611,6 +1612,82 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 }
 
 
+// Blob of particles to integrate at each point in velocity space
+// Initially created as the phase space particles of Larmor radius about the configuration space point
+
+vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV,
+                                        float n_m3, int nPblob, int nThermal, float &dv, C3Vec b0_XYZ) {
+
+        vector<CParticle> pList;
+
+        pList.resize(nPblob);
+
+        float m = amu * _mi;
+		float vTh = get_vTh ( amu, Z, T_keV );
+    
+        float TestIntegratedValue = 0;
+    
+        C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
+        C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+
+        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0))/mag(b0_XYZ)
+        C3Vec b0_perp2_XYZ = cross(b0_XYZ, b0_perp1_XYZ);
+
+        float rL = (P.m*P.vPer)/(abs(P.q)*mag(b0_XYZ));
+
+/////Can I assume that vPer is already in P?
+
+       // pList[cnt].vPar = thisV_abp.c3;
+       // pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+        //pList[cnt].gyroPhase = GetGyroPhase(thisV_abp);
+        //pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
+
+
+        int cnt = 0;
+        for(int i=0;i<nPblob;i++) {
+
+              float weight = maxwellian(P.v_c1,P.v_c2,P.v_c3,vTh) * n_m3; // What is n_m3?
+//              TestIntegratedValue += weight * dv;
+ 	            CParticle p_tmp (P.c1 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
+                                P.c2 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
+                                P.c3 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
+                                P.v_c1,
+                                P.v_c2,
+                                P.v_c3,
+                                amu,Z,weight);
+
+                    pList[cnt] = p_tmp;
+                    pList[cnt].number = cnt;
+                    pList[cnt].vTh = vTh;
+
+                    pList[cnt].d3v = dv;
+
+                    // Get vPar, vPer and mu for guiding center integration
+
+                    float bMag = mag (b0_XYZ);
+                    float vMag = mag (thisV_XYZ);
+
+#if DEBUG_MAXWELLIAN >=2 
+                    cout<<"ThisVx: "<<thisvx<<endl;
+                    cout<<"ThisVy: "<<thisvy<<endl;
+                    cout<<"ThisVz: "<<thisvz<<endl;
+                    cout<<"vMag: "<<vMag<<endl;
+                    cout<<"vPer: "<<pList[cnt].vPer<<endl;
+                    cout<<"vPar: "<<pList[cnt].vPar<<endl;
+                    cout<<"u: "<<pList[cnt].u<<endl<<endl;
+                    if(isnan(pList[cnt].u)) exit(1);
+#endif                    
+                    cnt++;
+                }
+
+#if DEBUG_MAXWELLIAN >=1 
+        cout << "TestIntegratedValue: " << TestIntegratedValue << endl;
+#endif
+        return pList;
+}
+
+
+
 // Calculate the jP given some known E and f(v)
 
 int main ( int argc, char **argv )
@@ -1954,35 +2031,45 @@ int main ( int argc, char **argv )
 
 
 	float wrf = freq * 2 * _pi;
-	float xGridMin = cfg.lookup("xGridMin");
-	float xGridMax = cfg.lookup("xGridMax");
-	int nXGrid = cfg.lookup("nXGrid");
-	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid), wrf_wc(nXGrid);
-    vector<C3Vec> b0_XYZ_T_at_xGrid(nXGrid);
-	float xGridRng = 0;
-	float xGridStep = 0;
+    
+	float rGridMin = cfg.lookup("rGridMin");
+	float rGridMax = cfg.lookup("rGridMax");
+	int nRGrid = cfg.lookup("nRGrid");
+
+	float zGridMin = cfg.lookup("zGridMin");
+	float zGridMax = cfg.lookup("zGridMax");
+	int nZGrid = cfg.lookup("nZGrid");
+
+	float phiGridMin = cfg.lookup("phiGridMin");
+	float phiGridMax = cfg.lookup("phiGridMax");
+	int nPhiGrid = cfg.lookup("nPhiGrid");
+
+	vector<float> rGrid(nRGrid), density_m3(nRGrid), T_keV(nRGrid), wrf_wc(nRGrid);
+    vector<C3Vec> b0_XYZ_T_at_rGrid(nRGrid);
+	float rGridRng = 0;
+	float rGridStep = 0;
 	
-	if(nXGrid>1) {
-		xGridRng = xGridMax-xGridMin;
-		xGridStep = xGridRng/(nXGrid-1);
+	if(nRGrid>1) {
+		rGridRng = rGridMax-rGridMin;
+		rGridStep = rGridRng/(nRGrid-1);
 	}
 
-	for(int iX=0;iX<nXGrid;iX++) {
-		xGrid[iX] = xGridMin+iX*xGridStep;
+	for(int iR=0;iR<nRGrid;iR++) {
+		rGrid[iR] = rGridMin+iR*rGridStep;
         int iStat;
-        density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
-        b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
+        density_m3[iR] = kj_interp1D(rGrid[iR],r,n_m3,iStat);
+        b0_XYZ_T_at_rGrid[iR] = kj_interp1D(xGrid[iR],r,b0_XYZ,iStat);
         //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
         //T_keV[iX] = 2.0;
-        T_keV[iX] = 0.01;
+        T_keV[iR] = 0.01;
         //kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
-    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
+    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_rGrid);
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
-	//
+    
 #if USEPAPI >= 1
 	cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 	papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
@@ -2006,7 +2093,9 @@ int main ( int argc, char **argv )
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
-	int nP = nPx*nPy*nPz;
+//	int nP = nPx*nPy*nPz;
+	int nP = nPx*nPy*nPz*nRGrid;
+    int nPblob = cfg.lookup("nPblob");
     float wc = Z*_e*MaxB0/(amu*_mi);
     float cyclotronPeriod = 2*_pi / wc;
 	//float dtMin 	= -tRF/nStepsPerCycle;
@@ -2015,10 +2104,11 @@ int main ( int argc, char **argv )
 	//int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
     bool SaveSingleOrbit = cfg.lookup("SaveSingleOribt");
 
-	for(int iX=0;iX<nXGrid;iX++) {
-		float this_wc =	Z*_e*mag(b0_XYZ_T_at_xGrid[iX])/(amu*_mi);
-		wrf_wc[iX] =  wrf / this_wc;
+	for(int iR=0;iR<nRGrid;iR++) {
+		float this_wc =	Z*_e*mag(b0_XYZ_T_at_rGrid[iR])/(amu*_mi);
+		wrf_wc[iR] =  wrf / this_wc;
 	}
+
 
 	//vector<CParticle> particles_XYZ_0(particles_XYZ);
 
@@ -2062,26 +2152,31 @@ int main ( int argc, char **argv )
 
 
 
-	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
+	vector<vector<float> > j1x(nRGrid), j1y(nRGrid), j1z(nRGrid);
 #if LOWMEM >= 1
-	vector<complex<float> > j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
+	vector<complex<float> > j1xc(nRGrid), j1yc(nRGrid), j1zc(nRGrid);
 #else
-	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
+	vector<vector<complex<float> > >j1xc(nRGrid), j1yc(nRGrid), j1zc(nRGrid);
 #endif
 
 #if defined(_OPENMP)
         int nThreads;
 #endif
+
+
+//// For 1-D configuration space, create nPx*nPy*nPZ phase space particles
+    vector<CParticle> ThisParticleList(create_particles(rGrid[iR],amu,Z,T_keV[iR],density_m3[iR],
+                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+
  
 	#pragma omp parallel for private(istat)
-	for(int iX=0;iX<nXGrid;iX++) {
+	for(int iP=0;iP<nP;iP++) {
 
 #if defined(_OPENMP)
         nThreads = omp_get_num_threads();
 #endif
         float dv;
-        vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
-                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+//////////////////////// Between here and loop over blob, need to be careful with initializing j
 #if !(LOWMEM >= 1)
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
@@ -2117,7 +2212,12 @@ int main ( int argc, char **argv )
 		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
 		vector<complex<float> > f1c(nP);
 
-		for(int iP=0;iP<nP;iP++) {
+        vector<CParticle> ParticleBlobList(create_particle_blob(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
+                                nPblob,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+
+////////// Loop over blob
+
+		for(int iPblob=0;iPblob<nPblob;iPblob++) {
 
 			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitE1_im_XYZ(nSteps,C3Vec(0,0,0));
@@ -2125,7 +2225,7 @@ int main ( int argc, char **argv )
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
 
-			CParticle thisParticle_XYZ(ThisParticleList[iP]);
+			CParticle thisParticle_XYZ(ThisParticleList[iPblob]);
 
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
