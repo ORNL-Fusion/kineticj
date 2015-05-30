@@ -681,9 +681,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
 	}
-
 }
-
 
 template<class TYPE>
 TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
@@ -1204,8 +1202,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     Fe1 = (p.q/p.m)*e1_XYZ;
 
-	return Fb0;
-	//return Fb0 + Fe1;
+	//return Fb0;
+	return Fb0 + Fe1;
 }
 
 // First-order orbits
@@ -1586,6 +1584,7 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
                     C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
 
                     pList[cnt].vPar = thisV_abp.c3;
+                    
                     pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
                     pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
                     pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
@@ -1628,44 +1627,51 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
         float TestIntegratedValue = 0;
     
         C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
-        C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
 
-        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0))/mag(b0_XYZ)
+        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0))/mag(b0_XYZ);
         C3Vec b0_perp2_XYZ = cross(b0_XYZ, b0_perp1_XYZ);
 
-        float rL = (P.m*P.vPer)/(abs(P.q)*mag(b0_XYZ));
+        cout << "P.v            "  << P.v_c1 << " , "<< P.v_c2 << " , "<< P.v_c3  << endl;
 
-/////Can I assume that vPer is already in P?
+/// Now assume that vPar, vPer is in P
+//        C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+//        float vPar = thisV_abp.c3;
+//        float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
 
-       // pList[cnt].vPar = thisV_abp.c3;
-       // pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
-        //pList[cnt].gyroPhase = GetGyroPhase(thisV_abp);
-        //pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
+        float rL = (m*P.v_c2)/(abs(P.q)*mag(b0_XYZ));
 
-
+//        cout << "thisV_abp            "  << thisV_abp.c1 << " , "<< thisV_abp.c2 << " , "<< thisV_abp.c3  << endl;
+//        cout << "vPer              "  << vPer << endl;
+//        cout << "rL                "  << rL << endl;
+//        cout << "P.m               "  << P.m << endl;
+//        cout << "P.q               "  << P.q << endl;
+//        cout << "b0_XYZ            "  << b0_XYZ.c1 << " , "<< b0_XYZ.c2 << " , "<< b0_XYZ.c3  << endl;
+        C3Vec P_CYL = C3Vec(P.c1, P.c2, P.c2);
+        C3Vec P_XYZ = CYL_to_XYZ(P_CYL);
+    
         int cnt = 0;
         for(int i=0;i<nPblob;i++) {
 
-              float weight = maxwellian(P.v_c1,P.v_c2,P.v_c3,vTh) * n_m3; // What is n_m3?
+              float weight = maxwellian(P.v_c1,P.v_c2,P.v_c3,vTh) * n_m3; // n_m3 = density? (why "_3" ?)
 //              TestIntegratedValue += weight * dv;
- 	            CParticle p_tmp (P.c1 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
-                                P.c2 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
-                                P.c3 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
-                                P.v_c1,
-                                P.v_c2,
-                                P.v_c3,
+ 	            CParticle p_tmp (P_XYZ.c1 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
+                                P_XYZ.c2 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
+                                P_XYZ.c3 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
+                                P.v_c2*( -sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
+                                P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
+                                P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
                                 amu,Z,weight);
 
-                    pList[cnt] = p_tmp;
-                    pList[cnt].number = cnt;
-                    pList[cnt].vTh = vTh;
+                pList[cnt] = p_tmp;
+                pList[cnt].number = cnt;
+                pList[cnt].vTh = vTh;
 
-                    pList[cnt].d3v = dv;
+                pList[cnt].d3v = dv;
 
-                    // Get vPar, vPer and mu for guiding center integration
+                // Get vPar, vPer and mu for guiding center integration
 
-                    float bMag = mag (b0_XYZ);
-                    float vMag = mag (thisV_XYZ);
+                float bMag = mag (b0_XYZ);
+                float vMag = mag (thisV_XYZ);
 
 #if DEBUG_MAXWELLIAN >=2 
                     cout<<"ThisVx: "<<thisvx<<endl;
@@ -1677,8 +1683,8 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
                     cout<<"u: "<<pList[cnt].u<<endl<<endl;
                     if(isnan(pList[cnt].u)) exit(1);
 #endif                    
-                    cnt++;
-                }
+                cnt++;
+        }
 
 #if DEBUG_MAXWELLIAN >=1 
         cout << "TestIntegratedValue: " << TestIntegratedValue << endl;
@@ -2036,13 +2042,8 @@ int main ( int argc, char **argv )
 	float rGridMax = cfg.lookup("rGridMax");
 	int nRGrid = cfg.lookup("nRGrid");
 
-	float zGridMin = cfg.lookup("zGridMin");
-	float zGridMax = cfg.lookup("zGridMax");
-	int nZGrid = cfg.lookup("nZGrid");
-
-	float phiGridMin = cfg.lookup("phiGridMin");
-	float phiGridMax = cfg.lookup("phiGridMax");
-	int nPhiGrid = cfg.lookup("nPhiGrid");
+	int nVparGrid = cfg.lookup("nVparGrid");
+	int nVperGrid = cfg.lookup("nVperGrid");
 
 	vector<float> rGrid(nRGrid), density_m3(nRGrid), T_keV(nRGrid), wrf_wc(nRGrid);
     vector<C3Vec> b0_XYZ_T_at_rGrid(nRGrid);
@@ -2054,14 +2055,23 @@ int main ( int argc, char **argv )
 		rGridStep = rGridRng/(nRGrid-1);
 	}
 
+
+///////////////////////
+/////////////
+///// NEED TO FIX:      b0_XYZ_T_at_rGrid is defined only for configuration space points
+/////////               there will be an error if more than one particle in PrimaryWorkList, e.g. doing a scan over Vx for a single configuration space point
+/////////               Initial fix: just take index 0 for all Vx points
+//////////////////////
+
+
 	for(int iR=0;iR<nRGrid;iR++) {
 		rGrid[iR] = rGridMin+iR*rGridStep;
         int iStat;
         density_m3[iR] = kj_interp1D(rGrid[iR],r,n_m3,iStat);
-        b0_XYZ_T_at_rGrid[iR] = kj_interp1D(xGrid[iR],r,b0_XYZ,iStat);
+        b0_XYZ_T_at_rGrid[iR] = kj_interp1D(rGrid[iR],r,b0_XYZ,iStat);
         //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
         //T_keV[iX] = 2.0;
-        T_keV[iR] = 0.01;
+        T_keV[iR] = 0.1;
         //kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
@@ -2093,8 +2103,7 @@ int main ( int argc, char **argv )
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
-//	int nP = nPx*nPy*nPz;
-	int nP = nPx*nPy*nPz*nRGrid;
+	int nP = nPx*nPy*nPz;
     int nPblob = cfg.lookup("nPblob");
     float wc = Z*_e*MaxB0/(amu*_mi);
     float cyclotronPeriod = 2*_pi / wc;
@@ -2103,15 +2112,12 @@ int main ( int argc, char **argv )
 	int nSteps 	= nRFCycles*nStepsPerCycle;
 	//int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
     bool SaveSingleOrbit = cfg.lookup("SaveSingleOribt");
-
+    int nList;
+    
 	for(int iR=0;iR<nRGrid;iR++) {
 		float this_wc =	Z*_e*mag(b0_XYZ_T_at_rGrid[iR])/(amu*_mi);
 		wrf_wc[iR] =  wrf / this_wc;
 	}
-
-
-	//vector<CParticle> particles_XYZ_0(particles_XYZ);
-
 
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -2150,8 +2156,6 @@ int main ( int argc, char **argv )
 		hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
 
-
-
 	vector<vector<float> > j1x(nRGrid), j1y(nRGrid), j1z(nRGrid);
 #if LOWMEM >= 1
 	vector<complex<float> > j1xc(nRGrid), j1yc(nRGrid), j1zc(nRGrid);
@@ -2162,43 +2166,65 @@ int main ( int argc, char **argv )
 #if defined(_OPENMP)
         int nThreads;
 #endif
+        float dv;
 
+//////////// Initialize primary phase space worklist: for kineticj this means (x,0.0,0.0,vperp=0?,vpar=0?)
+    nList = nRGrid;   // for scan over R
+  //  nList = nVparGrid;  // for scan over Vpar
+    
+    cout << "nList     " << nList << endl;
+    
+    vector<CParticle> PrimaryWorkList;
+    PrimaryWorkList.resize(nList);
+    
+    float vth_part = get_vTh(amu, Z,T_keV[0]);
+    vector<float> VparGrid(nVparGrid);
 
-//// For 1-D configuration space, create nPx*nPy*nPZ phase space particles
-    vector<CParticle> ThisParticleList(create_particles(rGrid[iR],amu,Z,T_keV[iR],density_m3[iR],
-                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
+		VparGrid[iVpar] = vth_part + iVpar*(vth_part/nVparGrid);
+    }
 
+    for (int iList=0;iList<nList;iList++){
+    
+    ///// kineticj
+    //     PrimaryWorkList[iList] = CParticle(rGrid[iList],0.0,0.0, vth_part*2.0 ,vth_part*2.0 ,vth_part*2.0,amu,Z,0.0);
+    
+    ////  dc, for Dvx vs Vx
+    //       PrimaryWorkList[iList] = CParticle(rGrid[0],0.0,0.0, VxGrid[iList] ,0.0,0.0,amu,Z,0.0);
+    
+    ///  dc, for Dvpar vs R, velocity is in (vpar, vper, gyroPhase)
+           PrimaryWorkList[iList] = CParticle(rGrid[iList],0.0,0.0, 0.0,vth_part,0.0,amu,Z,0.0);
+    }
  
 	#pragma omp parallel for private(istat)
-	for(int iP=0;iP<nP;iP++) {
+	for(int iList=0;iList<nList;iList++) {
 
 #if defined(_OPENMP)
         nThreads = omp_get_num_threads();
 #endif
-        float dv;
-//////////////////////// Between here and loop over blob, need to be careful with initializing j
+
 #if !(LOWMEM >= 1)
-		j1x[iX].resize(nJp);
-		j1xc[iX].resize(nJp);
+		j1x[iList].resize(nJp);
+		j1xc[iList].resize(nJp);
 
-		j1y[iX].resize(nJp);
-		j1yc[iX].resize(nJp);
+		j1y[iList].resize(nJp);
+		j1yc[iList].resize(nJp);
 
-		j1z[iX].resize(nJp);
-		j1zc[iX].resize(nJp);
+		j1z[iList].resize(nJp);
+		j1zc[iList].resize(nJp);
 #endif
 #if CLOCK >= 1
         clock_t startTime = clock();
 #endif
 #if LOWMEM >= 1
-        j1xc[iX] = complex<float>(0,0);
-        j1yc[iX] = complex<float>(0,0);
-        j1zc[iX] = complex<float>(0,0);
+        j1xc[iList] = complex<float>(0,0);
+        j1yc[iList] = complex<float>(0,0);
+        j1zc[iList] = complex<float>(0,0);
 #else
 		for(int jt=0;jt<nJp;jt++) {
-            j1xc[iX][jt] = complex<float>(0,0);
-            j1yc[iX][jt] = complex<float>(0,0);
-            j1zc[iX][jt] = complex<float>(0,0);
+            j1xc[iList][jt] = complex<float>(0,0);
+            j1yc[iList][jt] = complex<float>(0,0);
+            j1zc[iList][jt] = complex<float>(0,0);
         }
 #endif
 
@@ -2212,20 +2238,48 @@ int main ( int argc, char **argv )
 		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
 		vector<complex<float> > f1c(nP);
 
-        vector<CParticle> ParticleBlobList(create_particle_blob(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
-                                nPblob,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+//// kineticj: 1-D create nPx*nPy*nPZ phase space particles
+//        vector<CParticle> ThisParticleList(create_particles(PrimaryWorkList[iList].c1,amu,Z,T_keV[iList],density_m3[iList],
+//                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
+        
+/////// dc: create blob, e.g. Larmor orbit
+        nP = nPblob;
+        
+        ///b0_XYZ_T_at_rGrid[0] assumes a single configuration space point!
+        //vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+        //                        nP,nThermal,dv,b0_XYZ_T_at_rGrid[0]));
 
-////////// Loop over blob
+        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+                                nP,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
 
-		for(int iPblob=0;iPblob<nPblob;iPblob++) {
+        cout << "nP       " << nP << endl;
+        cout << "iList       " << iList << endl;
+        
+/// Save particles to file to test
+//
+        if (iList == 10){
+            ofstream ParticleFile;
+            ParticleFile.open("output/particles.txt", ios::out | ios::trunc);
+            ParticleFile << rGrid[iList] <<"    "<< 0.0 <<"    "<< 0.0 << endl;
+            
+            for(int iP=0;iP <nP;iP++) {
+            
+            ParticleFile <<         ThisParticleList[iP].c1
+                        <<"    "<<  ThisParticleList[iP].c2
+                        <<"    "<<  ThisParticleList[iP].c3
+                        << endl;
+            }
+        }
+//        ParticleFile.close;
 
+		for(int iP=0;iP <nP;iP++) {
 			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitE1_im_XYZ(nSteps,C3Vec(0,0,0));
 
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
 
-			CParticle thisParticle_XYZ(ThisParticleList[iPblob]);
+			CParticle thisParticle_XYZ(ThisParticleList[iP]);
 
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
@@ -2239,7 +2293,7 @@ int main ( int argc, char **argv )
 
             stringstream OrbitFileName;
             OrbitFileName << "output/orbit";
-            OrbitFileName << setw(3) << setfill('0') << iP;
+            OrbitFileName << '_' << iList << '_' << setw(3) << setfill('0') << iP;
             OrbitFileName << ".txt";
             
             int write_iX;
@@ -2249,7 +2303,7 @@ int main ( int argc, char **argv )
                  write_iX = 0;
                  write_iP = 5;
                
-                if(iX==write_iX && iP==write_iP) {
+                if(iList==write_iX && iP==write_iP) {
                     cout<<"Write Particle Properties:"<<endl;
                     cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
                     cout<<" v1: "<<thisParticle_XYZ.v_c1<<endl;
@@ -2257,7 +2311,7 @@ int main ( int argc, char **argv )
                     cout<<" v3: "<<thisParticle_XYZ.v_c3<<endl;
 
                     OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
-                    OrbitFile<<"wc / wrf: "<< wrf_wc[iX]<<endl;
+                    OrbitFile<<"wc / wrf: "<< wrf_wc[iList]<<endl;
                     OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
                     v1File.open("output/orbit_v1.txt", ios::out | ios::trunc);
                     v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
@@ -2270,8 +2324,8 @@ int main ( int argc, char **argv )
             
              else{
                 OrbitFile.open(OrbitFileName.str().c_str(), ios::out | ios::trunc);
-                OrbitFile<<"wc / wrf: "<< wrf_wc[iX]<<endl;
-                OrbitFile<<" t  x  y  z vx vy vz  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+                OrbitFile<<"wc / wrf: "<< wrf_wc[iList]<<endl;
+                OrbitFile<<" t  x  y  z vpar vper  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
             }
 #endif    
 			// generate  orbit and get time-harmonic e along it
@@ -2310,7 +2364,7 @@ int main ( int argc, char **argv )
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
-				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
+				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
 				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
 				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
@@ -2393,7 +2447,7 @@ int main ( int argc, char **argv )
 
                 if(SaveSingleOrbit){
                 
-                    if(iX==write_iX && iP==write_iP) {
+                    if(iList==write_iX && iP==write_iP) {
                         df0dv_File<<scientific;
                         df0dv_File<< thisT[i]
                                 <<"    "<< thisVel_XYZ.c1
@@ -2410,7 +2464,7 @@ int main ( int argc, char **argv )
                                 << endl;
                     }
      
-                    if(iX==write_iX && iP==write_iP) {
+                    if(iList==write_iX && iP==write_iP) {
                         OrbitFile<<scientific;
                         OrbitFile<< thisT[i]
                                 <<"    "<< thisPos.c1
@@ -2430,7 +2484,7 @@ int main ( int argc, char **argv )
                                 <<"    "<< imag(thisB1c_XYZ[i].c3)
                                 << endl;
                     }
-                    if(iX==write_iX && iP==write_iP) {
+                    if(iList==write_iX && iP==write_iP) {
                         e1_dot_grad_File<<scientific;
                         e1_dot_grad_File<< thisT[i]
                                 <<"    "<< real(this_e1_dot_gradvf0[i])
@@ -2441,14 +2495,22 @@ int main ( int argc, char **argv )
                 }
                 else{
                         if ( i % (int)floor(nSteps/nRFCycles) == 0){
-                        OrbitFile<<scientific;
-                        OrbitFile<< thisT[i]
+                            int tmp_Stat;
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
+                            float vPar = thisV_abp.c3;
+                            float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+
+                            OrbitFile<<scientific;
+                            OrbitFile<< thisT[i]
                                 <<"    "<< thisPos.c1
                                 <<"    "<< thisPos.c2
                                 <<"    "<< thisPos.c3
-                                <<"    "<< thisVel_XYZ.c1
-                                <<"    "<< thisVel_XYZ.c2
-                                <<"    "<< thisVel_XYZ.c3
+//                                <<"    "<< thisVel_XYZ.c1
+//                                <<"    "<< thisVel_XYZ.c2
+//                                <<"    "<< thisVel_XYZ.c3
+                                <<"    "<< vPar
+                                <<"    "<< vPer
                                 <<"    "<< real(thisE1c_XYZ[i].c1)
                                 <<"    "<< imag(thisE1c_XYZ[i].c1)
                                 <<"    "<< real(thisE1c_XYZ[i].c2)
@@ -2468,14 +2530,14 @@ int main ( int argc, char **argv )
 #endif
 			}
 #if LOWMEM_ORBIT_WRITE >= 1
-            if(iX==write_iX && iP==write_iP) {
+            if(iList==write_iX && iP==write_iP) {
                 OrbitFile.close();
             }
 #endif
 			complex<float> this_f1c = -qOverm * intVecArray ( thisT, this_e1_dot_gradvf0 );
 
 #if LOWMEM_ORBIT_WRITE >= 1
-            if(iX==write_iX && iP==write_iP) {
+            if(iList==write_iX && iP==write_iP) {
 
                 complex<float> tmp = 0.0;
                 for(int i=0;i<nSteps;i++) {
@@ -2507,9 +2569,9 @@ int main ( int argc, char **argv )
 				//j1yc[iX] += h * ( v0y_i*f1yc[iP] ); 
 				//j1zc[iX] += h * ( v0z_i*f1zc[iP] ); 
 
-				j1xc[iX] += h * ( v0x_i*f1c[iP] ); 
-				j1yc[iX] += h * ( v0y_i*f1c[iP] ); 
-				j1zc[iX] += h * ( v0z_i*f1c[iP] ); 
+				j1xc[iList] += h * ( v0x_i*f1c[iP] );
+				j1yc[iList] += h * ( v0y_i*f1c[iP] );
+				j1zc[iList] += h * ( v0z_i*f1c[iP] );
 			}
 		}
 
@@ -3142,7 +3204,7 @@ int main ( int argc, char **argv )
 	
 	//cout << "Writing jP to file ... ";
 
-	for(int iX=0;iX<nXGrid;iX++) {
+	for(int iList=0;iList<nList;iList++) {
 
 		stringstream ncjPFileName;
 		ncjPFileName << "output/";
@@ -3152,7 +3214,7 @@ int main ( int argc, char **argv )
 			int mkDirStat = mkdir(ncjPFileName.str().c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 		}
 		ncjPFileName << "/jP_";
-		ncjPFileName << setw(3) << setfill('0') << iX;
+		ncjPFileName << setw(3) << setfill('0') << iList;
 		ncjPFileName << ".nc"; 	
 #if DEBUGLEVEL >= 1
 		cout<<ncjPFileName.str().c_str()<<endl;
@@ -3181,25 +3243,25 @@ int main ( int argc, char **argv )
 		NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re",ncFloat,nc_scalar);
 		NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im",ncFloat,nc_scalar);
 
-		nc_x.putVar(&xGrid[iX]);
+		nc_x.putVar(&rGrid[iList]);
 		nc_freq.putVar(&freq);
 
 		vector<size_t> startp (1,0);
 		vector<size_t> countp (1,nJp);
 
 #if LOWMEM >= 1
-		float tmpJxRe = real(j1xc[iX]);
-		float tmpJxIm = imag(j1xc[iX]);
+		float tmpJxRe = real(j1xc[iList]);
+		float tmpJxIm = imag(j1xc[iList]);
 		nc_j1xc_re.putVar(&tmpJxRe);
 		nc_j1xc_im.putVar(&tmpJxIm);
 
-		float tmpJyRe = real(j1yc[iX]);
-		float tmpJyIm = imag(j1yc[iX]);
+		float tmpJyRe = real(j1yc[iList]);
+		float tmpJyIm = imag(j1yc[iList]);
 		nc_j1yc_re.putVar(&tmpJyRe);
 		nc_j1yc_im.putVar(&tmpJyIm);
 
-	    float tmpJzRe = real(j1zc[iX]);
-		float tmpJzIm = imag(j1zc[iX]);
+	    float tmpJzRe = real(j1zc[iList]);
+		float tmpJzIm = imag(j1zc[iList]);
 		nc_j1zc_re.putVar(&tmpJzRe);
 		nc_j1zc_im.putVar(&tmpJzIm);
 #else 
