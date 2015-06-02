@@ -2041,44 +2041,6 @@ int main ( int argc, char **argv )
 
 	float wrf = freq * 2 * _pi;
     
-	float rGridMin = cfg.lookup("rGridMin");
-	float rGridMax = cfg.lookup("rGridMax");
-	int nRGrid = cfg.lookup("nRGrid");
-
-	int nVparGrid = cfg.lookup("nVparGrid");
-	int nVperGrid = cfg.lookup("nVperGrid");
-
-	vector<float> rGrid(nRGrid), density_m3(nRGrid), T_keV(nRGrid), wrf_wc(nRGrid);
-    vector<C3Vec> b0_XYZ_T_at_rGrid(nRGrid);
-	float rGridRng = 0;
-	float rGridStep = 0;
-	
-	if(nRGrid>1) {
-		rGridRng = rGridMax-rGridMin;
-		rGridStep = rGridRng/(nRGrid-1);
-	}
-
-
-///////////////////////
-/////////////
-///// NEED TO FIX:      b0_XYZ_T_at_rGrid is defined only for configuration space points
-/////////               there will be an error if more than one particle in PrimaryWorkList, e.g. doing a scan over Vx for a single configuration space point
-/////////               Initial fix: just take index 0 for all Vx points
-//////////////////////
-
-
-	for(int iR=0;iR<nRGrid;iR++) {
-		rGrid[iR] = rGridMin+iR*rGridStep;
-        int iStat;
-        density_m3[iR] = kj_interp1D(rGrid[iR],r,n_m3,iStat);
-        b0_XYZ_T_at_rGrid[iR] = kj_interp1D(rGrid[iR],r,b0_XYZ,iStat);
-        //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
-        //T_keV[iX] = 2.0;
-        T_keV[iR] = 0.01;
-        //kj_interp1D(xGrid[iX],r,n_m3);
-	}
-
-    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_rGrid);
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
@@ -2108,6 +2070,84 @@ int main ( int argc, char **argv )
     int nThermal = cfg.lookup("nThermal");
 	int nP = nPx*nPy*nPz;
     int nPblob = cfg.lookup("nPblob");
+    int nList;
+    
+#if defined(_OPENMP)
+        int nThreads;
+#endif
+        float dv;
+
+//////////// Initialize primary phase space worklist:
+	float rGridMin = cfg.lookup("rGridMin");
+	float rGridMax = cfg.lookup("rGridMax");
+	int nRGrid = cfg.lookup("nRGrid");
+
+	int nVparGrid = cfg.lookup("nVparGrid");
+	int nVperGrid = cfg.lookup("nVperGrid");
+
+    nList = nRGrid*nVparGrid*nVperGrid;
+    cout << "nList     " << nList << endl;
+
+	vector<float> rGrid(nRGrid), density_m3(nList), T_keV(nList), wrf_wc(nList);
+    vector<C3Vec> b0_XYZ_T_at_List(nList);
+    
+    vector<float> VparGrid(nVparGrid), VperGrid(nVperGrid);
+    
+    vector<CParticle> PrimaryWorkList;
+    PrimaryWorkList.resize(nList);
+    
+    float rGridRng = 0;
+	float rGridStep = 0;
+	
+	if(nRGrid>1) {
+		rGridRng = rGridMax-rGridMin;
+		rGridStep = rGridRng/(nRGrid-1);
+	}
+
+    for (int iList=0;iList<nList;iList++){
+        T_keV[iList] = 0.01;
+    }
+    
+    float vth_part = get_vTh(amu, Z,T_keV[0]);
+
+    /// initialize (rGrid, VparGrid, VperGrid)
+	for(int iR=0;iR<nRGrid;iR++) {
+		rGrid[iR] = rGridMin+iR*rGridStep;
+    }
+	
+	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
+		VparGrid[iVpar] = 0.0*vth_part + iVpar*(vth_part/nVparGrid);
+    }
+    
+	for(int iVper=0;iVper<nVperGrid;iVper++) {
+		VperGrid[iVper] = vth_part + iVper*(vth_part/nVperGrid);
+    }
+    
+    // initialize primary worklist (assuming y,z,gyrophase = 0)
+    for (int iList=0;iList<nList;iList++){
+           int iR = iList % nList ;
+            int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
+            int iVper = int(floor(iList/(nRGrid*nVparGrid)));
+        
+           PrimaryWorkList[iList] = CParticle(rGrid[iR], 0.0, 0.0, VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0);
+    }
+    
+    // Initialize other variables on worklist, density, Bfield, etc
+    for (int iList=0;iList<nList;iList++){
+        int iStat;
+        density_m3[iList] = kj_interp1D(PrimaryWorkList[iList].c1,r,n_m3,iStat);
+        b0_XYZ_T_at_List[iList] = kj_interp1D(PrimaryWorkList[iList].c1,r,b0_XYZ,iStat);
+    }
+
+    for (int iList=0;iList<nList;iList++){
+    float this_wc =	Z*_e*mag(b0_XYZ_T_at_List[iList])/(amu*_mi);
+		wrf_wc[iList] =  wrf / this_wc;
+	}
+
+//	for(int iR=0;iR<nRGrid;iR++) {
+//	}
+
+    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_List);
     float wc = Z*_e*MaxB0/(amu*_mi);
     float cyclotronPeriod = 2*_pi / wc;
 	//float dtMin 	= -tRF/nStepsPerCycle;
@@ -2115,12 +2155,7 @@ int main ( int argc, char **argv )
 	int nSteps 	= nRFCycles*nStepsPerCycle;
 	//int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
     bool SaveSingleOrbit = cfg.lookup("SaveSingleOribt");
-    int nList;
-    
-	for(int iR=0;iR<nRGrid;iR++) {
-		float this_wc =	Z*_e*mag(b0_XYZ_T_at_rGrid[iR])/(amu*_mi);
-		wrf_wc[iR] =  wrf / this_wc;
-	}
+
 
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
@@ -2166,39 +2201,7 @@ int main ( int argc, char **argv )
 	vector<vector<complex<float> > >j1xc(nRGrid), j1yc(nRGrid), j1zc(nRGrid);
 #endif
 
-#if defined(_OPENMP)
-        int nThreads;
-#endif
-        float dv;
 
-//////////// Initialize primary phase space worklist: for kineticj this means (x,0.0,0.0,vperp=0?,vpar=0?)
-    nList = nRGrid;   // for scan over R
-  //  nList = nVparGrid;  // for scan over Vpar
-    
-    cout << "nList     " << nList << endl;
-    
-    vector<CParticle> PrimaryWorkList;
-    PrimaryWorkList.resize(nList);
-    
-    float vth_part = get_vTh(amu, Z,T_keV[0]);
-    vector<float> VparGrid(nVparGrid);
-
-	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
-		VparGrid[iVpar] = vth_part + iVpar*(vth_part/nVparGrid);
-    }
-
-    for (int iList=0;iList<nList;iList++){
-    
-    ///// kineticj
-    //     PrimaryWorkList[iList] = CParticle(rGrid[iList],0.0,0.0, vth_part*2.0 ,vth_part*2.0 ,vth_part*2.0,amu,Z,0.0);
-    
-    ////  dc, for Dvx vs Vx
-    //       PrimaryWorkList[iList] = CParticle(rGrid[0],0.0,0.0, VxGrid[iList] ,0.0,0.0,amu,Z,0.0);
-    
-    ///  dc, for Dvpar vs R, velocity is in (vpar, vper, gyroPhase)
-           PrimaryWorkList[iList] = CParticle(rGrid[iList],0.0,0.0, 0.0,vth_part,0.0,amu,Z,0.0);
-    }
- 
 	#pragma omp parallel for private(istat)
 	for(int iList=0;iList<nList;iList++) {
 
@@ -2253,7 +2256,7 @@ int main ( int argc, char **argv )
         //                        nP,nThermal,dv,b0_XYZ_T_at_rGrid[0]));
 
         vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-                                nP,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
+                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
 
         cout << "nP       " << nP << endl;
         cout << "iList       " << iList << endl;
