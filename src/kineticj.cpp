@@ -1076,6 +1076,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 	cout << "\tp.q/p.m: " << p.q/p.m << endl;
 #endif
 
+
 	return v_x_b0*(p.q/p.m);
 
 }
@@ -1201,9 +1202,11 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 	e1_XYZ = C3Vec(ex_a*cos(ex_p) , ey_a*cos(ey_p), ez_a*cos(ez_p) );
     
     Fe1 = (p.q/p.m)*e1_XYZ;
+ //   cout << "Fb0     " << Fb0.c1 << "     " << Fb0.c2 << "    " << Fb0.c3 << endl;
+ //   cout << "p.q,   p.m     " << p.q << "     " << p.m  << endl;
 
-	//return Fb0;
-	return Fb0 + Fe1;
+	return Fb0;
+	//return Fb0 + (1.0e6)*Fe1;
 }
 
 // First-order orbits
@@ -1628,24 +1631,16 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
     
         C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
 
-        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0))/mag(b0_XYZ);
+        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0));
+        b0_perp1_XYZ = b0_perp1_XYZ/mag(b0_perp1_XYZ);
+    
+    
         C3Vec b0_perp2_XYZ = cross(b0_XYZ, b0_perp1_XYZ);
-
-        cout << "P.v            "  << P.v_c1 << " , "<< P.v_c2 << " , "<< P.v_c3  << endl;
-
-/// Now assume that vPar, vPer is in P
-//        C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
-//        float vPar = thisV_abp.c3;
-//        float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+        b0_perp2_XYZ = b0_perp2_XYZ/mag(b0_perp2_XYZ);
+    
 
         float rL = (m*P.v_c2)/(abs(P.q)*mag(b0_XYZ));
 
-//        cout << "thisV_abp            "  << thisV_abp.c1 << " , "<< thisV_abp.c2 << " , "<< thisV_abp.c3  << endl;
-//        cout << "vPer              "  << vPer << endl;
-//        cout << "rL                "  << rL << endl;
-//        cout << "P.m               "  << P.m << endl;
-//        cout << "P.q               "  << P.q << endl;
-//        cout << "b0_XYZ            "  << b0_XYZ.c1 << " , "<< b0_XYZ.c2 << " , "<< b0_XYZ.c3  << endl;
         C3Vec P_CYL = C3Vec(P.c1, P.c2, P.c2);
         C3Vec P_XYZ = CYL_to_XYZ(P_CYL);
     
@@ -1657,10 +1652,18 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
  	            CParticle p_tmp (P_XYZ.c1 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
                                 P_XYZ.c2 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
                                 P_XYZ.c3 + rL*(cos(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + sin(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
-                                P.v_c2*( -sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
+                                P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c1 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c1),
                                 P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c2 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c2),
                                 P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3),
                                 amu,Z,weight);
+
+//        cout << "b0_XYZ   " << b0_XYZ.c1 << "   " << b0_XYZ.c2 << "    " << b0_XYZ.c3 << endl;
+//        cout << "b0_perp1_XYZ   " << b0_perp1_XYZ.c1 << "   " << b0_perp1_XYZ.c2 << "    " << b0_perp1_XYZ.c3 << endl;
+//        cout << "b0_perp2_XYZ   " << b0_perp2_XYZ.c1 << "   " << b0_perp2_XYZ.c2 << "    " << b0_perp2_XYZ.c3 << endl;
+//        cout << "mag(b0perp1)    " << mag(b0_perp1_XYZ) << endl;
+//        cout << "mag(b0perp2)    " << mag(b0_perp2_XYZ) << endl;
+//        cout << "b0perp1 dot b0perp2    " << b0_perp1_XYZ.c1*b0_perp2_XYZ.c1 + b0_perp1_XYZ.c2*b0_perp2_XYZ.c2 + b0_perp1_XYZ.c3*b0_perp2_XYZ.c3 << endl;
+//        cout << "v_perp      " << pow(p_tmp.v_c1,2) + pow(p_tmp.v_c3,2) << endl;
 
                 pList[cnt] = p_tmp;
                 pList[cnt].number = cnt;
@@ -2071,7 +2074,7 @@ int main ( int argc, char **argv )
         b0_XYZ_T_at_rGrid[iR] = kj_interp1D(rGrid[iR],r,b0_XYZ,iStat);
         //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
         //T_keV[iX] = 2.0;
-        T_keV[iR] = 0.1;
+        T_keV[iR] = 0.01;
         //kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
@@ -2257,20 +2260,25 @@ int main ( int argc, char **argv )
         
 /// Save particles to file to test
 //
-        if (iList == 10){
+        if (iList == 30){
             ofstream ParticleFile;
             ParticleFile.open("output/particles.txt", ios::out | ios::trunc);
-            ParticleFile << rGrid[iList] <<"    "<< 0.0 <<"    "<< 0.0 << endl;
+ //           ParticleFile << rGrid[iList] <<"    "<< 0.0 <<"    "<< 0.0 <<    <<     <<     << endl;
             
             for(int iP=0;iP <nP;iP++) {
             
-            ParticleFile <<         ThisParticleList[iP].c1
+            ParticleFile <<  std::fixed << std::setprecision(8) <<
+                     ThisParticleList[iP].c1
                         <<"    "<<  ThisParticleList[iP].c2
                         <<"    "<<  ThisParticleList[iP].c3
+                        <<"    "<<  ThisParticleList[iP].v_c1
+                        <<"    "<<  ThisParticleList[iP].v_c2
+                        <<"    "<<  ThisParticleList[iP].v_c3
+                        <<"    "<<  sqrt(ThisParticleList[iP].v_c1*ThisParticleList[iP].v_c1 + ThisParticleList[iP].v_c3*ThisParticleList[iP].v_c3)
                         << endl;
             }
         }
-//        ParticleFile.close;
+      //  ParticleFile.close();
 
 		for(int iP=0;iP <nP;iP++) {
 			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
@@ -2495,20 +2503,19 @@ int main ( int argc, char **argv )
                 }
                 else{
                         if ( i % (int)floor(nSteps/nRFCycles) == 0){
+    //                      if ( i % 1 == 0){
+    
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
 
-                            OrbitFile<<scientific;
-                            OrbitFile<< thisT[i]
+                            //OrbitFile<<scientific;
+                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i]
                                 <<"    "<< thisPos.c1
                                 <<"    "<< thisPos.c2
                                 <<"    "<< thisPos.c3
-//                                <<"    "<< thisVel_XYZ.c1
-//                                <<"    "<< thisVel_XYZ.c2
-//                                <<"    "<< thisVel_XYZ.c3
                                 <<"    "<< vPar
                                 <<"    "<< vPer
                                 <<"    "<< real(thisE1c_XYZ[i].c1)
@@ -2598,7 +2605,7 @@ int main ( int argc, char **argv )
 
 		vector<CParticle> this_particles_XYZ(particles_XYZ);
 		for(int iP=0;iP<particles_XYZ.size();iP++) {
-				this_particles_XYZ[iP].c1 = xGrid[iX];
+				this_particles_XYZ[iP].c1 = rGrid[iR];
 		}
 		// Generate linear orbits
 		vector<vector<C3Vec> > orbits_XYZ(this_particles_XYZ.size());
@@ -2964,8 +2971,8 @@ int main ( int argc, char **argv )
 						else // This is the reflective piece of the current
 						{
 							if(
-								(orbits_XYZ[iP][i].c1>xGrid[iX]&&orbits_XYZ[iP][i-1].c1<xGrid[iX]) ||
-						   		(orbits_XYZ[iP][i].c1<xGrid[iX]&&orbits_XYZ[iP][i-1].c1>xGrid[iX]) ){
+								(orbits_XYZ[iP][i].c1>rGrid[iR]&&orbits_XYZ[iP][i-1].c1<xGrid[iR]) ||
+						   		(orbits_XYZ[iP][i].c1<rGrid[iR]&&orbits_XYZ[iP][i-1].c1>xGrid[iR]) ){
 
 								float _t = tJp[jt]+thisT[i];
 								float _jt_float;
