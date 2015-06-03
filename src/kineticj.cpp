@@ -1085,9 +1085,11 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
 			  	const vector<float> &rVec, int &status ) {
+    
+        C3Vec Fb0 = GetFb0(p, v_XYZ, x, b0Vec_CYL, rVec, status);
 
-        return GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
-}
+        return Fb0;
+        }
 
 // Zero-order orbits
 int rk4_move ( CParticle &p, const float &dt, const float &t0, 
@@ -1122,6 +1124,7 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 		p.v_c1 = yn1.c1;
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
+
 
 #if _PARTICLE_BOUNDARY == 1
 		// Particle absorbing walls
@@ -1178,7 +1181,9 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
                  const vector<C3Vec> &e1REVec_XYZ,const vector<C3Vec> &e1IMVec_XYZ,
                   const float wrf, int &status ) {
 
+
     C3Vec Fb0 = GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
+    
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
@@ -1202,11 +1207,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 	e1_XYZ = C3Vec(ex_a*cos(ex_p) , ey_a*cos(ey_p), ez_a*cos(ez_p) );
     
     Fe1 = (p.q/p.m)*e1_XYZ;
- //   cout << "Fb0     " << Fb0.c1 << "     " << Fb0.c2 << "    " << Fb0.c3 << endl;
- //   cout << "p.q,   p.m     " << p.q << "     " << p.m  << endl;
 
-	return Fb0;
-	//return Fb0 + (1.0e6)*Fe1;
+	return Fb0 + (1.0e3)*Fe1;
 }
 
 // First-order orbits
@@ -1219,16 +1221,24 @@ int rk4_move ( CParticle &p, float dt, float t0,
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
 		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, r, e1Re, e1Im, wrf, status ) * dt;
-		x1 = k1 * dt;                                               
+	//	x1 = k1 * dt;
+		x1 = yn0 * dt;
+
 		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, e1Re, e1Im, wrf, status ) * dt;
-		x2 = k2 * dt;                                               
+	//	x2 = k2 * dt;
+		x2 = (yn0 + 0.5*k1) * dt;
+
 		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, e1Re, e1Im, wrf, status ) * dt;
-		x3 = k3 * dt;                                               
+	//	x3 = k3 * dt;
+		x3 = (yn0 + 0.5*k2) * dt;
+
 		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, e1Re, e1Im, wrf, status ) * dt;
-		x4 = k4 * dt;
+	//	x4 = k4 * dt;
+		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+
 
 		p.c1 = xn1.c1;
 		p.c2 = xn1.c2;
@@ -2070,6 +2080,7 @@ int main ( int argc, char **argv )
     int nThermal = cfg.lookup("nThermal");
 	int nP = nPx*nPy*nPz;
     int nPblob = cfg.lookup("nPblob");
+    int nSavePerRFCycle = cfg.lookup("nSavePerRFCycle");
     int nList;
     
 #if defined(_OPENMP)
@@ -2250,10 +2261,6 @@ int main ( int argc, char **argv )
         
 /////// dc: create blob, e.g. Larmor orbit
         nP = nPblob;
-        
-        ///b0_XYZ_T_at_rGrid[0] assumes a single configuration space point!
-        //vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-        //                        nP,nThermal,dv,b0_XYZ_T_at_rGrid[0]));
 
         vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
                                 nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
@@ -2263,7 +2270,7 @@ int main ( int argc, char **argv )
         
 /// Save particles to file to test
 //
-        if (iList == 30){
+        if (iList == 1){
             ofstream ParticleFile;
             ParticleFile.open("output/particles.txt", ios::out | ios::trunc);
  //           ParticleFile << rGrid[iList] <<"    "<< 0.0 <<"    "<< 0.0 <<    <<     <<     << endl;
@@ -2303,7 +2310,7 @@ int main ( int argc, char **argv )
 			ofstream df0dv_File;
 
             stringstream OrbitFileName;
-            OrbitFileName << "output/orbit";
+            OrbitFileName << "output/unperturbed/orbit";
             OrbitFileName << '_' << iList << '_' << setw(3) << setfill('0') << iP;
             OrbitFileName << ".txt";
             
@@ -2342,6 +2349,314 @@ int main ( int argc, char **argv )
 			// generate  orbit and get time-harmonic e along it
 
 			vector<C3Vec> thisOrbit_XYZ(nSteps);
+
+			vector<C3VecI> thisE1c_XYZ(nSteps,C3VecI());
+			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
+			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
+            vector<complex<float> > this_e1_dot_gradvf0(nSteps);
+
+	 		for(int i=0;i<nSteps;i++) {	
+
+				thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+#if GC_ORBITS >=1 
+                int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
+                                r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
+#else
+				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+
+               // int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
+                
+#endif
+                int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
+#if DEBUG_MOVE >=1 
+                cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
+                if(MoveStatus>0) {
+                    cout<<"ERROR: rk4_move_gc threw an error"<<endl;
+                    cout<<"MoveStatus: "<<MoveStatus<<endl;
+                    exit(1); 
+                }
+#endif
+            
+                C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
+                C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
+				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+
+                float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
+
+				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
+
+				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+	
+				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
+				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
+				thisOrbitB1_re_XYZ[i] = b1ReTmp_XYZ*(1-OverallStatus);
+				thisOrbitB1_im_XYZ[i] = b1ImTmp_XYZ*(1-OverallStatus);
+
+				float tTmp = thisT[i];
+				float weight = hanningWeight[i];
+                float phs = -(wrf * tTmp); 
+                complex<float> _i(0,1);
+                complex<float> exp_inphi = exp(_i*(float)nPhi*this_Theta);
+
+				thisE1c_XYZ[i] = exp_inphi * C3VecI(
+								weight*complex<float>(
+										thisOrbitE1_re_XYZ[i].c1*cos(phs)-thisOrbitE1_im_XYZ[i].c1*sin(phs),
+										thisOrbitE1_im_XYZ[i].c1*cos(phs)+thisOrbitE1_re_XYZ[i].c1*sin(phs)),
+								weight*complex<float>(
+										thisOrbitE1_re_XYZ[i].c2*cos(phs)-thisOrbitE1_im_XYZ[i].c2*sin(phs),
+										thisOrbitE1_im_XYZ[i].c2*cos(phs)+thisOrbitE1_re_XYZ[i].c2*sin(phs)),
+								weight*complex<float>(
+										thisOrbitE1_re_XYZ[i].c3*cos(phs)-thisOrbitE1_im_XYZ[i].c3*sin(phs),
+										thisOrbitE1_im_XYZ[i].c3*cos(phs)+thisOrbitE1_re_XYZ[i].c3*sin(phs))
+								);	
+
+				thisB1c_XYZ[i] = exp_inphi * C3VecI(
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c1*cos(phs)-thisOrbitB1_im_XYZ[i].c1*sin(phs),
+										thisOrbitB1_im_XYZ[i].c1*cos(phs)+thisOrbitB1_re_XYZ[i].c1*sin(phs)),
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c2*cos(phs)-thisOrbitB1_im_XYZ[i].c2*sin(phs),
+										thisOrbitB1_im_XYZ[i].c2*cos(phs)+thisOrbitB1_re_XYZ[i].c2*sin(phs)),
+								weight*complex<float>(
+										thisOrbitB1_re_XYZ[i].c3*cos(phs)-thisOrbitB1_im_XYZ[i].c3*sin(phs),
+										thisOrbitB1_im_XYZ[i].c3*cos(phs)+thisOrbitB1_re_XYZ[i].c3*sin(phs))
+								);	
+
+                //complex<float> _i(0,1);
+				//complex<float> phs = -(_i*wrf*tTmp);
+                //complex<float> amp1(thisOrbitE_re_XYZ[i].c1,thisOrbitE_im_XYZ[i].c1);
+                //complex<float> amp2(thisOrbitE_re_XYZ[i].c2,thisOrbitE_im_XYZ[i].c2);
+                //complex<float> amp3(thisOrbitE_re_XYZ[i].c3,thisOrbitE_im_XYZ[i].c3);
+                //complex<float> expPart = exp(phs);
+                //thisE1c[i] = weight*C3VecI(amp1*expPart,amp2*expPart,amp3*expPart); 
+
+#if DEBUG_MOVE >= 2
+                cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c_XYZ[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c_XYZ[i].c3<<endl;
+
+                cout << "thisB1c[i].c1: "<<thisB1c_XYZ[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c_XYZ[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c_XYZ[i].c3<<endl;
+#endif
+#if DEBUG_FORCE_TERM >= 1
+                cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
+                cout << "thisE1c[i].c2: "<<thisE1c_XYZ[i].c2<<endl;
+                cout << "thisE1c[i].c3: "<<thisE1c_XYZ[i].c3<<endl;
+
+                cout << "thisB1c[i].c1: "<<thisB1c_XYZ[i].c1<<endl;
+                cout << "thisB1c[i].c2: "<<thisB1c_XYZ[i].c2<<endl;
+                cout << "thisB1c[i].c3: "<<thisB1c_XYZ[i].c3<<endl;
+
+                cout << "thisVel_XYZ.c1: "<<thisVel_XYZ.c1<<endl;
+                cout << "thisVel_XYZ.c2: "<<thisVel_XYZ.c2<<endl;
+                cout << "thisVel_XYZ.c3: "<<thisVel_XYZ.c3<<endl;
+
+#endif
+                this_e1_dot_gradvf0[i] = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
+
+				//this_e1_dot_df0dv[i].c1 = thisE1c[i].c1 * thisdf0_dv.c1;  
+				//this_e1_dot_df0dv[i].c2 = thisE1c[i].c2 * thisdf0_dv.c2;  
+				//this_e1_dot_df0dv[i].c3 = thisE1c[i].c3 * thisdf0_dv.c3;  
+
+#if LOWMEM_ORBIT_WRITE >= 1
+
+                if(SaveSingleOrbit){
+                
+                    if(iList==write_iX && iP==write_iP) {
+                        df0dv_File<<scientific;
+                        df0dv_File<< thisT[i]
+                                <<"    "<< thisVel_XYZ.c1
+                                <<"    "<< thisVel_XYZ.c2
+                                <<"    "<< thisVel_XYZ.c3 
+                                <<"    "<< thisParticle_XYZ.vAlp
+                                <<"    "<< thisParticle_XYZ.vBet
+                                <<"    "<< thisParticle_XYZ.vPar
+                                <<"    "<< thisParticle_XYZ.vPer
+                                <<"    "<< thisParticle_XYZ.phs
+                                <<"    "<< gradv_f0_XYZ.c1 
+                                <<"    "<< gradv_f0_XYZ.c2 
+                                <<"    "<< gradv_f0_XYZ.c3 
+                                << endl;
+                    }
+     
+                    if(iList==write_iX && iP==write_iP) {
+                        OrbitFile<<scientific;
+                        OrbitFile<< thisT[i]
+                                <<"    "<< thisPos.c1
+                                <<"    "<< thisPos.c2
+                                <<"    "<< thisPos.c3 
+                                <<"    "<< real(thisE1c_XYZ[i].c1)
+                                <<"    "<< imag(thisE1c_XYZ[i].c1)
+                                <<"    "<< real(thisE1c_XYZ[i].c2)
+                                <<"    "<< imag(thisE1c_XYZ[i].c2)
+                                <<"    "<< real(thisE1c_XYZ[i].c3)
+                                <<"    "<< imag(thisE1c_XYZ[i].c3)
+                                <<"    "<< real(thisB1c_XYZ[i].c1)
+                                <<"    "<< imag(thisB1c_XYZ[i].c1)
+                                <<"    "<< real(thisB1c_XYZ[i].c2)
+                                <<"    "<< imag(thisB1c_XYZ[i].c2)
+                                <<"    "<< real(thisB1c_XYZ[i].c3)
+                                <<"    "<< imag(thisB1c_XYZ[i].c3)
+                                << endl;
+                    }
+                    if(iList==write_iX && iP==write_iP) {
+                        e1_dot_grad_File<<scientific;
+                        e1_dot_grad_File<< thisT[i]
+                                <<"    "<< real(this_e1_dot_gradvf0[i])
+                                <<"    "<< imag(this_e1_dot_gradvf0[i])
+                                << endl;
+                    }
+                    
+                }
+                else{
+                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
+    
+                            int tmp_Stat;
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
+                            float vPar = thisV_abp.c3;
+                            float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+
+                            //OrbitFile<<scientific;
+                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i]
+                                <<"    "<< thisPos.c1
+                                <<"    "<< thisPos.c2
+                                <<"    "<< thisPos.c3
+                                <<"    "<< vPar
+                                <<"    "<< vPer
+                                <<"    "<< real(thisE1c_XYZ[i].c1)
+                                <<"    "<< imag(thisE1c_XYZ[i].c1)
+                                <<"    "<< real(thisE1c_XYZ[i].c2)
+                                <<"    "<< imag(thisE1c_XYZ[i].c2)
+                                <<"    "<< real(thisE1c_XYZ[i].c3)
+                                <<"    "<< imag(thisE1c_XYZ[i].c3)
+                                <<"    "<< real(thisB1c_XYZ[i].c1)
+                                <<"    "<< imag(thisB1c_XYZ[i].c1)
+                                <<"    "<< real(thisB1c_XYZ[i].c2)
+                                <<"    "<< imag(thisB1c_XYZ[i].c2)
+                                <<"    "<< real(thisB1c_XYZ[i].c3)
+                                <<"    "<< imag(thisB1c_XYZ[i].c3)
+                                << endl;
+                                }
+                }
+                
+#endif
+			}
+#if LOWMEM_ORBIT_WRITE >= 1
+            if(iList==write_iX && iP==write_iP) {
+                OrbitFile.close();
+            }
+#endif
+			complex<float> this_f1c = -qOverm * intVecArray ( thisT, this_e1_dot_gradvf0 );
+
+#if LOWMEM_ORBIT_WRITE >= 1
+            if(iList==write_iX && iP==write_iP) {
+
+                complex<float> tmp = 0.0;
+                for(int i=0;i<nSteps;i++) {
+						//float tmp_vTh = get_vTh ( thisParticle_XYZ.amu, thisParticle_XYZ.Z, T_keV[iX] );
+                        tmp += -qOverm * this_e1_dot_gradvf0[i] * dtMin;
+                        v1File<<thisT[i]
+                                <<"    "<< real(tmp)
+                                <<"    "<< imag(tmp)
+                                << endl;
+                }
+				//cout<<"tmp: "<<tmp.c1<<"  "<<tmp.c2<<"  "<<tmp.c3<<endl;
+				//cout<<"thisV1c: "<<thisV1c.c1<<"  "<<thisV1c.c2<<"  "<<thisV1c.c3<<endl;
+            }
+#endif
+			f1c[iP] = -this_f1c;
+			//f1xc[iP] = -thisV1c.c1;
+			//f1yc[iP] = -thisV1c.c2;
+			//f1zc[iP] = -thisV1c.c3;
+
+			float v0x_i = ThisParticleList[iP].v_c1;
+			float v0y_i = ThisParticleList[iP].v_c2;
+			float v0z_i = ThisParticleList[iP].v_c3;
+
+			float h = dv * Ze;
+
+			#pragma omp critical // "atomic" does not work for complex numbers
+			{
+				//j1xc[iX] += h * ( v0x_i*f1xc[iP] ); 
+				//j1yc[iX] += h * ( v0y_i*f1yc[iP] ); 
+				//j1zc[iX] += h * ( v0z_i*f1zc[iP] ); 
+
+				j1xc[iList] += h * ( v0x_i*f1c[iP] );
+				j1yc[iList] += h * ( v0y_i*f1c[iP] );
+				j1zc[iList] += h * ( v0z_i*f1c[iP] );
+			}
+		}
+
+///////////////////
+///////// Begin perturbed orbit optional section
+///////////////////
+#if COMPUTE_PERTURBED_ORBITS >= 1
+
+		for(int iP=0;iP <nP;iP++) {
+			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitE1_im_XYZ(nSteps,C3Vec(0,0,0));
+
+			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
+			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
+
+			CParticle thisParticle_XYZ(ThisParticleList[iP]);
+
+			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
+            
+			float Ze = thisParticle_XYZ.q;
+
+#if LOWMEM_ORBIT_WRITE >= 1
+            ofstream OrbitFile;
+            ofstream v1File;
+			ofstream e1_dot_grad_File;
+			ofstream df0dv_File;
+
+            stringstream OrbitFileName;
+            OrbitFileName << "output/perturbed/orbit";
+            OrbitFileName << '_' << iList << '_' << setw(3) << setfill('0') << iP;
+            OrbitFileName << ".txt";
+            
+            int write_iX;
+            int write_iP;
+            
+            if(SaveSingleOrbit){
+                 write_iX = 0;
+                 write_iP = 5;
+               
+                if(iList==write_iX && iP==write_iP) {
+                    cout<<"Write Particle Properties:"<<endl;
+                    cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
+                    cout<<" v1: "<<thisParticle_XYZ.v_c1<<endl;
+                    cout<<" v2: "<<thisParticle_XYZ.v_c2<<endl;
+                    cout<<" v3: "<<thisParticle_XYZ.v_c3<<endl;
+
+                    OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
+                    OrbitFile<<"wc / wrf: "<< wrf_wc[iList]<<endl;
+                    OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+                    v1File.open("output/orbit_v1.txt", ios::out | ios::trunc);
+                    v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
+                    e1_dot_grad_File.open("output/orbit_e1_dot_grad_df0_dv.txt", ios::out | ios::trunc);
+                    e1_dot_grad_File<<" t  re(v1xb01)  im(v1xb01)  re(v1xb02)  im(v1xb02)  re(v1xb03)  im(v1xb03)"<<endl;
+                    df0dv_File.open("output/df0dv.txt", ios::out | ios::trunc);
+                    df0dv_File<<" t  vx  vy  vz  valp  vbet  vpar  vper  gyroAngle  df0dv_x  df0dv_y  df0dv_z"<<endl;
+                }
+             }
+            
+             else{
+                OrbitFile.open(OrbitFileName.str().c_str(), ios::out | ios::trunc);
+                OrbitFile<<"wc / wrf: "<< wrf_wc[iList]<<endl;
+                OrbitFile<<" t  x  y  z vpar vper  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+            }
+#endif    
+			// generate  orbit and get time-harmonic e along it
+
+			vector<C3Vec> thisOrbit_XYZ(nSteps);
+
 			vector<C3VecI> thisE1c_XYZ(nSteps,C3VecI());
 			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
@@ -2505,8 +2820,7 @@ int main ( int argc, char **argv )
                     
                 }
                 else{
-                        if ( i % (int)floor(nSteps/nRFCycles) == 0){
-    //                      if ( i % 1 == 0){
+                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
@@ -2584,6 +2898,18 @@ int main ( int argc, char **argv )
 				j1zc[iList] += h * ( v0z_i*f1c[iP] );
 			}
 		}
+
+#endif
+///////////////////
+///////// End perturbed orbit optional section
+///////////////////
+
+
+
+
+
+
+
 
 #if CLOCK >= 1
 #if not defined(_OPENMP)
