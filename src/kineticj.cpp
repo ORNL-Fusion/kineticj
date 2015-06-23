@@ -15,7 +15,7 @@
     /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
     wrf = 1.1*wrf;
 */
-
+/////Other hacks:
 // A constant drift in vx is added in rk4move for first-order orbits
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
@@ -664,9 +664,19 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 			return C3Vec(0,0,0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
-			// Periodic 
-			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+			// Periodic
+            float xRange = xVec.back() - xVec.front();
+            int N;
+			if(xTmp<xVec.front()){
+                N = int(floor( (xVec.back() - xTmp)/xRange )) + 1;
+                xTmp = xTmp + N*xRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(xTmp>xVec.back()){
+                N = int(floor( (xTmp - xVec.front())/xRange ));
+                xTmp = xTmp - N*xRange;
+            }
+    
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
 			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
@@ -1907,6 +1917,19 @@ int main ( int argc, char **argv )
 						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
                         b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
 				}
+            
+            
+                ////////////////  Bfield hacking....
+            
+				for(int i=0; i<nR/2 + 1; i++) {
+                        b0_CYL[i] = b0_CYL[nR - i - 1];
+                        b0_XYZ[i] = b0_XYZ[nR - i - 1];
+//                        b0_CYL[nR - i - 1] = b0_CYL[i];
+//                        b0_XYZ[nR - i - 1] = b0_XYZ[i];
+
+				}
+/////////////////////////////////////////////////////////////////////////////////
+            
 
 				nc_e_r_re.getVar(&e_r_re[0]);
 				nc_e_p_re.getVar(&e_p_re[0]);
@@ -2072,7 +2095,7 @@ int main ( int argc, char **argv )
 
 	float wrf = freq * 2 * _pi;
     /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
-    wrf = 1.1*wrf;
+    wrf = 0.9*wrf;
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
@@ -2156,7 +2179,7 @@ int main ( int argc, char **argv )
     }
     
 	for(int iVper=0;iVper<nVperGrid;iVper++) {
-		VperGrid[iVper] = vth_part + iVper*(vth_part/nVperGrid);
+		VperGrid[iVper] = 0.3*vth_part + iVper*(vth_part/nVperGrid);
     }
     
     for(int iPhase=0;iPhase<nPhaseGrid;iPhase++){
