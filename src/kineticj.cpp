@@ -1,3 +1,24 @@
+//// Current hacks:
+// modifying wrf = 1.1wrf to move resonance location
+// inputing an AORSA E-field, but modifying it to have no spatial dependence, and no y-component
+////// Both are in the lines of code:
+/*
+           e1Re_XYZ[i] =C3Vec(1.0,0.0,-1.0);
+            e1Im_XYZ[i] =C3Vec(-1.0,0.0,0.0);
+            
+            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
+            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
+
+		}
+
+	float wrf = freq * 2 * _pi;
+    /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
+    wrf = 1.1*wrf;
+*/
+
+// A constant drift in vx is added in rk4move for first-order orbits
+// the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -1671,14 +1692,6 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
                                 -P.v_c2*(-sin(2.0*_pi*i/nPblob)*b0_perp1_XYZ.c3 + cos(2.0*_pi*i/nPblob)*b0_perp2_XYZ.c3) + P.v_c1*b0_XYZ.c3/magb0,
                                 amu,Z,weight,P.rfPhase);
             
-//        cout << "b0_XYZ   " << b0_XYZ.c1 << "   " << b0_XYZ.c2 << "    " << b0_XYZ.c3 << endl;
-//        cout << "b0_perp1_XYZ   " << b0_perp1_XYZ.c1 << "   " << b0_perp1_XYZ.c2 << "    " << b0_perp1_XYZ.c3 << endl;
-//        cout << "b0_perp2_XYZ   " << b0_perp2_XYZ.c1 << "   " << b0_perp2_XYZ.c2 << "    " << b0_perp2_XYZ.c3 << endl;
-//        cout << "mag(b0perp1)    " << mag(b0_perp1_XYZ) << endl;
-//        cout << "mag(b0perp2)    " << mag(b0_perp2_XYZ) << endl;
-//        cout << "b0perp1 dot b0perp2    " << b0_perp1_XYZ.c1*b0_perp2_XYZ.c1 + b0_perp1_XYZ.c2*b0_perp2_XYZ.c2 + b0_perp1_XYZ.c3*b0_perp2_XYZ.c3 << endl;
-//        cout << "v_perp      " << pow(p_tmp.v_c1,2) + pow(p_tmp.v_c3,2) << endl;
-
                 pList[cnt] = p_tmp;
                 pList[cnt].number = cnt;
                 pList[cnt].vTh = vTh;
@@ -2975,9 +2988,8 @@ int main ( int argc, char **argv )
 //#else // END OF LOWMEM CODING ^^^
 //////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
-		//cout << "DONE" << endl;
 
-#endif 
+#endif
 
 
 #if USEPAPI >= 1
