@@ -1,40 +1,7 @@
-//// Current hacks:
-// modifying wrf = 1.1wrf to move resonance location
-// inputing an AORSA E-field, but modifying it to have no spatial dependence, and no y-component
-////// Both are in the lines of code:
-/*
-           e1Re_XYZ[i] =C3Vec(1.0,0.0,-1.0);
-            e1Im_XYZ[i] =C3Vec(-1.0,0.0,0.0);
-            
-            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
-            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
-
-		}
-
-	float wrf = freq * 2 * _pi;
-    /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
-    wrf = 1.1*wrf;
-*/
-/////Other hacks:
-// A constant drift in vx is added in rk4move for first-order orbits
+// Current hacks:
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
 
-///Bfield field hack to make periodic
-/*
-            
-                ////////////////  Bfield hacking....
-            
-				for(int i=0; i<nR/2; i++) {
-                        b0_CYL[i] = b0_CYL[nR - i - 1];
-                        b0_XYZ[i] = b0_XYZ[nR - i - 1];
-//                        b0_CYL[nR - i - 1] = b0_CYL[i];
-//                        b0_XYZ[nR - i - 1] = b0_XYZ[i];
-
-				}
-/////////////////////////////////////////////////////////////////////////////////
-
-*/
 
 #include <string>
 #include <iostream>
@@ -1169,19 +1136,15 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 
 		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, status ) * dt;	
 		x1 = yn0 * dt;
-        //cout << "dx1: " << x1.c1 << endl;
 
 		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, status ) * dt;	
 		x2 = (yn0 + 0.5*k1) * dt;
-        //cout << "dx2: " << x2.c1 << endl;
 
 		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, status ) * dt;	
 		x3 = (yn0 + 0.5*k2) * dt;
-        //cout << "dx3: " << x3.c1 << endl;
 
 		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, status ) * dt;	
 		x4 = (yn0 + 1.0*k3) * dt;
-        //cout << "dx4: " << x4.c1 << endl;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
@@ -1271,11 +1234,9 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     ez_p = atan2(e1IM_XYZ.c3,e1RE_XYZ.c3);
 
 	e1_XYZ = C3Vec(ex_a*cos(ex_p + wrf*t + p.rfPhase) , ey_a*cos(ey_p + wrf*t + p.rfPhase), ez_a*cos(ez_p + wrf*t + p.rfPhase) );
-//	e1_XYZ = C3Vec(ex_a*cos(ex_p + wrf*t) , ey_a*cos(ey_p + wrf*t), ez_a*cos(ez_p + wrf*t) );
 
     
     Fe1 = (p.q/p.m)*e1_XYZ;
-	//cout << "Fb0/Fe1       " << Fb0/(1.0e4*Fe1) << endl;
     return Fb0 + (1.0e3)*Fe1;
     
 }
@@ -1290,25 +1251,20 @@ int rk4_move ( CParticle &p, float dt, float t0,
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
 		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, r, e1Re, e1Im, wrf, status ) * dt;
-	//	x1 = k1 * dt;
 		x1 = yn0 * dt;
 
 		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, e1Re, e1Im, wrf, status ) * dt;
-	//	x2 = k2 * dt;
 		x2 = (yn0 + 0.5*k1) * dt;
 
 		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, e1Re, e1Im, wrf, status ) * dt;
-	//	x3 = k3 * dt;
 		x3 = (yn0 + 0.5*k2) * dt;
 
 		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, e1Re, e1Im, wrf, status ) * dt;
-	//	x4 = k4 * dt;
 		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
 
-		//p.c1 = xn1.c1 - dt*100084.98;
     
         p.c1 = xn1.c1;
         p.c2 = xn1.c2;
@@ -2046,30 +2002,11 @@ int main ( int argc, char **argv )
 
 				b0_CYL.resize(nR);
 				b0_XYZ.resize(nR);
-
-          
-                ////////////////  Bfield hacking....
- 
+           
 				for(int i=0; i<nR; i++) {
-						b0_CYL[i] = C3Vec(b0_p[i], 0.1*b0_p[i], 0.0);
-                        //b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
-                        // hack line to add small extra Bx
-                        //b0_CYL[i].c1 = 0.1*b0_CYL[i].c2;
-                    
-				}
-/// hack to make periodic
-                for(int i=0; i<nR/2; i++) {
-                        b0_CYL[i] = b0_CYL[nR - i - 1];
-
-				}
-
-				for(int i=0; i<nR; i++) {
+                        b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
                         b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
-                }
-            
-            
-/////////////////////////////////////////////////////////////////////////////////
-            
+				}
 
 				nc_e_r_re.getVar(&e_r_re[0]);
 				nc_e_p_re.getVar(&e_p_re[0]);
@@ -2221,14 +2158,8 @@ int main ( int argc, char **argv )
 
 			float _p = 0;
 
-            //e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
-            //e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
-
-            e1Re_XYZ[i] =C3Vec(0.0,0.0,1.0);
-            e1Im_XYZ[i] =C3Vec(0.0,-1.0,0.0);
-
-            //e1Re_XYZ[i] =C3Vec(-1.0,0.0,1.0);
-            //e1Im_XYZ[i] =C3Vec(0.0,0.0,-1.0);
+            e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
+            e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
 
             
             b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
@@ -2238,12 +2169,7 @@ int main ( int argc, char **argv )
 
 
 	float wrf = freq * 2 * _pi;
-    /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
-    //// for 2 resonance
-    //wrf = 0.975*wrf;
-    ///Resonance in the middle:
-    //wrf = 1.053*wrf;
-    wrf = 1.03*wrf;
+
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
     
