@@ -19,6 +19,23 @@
 // A constant drift in vx is added in rk4move for first-order orbits
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
+
+///Bfield field hack to make periodic
+/*
+            
+                ////////////////  Bfield hacking....
+            
+				for(int i=0; i<nR/2; i++) {
+                        b0_CYL[i] = b0_CYL[nR - i - 1];
+                        b0_XYZ[i] = b0_XYZ[nR - i - 1];
+//                        b0_CYL[nR - i - 1] = b0_CYL[i];
+//                        b0_XYZ[nR - i - 1] = b0_XYZ[i];
+
+				}
+/////////////////////////////////////////////////////////////////////////////////
+
+*/
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -668,12 +685,12 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
             float xRange = xVec.back() - xVec.front();
             int N;
 			if(xTmp<xVec.front()){
-                N = int(floor( (xVec.back() - xTmp)/xRange )) + 1;
+                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
                 xTmp = xTmp + N*xRange;
                // xTmp = xVec.back()-(xVec.front()-xTmp);
              }
 			if(xTmp>xVec.back()){
-                N = int(floor( (xTmp - xVec.front())/xRange ));
+                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
                 xTmp = xTmp - N*xRange;
             }
     
@@ -750,8 +767,17 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
-			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+            float xRange = xVec.back() - xVec.front();
+            int N;
+			if(xTmp<xVec.front()){
+                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+                xTmp = xTmp + N*xRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(xTmp>xVec.back()){
+                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+                xTmp = xTmp - N*xRange;
+            }
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
 			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
@@ -853,8 +879,17 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
-			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
+            float xRange = xVec.back() - xVec.front();
+            int N;
+			if(xTmp<xVec.front()){
+                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+                xTmp = xTmp + N*xRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(xTmp>xVec.back()){
+                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+                xTmp = xTmp - N*xRange;
+            }
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
 			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
@@ -1273,8 +1308,10 @@ int rk4_move ( CParticle &p, float dt, float t0,
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
 
-		p.c1 = xn1.c1 + 0.00005;
-		p.c2 = xn1.c2;
+		//p.c1 = xn1.c1 - dt*100084.98;
+    
+        p.c1 = xn1.c1;
+        p.c2 = xn1.c2;
 		p.c3 = xn1.c3;
 		p.v_c1 = yn1.c1;
 		p.v_c2 = yn1.c2;
@@ -1733,6 +1770,102 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 }
 
 
+/// Another version of blob creator, the blob in this case is a small region in (x,vPar,vPer)
+vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV, float n_m3,
+                                        int nXBlob, int nVparBlob, int nVperBlob, int nThermal, float &dv, C3Vec b0_XYZ) {
+
+
+        C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
+    
+        C3Vec P_CYL = C3Vec(P.c1, P.c2, P.c2);
+        C3Vec P_XYZ = CYL_to_XYZ(P_CYL);
+
+        vector<CParticle> pList;
+    
+        float m = amu * _mi;
+		float vTh = get_vTh ( amu, Z, T_keV );
+    
+        float xMin = P_XYZ.c1 - 0.01;
+        float xMax = P_XYZ.c1 + 0.01;
+        float delX = (xMax - xMin)/nXBlob;
+    
+        float vParMin = P.v_c1 - 0.001*vTh;
+        float vParMax = P.v_c1 + 0.001*vTh;
+        float delVPar = (vParMax - vParMin)/nVparBlob;
+
+        float vPerMin = P.v_c2 - 0.001*vTh;
+        float vPerMax = P.v_c2 + 0.001*vTh;
+        float delVPer = (vPerMax - vPerMin)/nVperBlob;
+    
+        float TestIntegratedValue = 0;
+    
+        float magb0 = mag(b0_XYZ);
+        int nPblob = nXBlob*nVparBlob*nVperBlob;
+    
+        pList.resize(nPblob);
+
+        C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0));
+        b0_perp1_XYZ = b0_perp1_XYZ/mag(b0_perp1_XYZ);
+    
+        C3Vec b0_perp2_XYZ = cross(b0_XYZ, b0_perp1_XYZ);
+        b0_perp2_XYZ = b0_perp2_XYZ/mag(b0_perp2_XYZ);
+    
+        int cnt = 0;
+//i=0 case:
+        float weight = maxwellian(P.v_c1,P.v_c2,P.v_c3,vTh) * n_m3; // n_m3 = density? (why "_3" ?)
+
+        cnt = 0;
+        for(int i=0;i<nPblob;i++) {
+        
+            int iX = i % nXBlob ;
+            int iVpar = int(floor( i/nXBlob)) % nVparBlob;
+            int iVper = int(floor(i/(nXBlob*nVparBlob))) % nVperBlob;
+            float VparTmp = vParMin + delVPar*iVpar;
+            float VperTmp = vPerMin + delVPer*iVper;
+
+ 	            CParticle p_tmp (P_XYZ.c1 + xMin + iX*delX,
+                                P_XYZ.c2,
+                                P_XYZ.c3,
+                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c1 + cos(P.v_c3)*b0_perp2_XYZ.c1) + VparTmp*b0_XYZ.c1/magb0,
+                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c2 + cos(P.v_c3)*b0_perp2_XYZ.c2) + VparTmp*b0_XYZ.c2/magb0,
+                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c3 + cos(P.v_c3)*b0_perp2_XYZ.c3) + VparTmp*b0_XYZ.c3/magb0,
+                                amu,Z,weight,P.rfPhase);
+            
+                pList[cnt] = p_tmp;
+                pList[cnt].number = cnt;
+                pList[cnt].vTh = vTh;
+
+                pList[cnt].d3v = dv;
+
+                // Get vPar, vPer and mu for guiding center integration
+
+                float bMag = mag (b0_XYZ);
+                float vMag = mag (thisV_XYZ);
+
+#if DEBUG_MAXWELLIAN >=2 
+                    cout<<"ThisVx: "<<thisvx<<endl;
+                    cout<<"ThisVy: "<<thisvy<<endl;
+                    cout<<"ThisVz: "<<thisvz<<endl;
+                    cout<<"vMag: "<<vMag<<endl;
+                    cout<<"vPer: "<<pList[cnt].vPer<<endl;
+                    cout<<"vPar: "<<pList[cnt].vPar<<endl;
+                    cout<<"u: "<<pList[cnt].u<<endl<<endl;
+                    if(isnan(pList[cnt].u)) exit(1);
+#endif                    
+                cnt++;
+        }
+
+#if DEBUG_MAXWELLIAN >=1 
+        cout << "TestIntegratedValue: " << TestIntegratedValue << endl;
+#endif
+        return pList;
+}
+
+
+
+
+
+
 
 // Calculate the jP given some known E and f(v)
 
@@ -1913,21 +2046,28 @@ int main ( int argc, char **argv )
 
 				b0_CYL.resize(nR);
 				b0_XYZ.resize(nR);
-				for(int i=0; i<nR; i++) {
-						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
-                        b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
-				}
-            
-            
+
+          
                 ////////////////  Bfield hacking....
-            
-				for(int i=0; i<nR/2 + 1; i++) {
+ 
+				for(int i=0; i<nR; i++) {
+						b0_CYL[i] = C3Vec(b0_p[i], 0.1*b0_p[i], 0.0);
+                        //b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
+                        // hack line to add small extra Bx
+                        //b0_CYL[i].c1 = 0.1*b0_CYL[i].c2;
+                    
+				}
+/// hack to make periodic
+                for(int i=0; i<nR/2; i++) {
                         b0_CYL[i] = b0_CYL[nR - i - 1];
-                        b0_XYZ[i] = b0_XYZ[nR - i - 1];
-//                        b0_CYL[nR - i - 1] = b0_CYL[i];
-//                        b0_XYZ[nR - i - 1] = b0_XYZ[i];
 
 				}
+
+				for(int i=0; i<nR; i++) {
+                        b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
+                }
+            
+            
 /////////////////////////////////////////////////////////////////////////////////
             
 
@@ -2084,8 +2224,12 @@ int main ( int argc, char **argv )
             //e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
             //e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
 
-            e1Re_XYZ[i] =C3Vec(1.0,0.0,-1.0);
-            e1Im_XYZ[i] =C3Vec(-1.0,0.0,0.0);
+            e1Re_XYZ[i] =C3Vec(0.0,0.0,1.0);
+            e1Im_XYZ[i] =C3Vec(0.0,-1.0,0.0);
+
+            //e1Re_XYZ[i] =C3Vec(-1.0,0.0,1.0);
+            //e1Im_XYZ[i] =C3Vec(0.0,0.0,-1.0);
+
             
             b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
             b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
@@ -2095,8 +2239,11 @@ int main ( int argc, char **argv )
 
 	float wrf = freq * 2 * _pi;
     /////////////////////////////////////////////////////////////////////////////////////////////  CHANGED (WRF=1.1 WRF) HERE FOR TOY PROBLEM///////////////////////////////////////////////
-    wrf = 0.9*wrf;
-
+    //// for 2 resonance
+    //wrf = 0.975*wrf;
+    ///Resonance in the middle:
+    //wrf = 1.053*wrf;
+    wrf = 1.03*wrf;
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
     
@@ -2120,6 +2267,9 @@ int main ( int argc, char **argv )
     int nPx = cfg.lookup("nPx");
     int nPy = cfg.lookup("nPy");
     int nPz = cfg.lookup("nPz");
+    int nPVpar = cfg.lookup("nPVpar");
+    int nPVper = cfg.lookup("nPVper");
+    
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
@@ -2164,7 +2314,7 @@ int main ( int argc, char **argv )
 	}
 
     for (int iList=0;iList<nList;iList++){
-        T_keV[iList] = 0.01;
+        T_keV[iList] = 1.0;
     }
     
     float vth_part = get_vTh(amu, Z,T_keV[0]);
@@ -2175,7 +2325,7 @@ int main ( int argc, char **argv )
     }
 	
 	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
-		VparGrid[iVpar] = 0.0*vth_part + iVpar*(vth_part/nVparGrid);
+		VparGrid[iVpar] = 0.3*vth_part + iVpar*(vth_part/nVparGrid);
     }
     
 	for(int iVper=0;iVper<nVperGrid;iVper++) {
@@ -2192,15 +2342,11 @@ int main ( int argc, char **argv )
             int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
             int iVper = int(floor(iList/(nRGrid*nVparGrid))) % nVperGrid;
             int iPhase = int(floor(iList/(nRGrid*nVparGrid*nVperGrid)));
-            cout << "iList    = " << iList << "    iPhase =    " << iPhase << "   PhaseGrid[iPhase]      " << PhaseGrid[iPhase] << endl;
+            cout << "iList   = " << iList << "    iPhase = " << iPhase << "   PhaseGrid[iPhase] = " << PhaseGrid[iPhase]
+            << ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR] << endl;
         
            PrimaryWorkList[iList] = CParticle(rGrid[iR], 0.0, 0.0, VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
         
-             cout << "iList    = " << iList << "    PrimaryWorkList    "
-            << PrimaryWorkList[iList].c1 << "   "
-            << PrimaryWorkList[iList].c2 << "   "
-            << PrimaryWorkList[iList].c3 << "   "
-            << PrimaryWorkList[iList].rfPhase << endl;
     }
     
     // Initialize other variables on worklist, density, Bfield, etc
@@ -2311,7 +2457,6 @@ int main ( int argc, char **argv )
 #endif	
 
 #if LOWMEM >= 1
-        nP = nPblob;
 
  // START OF THE LOWMEM CODING vvv
 		vector<float> f1(nP);
@@ -2321,18 +2466,23 @@ int main ( int argc, char **argv )
 //// kineticj: 1-D create nPx*nPy*nPZ phase space particles
 //        vector<CParticle> ThisParticleList(create_particles(PrimaryWorkList[iList].c1,amu,Z,T_keV[iList],density_m3[iList],
 //                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
-        
+
 /////// dc: create blob, e.g. Larmor orbit
+//        nP = nPblob;
+//        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+//                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
 
+//////  dc:  create blob, a small (x,Vpar,VPer) region around PrimaryWorkList point
+        nP = nPx*nPVpar*nPVper;
         vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
-
+                                           nPx, nPVpar, nPVper,nThermal,dv,b0_XYZ_T_at_List[iList]));
+        
         cout << "nP       " << nP << endl;
         cout << "iList       " << iList << endl;
         
 /// Save particles to file to test
 //
-        if (iList == 1){
+        if (iList == 0){
             ofstream ParticleFile;
             ParticleFile.open("output/particles.txt", ios::out | ios::trunc);
  //           ParticleFile << rGrid[iList] <<"    "<< 0.0 <<"    "<< 0.0 <<    <<     <<     << endl;
@@ -2418,7 +2568,6 @@ int main ( int argc, char **argv )
 			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
-            cout << "about to move a UNperturbed orbit!" << endl;
 
 	 		for(int i=0;i<nSteps;i++) {	
 
@@ -2672,13 +2821,15 @@ int main ( int argc, char **argv )
 #if COMPUTE_PERTURBED_ORBITS >= 1
 
 		for(int iP=0;iP <nP;iP++) {
+
 			vector<C3Vec> thisOrbitE1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitE1_im_XYZ(nSteps,C3Vec(0,0,0));
 
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
-
-			CParticle thisParticle_XYZ(ThisParticleList[iP]);
+            cout << "hello!!" << endl;
+            CParticle thisParticle_XYZ(ThisParticleList[iP]);
+            cout << "HI          !!!!!" << endl;
 
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
@@ -2697,7 +2848,6 @@ int main ( int argc, char **argv )
             
             int write_iX;
             int write_iP;
-            
             if(SaveSingleOrbit){
                  write_iX = 0;
                  write_iP = 5;
@@ -2725,6 +2875,7 @@ int main ( int argc, char **argv )
                 OrbitFile.open(OrbitFileName.str().c_str(), ios::out | ios::trunc);
                 OrbitFile<<"wc / wrf: "<< wrf_wc[iList]<<endl;
                 OrbitFile<<" t  x  y  z vpar vper vx vy vz re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+                
             }
 #endif    
 			// generate  orbit and get time-harmonic e along it
@@ -2735,7 +2886,6 @@ int main ( int argc, char **argv )
 			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
-            cout << "about to move a perturbed orbit!" << endl;
 
 	 		for(int i=0;i<nSteps;i++) {	
 				thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
@@ -2897,7 +3047,7 @@ int main ( int argc, char **argv )
                     
                 }
                 else{
-                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
+                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0 && i < nSteps - 1 ){
     
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
@@ -2906,7 +3056,7 @@ int main ( int argc, char **argv )
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
 
                             //OrbitFile<<scientific;
-                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i]
+                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i + 1]
                                 <<"    "<< thisPos.c1
                                 <<"    "<< thisPos.c2
                                 <<"    "<< thisPos.c3
