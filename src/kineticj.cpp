@@ -2394,14 +2394,14 @@ int main ( int argc, char **argv )
 //                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
 
 /////// dc: create blob, e.g. Larmor orbit
-//        nP = nPblob;
-//        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-//                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
+        nP = nPblob;
+        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
 
 //////  dc:  create blob, a small (x,Vpar,VPer) region around PrimaryWorkList point
-        nP = nPx*nPVpar*nPVper;
-        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-                                           nPx, nPVpar, nPVper,nThermal,dv,b0_XYZ_T_at_List[iList]));
+//        nP = nPx*nPVpar*nPVper;
+//        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+//                                           nPx, nPVpar, nPVper,nThermal,dv,b0_XYZ_T_at_List[iList]));
         
         cout << "nP       " << nP << endl;
         cout << "iList       " << iList << endl;
@@ -2753,9 +2753,7 @@ int main ( int argc, char **argv )
 
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
-            cout << "hello!!" << endl;
             CParticle thisParticle_XYZ(ThisParticleList[iP]);
-            cout << "HI          !!!!!" << endl;
 
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
