@@ -646,7 +646,9 @@ fieldMeshClass::fieldMeshClass ( vector<float> _r) {
 		r = _r;
 }
 
-C3Vec kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<C3Vec> &fVec, int &status ) {
+////1D w/o a Cparticle input
+template<class TYPE>
+TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<TYPE> &fVec, int &status ) {
 
     status = 0;
     
@@ -666,7 +668,7 @@ C3Vec kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
             cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
 #endif
 			status = 1;
-			return C3Vec(0,0,0);
+			return TYPE(0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic
@@ -693,7 +695,7 @@ C3Vec kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 #if DEBUG_INTERP >= 2
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 #endif
-			return C3Vec(0,0,0);
+			return TYPE(0);
 	}
 #endif
 	//else
@@ -714,16 +716,16 @@ C3Vec kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		return fVec[x0];
 	}
 	else {
-		C3Vec f0 = fVec[x0];
-		C3Vec f1 = fVec[x1];
+		TYPE f0 = fVec[x0];
+		TYPE f1 = fVec[x1];
 
 		return f0+(_x-x0)*(f1-f0)/(x1-x0);
 	}
 }
 
 
+////1D w/ a Cparticle input
 template<class TYPE>
-//// 1D templated interp
 TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<TYPE> &fVec, CParticle &p, int &status ) {
 
     status = 0;
@@ -851,83 +853,25 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 }
 
 
-float kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<float> &fVec, int &status ) {
+/////////////////////////////////////////////////////////// CHANGE x TO r FOR 2D INTERPOLATION, OR USE MORE GENERAL c1, c2, c3 ???
+
+//// 2D templated interp w/ Cparticle input
+template<class TYPE2>
+TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
     status = 0;
     float x = Loc.c1;
-	float _x, x0, x1;
-	float xTmp;
-	xTmp = x;
-
-#if _PARTICLE_BOUNDARY == 1
-	if(x<fieldMesh.r.front()||x>fieldMesh.r.back()) {
-#if DEBUG_INTERP >= 1
-            cout<<"Non-particle interpolator"<<endl;
-            cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<fieldMesh.r.front()<<endl;
-            cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
-#endif
-            status = 1;
-			return 0;
-	}
-#elif _PARTICLE_BOUNDARY == 2
-			// Periodic 
-            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
-            int N;
-			if(xTmp<fieldMesh.r.front()){
-                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
-                xTmp = xTmp + N*xRange;
-               // xTmp = xVec.back()-(xVec.front()-xTmp);
-             }
-			if(xTmp>fieldMesh.r.back()){
-                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
-                xTmp = xTmp - N*xRange;
-            }
-#elif _PARTICLE_BOUNDARY == 3
-			// Particle reflecting walls
-			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
-			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
-#endif
-	
-    _x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
-
-	x0 = floor(_x);
-	x1 = ceil(_x);
-	
-	// Catch for particle at point
-	if(x0==x1) {
-#if DEBUG_INTERP >= 2
-        cout << "Non-particle version of kj_interp" << endl;
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-#endif
-		return fVec[x0];
-	}
-	else {
-		float f0 = fVec[x0];
-		float f1 = fVec[x1];
-
-		return f0+(_x-x0)*(f1-f0)/(x1-x0);
-	}
-}
-/*
-//// 2D templated interp
-/// TO-DO:  Generalize boundary detection in all boundary cases....
-template<class TYPE2>
-TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
-
-    status = 0;
-    float x = Loc.x;
+    float z = Loc.c2;
     
-	float _x, x0, x1;
-	float xTmp;
-	xTmp = x;
+	float _x, x0, x1, _z, z0, z1;
+	float xTmp = x;
+	float zTmp = z;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x < xVec.front()||x>xVec.back()) {
+	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
-            if(xVec.size()!=fVec.size()) {
+            if(fieldMesh.r.size()!=fVec.size()) {
 #if DEBUG_INTERP >= 2
                 cout<<"ERROR: xVec and fVec are not the same size for interpolation!"<<endl;
 #endif
@@ -939,8 +883,8 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"Particle number: "<<p.number<<endl;
             cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec.front()<<endl;
-            cout<<"xVec.back():"<<xVec.back()<<endl;
+            cout<<"xVec.front():"<<fieldMesh.r.front()<<endl;
+            cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
 #endif
 #endif
             status = 1;
@@ -949,21 +893,37 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
-            float xRange = xVec.back() - xVec.front();
+            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
+            float zRange = fieldMesh.z.back() - fieldMesh.z.front();
+
             int N;
-			if(xTmp<xVec.front()){
-                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+			if(xTmp<fieldMesh.r.front()){
+                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
                 xTmp = xTmp + N*xRange;
                // xTmp = xVec.back()-(xVec.front()-xTmp);
              }
-			if(xTmp>xVec.back()){
-                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+			if(xTmp>fieldMesh.r.back()){
+                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
                 xTmp = xTmp - N*xRange;
             }
+    
+			if(zTmp<fieldMesh.z.front()){
+                N = int(floor( (fieldMesh.z.front() - zTmp)/zRange )) + 1;
+                zTmp = zTmp + N*zRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(zTmp>fieldMesh.z.back()){
+                N = int(floor( (zTmp - fieldMesh.z.back())/zRange )) + 1;
+                zTmp = zTmp - N*zRange;
+            }
+    
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
+			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
+    
+			if(zTmp<fieldMesh.z.front()) zTmp = fieldMesh.z.front()+(fieldMesh.z.front()-zTmp);
+			if(zTmp>fieldMesh.z.back()) zTmp = fieldMesh.z.back()-(zTmp-fieldMesh.z.back());
 #endif
 
 #if DEBUG_INTERP >= 1    
@@ -977,11 +937,15 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
 #endif
 	//else
 	//{
-		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
+		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
 	x0 = floor(_x);
 	x1 = ceil(_x);
+
+	z0 = floor(_z);
+	z1 = ceil(_z);
 	
 	// Catch for particle at point
 	if(x0==x1) {
@@ -993,8 +957,11 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
 		return fVec[x0];
 	}
 	else {
-		TYPE2 f0 = fVec[x0];
-		TYPE2 f1 = fVec[x1];
+		TYPE2 f00 = fVec[x0];
+		TYPE2 f01 = fVec[x1];
+		TYPE2 f10 = fVec[z0];
+		TYPE2 f11 = fVec[z1];
+        
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
         //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
@@ -1006,18 +973,18 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
         //cout << endl;
         if(x0>fVec.size()-1||x0<0||x1>fVec.size()-1||x1<1) {
                 cout<<"ERROR: interpolation point off the end of array"<<endl;
-                cout<<"x.front: "<<xVec.front()<<endl;
-                cout<<"x.back: "<<xVec.back()<<endl;
+                cout<<"x.front: "<<fieldMesh.r.front()<<endl;
+                cout<<"x.back: "<<fieldMesh.r.back()<<endl;
                 cout<<"x: "<<x<<endl;
-                cout<<"xVec.size(): "<<xVec.size()<<endl;
+                cout<<"xVec.size(): "<<fieldMesh.r.size()<<endl;
                 cout<<"fVec.size(): "<<fVec.size()<<endl;
                 ++p.status;
                 status = 1;
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = f0+(_x-x0)*(f1-f0)/(x1-x0);
-
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
+        
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
 #if DEBUG_INTERP >= 2
@@ -1038,13 +1005,153 @@ TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const ve
 #endif
 		return result;
 	}
-
 }
-*/
 
 
+//// 2D templated interp w/o Cparticle input
+template<class TYPE2>
+TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, int &status ) {
 
+    status = 0;
+    float x = Loc.c1;
+    float z = Loc.c2;
+    
+	float _x, x0, x1, _z, z0, z1;
+	float xTmp = x;
+	float zTmp = z;
 
+#if _PARTICLE_BOUNDARY == 1
+	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
+			// Particle absorbing walls
+#if DEBUG_INTERP >= 1
+            if(fieldMesh.r.size()!=fVec.size()) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: xVec and fVec are not the same size for interpolation!"<<endl;
+#endif
+                status = 1;
+                return TYPE2(0);
+            }
+#if DEBUG_INTERP >= 2
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<fieldMesh.r.front()<<endl;
+            cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
+#endif
+#endif
+            status = 1;
+			return TYPE2(0);
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
+            float zRange = fieldMesh.z.back() - fieldMesh.z.front();
+
+            int N;
+			if(xTmp<fieldMesh.r.front()){
+                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
+                xTmp = xTmp + N*xRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(xTmp>fieldMesh.r.back()){
+                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
+                xTmp = xTmp - N*xRange;
+            }
+    
+			if(zTmp<fieldMesh.z.front()){
+                N = int(floor( (fieldMesh.z.front() - zTmp)/zRange )) + 1;
+                zTmp = zTmp + N*zRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(zTmp>fieldMesh.z.back()){
+                N = int(floor( (zTmp - fieldMesh.z.back())/zRange )) + 1;
+                zTmp = zTmp - N*zRange;
+            }
+    
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
+			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
+    
+			if(zTmp<fieldMesh.z.front()) zTmp = fieldMesh.z.front()+(fieldMesh.z.front()-zTmp);
+			if(zTmp>fieldMesh.z.back()) zTmp = fieldMesh.z.back()-(zTmp-fieldMesh.z.back());
+#endif
+
+#if DEBUG_INTERP >= 1    
+#if DEBUG_INTERP >= 2
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+#endif
+            status = 1;
+			return TYPE2(0);
+	}
+#endif
+	//else
+	//{
+		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
+		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
+	//}
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+
+	z0 = floor(_z);
+	z1 = ceil(_z);
+	
+	// Catch for particle at point
+	if(x0==x1) {
+#if DEBUG_INTERP >= 2
+        cout << "Particle version of kj_interp" << endl;
+		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+#endif
+		return fVec[x0];
+	}
+	else {
+		TYPE2 f00 = fVec[x0];
+		TYPE2 f01 = fVec[x1];
+		TYPE2 f10 = fVec[z0];
+		TYPE2 f11 = fVec[z1];
+        
+#if DEBUG_INTERP >=2
+        //cout << "kj_interp: " << endl;
+        //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
+        //if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
+        //kj_print(x0,"x0");
+        //kj_print(x1,"x1");
+        //kj_print(y0,"y0");
+        //kj_print(y1,"y1");
+        //cout << endl;
+        if(x0>fVec.size()-1||x0<0||x1>fVec.size()-1||x1<1) {
+                cout<<"ERROR: interpolation point off the end of array"<<endl;
+                cout<<"x.front: "<<fieldMesh.r.front()<<endl;
+                cout<<"x.back: "<<fieldMesh.r.back()<<endl;
+                cout<<"x: "<<x<<endl;
+                cout<<"xVec.size(): "<<fieldMesh.r.size()<<endl;
+                cout<<"fVec.size(): "<<fVec.size()<<endl;
+                status = 1;
+                return TYPE2(0);
+        }
+#endif
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
+        
+#if DEBUG_INTERP >=1
+        if(isnan(result)) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: interpolation produced a NaN"<<endl;
+#endif
+                status = 1;
+                return TYPE2(0);
+        } 
+        if(isinf(result)) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: interpolation produced a INF"<<endl;
+#endif
+                status = 1;
+                return TYPE2(0);
+        }
+#endif
+		return result;
+	}
+}
 
 
 
@@ -2231,7 +2338,6 @@ int main ( int argc, char **argv )
 		}
     
         fieldMeshClass fieldMesh(r);
-
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
