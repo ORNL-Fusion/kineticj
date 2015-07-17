@@ -628,7 +628,25 @@ C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
         return xyz;
 }
 
-C3Vec kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
+class fieldMeshClass {
+    public:
+        vector<float> r;
+        vector<float> z;
+    
+        fieldMeshClass ( vector<float> r, vector<float> z);
+        fieldMeshClass ( vector<float> r);
+};
+
+fieldMeshClass::fieldMeshClass ( vector<float> _r, vector<float> _z) {
+		r = _r;
+		z = _z;
+}
+
+fieldMeshClass::fieldMeshClass ( vector<float> _r) {
+		r = _r;
+}
+
+C3Vec kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<C3Vec> &fVec, int &status ) {
 
     status = 0;
     
@@ -639,35 +657,35 @@ C3Vec kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<C3Ve
     xTmp = x;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()) {
+	if(x<fieldMesh.r.front()||x>fieldMesh.r.back()) {
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 2
 			cout<<"Particle absorbed at "<<x<<endl;
             cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec.front()<<endl;
-            cout<<"xVec.back():"<<xVec.back()<<endl;
+            cout<<"xVec.front():"<<fieldMesh.r.front()<<endl;
+            cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
 #endif
 			status = 1;
 			return C3Vec(0,0,0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic
-            float xRange = xVec.back() - xVec.front();
+            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
             int N;
-			if(xTmp<xVec.front()){
-                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+			if(xTmp<fieldMesh.r.front()){
+                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
                 xTmp = xTmp + N*xRange;
                // xTmp = xVec.back()-(xVec.front()-xTmp);
              }
-			if(xTmp>xVec.back()){
-                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+			if(xTmp>fieldMesh.r.back()){
+                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
                 xTmp = xTmp - N*xRange;
             }
     
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
+			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
 #endif
 
 #if DEBUG_INTERP >= 1    
@@ -680,7 +698,7 @@ C3Vec kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<C3Ve
 #endif
 	//else
 	//{
-		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
 	//}
 
 	x0 = floor(_x);
@@ -693,20 +711,20 @@ C3Vec kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<C3Ve
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return yVec[x0];
+		return fVec[x0];
 	}
 	else {
-		C3Vec y0 = yVec[x0];
-		C3Vec y1 = yVec[x1];
+		C3Vec f0 = fVec[x0];
+		C3Vec f1 = fVec[x1];
 
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+		return f0+(_x-x0)*(f1-f0)/(x1-x0);
 	}
 }
 
 
 template<class TYPE>
 //// 1D templated interp
-TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
+TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<TYPE> &fVec, CParticle &p, int &status ) {
 
     status = 0;
     float x = Loc.c1;
@@ -715,12 +733,12 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
 	xTmp = x;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()) {
+	if(x<fieldMesh.r.front()||x>fieldMesh.r.back()) {
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
-            if(xVec.size()!=yVec.size()) {
+            if(fieldMesh.r.size()!=fVec.size()) {
 #if DEBUG_INTERP >= 2
-                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+                cout<<"ERROR: xVec and fVec are not the same size for interpolation!"<<endl;
 #endif
                 p.status = 1;
                 status = 1;
@@ -740,21 +758,21 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
-            float xRange = xVec.back() - xVec.front();
+            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
             int N;
-			if(xTmp<xVec.front()){
-                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+			if(xTmp<fieldMesh.r.front()){
+                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
                 xTmp = xTmp + N*xRange;
                // xTmp = xVec.back()-(xVec.front()-xTmp);
              }
-			if(xTmp>xVec.back()){
-                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+			if(xTmp>fieldMesh.r.back()){
+                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
                 xTmp = xTmp - N*xRange;
             }
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
+			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
 #endif
 
 #if DEBUG_INTERP >= 1    
@@ -768,7 +786,7 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
 #endif
 	//else
 	//{
-		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
 	//}
 
 	x0 = floor(_x);
@@ -781,11 +799,11 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return yVec[x0];
+		return fVec[x0];
 	}
 	else {
-		TYPE y0 = yVec[x0];
-		TYPE y1 = yVec[x1];
+		TYPE f0 = fVec[x0];
+		TYPE f1 = fVec[x1];
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
         //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
@@ -795,19 +813,19 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
         //kj_print(y0,"y0");
         //kj_print(y1,"y1");
         //cout << endl;
-        if(x0>yVec.size()-1||x0<0||x1>yVec.size()-1||x1<1) {
+        if(x0>fVec.size()-1||x0<0||x1>fVec.size()-1||x1<1) {
                 cout<<"ERROR: interpolation point off the end of array"<<endl;
-                cout<<"x.front: "<<xVec.front()<<endl;
-                cout<<"x.back: "<<xVec.back()<<endl;
+                cout<<"x.front: "<<fieldMesh.r.front()<<endl;
+                cout<<"x.back: "<<fieldMesh.r.back()<<endl;
                 cout<<"x: "<<x<<endl;
-                cout<<"xVec.size(): "<<xVec.size()<<endl;
-                cout<<"yVec.size(): "<<yVec.size()<<endl;
+                cout<<"xVec.size(): "<<fieldMesh.r.size()<<endl;
+                cout<<"fVec.size(): "<<fVec.size()<<endl;
                 ++p.status;
                 status = 1;
                 return TYPE(0);
         }
 #endif
-        TYPE result = y0+(_x-x0)*(y1-y0)/(x1-x0);
+        TYPE result = f0+(_x-x0)*(f1-f0)/(x1-x0);
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -833,7 +851,7 @@ TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE>
 }
 
 
-float kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
+float kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<float> &fVec, int &status ) {
 
     status = 0;
     float x = Loc.c1;
@@ -842,36 +860,36 @@ float kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<floa
 	xTmp = x;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()) {
+	if(x<fieldMesh.r.front()||x>fieldMesh.r.back()) {
 #if DEBUG_INTERP >= 1
             cout<<"Non-particle interpolator"<<endl;
             cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec.front()<<endl;
-            cout<<"xVec.back():"<<xVec.back()<<endl;
+            cout<<"xVec.front():"<<fieldMesh.r.front()<<endl;
+            cout<<"xVec.back():"<<fieldMesh.r.back()<<endl;
 #endif
             status = 1;
 			return 0;
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
-            float xRange = xVec.back() - xVec.front();
+            float xRange = fieldMesh.r.back() - fieldMesh.r.front();
             int N;
-			if(xTmp<xVec.front()){
-                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+			if(xTmp<fieldMesh.r.front()){
+                N = int(floor( (fieldMesh.r.front() - xTmp)/xRange )) + 1;
                 xTmp = xTmp + N*xRange;
                // xTmp = xVec.back()-(xVec.front()-xTmp);
              }
-			if(xTmp>xVec.back()){
-                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+			if(xTmp>fieldMesh.r.back()){
+                N = int(floor( (xTmp - fieldMesh.r.back())/xRange )) + 1;
                 xTmp = xTmp - N*xRange;
             }
 #elif _PARTICLE_BOUNDARY == 3
 			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+			if(xTmp<fieldMesh.r.front()) xTmp = fieldMesh.r.front()+(fieldMesh.r.front()-xTmp);
+			if(xTmp>fieldMesh.r.back()) xTmp = fieldMesh.r.back()-(xTmp-fieldMesh.r.back());
 #endif
 	
-    _x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+    _x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
 
 	x0 = floor(_x);
 	x1 = ceil(_x);
@@ -883,29 +901,24 @@ float kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<floa
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return yVec[x0];
+		return fVec[x0];
 	}
 	else {
-		float y0 = yVec[x0];
-		float y1 = yVec[x1];
+		float f0 = fVec[x0];
+		float f1 = fVec[x1];
 
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
+		return f0+(_x-x0)*(f1-f0)/(x1-x0);
 	}
 }
-
-
 /*
-//template<class TYPE>
-//// 1D templated interp
-//TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
-template<class TYPE2>
-//template<class TYPE>
 //// 2D templated interp
-
 /// TO-DO:  Generalize boundary detection in all boundary cases....
-TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, const vector< vector< TYPE2 > > &yVec, CParticle &p, int &status ) {
+template<class TYPE2>
+TYPE2 kj_interp ( const C3Vec &Loc, const vector<vector<float> > &xVec, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
     status = 0;
+    float x = Loc.x;
+    
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -914,9 +927,9 @@ TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, co
 	if(x < xVec.front()||x>xVec.back()) {
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
-            if(xVec.size()!=yVec.size()) {
+            if(xVec.size()!=fVec.size()) {
 #if DEBUG_INTERP >= 2
-                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+                cout<<"ERROR: xVec and fVec are not the same size for interpolation!"<<endl;
 #endif
                 p.status = 1;
                 status = 1;
@@ -977,11 +990,11 @@ TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, co
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return yVec[x0];
+		return fVec[x0];
 	}
 	else {
-		TYPE2 y0 = yVec[x0];
-		TYPE2 y1 = yVec[x1];
+		TYPE2 f0 = fVec[x0];
+		TYPE2 f1 = fVec[x1];
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
         //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
@@ -991,19 +1004,19 @@ TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, co
         //kj_print(y0,"y0");
         //kj_print(y1,"y1");
         //cout << endl;
-        if(x0>yVec.size()-1||x0<0||x1>yVec.size()-1||x1<1) {
+        if(x0>fVec.size()-1||x0<0||x1>fVec.size()-1||x1<1) {
                 cout<<"ERROR: interpolation point off the end of array"<<endl;
                 cout<<"x.front: "<<xVec.front()<<endl;
                 cout<<"x.back: "<<xVec.back()<<endl;
                 cout<<"x: "<<x<<endl;
                 cout<<"xVec.size(): "<<xVec.size()<<endl;
-                cout<<"yVec.size(): "<<yVec.size()<<endl;
+                cout<<"fVec.size(): "<<fVec.size()<<endl;
                 ++p.status;
                 status = 1;
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = y0+(_x-x0)*(y1-y0)/(x1-x0);
+        TYPE2 result = f0+(_x-x0)*(f1-f0)/(x1-x0);
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -1027,7 +1040,6 @@ TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, co
 	}
 
 }
-
 */
 
 
@@ -1380,7 +1392,6 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-    
     e1RE_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1REVec_XYZ, p, status );
 	e1IM_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1IMVec_XYZ, p, status );
     
@@ -1394,7 +1405,6 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 
 	e1_XYZ = C3Vec(ex_a*cos(ex_p + wrf*t + p.rfPhase) , ey_a*cos(ey_p + wrf*t + p.rfPhase), ez_a*cos(ez_p + wrf*t + p.rfPhase) );
 
-    
     Fe1 = (p.q/p.m)*e1_XYZ;
     return Fb0 + (1.0e3)*Fe1;
     
@@ -2075,7 +2085,7 @@ int main ( int argc, char **argv )
 
 
 #if DIM == 1
-            vector<float>   r, b0_r, b0_p, b0_z,
+            vector<float>           r, b0_r, b0_p, b0_z,
                                     e_r_re, e_p_re, e_z_re,
                                     e_r_im, e_p_im, e_z_im, n_m3,
                                     b_r_re, b_p_re, b_z_re,
@@ -2086,12 +2096,10 @@ int main ( int argc, char **argv )
 
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
-
 	
 				NcDim nc_nR(dataFile.getDim("nR"));
 				NcDim nc_nSpec(dataFile.getDim("nSpec"));
 				NcDim nc_scalar(dataFile.getDim("scalar"));
-            
             
                 int nR = nc_nR.getSize();
                 int nZ = 1;
@@ -2129,7 +2137,7 @@ int main ( int argc, char **argv )
                 NcVar nc_density(dataFile.getVar("density_m3"));
 
                 r.resize(nR);
-
+            
                 b0_r.resize(nR);
                 b0_p.resize(nR);
                 b0_z.resize(nR);
@@ -2221,6 +2229,9 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
+    
+        fieldMeshClass fieldMesh(r);
+
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
@@ -2339,7 +2350,7 @@ int main ( int argc, char **argv )
 #if DIM == 2
             vector<float> r;
             vector<float> z;
-            vector<vector<float> >   b0_r, b0_p, b0_z,
+            vector<vector<float> >    b0_r, b0_p, b0_z,
                                     e_r_re, e_p_re, e_z_re,
                                     e_r_im, e_p_im, e_z_im, n_m3,
                                     b_r_re, b_p_re, b_z_re,
@@ -2397,7 +2408,7 @@ int main ( int argc, char **argv )
 
                 r.resize(nR);
                 z.resize(nZ);
-
+            
                 b0_r.resize(nR,nZ);
                 b0_p.resize(nR,nZ);
                 b0_z.resize(nR,nZ);
@@ -2493,6 +2504,9 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
+    
+        fieldMeshClass fieldMesh(r,z);
+
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
@@ -2570,17 +2584,18 @@ int main ( int argc, char **argv )
 
 		// Rotate the e & b fields to XYZ
 /////// need to be careful here for 2d////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
-		e1Re_CYL.resize(e_r.size());
-		e1Im_CYL.resize(e_r.size());
-		b1Re_CYL.resize(e_r.size());
-		b1Im_CYL.resize(e_r.size());
+		vector< vector<C3Vec> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+    
+		e1Re_CYL.resize(e_r.size(),e_r[0].size());
+		e1Im_CYL.resize(e_r.size(),e_r[0].size());
+		b1Re_CYL.resize(e_r.size(),e_r[0].size());
+		b1Im_CYL.resize(e_r.size(),e_r[0].size());
 
-		vector<C3Vec> e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
-		e1Re_XYZ.resize(e_r.size());
-		e1Im_XYZ.resize(e_r.size());
-		b1Re_XYZ.resize(e_r.size());
-		b1Im_XYZ.resize(e_r.size());
+		vector< vector<C3Vec> > e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
+		e1Re_XYZ.resize(e_r.size(),e_r[0].size());
+		e1Im_XYZ.resize(e_r.size(),e_r[0].size());
+		b1Re_XYZ.resize(e_r.size(),e_r[0].size());
+		b1Im_XYZ.resize(e_r.size(),e_r[0].size());
 
 		for(int i=0;i<e_r.size();i++) {
             for(int j=0;j<e_r[0].size();j++) {
@@ -2763,8 +2778,8 @@ int main ( int argc, char **argv )
     // Initialize other variables on worklist, density, Bfield, etc
     for (int iList=0;iList<nList;iList++){
         int iStat;
-        density_m3[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),r,n_m3,iStat);
-        b0_XYZ_T_at_List[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),r,b0_XYZ,iStat);
+        density_m3[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,n_m3,iStat);
+        b0_XYZ_T_at_List[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,b0_XYZ,iStat);
     }
 
     for (int iList=0;iList<nList;iList++){
@@ -3004,16 +3019,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp (C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp (C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3145,7 +3160,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
@@ -3319,16 +3334,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3459,7 +3474,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0 && i < nSteps - 1 ){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
