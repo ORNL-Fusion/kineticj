@@ -628,7 +628,7 @@ C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
         return xyz;
 }
 
-C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
+C3Vec kj_interp ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
 
     status = 0;
 	float _x, x0, x1;
@@ -686,7 +686,7 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
-        cout << "status version of kj_interp1D" << endl;
+        cout << "status version of kj_interp" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -701,7 +701,8 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 }
 
 template<class TYPE>
-TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
+//// 1D templated interp
+TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
 
     status = 0;
 	float _x, x0, x1;
@@ -771,7 +772,7 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
-        cout << "Particle version of kj_interp1D" << endl;
+        cout << "Particle version of kj_interp" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -781,7 +782,7 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 		TYPE y0 = yVec[x0];
 		TYPE y1 = yVec[x1];
 #if DEBUG_INTERP >=2
-        //cout << "kj_interp1D: " << endl;
+        //cout << "kj_interp: " << endl;
         //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
         //if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
         //kj_print(x0,"x0");
@@ -826,7 +827,8 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 
 }
 
-float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
+
+float kj_interp ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
 
     status = 0;
 	float _x, x0, x1;
@@ -871,7 +873,7 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
-        cout << "Non-particle version of kj_interp1D" << endl;
+        cout << "Non-particle version of kj_interp" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
@@ -884,6 +886,146 @@ float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<floa
 		return y0+(_x-x0)*(y1-y0)/(x1-x0);
 	}
 }
+
+
+/*
+//// 2D templated interp
+TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, const vector<vector<TYPE> > &yVec, CParticle &p, int &status ) {
+
+    status = 0;
+	float _x, x0, x1;
+	float xTmp;
+	xTmp = x;
+
+#if _PARTICLE_BOUNDARY == 1
+	if(x < xVec.front()||x>xVec.back()) {
+			// Particle absorbing walls
+#if DEBUG_INTERP >= 1
+            if(xVec.size()!=yVec.size()) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+#endif
+                p.status = 1;
+                status = 1;
+                return TYPE(0);
+            }
+#if DEBUG_INTERP >= 2
+			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"Particle number: "<<p.number<<endl;
+            cout<<"x:"<<x<<endl;
+            cout<<"xVec.front():"<<xVec.front()<<endl;
+            cout<<"xVec.back():"<<xVec.back()<<endl;
+#endif
+#endif
+            status = 1;
+			p.status = 1;
+			return TYPE(0);
+	}
+#elif _PARTICLE_BOUNDARY == 2
+			// Periodic 
+            float xRange = xVec.back() - xVec.front();
+            int N;
+			if(xTmp<xVec.front()){
+                N = int(floor( (xVec.front() - xTmp)/xRange )) + 1;
+                xTmp = xTmp + N*xRange;
+               // xTmp = xVec.back()-(xVec.front()-xTmp);
+             }
+			if(xTmp>xVec.back()){
+                N = int(floor( (xTmp - xVec.back())/xRange )) + 1;
+                xTmp = xTmp - N*xRange;
+            }
+#elif _PARTICLE_BOUNDARY == 3
+			// Particle reflecting walls
+			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
+			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
+#endif
+
+#if DEBUG_INTERP >= 1    
+	if(p.status>0){
+#if DEBUG_INTERP >= 2
+			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
+#endif
+            status = 1;
+			return TYPE(0);
+	}
+#endif
+	//else
+	//{
+		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
+	//}
+
+	x0 = floor(_x);
+	x1 = ceil(_x);
+	
+	// Catch for particle at point
+	if(x0==x1) {
+#if DEBUG_INTERP >= 2
+        cout << "Particle version of kj_interp" << endl;
+		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+#endif
+		return yVec[x0];
+	}
+	else {
+		TYPE y0 = yVec[x0];
+		TYPE y1 = yVec[x1];
+#if DEBUG_INTERP >=2
+        //cout << "kj_interp: " << endl;
+        //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
+        //if(typeid(TYPE)==typeid(float)) cout << "Type is float" << endl;
+        //kj_print(x0,"x0");
+        //kj_print(x1,"x1");
+        //kj_print(y0,"y0");
+        //kj_print(y1,"y1");
+        //cout << endl;
+        if(x0>yVec.size()-1||x0<0||x1>yVec.size()-1||x1<1) {
+                cout<<"ERROR: interpolation point off the end of array"<<endl;
+                cout<<"x.front: "<<xVec.front()<<endl;
+                cout<<"x.back: "<<xVec.back()<<endl;
+                cout<<"x: "<<x<<endl;
+                cout<<"xVec.size(): "<<xVec.size()<<endl;
+                cout<<"yVec.size(): "<<yVec.size()<<endl;
+                ++p.status;
+                status = 1;
+                return TYPE(0);
+        }
+#endif
+        TYPE result = y0+(_x-x0)*(y1-y0)/(x1-x0);
+
+#if DEBUG_INTERP >=1
+        if(isnan(result)) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: interpolation produced a NaN"<<endl;
+#endif
+                ++p.status;
+                status = 1;
+                return TYPE(0);
+        } 
+        if(isinf(result)) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: interpolation produced a INF"<<endl;
+#endif
+                ++p.status;
+                status = 1;
+                return TYPE(0);
+        }
+#endif
+		return result;
+	}
+
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
 
 C3Vec operator* ( const float A[][3], const C3Vec x ) {
         C3Vec B;
@@ -1093,7 +1235,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p, status );
+	b0_CYL = kj_interp ( _r, rVec, b0Vec_CYL, p, status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -1222,8 +1364,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-	e1RE_XYZ = kj_interp1D ( _r, rVec, e1REVec_XYZ, p, status );
-	e1IM_XYZ = kj_interp1D ( _r, rVec, e1IMVec_XYZ, p, status );
+	e1RE_XYZ = kj_interp ( _r, rVec, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp ( _r, rVec, e1IMVec_XYZ, p, status );
     
     ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
     ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
@@ -1279,7 +1421,7 @@ int rk4_move ( CParticle &p, float dt, float t0,
 // Parallel acceleration
 float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB, int &status ) {
 
-    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, p, status );
+    float This_bDotGradB = kj_interp ( r.c1, r_GC, bDotGradB, p, status );
 #if DEBUG_EVAL_APAR >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_aPar"<<endl;
@@ -1300,7 +1442,7 @@ float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const 
 // Perpendicular velocity
 float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
+	C3Vec This_b0_CYL = kj_interp ( r.c1, r_b0, b0_CYL, p, status );
     return sqrt ( 2.0 * p.u * mag(This_b0_CYL) / p.m );
 }
 
@@ -1309,7 +1451,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
                 const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, 
                 const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
+	C3Vec This_b0_CYL = kj_interp ( r.c1, r_b0, b0_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_vGC"<<endl;
@@ -1317,7 +1459,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, p, status );
+	C3Vec This_curv_CYL = kj_interp ( r.c1, r_GC, curv_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 2 in eval_vGC"<<endl;
@@ -1325,7 +1467,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, p, status );
+	C3Vec This_grad_CYL = kj_interp ( r.c1, r_GC, grad_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 3 in eval_vGC"<<endl;
@@ -1438,7 +1580,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update the XYZ velocity also
 
-                C3Vec this_b0_CYL = kj_interp1D ( xn1.c1, r_b0, b0_CYL, status );
+                C3Vec this_b0_CYL = kj_interp ( xn1.c1, r_b0, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
                 C3Vec v_abp;
@@ -1899,17 +2041,11 @@ int main ( int argc, char **argv )
 		// This needs netCDF 4.1.1 or later build with
 		// ./configure --enable-cxx-4 [plus other options]
 
-		vector<float> r, b0_r, b0_p, b0_z,
-				e_r_re, e_p_re, e_z_re,
-				e_r_im, e_p_im, e_z_im, n_m3,
-				b_r_re, b_p_re, b_z_re,
-				b_r_im, b_p_im, b_z_im;
-		vector<C3Vec> b0_CYL, b0_XYZ;
 		
+        //// These are defined for DIM = 1 or 2
+    
+		vector<C3Vec> b0_CYL, b0_XYZ;
 		float freq;
-
-		vector<complex<float> > e_r, e_p, e_z;	
-		vector<complex<float> > b_r, b_p, b_z;	
 
 		ifstream file(eField_fName.c_str());
 		if(!file.good()) {
@@ -1918,74 +2054,88 @@ int main ( int argc, char **argv )
 		}
 
 
+#if DIM == 1
+            vector<float>   r, b0_r, b0_p, b0_z,
+                                    e_r_re, e_p_re, e_z_re,
+                                    e_r_im, e_p_im, e_z_im, n_m3,
+                                    b_r_re, b_p_re, b_z_re,
+                                    b_r_im, b_p_im, b_z_im;
+
+            vector<complex<float> >  e_r, e_p, e_z;
+            vector<complex<float> >  b_r, b_p, b_z;
+
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
+
 	
 				NcDim nc_nR(dataFile.getDim("nR"));
 				NcDim nc_nSpec(dataFile.getDim("nSpec"));
 				NcDim nc_scalar(dataFile.getDim("scalar"));
-	
-				int nR = nc_nR.getSize();
-				int nSpec = nc_nSpec.getSize();
+            
+            
+                int nR = nc_nR.getSize();
+                int nZ = 1;
+                int nSpec = nc_nSpec.getSize();
 
                 if(species_number>nSpec-1) {
                         cout << "ERROR: Asking for species that does not exist in density data" << endl;
                         exit(1);
                 }
-	
-				cout << "\tnR: " << nR << endl;
-	
-				NcVar nc_r(dataFile.getVar("r"));
-				NcVar nc_freq(dataFile.getVar("freq"));
 
-				NcVar nc_b0_r(dataFile.getVar("B0_r"));
-				NcVar nc_b0_p(dataFile.getVar("B0_p"));
-				NcVar nc_b0_z(dataFile.getVar("B0_z"));
+                cout << "\tnR: " << nR << endl;
 
-				NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
-				NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
-				NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
-				NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
-				NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
-				NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
+                NcVar nc_r(dataFile.getVar("r"));
+            
+                NcVar nc_freq(dataFile.getVar("freq"));
 
-				NcVar nc_b_r_re(dataFile.getVar("b_r_re"));
-				NcVar nc_b_p_re(dataFile.getVar("b_p_re"));
-				NcVar nc_b_z_re(dataFile.getVar("b_z_re"));
-				NcVar nc_b_r_im(dataFile.getVar("b_r_im"));
-				NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
-				NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
+                NcVar nc_b0_r(dataFile.getVar("B0_r"));
+                NcVar nc_b0_p(dataFile.getVar("B0_p"));
+                NcVar nc_b0_z(dataFile.getVar("B0_z"));
 
-				NcVar nc_density(dataFile.getVar("density_m3"));
+                NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
+                NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
+                NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
+                NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
+                NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
+                NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
 
-				r.resize(nR);
+                NcVar nc_b_r_re(dataFile.getVar("b_r_re"));
+                NcVar nc_b_p_re(dataFile.getVar("b_p_re"));
+                NcVar nc_b_z_re(dataFile.getVar("b_z_re"));
+                NcVar nc_b_r_im(dataFile.getVar("b_r_im"));
+                NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
+                NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
 
-				b0_r.resize(nR);
-				b0_p.resize(nR);
-				b0_z.resize(nR);
+                NcVar nc_density(dataFile.getVar("density_m3"));
 
-				e_r_re.resize(nR);
-				e_p_re.resize(nR);
-				e_z_re.resize(nR);
-				e_r_im.resize(nR);
-				e_p_im.resize(nR);
-				e_z_im.resize(nR);
+                r.resize(nR);
 
-				b_r_re.resize(nR);
-				b_p_re.resize(nR);
-				b_z_re.resize(nR);
-				b_r_im.resize(nR);
-				b_p_im.resize(nR);
-				b_z_im.resize(nR);
+                b0_r.resize(nR);
+                b0_p.resize(nR);
+                b0_z.resize(nR);
+
+                e_r_re.resize(nR);
+                e_p_re.resize(nR);
+                e_z_re.resize(nR);
+                e_r_im.resize(nR);
+                e_p_im.resize(nR);
+                e_z_im.resize(nR);
+
+                b_r_re.resize(nR);
+                b_p_re.resize(nR);
+                b_z_re.resize(nR);
+                b_r_im.resize(nR);
+                b_p_im.resize(nR);
+                b_z_im.resize(nR);
 
                 n_m3.resize(nR);
 
-				nc_r.getVar(&r[0]);
-				nc_freq.getVar(&freq);
+                nc_r.getVar(&r[0]);
+                nc_freq.getVar(&freq);
 
-				nc_b0_r.getVar(&b0_r[0]);
-				nc_b0_p.getVar(&b0_p[0]);
-				nc_b0_z.getVar(&b0_z[0]);
+                nc_b0_r.getVar(&b0_r[0]);
+                nc_b0_p.getVar(&b0_p[0]);
+                nc_b0_z.getVar(&b0_z[0]);
 
                 // Here im reading a single species' density from a multi species array, 
                 // i.e., density[nSpec,nR] and I only want density[1,*] for example where
@@ -2000,8 +2150,8 @@ int main ( int argc, char **argv )
 
 				nc_density.getVar(start, count, &n_m3[0]);
 
-				b0_CYL.resize(nR);
-				b0_XYZ.resize(nR);
+				b0_CYL.resize(nR,nZ);
+				b0_XYZ.resize(nR,nZ);
            
 				for(int i=0; i<nR; i++) {
                         b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
@@ -2125,7 +2275,6 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
 
-
 		// Rotate the e & b fields to XYZ
 
 		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
@@ -2160,13 +2309,292 @@ int main ( int argc, char **argv )
 
             e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
             e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
+            
+            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
+            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
 
+		}
+#endif
+
+#if DIM == 2
+            vector<float> r;
+            vector<float> z;
+            vector<vector<float>>   b0_r, b0_p, b0_z,
+                                    e_r_re, e_p_re, e_z_re,
+                                    e_r_im, e_p_im, e_z_im, n_m3,
+                                    b_r_re, b_p_re, b_z_re,
+                                    b_r_im, b_p_im, b_z_im;
+
+            vector< vector<complex<float> > > e_r, e_p, e_z;
+            vector <vector<complex<float> > > b_r, b_p, b_z;
+
+		try {
+				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
+
+	
+				NcDim nc_nR(dataFile.getDim("nR"));
+				NcDim nc_nSpec(dataFile.getDim("nSpec"));
+				NcDim nc_scalar(dataFile.getDim("scalar"));
+ 
+
+                NcDim nc_nR(dataFile.getDim("nZ"));
+    
+                int nR = nc_nR.getSize();
+                int nZ = nc_nZ.getSize();
+                int nSpec = nc_nSpec.getSize();
+
+                if(species_number>nSpec-1) {
+                        cout << "ERROR: Asking for species that does not exist in density data" << endl;
+                        exit(1);
+                }
+
+                cout << "\tnR: " << nR << endl;
+
+                NcVar nc_r(dataFile.getVar("r"));
+                NcVar nc_r(dataFile.getVar("z"));
+            
+                NcVar nc_freq(dataFile.getVar("freq"));
+
+                NcVar nc_b0_r(dataFile.getVar("B0_r"));
+                NcVar nc_b0_p(dataFile.getVar("B0_p"));
+                NcVar nc_b0_z(dataFile.getVar("B0_z"));
+
+                NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
+                NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
+                NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
+                NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
+                NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
+                NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
+
+                NcVar nc_b_r_re(dataFile.getVar("b_r_re"));
+                NcVar nc_b_p_re(dataFile.getVar("b_p_re"));
+                NcVar nc_b_z_re(dataFile.getVar("b_z_re"));
+                NcVar nc_b_r_im(dataFile.getVar("b_r_im"));
+                NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
+                NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
+
+                NcVar nc_density(dataFile.getVar("density_m3"));
+
+                r.resize(nR);
+                z.resize(nZ);
+
+                b0_r.resize(nR,nZ);
+                b0_p.resize(nR,nZ);
+                b0_z.resize(nR,nZ);
+
+                e_r_re.resize(nR,nZ);
+                e_p_re.resize(nR,nZ);
+                e_z_re.resize(nR,nZ);
+                e_r_im.resize(nR,nZ);
+                e_p_im.resize(nR,nZ);
+                e_z_im.resize(nR,nZ);
+
+                b_r_re.resize(nR,nZ);
+                b_p_re.resize(nR,nZ);
+                b_z_re.resize(nR,nZ);
+                b_r_im.resize(nR,nZ);
+                b_p_im.resize(nR,nZ);
+                b_z_im.resize(nR,nZ);
+
+                n_m3.resize(nR,nZ);
+
+                nc_r.getVar(&r[0]);
+                nc_freq.getVar(&freq);
+
+                nc_b0_r.getVar(&b0_r[0]);
+                nc_b0_p.getVar(&b0_p[0]);
+                nc_b0_z.getVar(&b0_z[0]);
+    
+                // Here im reading a single species' density from a multi species array, 
+                // i.e., density[nSpec,nR] and I only want density[1,*] for example where
+                // the species is specified by "species_number" in the cfg file
+                vector<size_t> start, count;
+                start.resize(2);
+                count.resize(2);
+                start[1] = 0;
+                start[0] = species_number;
+                count[1] = nR;
+                count[0] = 1;
+
+				nc_density.getVar(start, count, &n_m3[0]);
+
+				b0_CYL.resize(nR,nZ);
+				b0_XYZ.resize(nR,nZ);
+           
+				for(int i=0; i<nR; i++) {
+                    for (int j = 0; j< nZ; j++){
+                        b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
+                        b0_XYZ[i][j] = rot_CYL_to_XYZ(0,b0_CYL[i][j],1);
+                        }
+				}
+
+//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
+				nc_e_r_re.getVar(&e_r_re[0]);
+				nc_e_p_re.getVar(&e_p_re[0]);
+				nc_e_z_re.getVar(&e_z_re[0]);
+				nc_e_r_im.getVar(&e_r_im[0]);
+				nc_e_p_im.getVar(&e_p_im[0]);
+				nc_e_z_im.getVar(&e_z_im[0]);
+
+				nc_b_r_re.getVar(&b_r_re[0]);
+				nc_b_p_re.getVar(&b_p_re[0]);
+				nc_b_z_re.getVar(&b_z_re[0]);
+				nc_b_r_im.getVar(&b_r_im[0]);
+				nc_b_p_im.getVar(&b_p_im[0]);
+				nc_b_z_im.getVar(&b_z_im[0]);
+
+//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
+				for(int i=0; i<nR; i++){
+						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
+						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
+						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
+				}
+
+				for(int i=0; i<nR; i++){
+						b_r.push_back(complex<float>( b_r_re[i], b_r_im[i] ) );
+						b_p.push_back(complex<float>( b_p_re[i], b_p_im[i] ) );
+						b_z.push_back(complex<float>( b_z_re[i], b_z_im[i] ) );
+				}
+
+				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
+				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+#if DEBUGLEVEL >= 1 
+				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
+				cout << "\tfreq: " << freq << endl;
+				cout << "\tmin(b0_p): " << *min << endl;
+				cout << "\tmax(b0_p): " << *max << endl;
+				cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR/2]) << endl;
+				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
+				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
+#endif
+		}
+		catch(exceptions::NcException &e) {
+				cout << "NetCDF: unknown error" << endl;
+				e.what();
+				exit(1);
+		}
+
+		// Read the guiding center terms from file
+		string gc_fName = cfg.lookup("gc_fName");	
+		cout << "Reading GC terms data file " << gc_fName << endl;
+
+		vector<float> r_gc, curv_r, curv_p, curv_z,
+            grad_r, grad_p, grad_z, bDotGradB;
+		vector<C3Vec> curv_CYL, grad_CYL;
+		
+		ifstream gc_file(gc_fName.c_str());
+		if(!gc_file.good()) {
+			cout << "ERROR: Cannot find file " << gc_fName << endl;
+			exit(1);
+		}
+
+		try {
+				NcFile dataFile ( gc_fName.c_str(), NcFile::read );
+	
+				NcDim gc_nc_nR(dataFile.getDim("nR"));
+				NcDim gc_nc_scalar(dataFile.getDim("scalar"));
+	
+				int nR_gc = gc_nc_nR.getSize();
+                cout << "nR_gc: " << nR_gc << endl;
+
+				NcVar gc_nc_r(dataFile.getVar("r"));
+
+				NcVar gc_nc_curv_r(dataFile.getVar("curv_r"));
+				NcVar gc_nc_curv_p(dataFile.getVar("curv_t"));
+				NcVar gc_nc_curv_z(dataFile.getVar("curv_z"));
+
+				NcVar gc_nc_grad_r(dataFile.getVar("grad_r"));
+				NcVar gc_nc_grad_p(dataFile.getVar("grad_t"));
+				NcVar gc_nc_grad_z(dataFile.getVar("grad_z"));
+
+				NcVar gc_nc_bDotGradB(dataFile.getVar("bDotGradB"));
+
+				r_gc.resize(nR_gc);
+
+				curv_r.resize(nR_gc);
+				curv_p.resize(nR_gc);
+				curv_z.resize(nR_gc);
+
+				grad_r.resize(nR_gc);
+				grad_p.resize(nR_gc);
+				grad_z.resize(nR_gc);
+
+				bDotGradB.resize(nR_gc);
+
+				gc_nc_r.getVar(&r_gc[0]);
+
+				gc_nc_curv_r.getVar(&curv_r[0]);
+				gc_nc_curv_p.getVar(&curv_p[0]);
+				gc_nc_curv_z.getVar(&curv_z[0]);
+
+				gc_nc_grad_r.getVar(&grad_r[0]);
+				gc_nc_grad_p.getVar(&grad_p[0]);
+				gc_nc_grad_z.getVar(&grad_z[0]);
+
+                gc_nc_bDotGradB.getVar(&bDotGradB[0]);
+
+				curv_CYL.resize(nR_gc);
+				grad_CYL.resize(nR_gc);
+				for(int i=0; i<nR_gc; i++) {
+						curv_CYL[i] = C3Vec(curv_r[i],curv_p[i],curv_z[i]);
+		                grad_CYL[i] = C3Vec(grad_r[i],grad_p[i],grad_z[i]);
+				}
+
+		}
+		catch(exceptions::NcException &e) {
+				cout << "NetCDF: unknown error." << endl;
+				e.what();
+				exit(1);
+		}
+
+
+		// Rotate the e & b fields to XYZ
+
+		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+		e1Re_CYL.resize(e_r.size());
+		e1Im_CYL.resize(e_r.size());
+		b1Re_CYL.resize(e_r.size());
+		b1Im_CYL.resize(e_r.size());
+
+		vector<C3Vec> e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
+		e1Re_XYZ.resize(e_r.size());
+		e1Im_XYZ.resize(e_r.size());
+		b1Re_XYZ.resize(e_r.size());
+		b1Im_XYZ.resize(e_r.size());
+
+/////// need to be careful here for 2d////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		for(int i=0;i<e_r.size();i++) {
+
+			e1Re_CYL[i].c1 = real(e_r[i]);
+			e1Re_CYL[i].c2 = real(e_p[i]);
+			e1Re_CYL[i].c3 = real(e_z[i]);
+			e1Im_CYL[i].c1 = imag(e_r[i]);
+			e1Im_CYL[i].c2 = imag(e_p[i]);
+			e1Im_CYL[i].c3 = imag(e_z[i]);
+
+			b1Re_CYL[i].c1 = real(b_r[i]);
+			b1Re_CYL[i].c2 = real(b_p[i]);
+			b1Re_CYL[i].c3 = real(b_z[i]);
+			b1Im_CYL[i].c1 = imag(b_r[i]);
+			b1Im_CYL[i].c2 = imag(b_p[i]);
+			b1Im_CYL[i].c3 = imag(b_z[i]);
+
+			float _p = 0;
+
+            e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
+            e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
             
             b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
             b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
 
 		}
 
+#endif
+            
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////// NOTHING BELOW HERE SEEMS TO DEPEND ON WHETHER DOING A 1D OR A 2D CALCULATION
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	float wrf = freq * 2 * _pi;
 
@@ -2278,8 +2706,8 @@ int main ( int argc, char **argv )
     // Initialize other variables on worklist, density, Bfield, etc
     for (int iList=0;iList<nList;iList++){
         int iStat;
-        density_m3[iList] = kj_interp1D(PrimaryWorkList[iList].c1,r,n_m3,iStat);
-        b0_XYZ_T_at_List[iList] = kj_interp1D(PrimaryWorkList[iList].c1,r,b0_XYZ,iStat);
+        density_m3[iList] = kj_interp(PrimaryWorkList[iList].c1,r,n_m3,iStat);
+        b0_XYZ_T_at_List[iList] = kj_interp(PrimaryWorkList[iList].c1,r,b0_XYZ,iStat);
     }
 
     for (int iList=0;iList<nList;iList++){
@@ -2519,16 +2947,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -2660,7 +3088,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(thisPos.c1,r,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
@@ -2834,16 +3262,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -2974,7 +3402,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0 && i < nSteps - 1 ){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp1D(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(thisPos.c1,r,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
