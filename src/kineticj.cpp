@@ -628,12 +628,15 @@ C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
         return xyz;
 }
 
-C3Vec kj_interp ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
+C3Vec kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
 
     status = 0;
+    
+    float x = Loc.c1;
+    
 	float _x, x0, x1;
 	float xTmp;
-	xTmp = x;
+    xTmp = x;
 
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()) {
@@ -700,11 +703,13 @@ C3Vec kj_interp ( const float &x, const vector<float> &xVec, const vector<C3Vec>
 	}
 }
 
+
 template<class TYPE>
 //// 1D templated interp
-TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
+TYPE kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
 
     status = 0;
+    float x = Loc.c1;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -828,9 +833,10 @@ TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &
 }
 
 
-float kj_interp ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
+float kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
 
     status = 0;
+    float x = Loc.c1;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -889,8 +895,12 @@ float kj_interp ( const float &x, const vector<float> &xVec, const vector<float>
 
 
 /*
+//template<class TYPE>
+//// 1D templated interp
+//TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
+
 //// 2D templated interp
-TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, const vector<vector<TYPE> > &yVec, CParticle &p, int &status ) {
+TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, const vector< vector< TYPE > > &yVec, CParticle &p, int &status ) {
 
     status = 0;
 	float _x, x0, x1;
@@ -1015,10 +1025,8 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 
 }
 
+
 */
-
-
-
 
 
 
@@ -1224,7 +1232,9 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
-    _p = 0; // Really need to do something about this.
+    
+    ///_p = 0; // Really need to do something about this (DG). ///// WHY??? (DB)
+
 
 #if DEBUGLEVEL >= 3
 	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
@@ -1235,7 +1245,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp ( _r, rVec, b0Vec_CYL, p, status );
+	b0_CYL = kj_interp ( C3Vec(_r,x.c3,_p) , rVec, b0Vec_CYL, p, status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -1358,14 +1368,15 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
-    _p = 0; // Really need to do something about this.
+    //_p = 0; // Really need to do something about this. (DG) /// WHY? (DB)
 
     C3Vec Fe1, e1RE_XYZ, e1IM_XYZ, e1_XYZ;
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-	e1RE_XYZ = kj_interp ( _r, rVec, e1REVec_XYZ, p, status );
-	e1IM_XYZ = kj_interp ( _r, rVec, e1IMVec_XYZ, p, status );
+    
+    e1RE_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1IMVec_XYZ, p, status );
     
     ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
     ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
@@ -1417,6 +1428,9 @@ int rk4_move ( CParticle &p, float dt, float t0,
 
         return status;
 }
+
+///////////////////////////////////// NEED TO CHANGE FIRST ARGUMENT OF kj_interp TO A C3Vec FOR GUIDING CENTER
+//////////////////////////////////////////////
 
 // Parallel acceleration
 float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB, int &status ) {
@@ -2319,7 +2333,7 @@ int main ( int argc, char **argv )
 #if DIM == 2
             vector<float> r;
             vector<float> z;
-            vector<vector<float>>   b0_r, b0_p, b0_z,
+            vector<vector<float> >   b0_r, b0_p, b0_z,
                                     e_r_re, e_p_re, e_z_re,
                                     e_r_im, e_p_im, e_z_im, n_m3,
                                     b_r_re, b_p_re, b_z_re,
@@ -2549,7 +2563,7 @@ int main ( int argc, char **argv )
 
 
 		// Rotate the e & b fields to XYZ
-
+/////// need to be careful here for 2d////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
 		e1Re_CYL.resize(e_r.size());
 		e1Im_CYL.resize(e_r.size());
@@ -2562,31 +2576,30 @@ int main ( int argc, char **argv )
 		b1Re_XYZ.resize(e_r.size());
 		b1Im_XYZ.resize(e_r.size());
 
-/////// need to be careful here for 2d////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		for(int i=0;i<e_r.size();i++) {
+            for(int j=0;j<e_r[0].size();j++) {
+			e1Re_CYL[i][j].c1 = real(e_r[i][j]);
+			e1Re_CYL[i][j].c2 = real(e_p[i][j]);
+			e1Re_CYL[i][j].c3 = real(e_z[i][j]);
+			e1Im_CYL[i][j].c1 = imag(e_r[i][j]);
+			e1Im_CYL[i][j].c2 = imag(e_p[i][j]);
+			e1Im_CYL[i][j].c3 = imag(e_z[i][j]);
 
-			e1Re_CYL[i].c1 = real(e_r[i]);
-			e1Re_CYL[i].c2 = real(e_p[i]);
-			e1Re_CYL[i].c3 = real(e_z[i]);
-			e1Im_CYL[i].c1 = imag(e_r[i]);
-			e1Im_CYL[i].c2 = imag(e_p[i]);
-			e1Im_CYL[i].c3 = imag(e_z[i]);
-
-			b1Re_CYL[i].c1 = real(b_r[i]);
-			b1Re_CYL[i].c2 = real(b_p[i]);
-			b1Re_CYL[i].c3 = real(b_z[i]);
-			b1Im_CYL[i].c1 = imag(b_r[i]);
-			b1Im_CYL[i].c2 = imag(b_p[i]);
-			b1Im_CYL[i].c3 = imag(b_z[i]);
+			b1Re_CYL[i][j].c1 = real(b_r[i][j]);
+			b1Re_CYL[i][j].c2 = real(b_p[i][j]);
+			b1Re_CYL[i][j].c3 = real(b_z[i][j]);
+			b1Im_CYL[i][j].c1 = imag(b_r[i][j]);
+			b1Im_CYL[i][j].c2 = imag(b_p[i][j]);
+			b1Im_CYL[i][j].c3 = imag(b_z[i][j]);
 
 			float _p = 0;
 
-            e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
-            e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
+            e1Re_XYZ[i][j] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i][j], 1);
+            e1Im_XYZ[i][j] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i][j], 1);
             
-            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
-            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
-
+            b1Re_XYZ[i][j] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i][j], 1);
+            b1Im_XYZ[i][j] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i][j], 1);
+            }
 		}
 
 #endif
@@ -2640,7 +2653,16 @@ int main ( int argc, char **argv )
 //////////// Initialize primary phase space worklist:
 	float rGridMin = cfg.lookup("rGridMin");
 	float rGridMax = cfg.lookup("rGridMax");
+
+	float zGridMin = cfg.lookup("zGridMin");
+	float zGridMax = cfg.lookup("zGridMax");
+
+	float phiGridMin = cfg.lookup("phiGridMin");
+	float phiGridMax = cfg.lookup("phiGridMax");
+    
 	int nRGrid = cfg.lookup("nRGrid");
+	int nZGrid = cfg.lookup("nZGrid");
+	int nPhiGrid = cfg.lookup("nPhiGrid");
 
 	int nVparGrid = cfg.lookup("nVparGrid");
 	int nVperGrid = cfg.lookup("nVperGrid");
@@ -2650,7 +2672,9 @@ int main ( int argc, char **argv )
     nList = nRGrid*nVparGrid*nVperGrid*nPhaseGrid;
     cout << "nList     " << nList << endl;
 
-	vector<float> rGrid(nRGrid), density_m3(nList), T_keV(nList), wrf_wc(nList);
+	vector<float> rGrid(nRGrid), zGrid(nZGrid), phiGrid(nPhiGrid);
+    vector<float> density_m3(nList), T_keV(nList), wrf_wc(nList);
+    
     vector<C3Vec> b0_XYZ_T_at_List(nList);
     
     vector<float> VparGrid(nVparGrid), VperGrid(nVperGrid);
@@ -2661,10 +2685,26 @@ int main ( int argc, char **argv )
     
     float rGridRng = 0;
 	float rGridStep = 0;
+
+    float zGridRng = 0;
+	float zGridStep = 0;
+
+    float phiGridRng = 0;
+	float phiGridStep = 0;
 	
 	if(nRGrid>1) {
 		rGridRng = rGridMax-rGridMin;
 		rGridStep = rGridRng/(nRGrid-1);
+	}
+
+	if(nZGrid>1) {
+		zGridRng = zGridMax-zGridMin;
+		zGridStep = zGridRng/(nZGrid-1);
+	}
+
+	if(nPhiGrid>1) {
+		phiGridRng = phiGridMax-phiGridMin;
+		phiGridStep = phiGridRng/(nPhiGrid-1);
 	}
 
     for (int iList=0;iList<nList;iList++){
@@ -2677,7 +2717,15 @@ int main ( int argc, char **argv )
 	for(int iR=0;iR<nRGrid;iR++) {
 		rGrid[iR] = rGridMin+iR*rGridStep;
     }
-	
+
+	for(int iZ=0;iZ<nZGrid;iZ++) {
+		zGrid[iZ] = zGridMin+iZ*zGridStep;
+    }
+
+	for(int iPhi=0;iPhi<nPhiGrid;iPhi++) {
+		phiGrid[iPhi] = phiGridMin+iPhi*phiGridStep;
+    }
+    
 	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
 		VparGrid[iVpar] = 0.3*vth_part + iVpar*(vth_part/nVparGrid);
     }
@@ -2692,22 +2740,25 @@ int main ( int argc, char **argv )
     
     // initialize primary worklist (assuming y,z,gyrophase = 0)
     for (int iList=0;iList<nList;iList++){
-            int iR = iList % nRGrid ;
-            int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
-            int iVper = int(floor(iList/(nRGrid*nVparGrid))) % nVperGrid;
-            int iPhase = int(floor(iList/(nRGrid*nVparGrid*nVperGrid)));
+            int iR = iList % nRGrid;
+            int iZ = int(floor(iList/nRGrid)) % nZGrid;
+            int iPhi = int(floor(iList/nRGrid*nZGrid)) % nPhiGrid;
+        
+            int iVpar = int(floor( iList/nRGrid*nZGrid*nPhiGrid)) % nVparGrid;
+            int iVper = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid))) % nVperGrid;
+            int iPhase = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid*nVperGrid)));
+        
             cout << "iList   = " << iList << "    iPhase = " << iPhase << "   PhaseGrid[iPhase] = " << PhaseGrid[iPhase]
             << ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR] << endl;
         
-           PrimaryWorkList[iList] = CParticle(rGrid[iR], 0.0, 0.0, VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
-        
+           PrimaryWorkList[iList] = CParticle(rGrid[iR], zGrid[iZ], phiGrid[iPhi], VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
     }
     
     // Initialize other variables on worklist, density, Bfield, etc
     for (int iList=0;iList<nList;iList++){
         int iStat;
-        density_m3[iList] = kj_interp(PrimaryWorkList[iList].c1,r,n_m3,iStat);
-        b0_XYZ_T_at_List[iList] = kj_interp(PrimaryWorkList[iList].c1,r,b0_XYZ,iStat);
+        density_m3[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),r,n_m3,iStat);
+        b0_XYZ_T_at_List[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),r,b0_XYZ,iStat);
     }
 
     for (int iList=0;iList<nList;iList++){
@@ -2947,16 +2998,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp (C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3088,7 +3139,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),r,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
@@ -3262,16 +3313,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), r, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3402,7 +3453,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0 && i < nSteps - 1 ){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(thisPos.c1,r,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),r,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
