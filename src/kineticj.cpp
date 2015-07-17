@@ -898,9 +898,12 @@ float kj_interp ( const C3Vec &Loc, const vector<float> &xVec, const vector<floa
 //template<class TYPE>
 //// 1D templated interp
 //TYPE kj_interp ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
-
+template<class TYPE2>
+//template<class TYPE>
 //// 2D templated interp
-TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, const vector< vector< TYPE > > &yVec, CParticle &p, int &status ) {
+
+/// TO-DO:  Generalize boundary detection in all boundary cases....
+TYPE2 kj_interp ( const vector<float> &x, const vector<vector<float> > &xVec, const vector< vector< TYPE2 > > &yVec, CParticle &p, int &status ) {
 
     status = 0;
 	float _x, x0, x1;
@@ -917,7 +920,7 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 #endif
                 p.status = 1;
                 status = 1;
-                return TYPE(0);
+                return TYPE2(0);
             }
 #if DEBUG_INTERP >= 2
 			cout<<"Particle absorbed at "<<x<<endl;
@@ -929,7 +932,7 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 #endif
             status = 1;
 			p.status = 1;
-			return TYPE(0);
+			return TYPE2(0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
@@ -956,7 +959,7 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 #endif
             status = 1;
-			return TYPE(0);
+			return TYPE2(0);
 	}
 #endif
 	//else
@@ -977,8 +980,8 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 		return yVec[x0];
 	}
 	else {
-		TYPE y0 = yVec[x0];
-		TYPE y1 = yVec[x1];
+		TYPE2 y0 = yVec[x0];
+		TYPE2 y1 = yVec[x1];
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
         //if(typeid(TYPE)==typeid(C3Vec)) cout << "Type is C3Vec" << endl;
@@ -997,10 +1000,10 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
                 cout<<"yVec.size(): "<<yVec.size()<<endl;
                 ++p.status;
                 status = 1;
-                return TYPE(0);
+                return TYPE2(0);
         }
 #endif
-        TYPE result = y0+(_x-x0)*(y1-y0)/(x1-x0);
+        TYPE2 result = y0+(_x-x0)*(y1-y0)/(x1-x0);
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -1009,7 +1012,7 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 #endif
                 ++p.status;
                 status = 1;
-                return TYPE(0);
+                return TYPE2(0);
         } 
         if(isinf(result)) {
 #if DEBUG_INTERP >= 2
@@ -1017,7 +1020,7 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 #endif
                 ++p.status;
                 status = 1;
-                return TYPE(0);
+                return TYPE2(0);
         }
 #endif
 		return result;
@@ -1025,8 +1028,8 @@ TYPE kj_interp ( const vector<float> &x, const vector<vector<float>> &xVec, cons
 
 }
 
-
 */
+
 
 
 
@@ -1226,15 +1229,15 @@ float GetBetComp ( const float vPer, const float phs ) {
 }
 
 
+template<class b0TYPE>
 C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
-				const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+				const C3Vec &x, const b0TYPE &b0Vec_CYL,
 			  	const vector<float> &rVec, int &status ) {
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
     
     ///_p = 0; // Really need to do something about this (DG). ///// WHY??? (DB)
-
 
 #if DEBUGLEVEL >= 3
 	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
@@ -1269,8 +1272,9 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 }
 
 // Zero-order orbits
+template<class b0TYPE>
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
-				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
+				const C3Vec &v_XYZ, const C3Vec &x, const b0TYPE &b0Vec_CYL,
 			  	const vector<float> &rVec, int &status ) {
     
         C3Vec Fb0 = GetFb0(p, v_XYZ, x, b0Vec_CYL, rVec, status);
@@ -1279,8 +1283,9 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
         }
 
 // Zero-order orbits
+template<class b0TYPE>
 int rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const vector<C3Vec> &b0, const vector<float> &r ) {
+				const b0TYPE &b0, const vector<float> &r ) {
 
         int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
@@ -1359,9 +1364,10 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 }
 
 // First-order orbits
+template<class b0TYPE, class e1TYPE>
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec &x,
-				const vector<C3Vec> &b0Vec_CYL,const vector<float> &rVec,
-                 const vector<C3Vec> &e1REVec_XYZ,const vector<C3Vec> &e1IMVec_XYZ,
+				const b0TYPE &b0Vec_CYL,const vector<float> &rVec,
+                 const e1TYPE &e1REVec_XYZ,const e1TYPE &e1IMVec_XYZ,
                   const float wrf, int &status ) {
 
     C3Vec Fb0 = GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
@@ -1395,9 +1401,10 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 }
 
 // First-order orbits
-int rk4_move ( CParticle &p, float dt, float t0, 
-				const vector<C3Vec> &b0, const vector<float> &r,
-                 const vector<C3Vec> &e1Re,  const vector<C3Vec> &e1Im, const float wrf ) {
+template<class b0TYPE, class e1TYPE>
+int rk4_move ( CParticle &p, float dt, float t0,
+				const b0TYPE&b0, const vector<float> &r,
+                 const e1TYPE &e1Re,  const e1TYPE &e1Im, const float wrf ) {
 
         int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
@@ -1417,7 +1424,6 @@ int rk4_move ( CParticle &p, float dt, float t0,
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
 		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
-
     
         p.c1 = xn1.c1;
         p.c2 = xn1.c2;
