@@ -954,13 +954,13 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return fVec[x0];
+		return fVec[x0][z0];
 	}
 	else {
-		TYPE2 f00 = fVec[x0];
-		TYPE2 f01 = fVec[x1];
-		TYPE2 f10 = fVec[z0];
-		TYPE2 f11 = fVec[z1];
+		TYPE2 f00 = fVec[x0][z0];
+		TYPE2 f01 = fVec[x0][z1];
+		TYPE2 f10 = fVec[x1][z0];
+		TYPE2 f11 = fVec[x1][z1];
         
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
@@ -1103,13 +1103,13 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
 		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
 #endif
-		return fVec[x0];
+		return fVec[x0][z0];
 	}
 	else {
-		TYPE2 f00 = fVec[x0];
-		TYPE2 f01 = fVec[x1];
-		TYPE2 f10 = fVec[z0];
-		TYPE2 f11 = fVec[z1];
+		TYPE2 f00 = fVec[x0][z0];
+		TYPE2 f01 = fVec[x0][z1];
+		TYPE2 f10 = fVec[x1][z0];
+		TYPE2 f11 = fVec[x1][z1];
         
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
@@ -2181,7 +2181,6 @@ int main ( int argc, char **argv )
 		
         //// These are defined for DIM = 1 or 2
     
-		vector<C3Vec> b0_CYL, b0_XYZ;
 		float freq;
 
 		ifstream file(eField_fName.c_str());
@@ -2192,6 +2191,8 @@ int main ( int argc, char **argv )
 
 
 #if DIM == 1
+            vector<C3Vec> b0_CYL, b0_XYZ;
+
             vector<float>           r, b0_r, b0_p, b0_z,
                                     e_r_re, e_p_re, e_z_re,
                                     e_r_im, e_p_im, e_z_im, n_m3,
@@ -2285,8 +2286,8 @@ int main ( int argc, char **argv )
 
 				nc_density.getVar(start, count, &n_m3[0]);
 
-				b0_CYL.resize(nR,nZ);
-				b0_XYZ.resize(nR,nZ);
+				b0_CYL.resize(nR);
+				b0_XYZ.resize(nR);
            
 				for(int i=0; i<nR; i++) {
                         b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
@@ -2454,6 +2455,7 @@ int main ( int argc, char **argv )
 #endif
 
 #if DIM == 2
+            vector< vector<C3Vec> > b0_CYL, b0_XYZ;
             vector<float> r;
             vector<float> z;
             vector<vector<float> >    b0_r, b0_p, b0_z,
@@ -2474,7 +2476,7 @@ int main ( int argc, char **argv )
 				NcDim nc_scalar(dataFile.getDim("scalar"));
  
 
-                NcDim nc_nR(dataFile.getDim("nZ"));
+                NcDim nc_nZ(dataFile.getDim("nZ"));
     
                 int nR = nc_nR.getSize();
                 int nZ = nc_nZ.getSize();
@@ -2488,7 +2490,7 @@ int main ( int argc, char **argv )
                 cout << "\tnR: " << nR << endl;
 
                 NcVar nc_r(dataFile.getVar("r"));
-                NcVar nc_r(dataFile.getVar("z"));
+                NcVar nc_z(dataFile.getVar("z"));
             
                 NcVar nc_freq(dataFile.getVar("freq"));
 
@@ -2514,26 +2516,32 @@ int main ( int argc, char **argv )
 
                 r.resize(nR);
                 z.resize(nZ);
-            
-                b0_r.resize(nR,nZ);
-                b0_p.resize(nR,nZ);
-                b0_z.resize(nR,nZ);
 
-                e_r_re.resize(nR,nZ);
-                e_p_re.resize(nR,nZ);
-                e_z_re.resize(nR,nZ);
-                e_r_im.resize(nR,nZ);
-                e_p_im.resize(nR,nZ);
-                e_z_im.resize(nR,nZ);
+                for(int i=0;i<nR;i++) {
+                
+                    b0_r[i].resize(nZ);
+                    b0_p[i].resize(nZ);
+                    b0_z[i].resize(nZ);
 
-                b_r_re.resize(nR,nZ);
-                b_p_re.resize(nR,nZ);
-                b_z_re.resize(nR,nZ);
-                b_r_im.resize(nR,nZ);
-                b_p_im.resize(nR,nZ);
-                b_z_im.resize(nR,nZ);
+                    e_r_re[i].resize(nZ);
+                    e_p_re[i].resize(nZ);
+                    e_z_re[i].resize(nZ);
+                    e_r_im[i].resize(nZ);
+                    e_p_im[i].resize(nZ);
+                    e_z_im[i].resize(nZ);
 
-                n_m3.resize(nR,nZ);
+                    b_r_re[i].resize(nZ);
+                    b_p_re[i].resize(nZ);
+                    b_z_re[i].resize(nZ);
+                    b_r_im[i].resize(nZ);
+                    b_p_im[i].resize(nZ);
+                    b_z_im[i].resize(nZ);
+
+                    n_m3[i].resize(nZ);
+                    b0_CYL[i].resize(nZ);
+                    b0_XYZ[i].resize(nZ);
+                    
+                }
 
                 nc_r.getVar(&r[0]);
                 nc_freq.getVar(&freq);
@@ -2554,10 +2562,7 @@ int main ( int argc, char **argv )
                 count[0] = 1;
 
 				nc_density.getVar(start, count, &n_m3[0]);
-
-				b0_CYL.resize(nR,nZ);
-				b0_XYZ.resize(nR,nZ);
-           
+	          
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
                         b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
@@ -2595,6 +2600,7 @@ int main ( int argc, char **argv )
 
 				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
 				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+            
 #if DEBUGLEVEL >= 1 
 				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
 				cout << "\tfreq: " << freq << endl;
@@ -2689,19 +2695,21 @@ int main ( int argc, char **argv )
 
 
 		// Rotate the e & b fields to XYZ
-/////// need to be careful here for 2d////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		vector< vector<C3Vec> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+        vector< vector<C3Vec> > e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
     
-		e1Re_CYL.resize(e_r.size(),e_r[0].size());
-		e1Im_CYL.resize(e_r.size(),e_r[0].size());
-		b1Re_CYL.resize(e_r.size(),e_r[0].size());
-		b1Im_CYL.resize(e_r.size(),e_r[0].size());
+		for (int i = 0; i<e_r.size(); i++){
+            e1Re_CYL[i].resize(e_r[0].size());
+            e1Im_CYL[i].resize(e_r[0].size());
+            b1Re_CYL[i].resize(e_r[0].size());
+            b1Im_CYL[i].resize(e_r[0].size());
 
-		vector< vector<C3Vec> > e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
-		e1Re_XYZ.resize(e_r.size(),e_r[0].size());
-		e1Im_XYZ.resize(e_r.size(),e_r[0].size());
-		b1Re_XYZ.resize(e_r.size(),e_r[0].size());
-		b1Im_XYZ.resize(e_r.size(),e_r[0].size());
+            e1Re_XYZ[i].resize(e_r.size(),e_r[0].size());
+            e1Im_XYZ[i].resize(e_r.size(),e_r[0].size());
+            b1Re_XYZ[i].resize(e_r.size(),e_r[0].size());
+            b1Im_XYZ[i].resize(e_r.size(),e_r[0].size());
+        }
+    
 
 		for(int i=0;i<e_r.size();i++) {
             for(int j=0;j<e_r[0].size();j++) {
