@@ -2455,6 +2455,7 @@ int main ( int argc, char **argv )
 #endif
 
 #if DIM == 2
+
             vector< vector<C3Vec> > b0_CYL, b0_XYZ;
             vector<float> r;
             vector<float> z;
@@ -2517,40 +2518,65 @@ int main ( int argc, char **argv )
                 r.resize(nR);
                 z.resize(nZ);
 
+                b0_r.resize(nR);
+                b0_p.resize(nR);
+                b0_z.resize(nR);
+
+                e_r_re.resize(nR);
+                e_p_re.resize(nR);
+                e_z_re.resize(nR);
+                e_r_im.resize(nR);
+                e_p_im.resize(nR);
+                e_z_im.resize(nR);
+
+                b_r_re.resize(nR);
+                b_p_re.resize(nR);
+                b_z_re.resize(nR);
+                b_r_im.resize(nR);
+                b_p_im.resize(nR);
+                b_z_im.resize(nR);
+            
+                n_m3.resize(nR);
+
+				b0_CYL.resize(nR);
+				b0_XYZ.resize(nR);
+
                 for(int i=0;i<nR;i++) {
-                
                     b0_r[i].resize(nZ);
                     b0_p[i].resize(nZ);
                     b0_z[i].resize(nZ);
-
+                    
                     e_r_re[i].resize(nZ);
                     e_p_re[i].resize(nZ);
                     e_z_re[i].resize(nZ);
                     e_r_im[i].resize(nZ);
                     e_p_im[i].resize(nZ);
                     e_z_im[i].resize(nZ);
-
+                    
                     b_r_re[i].resize(nZ);
                     b_p_re[i].resize(nZ);
                     b_z_re[i].resize(nZ);
                     b_r_im[i].resize(nZ);
                     b_p_im[i].resize(nZ);
                     b_z_im[i].resize(nZ);
-
+                    
                     n_m3[i].resize(nZ);
                     b0_CYL[i].resize(nZ);
                     b0_XYZ[i].resize(nZ);
-                    
+
                 }
 
                 nc_r.getVar(&r[0]);
                 nc_freq.getVar(&freq);
-
-                nc_b0_r.getVar(&b0_r[0]);
-                nc_b0_p.getVar(&b0_p[0]);
-                nc_b0_z.getVar(&b0_z[0]);
-    
-                // Here im reading a single species' density from a multi species array, 
+            
+                cout << "first hi .... always makes it here" << endl;
+            
+                nc_b0_r.getVar(&b0_r[0][0]);
+                nc_b0_p.getVar(&b0_p[0][0]);
+                nc_b0_z.getVar(&b0_z[0][0]);
+            
+                cout << "don't always make it here.... segmentation fault or nedCDF: unknown error" << endl;
+                // Here im reading a single species' density from a multi species array,
                 // i.e., density[nSpec,nR] and I only want density[1,*] for example where
                 // the species is specified by "species_number" in the cfg file
                 vector<size_t> start, count;
@@ -2561,8 +2587,8 @@ int main ( int argc, char **argv )
                 count[1] = nR;
                 count[0] = 1;
 
-				nc_density.getVar(start, count, &n_m3[0]);
-	          
+				nc_density.getVar(start, count, &n_m3[0][0]);
+                cout << "hello " << endl;
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
                         b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
@@ -2571,35 +2597,45 @@ int main ( int argc, char **argv )
 				}
 
 //////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
-				nc_e_r_re.getVar(&e_r_re[0]);
-				nc_e_p_re.getVar(&e_p_re[0]);
-				nc_e_z_re.getVar(&e_z_re[0]);
-				nc_e_r_im.getVar(&e_r_im[0]);
-				nc_e_p_im.getVar(&e_p_im[0]);
-				nc_e_z_im.getVar(&e_z_im[0]);
+				nc_e_r_re.getVar(&e_r_re[0][0]);
+				nc_e_p_re.getVar(&e_p_re[0][0]);
+				nc_e_z_re.getVar(&e_z_re[0][0]);
+				nc_e_r_im.getVar(&e_r_im[0][0]);
+				nc_e_p_im.getVar(&e_p_im[0][0]);
+				nc_e_z_im.getVar(&e_z_im[0][0]);
 
-				nc_b_r_re.getVar(&b_r_re[0]);
-				nc_b_p_re.getVar(&b_p_re[0]);
-				nc_b_z_re.getVar(&b_z_re[0]);
-				nc_b_r_im.getVar(&b_r_im[0]);
-				nc_b_p_im.getVar(&b_p_im[0]);
-				nc_b_z_im.getVar(&b_z_im[0]);
-
+				nc_b_r_re.getVar(&b_r_re[0][0]);
+				nc_b_p_re.getVar(&b_p_re[0][0]);
+				nc_b_z_re.getVar(&b_z_re[0][0]);
+				nc_b_r_im.getVar(&b_r_im[0][0]);
+				nc_b_p_im.getVar(&b_p_im[0][0]);
+				nc_b_z_im.getVar(&b_z_im[0][0]);
 //////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
+                cout << "hi   "  << endl;
 				for(int i=0; i<nR; i++){
-						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
-						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
-						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
+                    for(int j=0; j<nZ; j++){
+                        cout << "hi in loop" << endl;
+						e_r[i].push_back(complex<float>( e_r_re[i][j], e_r_im[i][j] ) );
+						e_p[i].push_back(complex<float>( e_p_re[i][j], e_p_im[i][j] ) );
+						e_z[i].push_back(complex<float>( e_z_re[i][j], e_z_im[i][j] ) );
+                    }
 				}
+                cout << "howdy " << endl;
 
 				for(int i=0; i<nR; i++){
-						b_r.push_back(complex<float>( b_r_re[i], b_r_im[i] ) );
-						b_p.push_back(complex<float>( b_p_re[i], b_p_im[i] ) );
-						b_z.push_back(complex<float>( b_z_re[i], b_z_im[i] ) );
+                    for(int j=0; j<nZ; j++){
+						b_r[i].push_back(complex<float>( b_r_re[i][j], b_r_im[i][j] ) );
+						b_p[i].push_back(complex<float>( b_p_re[i][j], b_p_im[i][j] ) );
+						b_z[i].push_back(complex<float>( b_z_re[i][j], b_z_im[i][j] ) );
+                    }
 				}
-
-				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
-				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+            
+//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
+			/// May not even be used???????
+            //	vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
+			//	vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
+            
+            
             
 #if DEBUGLEVEL >= 1 
 				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
