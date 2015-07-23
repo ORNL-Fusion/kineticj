@@ -1,0 +1,4 @@
+Reading eField data file data/ar2_kj.nc
+	nR: 256
+first hi .... always makes it here 
+ size of b0_r   256    256

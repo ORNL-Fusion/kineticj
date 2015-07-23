@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/kineticj.cpp"
+            timestampString = "456692341.426085"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "3610"
+            endingLineNumber = "3610"
+            landmarkName = "main ( int argc, char **argv )"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "main"
+                  moduleName = "kineticj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dvk/code/kineticj/src/kineticj.cpp"
+                  timestampString = "456689371.133401"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "3606"
+                  endingLineNumber = "3606"
+                  offsetFromSymbolStart = "31785">
+               </Location>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "main"
+                  moduleName = "kineticj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/dvk/code/kineticj/src/kineticj.cpp"
+                  timestampString = "456689371.133539"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "3606"
+                  endingLineNumber = "3606"
+                  offsetFromSymbolStart = "41224">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

@@ -2563,19 +2563,23 @@ int main ( int argc, char **argv )
                     n_m3[i].resize(nZ);
                     b0_CYL[i].resize(nZ);
                     b0_XYZ[i].resize(nZ);
-
                 }
 
                 nc_r.getVar(&r[0]);
                 nc_freq.getVar(&freq);
             
-                cout << "first hi .... always makes it here" << endl;
-            
+                cout << "first hi .... always makes it here " << endl;
+                cout << " size of b0_r   " << b0_r.size() << "    "  << b0_r[0].size() << endl;
                 nc_b0_r.getVar(&b0_r[0][0]);
                 nc_b0_p.getVar(&b0_p[0][0]);
                 nc_b0_z.getVar(&b0_z[0][0]);
-            
-                cout << "don't always make it here.... segmentation fault or nedCDF: unknown error" << endl;
+                cout << " got vars, about to write to screen " << endl;
+				for(int i=0; i<nR; i++) {
+                    for (int j = 0; j< nZ; j++){
+                        cout << b0_r[i][j] << endl;
+                    }
+                }
+                cout << "don't always make it here.... get either segmentation fault or nedCDF: unknown error" << endl;
                 // Here im reading a single species' density from a multi species array,
                 // i.e., density[nSpec,nR] and I only want density[1,*] for example where
                 // the species is specified by "species_number" in the cfg file
