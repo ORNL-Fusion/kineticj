@@ -59,7 +59,7 @@ int main ( int argc, char **argv )
 		}
 
 #if DIM == 1
-            vector<float>           r, b0_r, b0_p, b0_z;
+            vector<float>  r, b0_r, b0_p, b0_z;
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
 	
@@ -94,13 +94,19 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
-
 #endif
 
 #if DIM == 2
             vector<float> r;
             vector<float> z;
-            vector<vector<float> >    b0_r, b0_p, b0_z;
+//            vector<vector<float> >  new  b0_r(256, vector<float>(256));
+//            vector<vector<float> >  new  b0_p(256, vector<float>(256));
+//            vector<vector<float> >   new b0_z(256, vector<float>(256));
+ 
+            float b0_r[256][256];
+            float b0_p[256][256];
+            float b0_z[256][256];
+    
  
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
@@ -126,7 +132,8 @@ int main ( int argc, char **argv )
 
                 r.resize(nR);
                 z.resize(nZ);
-
+        
+/*
                 b0_r.resize(nR);
                 b0_p.resize(nR);
                 b0_z.resize(nR);
@@ -136,21 +143,23 @@ int main ( int argc, char **argv )
                     b0_p[i].resize(nZ);
                     b0_z[i].resize(nZ);
                  }
+*/
 
                 nc_r.getVar(&r[0]);
             
                 cout << "first hi .... always makes it here " << endl;
-                cout << " size of b0_r   " << b0_r.size() << "    "  << b0_r[0].size() << endl;
-                nc_b0_r.getVar(&b0_r[0][0]);
-                nc_b0_p.getVar(&b0_p[0][0]);
-                nc_b0_z.getVar(&b0_z[0][0]);
+                //cout << " size of b0_r   " << b0_r.size() << "    "  << b0_r[0].size() << endl;
+            
+                //nc_b0_r.getVar(&b0_r[0][0]);
+                //nc_b0_p.getVar(&b0_p[0][0]);
+                //nc_b0_z.getVar(&b0_z[0][0]);
 
                 //// below won't compile.....need a pointer, expecpt maybe when an array as in
                 // https://github.com/Unidata/netcdf-cxx4/blob/master/examples/sfc_pres_temp_rd.cpp
             
-                //nc_b0_r.getVar(b0_r);
-                //nc_b0_p.getVar(b0_p);
-                //nc_b0_z.getVar(b0_z);
+                nc_b0_r.getVar(b0_r);
+                nc_b0_p.getVar(b0_p);
+                nc_b0_z.getVar(b0_z);
             
                 cout << " got vars, about to write to screen " << endl;
 				for(int i=0; i<nR; i++) {
@@ -169,4 +178,3 @@ int main ( int argc, char **argv )
 
     return 0;
 }
- 
