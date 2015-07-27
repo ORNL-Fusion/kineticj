@@ -2518,81 +2518,128 @@ int main ( int argc, char **argv )
                 r.resize(nR);
                 z.resize(nZ);
 
-                b0_r.resize(nR);
-                b0_p.resize(nR);
-                b0_z.resize(nR);
-
-                e_r_re.resize(nR);
-                e_p_re.resize(nR);
-                e_z_re.resize(nR);
-                e_r_im.resize(nR);
-                e_p_im.resize(nR);
-                e_z_im.resize(nR);
-
-                b_r_re.resize(nR);
-                b_p_re.resize(nR);
-                b_z_re.resize(nR);
-                b_r_im.resize(nR);
-                b_p_im.resize(nR);
-                b_z_im.resize(nR);
-            
-                n_m3.resize(nR);
-
-				b0_CYL.resize(nR);
-				b0_XYZ.resize(nR);
-
-                for(int i=0;i<nR;i++) {
-                    b0_r[i].resize(nZ);
-                    b0_p[i].resize(nZ);
-                    b0_z[i].resize(nZ);
+				for(int i=0; i<nR; i++)
+				{
+					vector<float> row(nZ);
+                    vector<C3Vec> rowC3Vec(nZ);
                     
-                    e_r_re[i].resize(nZ);
-                    e_p_re[i].resize(nZ);
-                    e_z_re[i].resize(nZ);
-                    e_r_im[i].resize(nZ);
-                    e_p_im[i].resize(nZ);
-                    e_z_im[i].resize(nZ);
-                    
-                    b_r_re[i].resize(nZ);
-                    b_p_re[i].resize(nZ);
-                    b_z_re[i].resize(nZ);
-                    b_r_im[i].resize(nZ);
-                    b_p_im[i].resize(nZ);
-                    b_z_im[i].resize(nZ);
-                    
-                    n_m3[i].resize(nZ);
-                    b0_CYL[i].resize(nZ);
-                    b0_XYZ[i].resize(nZ);
-                }
+					b0_r.push_back(row);
+					b0_p.push_back(row);
+					b0_z.push_back(row);
 
+                    e_r_re.push_back(row);
+                    e_p_re.push_back(row);
+                    e_z_re.push_back(row);
+                    e_r_im.push_back(row);
+                    e_p_im.push_back(row);
+                    e_z_im.push_back(row);
+
+                    b_r_re.push_back(row);
+                    b_p_re.push_back(row);
+                    b_z_re.push_back(row);
+                    b_r_im.push_back(row);
+                    b_p_im.push_back(row);
+                    b_z_im.push_back(row);
+                    
+                    n_m3.push_back(row);
+
+                    b0_CYL.push_back(rowC3Vec);
+                    b0_XYZ.push_back(rowC3Vec);
+				}
+ 
                 nc_r.getVar(&r[0]);
                 nc_freq.getVar(&freq);
             
-                cout << "first hi .... always makes it here " << endl;
-                cout << " size of b0_r   " << b0_r.size() << "    "  << b0_r[0].size() << endl;
-                nc_b0_r.getVar(&b0_r[0][0]);
-                nc_b0_p.getVar(&b0_p[0][0]);
-                nc_b0_z.getVar(&b0_z[0][0]);
-                cout << " got vars, about to write to screen " << endl;
+                float* b0_r_2D = new float[nR*nZ];
+				float* b0_p_2D = new float[nR*nZ];
+				float* b0_z_2D = new float[nR*nZ];
+
+                float* e_r_re_2D = new float[nR*nZ];
+				float* e_p_re_2D = new float[nR*nZ];
+				float* e_z_re_2D = new float[nR*nZ];
+                float* e_r_im_2D = new float[nR*nZ];
+				float* e_p_im_2D = new float[nR*nZ];
+				float* e_z_im_2D = new float[nR*nZ];
+
+                float* b_r_re_2D = new float[nR*nZ];
+				float* b_p_re_2D = new float[nR*nZ];
+				float* b_z_re_2D = new float[nR*nZ];
+                float* b_r_im_2D = new float[nR*nZ];
+				float* b_p_im_2D = new float[nR*nZ];
+				float* b_z_im_2D = new float[nR*nZ];
+
+				float* n_m3_2D = new float[nR*nZ*nSpec];
+            
+                nc_b0_r.getVar(b0_r_2D);
+                nc_b0_p.getVar(b0_p_2D);
+                nc_b0_z.getVar(b0_z_2D);
+
+				nc_e_r_re.getVar(e_r_re_2D);
+				nc_e_p_re.getVar(e_p_re_2D);
+				nc_e_z_re.getVar(e_z_re_2D);
+				nc_e_r_im.getVar(e_r_im_2D);
+				nc_e_p_im.getVar(e_p_im_2D);
+				nc_e_z_im.getVar(e_z_im_2D);
+
+				nc_b_r_re.getVar(b_r_re_2D);
+				nc_b_p_re.getVar(b_p_re_2D);
+				nc_b_z_re.getVar(b_z_re_2D);
+				nc_b_r_im.getVar(b_r_im_2D);
+				nc_b_p_im.getVar(b_p_im_2D);
+				nc_b_z_im.getVar(b_z_im_2D);
+            
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
-                        cout << b0_r[i][j] << endl;
+						b0_r[i][j] = b0_r_2D[i*nZ+j];
+						b0_p[i][j] = b0_p_2D[i*nZ+j];
+						b0_z[i][j] = b0_z_2D[i*nZ+j];
+
+						e_r_re[i][j] = e_r_re_2D[i*nZ+j];
+						e_p_re[i][j] = e_p_re_2D[i*nZ+j];
+						e_z_re[i][j] = e_z_re_2D[i*nZ+j];
+						e_r_im[i][j] = e_r_im_2D[i*nZ+j];
+						e_p_im[i][j] = e_p_im_2D[i*nZ+j];
+						e_z_im[i][j] = e_z_im_2D[i*nZ+j];
+
+						b_r_re[i][j] = b_r_re_2D[i*nZ+j];
+						b_p_re[i][j] = b_p_re_2D[i*nZ+j];
+						b_z_re[i][j] = b_z_re_2D[i*nZ+j];
+						b_r_im[i][j] = b_r_im_2D[i*nZ+j];
+						b_p_im[i][j] = b_p_im_2D[i*nZ+j];
+						b_z_im[i][j] = b_z_im_2D[i*nZ+j];
+                        
                     }
                 }
-                cout << "don't always make it here.... get either segmentation fault or nedCDF: unknown error" << endl;
+            
+                cout << "hello, got vars from netcdf field and deleted arrays" << endl;
                 // Here im reading a single species' density from a multi species array,
                 // i.e., density[nSpec,nR] and I only want density[1,*] for example where
                 // the species is specified by "species_number" in the cfg file
+            
                 vector<size_t> start, count;
                 start.resize(2);
                 count.resize(2);
                 start[1] = 0;
                 start[0] = species_number;
-                count[1] = nR;
+                count[1] = nR*nZ;
                 count[0] = 1;
+            
+                cout << "species number        " << species_number << endl;
+                cout << "about to get n_m3     " << endl;
+                //nc_density.getVar(start, count, n_m3_2D);
+            
+                nc_density.getVar(n_m3_2D);
+            
+                cout << "got n_m3" << endl;
 
-				nc_density.getVar(start, count, &n_m3[0][0]);
-                cout << "hello " << endl;
+ 				for(int i=0; i<nR; i++) {
+                    for (int j = 0; j< nZ; j++){
+                        n_m3[i][j] = n_m3_2D[i*nZ+j];
+                    }
+                }
+
+                cout << "got and stored n_m3" << endl;
+
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
                         b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
@@ -2600,47 +2647,61 @@ int main ( int argc, char **argv )
                         }
 				}
 
-//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
-				nc_e_r_re.getVar(&e_r_re[0][0]);
-				nc_e_p_re.getVar(&e_p_re[0][0]);
-				nc_e_z_re.getVar(&e_z_re[0][0]);
-				nc_e_r_im.getVar(&e_r_im[0][0]);
-				nc_e_p_im.getVar(&e_p_im[0][0]);
-				nc_e_z_im.getVar(&e_z_im[0][0]);
+                delete [] b0_r_2D;
+				delete [] b0_p_2D;
+				delete [] b0_z_2D;
 
-				nc_b_r_re.getVar(&b_r_re[0][0]);
-				nc_b_p_re.getVar(&b_p_re[0][0]);
-				nc_b_z_re.getVar(&b_z_re[0][0]);
-				nc_b_r_im.getVar(&b_r_im[0][0]);
-				nc_b_p_im.getVar(&b_p_im[0][0]);
-				nc_b_z_im.getVar(&b_z_im[0][0]);
-//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
-                cout << "hi   "  << endl;
-				for(int i=0; i<nR; i++){
-                    for(int j=0; j<nZ; j++){
-                        cout << "hi in loop" << endl;
-						e_r[i].push_back(complex<float>( e_r_re[i][j], e_r_im[i][j] ) );
-						e_p[i].push_back(complex<float>( e_p_re[i][j], e_p_im[i][j] ) );
-						e_z[i].push_back(complex<float>( e_z_re[i][j], e_z_im[i][j] ) );
-                    }
-				}
-                cout << "howdy " << endl;
+                delete [] e_r_re_2D;
+				delete [] e_p_re_2D;
+				delete [] e_z_re_2D;
+                delete [] e_r_im_2D;
+				delete [] e_p_im_2D;
+				delete [] e_z_im_2D;
 
-				for(int i=0; i<nR; i++){
-                    for(int j=0; j<nZ; j++){
-						b_r[i].push_back(complex<float>( b_r_re[i][j], b_r_im[i][j] ) );
-						b_p[i].push_back(complex<float>( b_p_re[i][j], b_p_im[i][j] ) );
-						b_z[i].push_back(complex<float>( b_z_re[i][j], b_z_im[i][j] ) );
-                    }
-				}
+                delete [] b_r_re_2D;
+				delete [] b_p_re_2D;
+				delete [] b_z_re_2D;
+                delete [] b_r_im_2D;
+				delete [] b_p_im_2D;
+				delete [] b_z_im_2D;
             
-//////////////////////////////  how to change to 2D?////////////////////////////////////////////////////////////////////////////////////////////////////
-			/// May not even be used???????
+                vector<complex<float> > e_r_tmp, e_p_tmp, e_z_tmp;
+
+				for(int i=0; i<nR; i++){
+                    for(int j=0; j<nZ; j++){
+                    
+                        e_r_tmp.push_back(complex<float>( e_r_re[i][j], e_r_im[i][j] ) );
+                        e_p_tmp.push_back(complex<float>( e_r_re[i][j], e_r_im[i][j] ) );
+                        e_z_tmp.push_back(complex<float>( e_r_re[i][j], e_r_im[i][j] ) );
+                        
+                    }
+                    
+                    e_r.push_back(e_r_tmp);
+                    e_p.push_back(e_r_tmp);
+                    e_z.push_back(e_r_tmp);
+                    
+				}
+
+                vector<complex<float> > b_r_tmp, b_p_tmp, b_z_tmp;
+				for(int i=0; i<nR; i++){
+                    for(int j=0; j<nZ; j++){
+                        b_r_tmp.push_back(complex<float>( b_r_re[i][j], b_r_im[i][j] ) );
+                        b_p_tmp.push_back(complex<float>( b_r_re[i][j], b_r_im[i][j] ) );
+                        b_z_tmp.push_back(complex<float>( b_r_re[i][j], b_r_im[i][j] ) );
+                        
+                    }
+            
+                    b_r.push_back(b_r_tmp);
+                    b_p.push_back(b_r_tmp);
+                    b_z.push_back(b_r_tmp);
+                    
+				}
+//////////////////////////////  how to change to 2D? Commented out iterators, do not seemed to be used.
             //	vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
 			//	vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
             
             
-            
+//////////////// guiding center data not changed to 2D...............
 #if DEBUGLEVEL >= 1 
 				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
 				cout << "\tfreq: " << freq << endl;
@@ -2739,17 +2800,20 @@ int main ( int argc, char **argv )
         vector< vector<C3Vec> > e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
     
 		for (int i = 0; i<e_r.size(); i++){
-            e1Re_CYL[i].resize(e_r[0].size());
-            e1Im_CYL[i].resize(e_r[0].size());
-            b1Re_CYL[i].resize(e_r[0].size());
-            b1Im_CYL[i].resize(e_r[0].size());
+            vector<C3Vec> rowC3Vec(e_r[0].size());
+            
+            b0_CYL.push_back(rowC3Vec);
+            
+            e1Re_CYL.push_back(rowC3Vec);
+            e1Im_CYL.push_back(rowC3Vec);
+            b1Re_CYL.push_back(rowC3Vec);
+            b1Im_CYL.push_back(rowC3Vec);
 
-            e1Re_XYZ[i].resize(e_r.size(),e_r[0].size());
-            e1Im_XYZ[i].resize(e_r.size(),e_r[0].size());
-            b1Re_XYZ[i].resize(e_r.size(),e_r[0].size());
-            b1Im_XYZ[i].resize(e_r.size(),e_r[0].size());
+            e1Re_XYZ.push_back(rowC3Vec);
+            e1Im_XYZ.push_back(rowC3Vec);
+            b1Re_XYZ.push_back(rowC3Vec);
+            b1Im_XYZ.push_back(rowC3Vec);
         }
-    
 
 		for(int i=0;i<e_r.size();i++) {
             for(int j=0;j<e_r[0].size();j++) {
@@ -2785,6 +2849,8 @@ int main ( int argc, char **argv )
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	float wrf = freq * 2 * _pi;
+
+    cout << "Loaded all netcdf data!!! " << endl;
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
