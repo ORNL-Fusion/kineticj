@@ -2475,7 +2475,6 @@ int main ( int argc, char **argv )
 				NcDim nc_nR(dataFile.getDim("nR"));
 				NcDim nc_nSpec(dataFile.getDim("nSpec"));
 				NcDim nc_scalar(dataFile.getDim("scalar"));
- 
 
                 NcDim nc_nZ(dataFile.getDim("nZ"));
     
@@ -2548,6 +2547,8 @@ int main ( int argc, char **argv )
 				}
  
                 nc_r.getVar(&r[0]);
+                nc_z.getVar(&z[0]);
+
                 nc_freq.getVar(&freq);
             
                 float* b0_r_2D = new float[nR*nZ];
@@ -2634,8 +2635,10 @@ int main ( int argc, char **argv )
 
  				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
-                        n_m3[i][j] = n_m3_2D[i*nZ+j];
+                        n_m3[i][j] = n_m3_2D[i*nZ + j];
                     }
+                //cout << "n_m3[i][j]    " << n_m3[i][0] << endl;
+
                 }
 
                 cout << "got and stored n_m3" << endl;
@@ -2700,7 +2703,6 @@ int main ( int argc, char **argv )
             //	vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
 			//	vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
             
-            
 //////////////// guiding center data not changed to 2D...............
 #if DEBUGLEVEL >= 1 
 				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
@@ -2719,7 +2721,6 @@ int main ( int argc, char **argv )
 		}
     
         fieldMeshClass fieldMesh(r,z);
-
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
@@ -2990,16 +2991,32 @@ int main ( int argc, char **argv )
             int iPhase = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid*nVperGrid)));
         
             cout << "iList   = " << iList << "    iPhase = " << iPhase << "   PhaseGrid[iPhase] = " << PhaseGrid[iPhase]
-            << ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR] << endl;
+            << ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR]
+            << ",          iZ    =  "     << iZ << "     " << "z[iZ] = " << zGrid[iZ]
+            << ",          iPhi    =  "     << iPhi << "     " << "phi[iPhi] = " << phiGrid[iPhi]
+            << ",          iVpar   =  "     << iR << "     " << "Vpar[iVpar] = " << VparGrid[iVpar]
+            << ",          iVper    =  "     << iR << "     " << "Vper[iVper] = " << VperGrid[iVper] << endl;
         
            PrimaryWorkList[iList] = CParticle(rGrid[iR], zGrid[iZ], phiGrid[iPhi], VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
     }
+
+/*
+    for (int i = 0; i< fieldMesh.r.size(); i++){
+            cout << fieldMesh.r[i] << endl;
+    }
+
+    for (int i = 0; i< fieldMesh.z.size(); i++){
+            cout << fieldMesh.z[i] << endl;
+    }
+*/
     
     // Initialize other variables on worklist, density, Bfield, etc
     for (int iList=0;iList<nList;iList++){
         int iStat;
         density_m3[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,n_m3,iStat);
+        cout << "density_m3 from kj_interp    " << density_m3[iList] << endl;
         b0_XYZ_T_at_List[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,b0_XYZ,iStat);
+        cout << "b0 from kj_interp    " << b0_XYZ_T_at_List[iList] << endl;
     }
 
     for (int iList=0;iList<nList;iList++){
