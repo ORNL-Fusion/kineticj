@@ -97,16 +97,8 @@ int main ( int argc, char **argv )
 #endif
 
 #if DIM == 2
-            vector<float> r;
-            vector<float> z;
-            vector<vector<float> >  b0_r(256, vector<float>(256));
-            vector<vector<float> >  b0_p(256, vector<float>(256));
-            vector<vector<float> > b0_z(256, vector<float>(256));
- 
-//            float b0_r[256][256];
-//            float b0_p[256][256];
-//            float b0_z[256][256];
-    
+            vector<float> r, z;
+			vector<vector <float> > b0_r, b0_p, b0_z;
  
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
@@ -122,53 +114,56 @@ int main ( int argc, char **argv )
                 int nSpec = nc_nSpec.getSize();
 
                 cout << "\tnR: " << nR << endl;
+                cout << "\tnZ: " << nZ << endl;
 
                 NcVar nc_r(dataFile.getVar("r"));
                 NcVar nc_z(dataFile.getVar("z"));
             
-                NcVar nc_b0_r(dataFile.getVar("B0_r"));
-                NcVar nc_b0_p(dataFile.getVar("B0_p"));
-                NcVar nc_b0_z(dataFile.getVar("B0_z"));
+                NcVar nc_b0_r = dataFile.getVar("B0_r");
+                NcVar nc_b0_p = dataFile.getVar("B0_p");
+                NcVar nc_b0_z = dataFile.getVar("B0_z");
 
                 r.resize(nR);
                 z.resize(nZ);
-        
-/*
-                b0_r.resize(nR);
-                b0_p.resize(nR);
-                b0_z.resize(nR);
 
-                for(int i=0;i<nR;i++) {
-                    b0_r[i].resize(nZ);
-                    b0_p[i].resize(nZ);
-                    b0_z[i].resize(nZ);
-                 }
-*/
-
+				for(int i=0; i<nR; i++)
+				{
+					vector<float> row(nZ);
+					b0_r.push_back(row);
+					b0_p.push_back(row);
+					b0_z.push_back(row);
+				}
+       
                 nc_r.getVar(&r[0]);
             
-                cout << "first hi .... always makes it here " << endl;
-                //cout << " size of b0_r   " << b0_r.size() << "    "  << b0_r[0].size() << endl;
-            
-                nc_b0_r.getVar(&b0_r[0][0]);
-                nc_b0_p.getVar(&b0_p[0][0]);
-                nc_b0_z.getVar(&b0_z[0][0]);
+				float* b0_r_2D = new float[nR*nZ];
+				float* b0_p_2D = new float[nR*nZ];
+				float* b0_z_2D = new float[nR*nZ];
 
-                //// below won't compile.....need a pointer, expecpt maybe when an array as in
-                // https://github.com/Unidata/netcdf-cxx4/blob/master/examples/sfc_pres_temp_rd.cpp
-            
-                //nc_b0_r.getVar(b0_r);
-                //nc_b0_p.getVar(b0_p);
-                //nc_b0_z.getVar(b0_z);
-            
-                cout << " got vars, about to write to screen " << endl;
-				for(int i=0; i<nR; i++) {
-                    for (int j = 0; j< nZ; j++){
-                        cout << b0_r[i][j] << endl;
-                    }
-                }
-                cout << "don't always make it here.... get either segmentation fault or nedCDF: unknown error" << endl;
+				// Index [i][j] as [i*nZ+j]
+
+				nc_b0_r.getVar(b0_r_2D);
+				nc_b0_p.getVar(b0_p_2D);
+				nc_b0_z.getVar(b0_z_2D);
+
+				for (int i=0; i<nR; ++i) {
+					for (int j=0; j<nZ; ++j) {
+
+						b0_r[i][j] = b0_r_2D[i*nZ+j];
+						b0_p[i][j] = b0_p_2D[i*nZ+j];
+						b0_z[i][j] = b0_z_2D[i*nZ+j];
+
+						cout << b0_r[i][j] << "  " << b0_p[i][j] << "  " << b0_z[i][j] << endl;
+
+					}
+				}
+
+				delete [] b0_r_2D;
+				delete [] b0_p_2D;
+				delete [] b0_z_2D;
+
             }
+
 		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error" << endl;
 				e.what();
