@@ -859,6 +859,8 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
+
+    cout << "Loc  !!! " << Loc << endl;
     status = 0;
     float x = Loc.c1;
     float z = Loc.c2;
@@ -868,7 +870,13 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	float zTmp = z;
 
 #if _PARTICLE_BOUNDARY == 1
+    cout << " I AM HERE" << endl;
+    cout << " x  " << x << "z  " << z << " fieldMesh.r.front  " << endl;
+    
+    cout << fieldMesh.r.front() << fieldMesh.r.back () << fieldMesh.z.front() << fieldMesh.z.back () << endl;
+    
 	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
+        cout << "TRUE" << endl;
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
             if(fieldMesh.r.size()!=fVec.size()) {
@@ -890,7 +898,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
             status = 1;
 			p.status = 1;
 			return TYPE2(0);
-	}
+	} else{ cout << "FALSE  " << endl;}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
             float xRange = fieldMesh.r.back() - fieldMesh.r.front();
@@ -937,6 +945,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 #endif
 	//else
 	//{
+        cout << "hello!" << endl;
 		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
 		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
@@ -946,7 +955,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 
 	z0 = floor(_z);
 	z1 = ceil(_z);
-	
+        cout << "x0, x1, z0, z1   "  << x0 << x1 << z0 << z1 << endl;
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
@@ -957,6 +966,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		return fVec[x0][z0];
 	}
 	else {
+
 		TYPE2 f00 = fVec[x0][z0];
 		TYPE2 f01 = fVec[x0][z1];
 		TYPE2 f10 = fVec[x1][z0];
@@ -1351,7 +1361,7 @@ float GetBetComp ( const float vPer, const float phs ) {
 template<class b0TYPE>
 C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 				const C3Vec &x, const b0TYPE &b0Vec_CYL,
-			  	const vector<float> &rVec, int &status ) {
+			  	const fieldMeshClass &fieldMesh, int &status ) {
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
@@ -1367,7 +1377,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp ( C3Vec(_r,x.c3,_p) , rVec, b0Vec_CYL, p, status );
+	b0_CYL = kj_interp ( C3Vec(_r,x.c3,_p) , fieldMesh, b0Vec_CYL, p, status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -1394,9 +1404,9 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 template<class b0TYPE>
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 				const C3Vec &v_XYZ, const C3Vec &x, const b0TYPE &b0Vec_CYL,
-			  	const vector<float> &rVec, int &status ) {
+			  	const fieldMeshClass &fieldMesh, int &status ) {
     
-        C3Vec Fb0 = GetFb0(p, v_XYZ, x, b0Vec_CYL, rVec, status);
+        C3Vec Fb0 = GetFb0(p, v_XYZ, x, b0Vec_CYL, fieldMesh, status);
 
         return Fb0;
         }
@@ -1404,22 +1414,22 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 // Zero-order orbits
 template<class b0TYPE>
 int rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const b0TYPE &b0, const vector<float> &r ) {
+				const b0TYPE &b0, const fieldMeshClass &fieldMesh ) {
 
         int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, status ) * dt;	
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, fieldMesh, status ) * dt;
 		x1 = yn0 * dt;
 
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, status ) * dt;	
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, fieldMesh, status ) * dt;
 		x2 = (yn0 + 0.5*k1) * dt;
 
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, status ) * dt;	
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, fieldMesh, status ) * dt;
 		x3 = (yn0 + 0.5*k2) * dt;
 
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, status ) * dt;	
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, fieldMesh, status ) * dt;
 		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
@@ -1442,29 +1452,29 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 #if DEBUGLEVEL >= 1
 			cout<<"Particle went left"<<endl;
 #endif
-			p.c1 = r.back()-(r.front()-p.c1);
+			p.c1 = fieldMesh.r.back()-(fieldMesh.r.front()-p.c1);
 		}
-		if(p.c1>r.back())
+		if(p.c1>fieldMesh.r.back())
 		{
 #if DEBUGLEVEL >= 1
 			cout<<"Particle went right"<<endl;
 #endif
-			p.c1 = r.front()+(p.c1-r.back());
+			p.c1 = fieldMesh.r.front()+(p.c1-fieldMesh.r.back());
 		}
 #elif _PARTICLE_BOUNDARY == 3
 		// Particle reflecting walls
-		if(p.c1<r.front())
+		if(p.c1<fieldMesh.r.front())
 		{
 			cout<<"Particle hit the left wall"<<endl;
-			cout<<"r.front(): "<<r.front()<<endl;
-			p.c1 = r.front()+(r.front()-p.c1);
+			cout<<"r.front(): "<<fieldMesh.r.front()<<endl;
+			p.c1 = fieldMesh.r.front()+(fieldMesh.r.front()-p.c1);
 			p.v_c1 = -p.v_c1;
 		}
 		if(p.c1>r.back())
 		{
 			cout<<"Particle hit the right wall"<<endl;
-			cout<<"r.back(): "<<r.back()<<endl;
-			p.c1 = r.back()-(p.c1-r.back());
+			cout<<"r.back(): "<<fieldMesh.r.back()<<endl;
+			p.c1 = fieldMesh.r.back()-(p.c1-r.back());
 			p.v_c1 = -p.v_c1;
 		}
 #endif
@@ -1485,11 +1495,11 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 // First-order orbits
 template<class b0TYPE, class e1TYPE>
 C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec &x,
-				const b0TYPE &b0Vec_CYL,const vector<float> &rVec,
+				const b0TYPE &b0Vec_CYL,const fieldMeshClass &fieldMesh,
                  const e1TYPE &e1REVec_XYZ,const e1TYPE &e1IMVec_XYZ,
                   const float wrf, int &status ) {
 
-    C3Vec Fb0 = GetFb0(p, v_XYZ, x,b0Vec_CYL,rVec, status);
+    C3Vec Fb0 = GetFb0(p, v_XYZ, x,b0Vec_CYL,fieldMesh, status);
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
@@ -1499,8 +1509,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-    e1RE_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1REVec_XYZ, p, status );
-	e1IM_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), rVec, e1IMVec_XYZ, p, status );
+    e1RE_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), fieldMesh, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), fieldMesh, e1IMVec_XYZ, p, status );
     
     ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
     ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
@@ -1520,23 +1530,23 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 // First-order orbits
 template<class b0TYPE, class e1TYPE>
 int rk4_move ( CParticle &p, float dt, float t0,
-				const b0TYPE&b0, const vector<float> &r,
+				const b0TYPE&b0, const fieldMeshClass &fieldMesh,
                  const e1TYPE &e1Re,  const e1TYPE &e1Im, const float wrf ) {
 
         int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, r, e1Re, e1Im, wrf, status ) * dt;
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0 + 0.*yn0, xn0         , b0, fieldMesh, e1Re, e1Im, wrf, status ) * dt;
 		x1 = yn0 * dt;
 
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, fieldMesh, e1Re, e1Im, wrf, status ) * dt;
 		x2 = (yn0 + 0.5*k1) * dt;
 
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, fieldMesh, e1Re, e1Im, wrf, status ) * dt;
 		x3 = (yn0 + 0.5*k2) * dt;
 
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, e1Re, e1Im, wrf, status ) * dt;
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, fieldMesh, e1Re, e1Im, wrf, status ) * dt;
 		x4 = (yn0 + 1.0*k3) * dt;
 
 		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
@@ -2719,9 +2729,7 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
-    
         fieldMeshClass fieldMesh(r,z);
-    
     
     // make sure z is monotonically increasing
         sort(fieldMesh.z.begin(), fieldMesh.z.end());
@@ -2857,6 +2865,8 @@ int main ( int argc, char **argv )
 
     cout << "Loaded all netcdf data!!! " << endl;
 
+  //  cout << " x  " << x << "z  " << z << " fieldMesh.r.front  " << endl;
+    
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
     
@@ -3243,7 +3253,7 @@ int main ( int argc, char **argv )
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
                                 r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
 #else
-				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, fieldMesh );
 
                // int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
                 
@@ -3560,7 +3570,7 @@ int main ( int argc, char **argv )
 #else
 				//int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
 
-                int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
+                int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,fieldMesh, e1Re_XYZ, e1Im_XYZ, wrf );
                 
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
