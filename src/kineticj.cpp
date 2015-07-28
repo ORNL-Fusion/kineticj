@@ -2721,6 +2721,10 @@ int main ( int argc, char **argv )
 		}
     
         fieldMeshClass fieldMesh(r,z);
+    
+    
+    // make sure z is monotonically increasing
+        sort(fieldMesh.z.begin(), fieldMesh.z.end());
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
