@@ -1212,7 +1212,7 @@ C3Vec rot_CYL_to_XYZ ( const float t, const C3Vec vec, const int direction ) {
     return rot * vec;
 }
 
-C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direction ) {
+C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, C3Vec bUnit_XYZ, const int direction ) {
 
         // If direction<1 then the inverse rotation is applied, i.e., abp_to_XYZ
 
@@ -1222,7 +1222,8 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direc
         C3Vec yu_xyz (0,1,0);
         C3Vec zu_xyz (0,0,1);
 
-        C3Vec pu_xyz = bUnit_XYZ;
+        /// normalize bUnit_XYZ just in case:
+        C3Vec pu_xyz = bUnit_XYZ/mag(bUnit_XYZ);
 
         // alp is mostly in the +/- x / r direction depending on B toroidal direction
         // bet is mostly z direction
