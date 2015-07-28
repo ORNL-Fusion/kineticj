@@ -1325,6 +1325,9 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direc
 #endif
 
     A_abp = rot2 * ( rot1 * A_XYZ );
+    
+    cout << " A_XYZ  " << A_XYZ << endl;
+    cout << " A_abp  " << A_abp << endl;
 
     return A_abp;
 }
