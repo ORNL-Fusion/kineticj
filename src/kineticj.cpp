@@ -1,8 +1,6 @@
 // Current hacks:
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
-
-
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -723,7 +721,6 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 	}
 }
 
-
 ////1D w/ a Cparticle input
 template<class TYPE>
 TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<TYPE> &fVec, CParticle &p, int &status ) {
@@ -852,15 +849,11 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 
 }
 
-
 /////////////////////////////////////////////////////////// CHANGE x TO r FOR 2D INTERPOLATION, OR USE MORE GENERAL c1, c2, c3 ???
-
 //// 2D templated interp w/ Cparticle input
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
-
-    cout << "Loc  !!! " << Loc << endl;
     status = 0;
     float x = Loc.c1;
     float z = Loc.c2;
@@ -870,13 +863,8 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	float zTmp = z;
 
 #if _PARTICLE_BOUNDARY == 1
-    cout << " I AM HERE" << endl;
-    cout << " x  " << x << "z  " << z << " fieldMesh.r.front  " << endl;
-    
-    cout << fieldMesh.r.front() << fieldMesh.r.back () << fieldMesh.z.front() << fieldMesh.z.back () << endl;
     
 	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
-        cout << "TRUE" << endl;
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
             if(fieldMesh.r.size()!=fVec.size()) {
@@ -898,7 +886,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
             status = 1;
 			p.status = 1;
 			return TYPE2(0);
-	} else{ cout << "FALSE  " << endl;}
+	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
             float xRange = fieldMesh.r.back() - fieldMesh.r.front();
@@ -945,7 +933,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 #endif
 	//else
 	//{
-        cout << "hello!" << endl;
 		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
 		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
@@ -955,7 +942,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 
 	z0 = floor(_z);
 	z1 = ceil(_z);
-        cout << "x0, x1, z0, z1   "  << x0 << x1 << z0 << z1 << endl;
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
@@ -993,7 +979,16 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+/*
+        cout << "Loc   = " << Loc << endl;
+        cout << "result = " << result << endl;
+        cout << "x0, x1 = "  << x0 << "  " << x1 << endl;
+        cout << "z0, z1 = "  << z0 << "  " << z1 << endl;
+        cout << "_z  = " << _z << endl;
+        cout << "_x  = " << _x << endl;
+*/
+        
         
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -1141,8 +1136,9 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
-        
+        //TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
 #if DEBUG_INTERP >= 2
@@ -2855,7 +2851,6 @@ int main ( int argc, char **argv )
 		}
 
 #endif
-            
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////// NOTHING BELOW HERE SEEMS TO DEPEND ON WHETHER DOING A 1D OR A 2D CALCULATION
