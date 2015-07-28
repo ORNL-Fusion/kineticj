@@ -1160,9 +1160,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 }
 
 
-
-
-
 C3Vec operator* ( const float A[][3], const C3Vec x ) {
         C3Vec B;
         B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
@@ -1807,8 +1804,6 @@ C3Vec maxwellian_df0_dv (const C3Vec _v, const float _T_keV, const float _n_m3, 
 	return df0_dv;
 }
 
-
-
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, float n_m3, 
                 int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ, float rfPhase) {
 
@@ -2014,7 +2009,6 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 /// Another version of blob creator, the blob in this case is a small region in (x,vPar,vPer)
 vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV, float n_m3,
                                         int nXBlob, int nVparBlob, int nVperBlob, int nThermal, float &dv, C3Vec b0_XYZ) {
-
 
         C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
     
