@@ -610,6 +610,7 @@ int isinf ( const C3Vec arg ) {
     return answer;
 }
 
+////////////////////////////////////////////////////////// WARNING.  TEMPORARY HACK, CHANGED XYZ_to_CYL.  ONLY USE THAT MAY CAUSE TROUBLE IS IN ONE CALL IN GUIDING CENTER ORBITS
 C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
         C3Vec cyl;
         cyl.c1 = sqrt(pow(xyz.c1,2)+pow(xyz.c2,2));
