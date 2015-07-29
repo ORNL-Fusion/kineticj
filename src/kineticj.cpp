@@ -613,8 +613,8 @@ int isinf ( const C3Vec arg ) {
 C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
         C3Vec cyl;
         cyl.c1 = sqrt(pow(xyz.c1,2)+pow(xyz.c2,2));
-        cyl.c2 = atan2(xyz.c2,xyz.c1);
-        cyl.c3 = xyz.c3;
+        cyl.c3 = atan2(xyz.c2,xyz.c1);
+        cyl.c2 = xyz.c3;
         return cyl;
 }
 
@@ -1492,8 +1492,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-    e1RE_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), fieldMesh, e1REVec_XYZ, p, status );
-	e1IM_XYZ = kj_interp (C3Vec(x.c1,x.c2,x.c3), fieldMesh, e1IMVec_XYZ, p, status );
+    e1RE_XYZ = kj_interp (C3Vec(_r,x.c3,_p), fieldMesh, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp (C3Vec(_r,x.c3,_p), fieldMesh, e1IMVec_XYZ, p, status );
     
     ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
     ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
@@ -3382,6 +3382,8 @@ int main ( int argc, char **argv )
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp(XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)),fieldMesh,b0_XYZ,tmp_Stat);
                             cout << "b0_XYZ_T_at_ThisPos   " << b0_XYZ_T_at_ThisPos << endl;
+                            cout << "XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3))   = " << XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)) << endl;
+                            
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
