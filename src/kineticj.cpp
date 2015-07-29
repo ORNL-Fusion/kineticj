@@ -3239,16 +3239,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp (C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp (XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3380,7 +3380,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)),fieldMesh,b0_XYZ,tmp_Stat);
                             cout << "b0_XYZ_T_at_ThisPos   " << b0_XYZ_T_at_ThisPos << endl;
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
@@ -3555,16 +3555,16 @@ int main ( int argc, char **argv )
             
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
-				C3Vec thisB0 = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b0_CYL, istat );
+				C3Vec thisB0 = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b0_CYL, istat );
 
                 float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp ( C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3), fieldMesh, b1Im_XYZ, istat );
+				C3Vec e1ReTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, e1Re_XYZ, istat );
+				C3Vec e1ImTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, e1Im_XYZ, istat );
+				C3Vec b1ReTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b1Re_XYZ, istat );
+				C3Vec b1ImTmp_XYZ = kj_interp ( XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b1Im_XYZ, istat );
 	
 				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
 				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
@@ -3695,7 +3695,7 @@ int main ( int argc, char **argv )
                         if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
-                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
+                            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)),fieldMesh,b0_XYZ,tmp_Stat);
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
