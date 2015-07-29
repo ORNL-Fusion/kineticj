@@ -2874,7 +2874,8 @@ int main ( int argc, char **argv )
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
-	int nP = nPx*nPy*nPz;
+	int nP;
+    //= nPx*nPy*nPz;
     int nPblob = cfg.lookup("nPblob");
     int nSavePerRFCycle = cfg.lookup("nSavePerRFCycle");
     int nList;
@@ -3116,9 +3117,7 @@ int main ( int argc, char **argv )
 #if LOWMEM >= 1
 
  // START OF THE LOWMEM CODING vvv
-		vector<float> f1(nP);
-		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
-		vector<complex<float> > f1c(nP);
+
 
 //// kineticj: 1-D create nPx*nPy*nPZ phase space particles
 //        vector<CParticle> ThisParticleList(create_particles(PrimaryWorkList[iList].c1,amu,Z,T_keV[iList],density_m3[iList],
@@ -3136,7 +3135,11 @@ int main ( int argc, char **argv )
         
         cout << "nP       " << nP << endl;
         cout << "iList       " << iList << endl;
-        
+
+		vector<float> f1(nP);
+		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
+		vector<complex<float> > f1c(nP);
+                
 /// Save particles to file to test
 //
         if (iList == 0){
