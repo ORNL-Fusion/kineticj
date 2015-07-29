@@ -610,12 +610,11 @@ int isinf ( const C3Vec arg ) {
     return answer;
 }
 
-////////////////////////////////////////////////////////// WARNING.  TEMPORARY HACK, CHANGED XYZ_to_CYL.  ONLY USE THAT MAY CAUSE TROUBLE IS IN ONE CALL IN GUIDING CENTER ORBITS
 C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
         C3Vec cyl;
         cyl.c1 = sqrt(pow(xyz.c1,2)+pow(xyz.c2,2));
-        cyl.c3 = atan2(xyz.c2,xyz.c1);
-        cyl.c2 = xyz.c3;
+        cyl.c2 = atan2(xyz.c2,xyz.c1);
+        cyl.c3 = xyz.c3;
         return cyl;
 }
 
@@ -857,7 +856,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 
     status = 0;
     float x = Loc.c1;
-    float z = Loc.c2;
+    float z = Loc.c3;
     
 	float _x, x0, x1, _z, z0, z1;
 	float xTmp = x;
@@ -1012,7 +1011,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 
     status = 0;
     float x = Loc.c1;
-    float z = Loc.c2;
+    float z = Loc.c3;
     
 	float _x, x0, x1, _z, z0, z1;
 	float xTmp = x;
@@ -1366,7 +1365,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp ( C3Vec(_r,x.c3,_p) , fieldMesh, b0Vec_CYL, p, status );
+	b0_CYL = kj_interp ( C3Vec(_r,_p,x.c3) , fieldMesh, b0Vec_CYL, p, status );
 
 	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
@@ -1493,8 +1492,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
     
     float ex_a, ex_p, ey_a, ey_p, ez_a, ez_p;
     
-    e1RE_XYZ = kj_interp (C3Vec(_r,x.c3,_p), fieldMesh, e1REVec_XYZ, p, status );
-	e1IM_XYZ = kj_interp (C3Vec(_r,x.c3,_p), fieldMesh, e1IMVec_XYZ, p, status );
+    e1RE_XYZ = kj_interp (C3Vec(_r,_p,x.c3), fieldMesh, e1REVec_XYZ, p, status );
+	e1IM_XYZ = kj_interp (C3Vec(_r,_p,x.c3), fieldMesh, e1IMVec_XYZ, p, status );
     
     ex_a = sqrt( pow( e1RE_XYZ.c1,2) + pow( e1IM_XYZ.c1,2));
     ey_a = sqrt( pow( e1RE_XYZ.c2,2) + pow( e1IM_XYZ.c2,2));
@@ -2942,12 +2941,12 @@ int main ( int argc, char **argv )
 		rGrid[iR] = rGridMin+iR*rGridStep;
     }
 
-	for(int iZ=0;iZ<nZGrid;iZ++) {
-		zGrid[iZ] = zGridMin+iZ*zGridStep;
-    }
-
 	for(int iPhi=0;iPhi<nPhiGrid;iPhi++) {
 		phiGrid[iPhi] = phiGridMin+iPhi*phiGridStep;
+    }
+
+	for(int iZ=0;iZ<nZGrid;iZ++) {
+		zGrid[iZ] = zGridMin+iZ*zGridStep;
     }
     
 	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
@@ -2965,8 +2964,8 @@ int main ( int argc, char **argv )
     // initialize primary worklist (assuming y,z,gyrophase = 0)
     for (int iList=0;iList<nList;iList++){
             int iR = iList % nRGrid;
-            int iZ = int(floor(iList/nRGrid)) % nZGrid;
-            int iPhi = int(floor(iList/nRGrid*nZGrid)) % nPhiGrid;
+            int iPhi = int(floor(iList/nRGrid)) % nPhiGrid;
+            int iZ = int(floor(iList/nRGrid*nPhiGrid)) % nZGrid;
         
             int iVpar = int(floor( iList/nRGrid*nZGrid*nPhiGrid)) % nVparGrid;
             int iVper = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid))) % nVperGrid;
@@ -2979,7 +2978,7 @@ int main ( int argc, char **argv )
             << ",          iVpar   =  "     << iR << "     " << "Vpar[iVpar] = " << VparGrid[iVpar]
             << ",          iVper    =  "     << iR << "     " << "Vper[iVper] = " << VperGrid[iVper] << endl;
         
-           PrimaryWorkList[iList] = CParticle(rGrid[iR], zGrid[iZ], phiGrid[iPhi], VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
+           PrimaryWorkList[iList] = CParticle(rGrid[iR], phiGrid[iPhi],zGrid[iZ], VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
     }
 
 /*
