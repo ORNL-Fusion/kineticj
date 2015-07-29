@@ -136,10 +136,14 @@ int main ( int argc, char **argv )
        
                 nc_r.getVar(&r[0]);
             
-				float* b0_r_2D = new float[nR*nZ];
-				float* b0_p_2D = new float[nR*nZ];
-				float* b0_z_2D = new float[nR*nZ];
+				//float* b0_r_2D = new float[nR*nZ];
+				//float* b0_p_2D = new float[nR*nZ];
+				//float* b0_z_2D = new float[nR*nZ];
 
+				float b0_r_2D[nR][nZ];
+				float b0_p_2D[nR][nZ];
+				float b0_z_2D[nR][nZ];
+            
 				// Index [i][j] as [i*nZ+j]
 
 				nc_b0_r.getVar(b0_r_2D);
@@ -149,18 +153,22 @@ int main ( int argc, char **argv )
 				for (int i=0; i<nR; ++i) {
 					for (int j=0; j<nZ; ++j) {
 
-						b0_r[i][j] = b0_r_2D[i*nZ+j];
-						b0_p[i][j] = b0_p_2D[i*nZ+j];
-						b0_z[i][j] = b0_z_2D[i*nZ+j];
+//						b0_r[i][j] = b0_r_2D[i*nZ+j];
+//						b0_p[i][j] = b0_p_2D[i*nZ+j];
+//						b0_z[i][j] = b0_z_2D[i*nZ+j];
+
+						b0_r[i][j] = b0_r_2D[i][j];
+						b0_p[i][j] = b0_p_2D[i][j];
+						b0_z[i][j] = b0_z_2D[i][j];
 
 						cout << b0_r[i][j] << "  " << b0_p[i][j] << "  " << b0_z[i][j] << endl;
 
 					}
 				}
 
-				delete [] b0_r_2D;
-				delete [] b0_p_2D;
-				delete [] b0_z_2D;
+//				delete [] b0_r_2D;
+//				delete [] b0_p_2D;
+//				delete [] b0_z_2D;
 
             }
 

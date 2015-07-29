@@ -1936,7 +1936,6 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 
 // Blob of particles to integrate at each point in velocity space
 // Initially created as the phase space particles of Larmor radius about the configuration space point
-
 vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV,
                                         float n_m3, int nPblob, int nThermal, float &dv, C3Vec b0_XYZ) {
 
@@ -2010,44 +2009,34 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 }
 
 
-/// Another version of blob creator, the blob in this case is a small region in (x,vPar,vPer)
-vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV, float n_m3,
-                                        int nXBlob, int nVparBlob, int nVperBlob, int nThermal, float &dv, C3Vec b0_XYZ) {
-
-        C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
-    
-        C3Vec P_CYL = C3Vec(P.c1, P.c2, P.c2);
-        C3Vec P_XYZ = CYL_to_XYZ(P_CYL);
+/// overlaoded create_particle_blob version to average over both gyrophase and toroidal average
+/// blob is still a 1D vector to make consistent with rest of code
+vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV,
+                                        float n_m3, int nPGyro, int nPTor, int nThermal, float &dv, C3Vec b0_XYZ) {
 
         vector<CParticle> pList;
-    
+        int nPblob = nPGyro*nPTor;
+        pList.resize(nPblob);
+
         float m = amu * _mi;
 		float vTh = get_vTh ( amu, Z, T_keV );
     
-        float xMin = P_XYZ.c1 - 0.01;
-        float xMax = P_XYZ.c1 + 0.01;
-        float delX = (xMax - xMin)/nXBlob;
-    
-        float vParMin = P.v_c1 - 0.001*vTh;
-        float vParMax = P.v_c1 + 0.001*vTh;
-        float delVPar = (vParMax - vParMin)/nVparBlob;
-
-        float vPerMin = P.v_c2 - 0.001*vTh;
-        float vPerMax = P.v_c2 + 0.001*vTh;
-        float delVPer = (vPerMax - vPerMin)/nVperBlob;
-    
         float TestIntegratedValue = 0;
     
-        float magb0 = mag(b0_XYZ);
-        int nPblob = nXBlob*nVparBlob*nVperBlob;
-    
-        pList.resize(nPblob);
+        C3Vec thisV_XYZ(P.v_c1,P.v_c2,P.v_c3);
 
         C3Vec b0_perp1_XYZ = cross(b0_XYZ, C3Vec(0.0, 0.0, 1.0));
         b0_perp1_XYZ = b0_perp1_XYZ/mag(b0_perp1_XYZ);
     
+    
         C3Vec b0_perp2_XYZ = cross(b0_XYZ, b0_perp1_XYZ);
         b0_perp2_XYZ = b0_perp2_XYZ/mag(b0_perp2_XYZ);
+    
+    
+        float rL = (m*P.v_c2)/(abs(P.q)*mag(b0_XYZ));
+        float magb0 = mag(b0_XYZ);
+        C3Vec P_CYL = C3Vec(P.c1, P.c2, P.c2);
+        C3Vec P_XYZ = CYL_to_XYZ(P_CYL);
     
         int cnt = 0;
 //i=0 case:
@@ -2055,19 +2044,15 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 
         cnt = 0;
         for(int i=0;i<nPblob;i++) {
-        
-            int iX = i % nXBlob ;
-            int iVpar = int(floor( i/nXBlob)) % nVparBlob;
-            int iVper = int(floor(i/(nXBlob*nVparBlob))) % nVperBlob;
-            float VparTmp = vParMin + delVPar*iVpar;
-            float VperTmp = vPerMin + delVPer*iVper;
+               int iGyro = i % nPGyro;
+                int iTor = int(floor(i/nPGyro)) % nPTor;
 
- 	            CParticle p_tmp (P_XYZ.c1 + xMin + iX*delX,
-                                P_XYZ.c2,
-                                P_XYZ.c3,
-                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c1 + cos(P.v_c3)*b0_perp2_XYZ.c1) + VparTmp*b0_XYZ.c1/magb0,
-                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c2 + cos(P.v_c3)*b0_perp2_XYZ.c2) + VparTmp*b0_XYZ.c2/magb0,
-                                -VperTmp*(-sin(P.v_c3)*b0_perp1_XYZ.c3 + cos(P.v_c3)*b0_perp2_XYZ.c3) + VparTmp*b0_XYZ.c3/magb0,
+ 	            CParticle p_tmp (P_XYZ.c1*cos(2.0*_pi*iTor/nPTor) - P_XYZ.c2*sin(2.0*_pi*iTor/nPTor) + rL*(cos(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c1 + sin(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c1),
+                                 P_XYZ.c1*sin(2.0*_pi*iTor/nPTor) + P_XYZ.c2*cos(2.0*_pi*iTor/nPTor) + + rL*(cos(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c2 + sin(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c2),
+                                P_XYZ.c3 + rL*(cos(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c3 + sin(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c3),
+                                -P.v_c2*(-sin(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c1 + cos(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c1) + P.v_c1*b0_XYZ.c1/magb0,
+                                -P.v_c2*(-sin(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c2 + cos(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c2) + P.v_c1*b0_XYZ.c2/magb0,
+                                -P.v_c2*(-sin(2.0*_pi*iGyro/nPGyro)*b0_perp1_XYZ.c3 + cos(2.0*_pi*iGyro/nPGyro)*b0_perp2_XYZ.c3) + P.v_c1*b0_XYZ.c3/magb0,
                                 amu,Z,weight,P.rfPhase);
             
                 pList[cnt] = p_tmp;
@@ -2099,9 +2084,6 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 #endif
         return pList;
 }
-
-
-
 
 
 
@@ -2886,6 +2868,9 @@ int main ( int argc, char **argv )
     int nPVpar = cfg.lookup("nPVpar");
     int nPVper = cfg.lookup("nPVper");
     
+    int nPGyro = cfg.lookup("nPGyro");
+    int nPTor =  cfg.lookup("nPTor");
+    
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
@@ -2931,6 +2916,8 @@ int main ( int argc, char **argv )
     
     vector<CParticle> PrimaryWorkList;
     PrimaryWorkList.resize(nList);
+    
+    vector<float> Dvperp(nList), Dvpar(nList);
     
     float rGridRng = 0;
 	float rGridStep = 0;
@@ -3137,15 +3124,15 @@ int main ( int argc, char **argv )
 //        vector<CParticle> ThisParticleList(create_particles(PrimaryWorkList[iList].c1,amu,Z,T_keV[iList],density_m3[iList],
 //                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_rGrid[iList]));
 
-/////// dc: create blob, e.g. Larmor orbit
-        nP = nPblob;
-        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
-
-//////  dc:  create blob, a small (x,Vpar,VPer) region around PrimaryWorkList point
-//        nP = nPx*nPVpar*nPVper;
+/////// dc: create blob, Larmor orbit only
+//        nP = nPblob;
 //        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
-//                                           nPx, nPVpar, nPVper,nThermal,dv,b0_XYZ_T_at_List[iList]));
+//                                nP,nThermal,dv,b0_XYZ_T_at_List[iList]));
+
+/////// dc: create blob, e.g. gyrophase and toroidal average
+        nP = nPGyro*nPTor;
+        vector<CParticle> ThisParticleList(create_particle_blob(PrimaryWorkList[iList],amu,Z,T_keV[iList],density_m3[iList],
+                                nPGyro, nPTor,nThermal,dv,b0_XYZ_T_at_List[iList]));
         
         cout << "nP       " << nP << endl;
         cout << "iList       " << iList << endl;
