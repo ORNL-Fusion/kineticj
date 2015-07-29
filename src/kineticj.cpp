@@ -980,14 +980,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         }
 #endif
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
-/*
-        cout << "Loc   = " << Loc << endl;
-        cout << "result = " << result << endl;
-        cout << "x0, x1 = "  << x0 << "  " << x1 << endl;
-        cout << "z0, z1 = "  << z0 << "  " << z1 << endl;
-        cout << "_z  = " << _z << endl;
-        cout << "_x  = " << _x << endl;
-*/
         
         
 #if DEBUG_INTERP >=1
@@ -1136,7 +1128,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
                 return TYPE2(0);
         }
 #endif
-        //TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
 
 #if DEBUG_INTERP >=1
@@ -1380,11 +1371,6 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
 					0+0+1*b0_CYL.c3 );
 
-    //cout << "\tb0_XYZ: " << b0_XYZ.c1 <<"  "<< b0_XYZ.c2 <<"  "<< b0_XYZ.c3 << endl;
-
-	//C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
-	//				-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
-	//				v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
     C3Vec v_x_b0 = cross(v_XYZ,b0_XYZ);
 
 #if DEBUGLEVEL >= 3
@@ -3139,7 +3125,7 @@ int main ( int argc, char **argv )
 		vector<float> f1(nP);
 		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
 		vector<complex<float> > f1c(nP);
-                
+        
 /// Save particles to file to test
 //
         if (iList == 0){
@@ -3395,6 +3381,7 @@ int main ( int argc, char **argv )
     
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
+                            cout << "b0_XYZ_T_at_ThisPos   " << b0_XYZ_T_at_ThisPos << endl;
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
@@ -3705,7 +3692,7 @@ int main ( int argc, char **argv )
                     
                 }
                 else{
-                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0 && i < nSteps - 1 ){
+                        if ( i % (int)floor(nStepsPerCycle/nSavePerRFCycle) == 0){
     
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3),fieldMesh,b0_XYZ,tmp_Stat);
@@ -3714,7 +3701,7 @@ int main ( int argc, char **argv )
                             float vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
 
                             //OrbitFile<<scientific;
-                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i + 1]
+                            OrbitFile <<  std::fixed << std::setprecision(12) << thisT[i]
                                 <<"    "<< thisPos.c1
                                 <<"    "<< thisPos.c2
                                 <<"    "<< thisPos.c3
