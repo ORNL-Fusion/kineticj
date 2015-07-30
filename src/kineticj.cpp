@@ -858,6 +858,9 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
     float x = Loc.c1;
     float z = Loc.c3;
     
+  //  cout << "x   " << x << endl;
+  //  cout << "z   " << z << endl;
+    
 	float _x, x0, x1, _z, z0, z1;
 	float xTmp = x;
 	float zTmp = z;
@@ -1094,7 +1097,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	z1 = ceil(_z);
 	
 	// Catch for particle at point
-	if(x0==x1) {
+	if(x0==x1 || z0==z1) {
 #if DEBUG_INTERP >= 2
         cout << "Particle version of kj_interp" << endl;
 		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
@@ -1318,9 +1321,6 @@ C3Vec rot_XYZ_to_abp ( const C3Vec A_XYZ, C3Vec bUnit_XYZ, const int direction )
 
     A_abp = rot2 * ( rot1 * A_XYZ );
     
-    cout << " A_XYZ  " << A_XYZ << endl;
-    cout << " A_abp  " << A_abp << endl;
-
     return A_abp;
 }
 
@@ -1365,11 +1365,11 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 
 	C3Vec b0_CYL, b0_XYZ;
 
-	b0_CYL = kj_interp ( C3Vec(_r,_p,x.c3) , fieldMesh, b0Vec_CYL, p, status );
+	b0_CYL = kj_interp(C3Vec(_r,_p,x.c3) , fieldMesh, b0Vec_CYL, p, status);
 
-	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
+	b0_XYZ = C3Vec(cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
 					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
-					0+0+1*b0_CYL.c3 );
+					0+0+1*b0_CYL.c3);
 
     C3Vec v_x_b0 = cross(v_XYZ,b0_XYZ);
 
@@ -1377,10 +1377,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 	cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << endl;
 	cout << "\tp.q/p.m: " << p.q/p.m << endl;
 #endif
-
-
 	return v_x_b0*(p.q/p.m);
-
 }
 
 // Zero-order orbits
@@ -1396,8 +1393,8 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
 
 // Zero-order orbits
 template<class b0TYPE>
-int rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const b0TYPE &b0, const fieldMeshClass &fieldMesh ) {
+int rk4_move (CParticle &p, const float &dt, const float &t0,
+				const b0TYPE &b0, const fieldMeshClass &fieldMesh) {
 
         int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
@@ -1486,7 +1483,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
-    //_p = 0; // Really need to do something about this. (DG) /// WHY? (DB)
+    _p = 0; // Really need to do something about this. (DG) /// WHY? (DB)
 
     C3Vec Fe1, e1RE_XYZ, e1IM_XYZ, e1_XYZ;
     
@@ -3381,8 +3378,6 @@ int main ( int argc, char **argv )
     
                             int tmp_Stat;
                             C3Vec b0_XYZ_T_at_ThisPos = kj_interp(XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)),fieldMesh,b0_XYZ,tmp_Stat);
-                            cout << "b0_XYZ_T_at_ThisPos   " << b0_XYZ_T_at_ThisPos << endl;
-                            cout << "XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3))   = " << XYZ_to_CYL(C3Vec(thisPos.c1,thisPos.c2,thisPos.c3)) << endl;
                             
                             C3Vec thisV_abp = rot_XYZ_to_abp (thisVel_XYZ,b0_XYZ_T_at_ThisPos, 0 );
                             float vPar = thisV_abp.c3;
