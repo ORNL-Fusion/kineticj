@@ -862,6 +862,9 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
   //  cout << "z   " << z << endl;
     
 	float _x, x0, x1, _z, z0, z1;
+    
+    int ix, iz;
+    
 	float xTmp = x;
 	float zTmp = z;
 
@@ -941,11 +944,13 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
-	x0 = floor(_x);
-	x1 = ceil(_x);
+	//x0 = floor(_x);
+	ix = (int) floor(_x);
+    //x1 = ceil(_x);
 
-	z0 = floor(_z);
-	z1 = ceil(_z);
+	//z0 = floor(_z);
+	iz = (int) floor(_z);
+	//z1 = ceil(_z);
 	// Catch for particle at point
 	if(x0==x1) {
 #if DEBUG_INTERP >= 2
@@ -957,10 +962,10 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	}
 	else {
 
-		TYPE2 f00 = fVec[x0][z0];
-		TYPE2 f01 = fVec[x0][z1];
-		TYPE2 f10 = fVec[x1][z0];
-		TYPE2 f11 = fVec[x1][z1];
+		TYPE2 f00 = fVec[ix][iz];
+		TYPE2 f01 = fVec[ix][iz + 1];
+		TYPE2 f10 = fVec[ix + 1][iz];
+		TYPE2 f11 = fVec[ix + 1][iz + 1];
         
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
@@ -983,9 +988,16 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+        x0 = fieldMesh.r[ix];
+        x1 = fieldMesh.r[ix + 1];
+
+        z0 = fieldMesh.z[iz];
+        z1 = fieldMesh.r[iz + 1];
         
+       // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
         
+
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
 #if DEBUG_INTERP >= 2
@@ -1020,6 +1032,8 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	float _x, x0, x1, _z, z0, z1;
 	float xTmp = x;
 	float zTmp = z;
+    
+    int ix, iz;
 
 #if _PARTICLE_BOUNDARY == 1
 	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
@@ -1087,16 +1101,18 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 #endif
 	//else
 	//{
-		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
-		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
+	//	_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
+	//	_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
-	x0 = floor(_x);
-	x1 = ceil(_x);
+	//x0 = floor(_x);
+	ix = (int) floor(_x);
+    //x1 = ceil(_x);
 
-	z0 = floor(_z);
-	z1 = ceil(_z);
-	
+	//z0 = floor(_z);
+	iz = (int) floor(_z);
+	//z1 = ceil(_z);
+
 	// Catch for particle at point
 	if(x0==x1 || z0==z1) {
 #if DEBUG_INTERP >= 2
@@ -1107,10 +1123,11 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		return fVec[x0][z0];
 	}
 	else {
-		TYPE2 f00 = fVec[x0][z0];
-		TYPE2 f01 = fVec[x0][z1];
-		TYPE2 f10 = fVec[x1][z0];
-		TYPE2 f11 = fVec[x1][z1];
+
+		TYPE2 f00 = fVec[ix][iz];
+		TYPE2 f01 = fVec[ix][iz + 1];
+		TYPE2 f10 = fVec[ix + 1][iz];
+		TYPE2 f11 = fVec[ix + 1][iz + 1];
         
 #if DEBUG_INTERP >=2
         //cout << "kj_interp: " << endl;
@@ -1132,7 +1149,14 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
                 return TYPE2(0);
         }
 #endif
-        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+        x0 = fieldMesh.r[ix];
+        x1 = fieldMesh.r[ix + 1];
+
+        z0 = fieldMesh.z[iz];
+        z1 = fieldMesh.r[iz + 1];
+        
+       // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
+        TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
