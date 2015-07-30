@@ -952,15 +952,15 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	iz = (int) floor(_z);
 	//z1 = ceil(_z);
 	// Catch for particle at point
-	if(x0==x1) {
-#if DEBUG_INTERP >= 2
-        cout << "Particle version of kj_interp" << endl;
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-#endif
-		return fVec[x0][z0];
-	}
-	else {
+//	if(x0==x1) {
+//#if DEBUG_INTERP >= 2
+//        cout << "Particle version of kj_interp" << endl;
+//		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+//		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+//#endif
+//		return fVec[x0][z0];
+//	}
+//	else {
 
 		TYPE2 f00 = fVec[ix][iz];
 		TYPE2 f01 = fVec[ix][iz + 1];
@@ -992,11 +992,26 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         x1 = fieldMesh.r[ix + 1];
 
         z0 = fieldMesh.z[iz];
-        z1 = fieldMesh.r[iz + 1];
+        z1 = fieldMesh.z[iz + 1];
         
        // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
-        
+/*
+        cout << "x0   " << x0 << endl;
+        cout << "x1   " << x1 << endl;
+        cout << "x   " << x << endl;
+
+        cout << "z0   " << z0 << endl;
+        cout << "z1   " << z1 << endl;
+        cout << "z   " << z << endl;
+
+        cout << "f00   " << f00 << endl;
+        cout << "f01   " << f01 << endl;
+        cout << "f10   " << f10 << endl;
+        cout << "f11   " << f11 << endl;
+        cout << "result   " << result << endl;
+*/ 
+    
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -1017,7 +1032,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         }
 #endif
 		return result;
-	}
+	//}
 }
 
 
@@ -1101,8 +1116,8 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 #endif
 	//else
 	//{
-	//	_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
-	//	_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
+		_x = (xTmp-fieldMesh.r.front())/(fieldMesh.r.back()-fieldMesh.r.front())*(fieldMesh.r.size()-1);
+		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
 	//x0 = floor(_x);
@@ -1114,15 +1129,15 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	//z1 = ceil(_z);
 
 	// Catch for particle at point
-	if(x0==x1 || z0==z1) {
-#if DEBUG_INTERP >= 2
-        cout << "Particle version of kj_interp" << endl;
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-#endif
-		return fVec[x0][z0];
-	}
-	else {
+	//if(x0==x1 || z0==z1) {
+//#if DEBUG_INTERP >= 2
+//        cout << "Particle version of kj_interp" << endl;
+//		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
+//		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
+//#endif
+//		return fVec[ix][iz];
+//	}
+	//else {
 
 		TYPE2 f00 = fVec[ix][iz];
 		TYPE2 f01 = fVec[ix][iz + 1];
@@ -1153,7 +1168,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         x1 = fieldMesh.r[ix + 1];
 
         z0 = fieldMesh.z[iz];
-        z1 = fieldMesh.r[iz + 1];
+        z1 = fieldMesh.z[iz + 1];
         
        // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
@@ -1175,7 +1190,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         }
 #endif
 		return result;
-	}
+	//}
 }
 
 
