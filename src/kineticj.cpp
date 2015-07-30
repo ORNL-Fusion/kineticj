@@ -890,6 +890,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 			p.status = 1;
 			return TYPE2(0);
 	}
+    
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
             float xRange = fieldMesh.r.back() - fieldMesh.r.front();
