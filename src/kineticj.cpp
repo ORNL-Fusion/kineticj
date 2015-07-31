@@ -1010,7 +1010,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         cout << "f10   " << f10 << endl;
         cout << "f11   " << f11 << endl;
         cout << "result   " << result << endl;
-*/ 
+*/
     
 
 #if DEBUG_INTERP >=1
@@ -2730,9 +2730,48 @@ int main ( int argc, char **argv )
 		}
         fieldMeshClass fieldMesh(r,z);
     
-    // make sure z is monotonically increasing
-        sort(fieldMesh.z.begin(), fieldMesh.z.end());
+    // make sure z is monotonically increasing, and if not flip Z and all the scalar fields
+    if (fieldMesh.z.front() > fieldMesh.z.back()){
+        cout << "flipping fields!    " << endl;
+        reverse(fieldMesh.z.begin(), fieldMesh.z.end());
+        
+            for (int i = 0; i < fieldMesh.r.size(); i++){
+                reverse(b0_CYL[i].begin(), b0_CYL[i].end());
+                reverse(b0_XYZ[i].begin(), b0_XYZ[i].end());
 
+                reverse(b0_r[i].begin(), b0_r[i].end());
+                reverse(b0_p[i].begin(), b0_p[i].end());
+                reverse(b0_z[i].begin(), b0_z[i].end());
+
+                reverse(e_r_re[i].begin(), e_r_re[i].end());
+                reverse(e_p_re[i].begin(), e_p_re[i].end());
+                reverse(e_z_re[i].begin(), e_z_re[i].end());
+
+                reverse(e_r_im[i].begin(), e_r_im[i].end());
+                reverse(e_p_im[i].begin(), e_p_im[i].end());
+                reverse(e_z_im[i].begin(), e_z_im[i].end());
+
+                reverse(n_m3[i].begin(), n_m3[i].end());
+
+                reverse(b_r_re[i].begin(), b_r_re[i].end());
+                reverse(b_p_re[i].begin(), b_p_re[i].end());
+                reverse(b_z_re[i].begin(), b_z_re[i].end());
+
+                reverse(b_r_im[i].begin(), b_r_im[i].end());
+                reverse(b_p_im[i].begin(), b_p_im[i].end());
+                reverse(b_z_im[i].begin(), b_z_im[i].end());
+
+                reverse(e_r[i].begin(), e_r[i].end());
+                reverse(e_p[i].begin(), e_p[i].end());
+                reverse(e_z[i].begin(), e_z[i].end());
+
+                reverse(b_r[i].begin(), b_r[i].end());
+                reverse(b_p[i].begin(), b_p[i].end());
+                reverse(b_z[i].begin(), b_z[i].end());
+                
+        }
+    }
+    
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");	
 		cout << "Reading GC terms data file " << gc_fName << endl;
