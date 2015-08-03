@@ -2939,6 +2939,8 @@ int main ( int argc, char **argv )
     int nSavePerRFCycle = cfg.lookup("nSavePerRFCycle");
     int nList;
     
+    float tFinal = tRF*nRFCycles;
+    
 #if defined(_OPENMP)
         int nThreads;
 #endif
@@ -3229,7 +3231,7 @@ int main ( int argc, char **argv )
 
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
-
+            
 			CParticle thisParticle_XYZ(ThisParticleList[iP]);
             
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
@@ -3491,6 +3493,7 @@ int main ( int argc, char **argv )
                 OrbitFile.close();
             }
 #endif
+            
 			complex<float> this_f1c = -qOverm * intVecArray ( thisT, this_e1_dot_gradvf0 );
 
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -3537,6 +3540,9 @@ int main ( int argc, char **argv )
 ///////////////////
 ///////// Begin perturbed orbit optional section
 ///////////////////
+
+        C3Vec thisInitialVelCYL(0.0,0.0,0.0);
+
 #if COMPUTE_PERTURBED_ORBITS >= 1
 
 		for(int iP=0;iP <nP;iP++) {
@@ -3547,6 +3553,8 @@ int main ( int argc, char **argv )
 			vector<C3Vec> thisOrbitB1_re_XYZ(nSteps,C3Vec(0,0,0));
 			vector<C3Vec> thisOrbitB1_im_XYZ(nSteps,C3Vec(0,0,0));
             CParticle thisParticle_XYZ(ThisParticleList[iP]);
+            
+            thisInitialVelCYL = C3Vec(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2, thisParticle_XYZ.v_c3);
 
 			float qOverm =  thisParticle_XYZ.q/thisParticle_XYZ.m;
             
@@ -3805,6 +3813,17 @@ int main ( int argc, char **argv )
                 OrbitFile.close();
             }
 #endif
+
+            C3Vec thisFinalVelXYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2, thisParticle_XYZ.v_c3);
+            int tmp_Stat;
+            C3Vec b0_XYZ_T_at_ThisPos = kj_interp(XYZ_to_CYL(C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3)),fieldMesh,b0_XYZ,tmp_Stat);
+            C3Vec thisFinalVel_abp = rot_XYZ_to_abp (thisFinalVelXYZ,b0_XYZ_T_at_ThisPos, 0 );
+            float finalVPar = thisFinalVel_abp.c3;
+            float finalVPer = sqrt(pow(thisFinalVel_abp.c1,2)+pow(thisFinalVel_abp.c2,2));
+
+            Dvpar[iList]  += finalVPar - thisInitialVelCYL.c1;
+            Dvperp[iList] += finalVPer - thisInitialVelCYL.c2;
+
 			complex<float> this_f1c = -qOverm * intVecArray ( thisT, this_e1_dot_gradvf0 );
 
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -4062,6 +4081,48 @@ int main ( int argc, char **argv )
 #endif
 
 	} // End of xGrid loop
+
+    for (int iList = 0; iList < nList; iList++){
+        Dvpar[iList] = Dvpar[iList]/(2.0*nP*tFinal);
+        Dvperp[iList] = Dvperp[iList]/(2.0*nP*tFinal);
+    }
+    
+    try{
+        int nDimPosVel = 6;
+        float tmpData[nList][nDimPosVel];
+        for (int iList = 0; iList < nList; iList++){
+                    tmpData[iList][0] = PrimaryWorkList[iList].c1;
+                    tmpData[iList][1] = PrimaryWorkList[iList].c2;
+                    tmpData[iList][2] = PrimaryWorkList[iList].c3;
+
+                    tmpData[iList][3] = PrimaryWorkList[iList].v_c1;
+                    tmpData[iList][4] = PrimaryWorkList[iList].v_c2;
+                    tmpData[iList][5] = PrimaryWorkList[iList].v_c3;
+        }
+        
+        NcFile outFile("output/solution.nc", NcFile::replace);
+        
+        NcDim listDim = outFile.addDim("nList", nList);
+        NcDim worklistCol = outFile.addDim("nDimPosVel", nDimPosVel);
+        
+        vector <NcDim> worklistDims;
+        worklistDims.push_back(listDim);
+        worklistDims.push_back(worklistCol);
+        
+        NcVar worklist = outFile.addVar("workList", ncFloat,worklistDims);
+        
+        NcVar DvparNC = outFile.addVar("Dvpar", ncFloat,listDim);
+        NcVar DvperNC = outFile.addVar("Dvperp", ncFloat,listDim);
+        
+        worklist.putVar(tmpData);
+        DvparNC.putVar(&Dvpar[0]);
+        DvperNC.putVar(&Dvperp[0]);
+    }
+            catch(exceptions::NcException &e) {
+                    cout << "NetCDF: unknown error" << endl;
+                    e.what();
+                    exit(1);
+    }
 
 	// Write current(s) to file
 	
