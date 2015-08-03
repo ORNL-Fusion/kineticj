@@ -2599,24 +2599,23 @@ int main ( int argc, char **argv )
             
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
-						b0_r[i][j] = b0_r_2D[i*nZ+j];
-						b0_p[i][j] = b0_p_2D[i*nZ+j];
-						b0_z[i][j] = b0_z_2D[i*nZ+j];
+						b0_r[i][j] = b0_r_2D[j*nR+i];
+						b0_p[i][j] = b0_p_2D[j*nR+i];
+						b0_z[i][j] = b0_z_2D[j*nR+i];
 
-						e_r_re[i][j] = e_r_re_2D[i*nZ+j];
-						e_p_re[i][j] = e_p_re_2D[i*nZ+j];
-						e_z_re[i][j] = e_z_re_2D[i*nZ+j];
-						e_r_im[i][j] = e_r_im_2D[i*nZ+j];
-						e_p_im[i][j] = e_p_im_2D[i*nZ+j];
-						e_z_im[i][j] = e_z_im_2D[i*nZ+j];
+						e_r_re[i][j] = e_r_re_2D[j*nR+i];
+						e_p_re[i][j] = e_p_re_2D[j*nR+i];
+						e_z_re[i][j] = e_z_re_2D[j*nR+i];
+						e_r_im[i][j] = e_r_im_2D[j*nR+i];
+						e_p_im[i][j] = e_p_im_2D[j*nR+i];
+						e_z_im[i][j] = e_z_im_2D[j*nR+i];
 
-						b_r_re[i][j] = b_r_re_2D[i*nZ+j];
-						b_p_re[i][j] = b_p_re_2D[i*nZ+j];
-						b_z_re[i][j] = b_z_re_2D[i*nZ+j];
-						b_r_im[i][j] = b_r_im_2D[i*nZ+j];
-						b_p_im[i][j] = b_p_im_2D[i*nZ+j];
-						b_z_im[i][j] = b_z_im_2D[i*nZ+j];
-                        
+						b_r_re[i][j] = b_r_re_2D[j*nR+i];
+						b_p_re[i][j] = b_p_re_2D[j*nR+i];
+						b_z_re[i][j] = b_z_re_2D[j*nR+i];
+						b_r_im[i][j] = b_r_im_2D[j*nR+i];
+						b_p_im[i][j] = b_p_im_2D[j*nR+i];
+						b_z_im[i][j] = b_z_im_2D[j*nR+i];
                     }
                 }
             
@@ -2653,7 +2652,7 @@ int main ( int argc, char **argv )
 
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
-                        b0_CYL[i][j] = C3Vec(b0_r[j][i],b0_p[j][i],b0_z[j][i]);
+                        b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
                         b0_XYZ[i][j] = rot_CYL_to_XYZ(0,b0_CYL[i][j],1);
                         }
 				}
