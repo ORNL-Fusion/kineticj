@@ -1050,6 +1050,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
     
     int ix, iz;
 
+
 #if _PARTICLE_BOUNDARY == 1
 	if(x < fieldMesh.r.front()||x>fieldMesh.r.back() || z < fieldMesh.z.front() || z > fieldMesh.z.back() ) {
 			// Particle absorbing walls
@@ -1394,7 +1395,7 @@ C3Vec GetFb0( CParticle &p,const C3Vec &v_XYZ,
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
     
-    ///_p = 0; // Really need to do something about this (DG). ///// WHY??? (DB)
+    ///_p = 0; // Really need to do something about this (DLG). ///// WHY??? (DB)
 
 #if DEBUGLEVEL >= 3
 	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
@@ -1429,7 +1430,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t,
         C3Vec Fb0 = GetFb0(p, v_XYZ, x, b0Vec_CYL, fieldMesh, status);
 
         return Fb0;
-        }
+}
 
 // Zero-order orbits
 template<class b0TYPE>
@@ -1461,7 +1462,6 @@ int rk4_move (CParticle &p, const float &dt, const float &t0,
 		p.v_c1 = yn1.c1;
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
-
 
 #if _PARTICLE_BOUNDARY == 1
 		// Particle absorbing walls
@@ -1523,7 +1523,7 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec 
 
 	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
 	float _p = atan2 ( x.c2, x.c1 );
-    _p = 0; // Really need to do something about this. (DG) /// WHY? (DB)
+    _p = 0; // Really need to do something about this. (DLG) /// WHY? (DB)
 
     C3Vec Fe1, e1RE_XYZ, e1IM_XYZ, e1_XYZ;
     
@@ -2350,7 +2350,7 @@ int main ( int argc, char **argv )
         fieldMeshClass fieldMesh(r);
 
 		// Read the guiding center terms from file
-		string gc_fName = cfg.lookup("gc_fName");	
+		string gc_fName = cfg.lookup("gc_fName");
 		cout << "Reading GC terms data file " << gc_fName << endl;
 
 		vector<float> r_gc, curv_r, curv_p, curv_z,
@@ -2479,7 +2479,6 @@ int main ( int argc, char **argv )
 
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
-
 	
 				NcDim nc_nR(dataFile.getDim("nR"));
 				NcDim nc_nSpec(dataFile.getDim("nSpec"));
@@ -2654,7 +2653,7 @@ int main ( int argc, char **argv )
 
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
-                        b0_CYL[i][j] = C3Vec(b0_r[i][j],b0_p[i][j],b0_z[i][j]);
+                        b0_CYL[i][j] = C3Vec(b0_r[j][i],b0_p[j][i],b0_z[j][i]);
                         b0_XYZ[i][j] = rot_CYL_to_XYZ(0,b0_CYL[i][j],1);
                         }
 				}
@@ -2732,7 +2731,7 @@ int main ( int argc, char **argv )
     
     // make sure z is monotonically increasing, and if not flip Z and all the scalar fields
     if (fieldMesh.z.front() > fieldMesh.z.back()){
-        cout << "flipping fields!    " << endl;
+        cout << "z is not monotonically increasing, reversing fields!    " << endl;
         reverse(fieldMesh.z.begin(), fieldMesh.z.end());
         
             for (int i = 0; i < fieldMesh.r.size(); i++){
@@ -2844,7 +2843,6 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
-
 
 		// Rotate the e & b fields to XYZ
 		vector< vector<C3Vec> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
@@ -3301,7 +3299,6 @@ int main ( int argc, char **argv )
 				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, fieldMesh );
 
                // int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
-                
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
 #if DEBUG_MOVE >=1 
@@ -3317,7 +3314,7 @@ int main ( int argc, char **argv )
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
 				C3Vec thisB0 = kj_interp (XYZ_to_CYL(C3Vec(thisOrbit_XYZ[i].c1,thisOrbit_XYZ[i].c2,thisOrbit_XYZ[i].c3)), fieldMesh, b0_CYL, istat );
 
-                float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
+                float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2)); ////// This does not look like "theta" /// (DB)
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iList], density_m3[iList], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
