@@ -855,6 +855,7 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
+
     status = 0;
     float x = Loc.c1;
     float z = Loc.c3;
@@ -1562,8 +1563,8 @@ float eval_vPer ( CParticle &p, const C3Vec r, const fieldMeshClass &fieldMesh, 
 }
 
 // Guiding center veclocity
-template<class b0TYPE, class curvTYPE, class gradTYPE, class bdotgradTYPE>
-C3Vec eval_vGC ( CParticle &p, const C3Vec &r, const float &vPer, const float &vPar,
+template<class b0TYPE, class curvTYPE, class gradTYPE>
+C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar,
                 const fieldMeshClass &fieldMesh, const b0TYPE &b0_CYL,
                 const fieldMeshClass &fieldMesh_gc, const curvTYPE &curv_CYL, const gradTYPE &grad_CYL, int &status ) {
 
@@ -1609,6 +1610,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec &r, const float &vPer, const float &v
     C3Vec vGC = vPar * UnitB_CYL  +  pow(vPer,2) * This_grad_CYL  +  pow(vPar,2) * This_curv_CYL;
     return vGC; 
 }
+
 
 // Guiding center orbit
 template<class b0TYPE, class curvTYPE, class gradTYPE, class bdotgradTYPE>
@@ -1683,7 +1685,6 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 #endif
 
                 // Update particle with moved position and new vPar & vPer
-
 		    	float vPer1 = eval_vPer ( p, xn1, fieldMesh, b0_CYL, status );
 
                 p.vPar = vPar1;
@@ -1696,7 +1697,6 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 		        p.c3 = xn1_XYZ.c3;
 
                 // Update the XYZ velocity also
-
                 C3Vec this_b0_CYL = kj_interp ( xn1, fieldMesh, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
@@ -2038,6 +2038,14 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 
                 float bMag = mag (b0_XYZ);
                 float vMag = mag (thisV_XYZ);
+            
+                    C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+
+                    pList[cnt].vPar = thisV_abp.c3;
+                    
+                    pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+                    pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
+                    pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_MAXWELLIAN >=2 
                     cout<<"ThisVx: "<<thisvx<<endl;
@@ -2802,6 +2810,8 @@ int main ( int argc, char **argv )
                 gc_nc_grad_p.getVar(grad_p_2D);
                 gc_nc_grad_z.getVar(grad_z_2D);
 
+                gc_nc_bDotGradB.getVar(bDotGradB_2D);
+
             
 				for(int i=0; i<nR_gc; i++) {
                     for (int j = 0; j< nZ_gc; j++){
@@ -2833,7 +2843,6 @@ int main ( int argc, char **argv )
 		                grad_CYL[i][j] = C3Vec(grad_r[i][j],grad_p[i][j],grad_z[i][j]);
                     }
 				}
-
 		}
 		catch(exceptions::NcException &e) {
 				cout << "NetCDF: unknown error." << endl;
@@ -2888,7 +2897,6 @@ int main ( int argc, char **argv )
             b1Im_XYZ[i][j] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i][j], 1);
             }
 		}
-
 #endif
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3010,10 +3018,6 @@ int main ( int argc, char **argv )
             int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
             int iVper = int(floor(iList/(nRGrid*nVparGrid))) % nVperGrid;
             int iPhase = int(floor(iList/(nRGrid*nVparGrid*nVperGrid)));
-        
-            cout<< ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR]
-            << ",          iVpar   =  "     << iR << "     " << "Vpar[iVpar] = " << VparGrid[iVpar]
-            << ",          iVper    =  "     << iR << "     " << "Vper[iVper] = " << VperGrid[iVper] << endl;
         
            PrimaryWorkList[iList] = CParticle(rGrid[iR], 0.0,0.0, VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
     }
@@ -3247,7 +3251,7 @@ int main ( int argc, char **argv )
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
                                 fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
 #else
-				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, fieldMesh );
+				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, fieldMesh);
 
                // int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL,r, e1Re_XYZ, e1Im_XYZ, wrf );
 #endif
