@@ -1670,8 +1670,10 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
 }
 
 // Guiding center orbit
+
+template<class b0TYPE>
 int rk4_move_gc ( CParticle &p, const float &dt, const float &t0, 
-				const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, const vector<float> &r_GC, 
+				const fieldMeshClass &fieldMesh, const b0TYPE &b0_CYL, const fieldMeshClass &fieldMesh_gc,
                 const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, 
                 const vector<float> &bDotGradB, const float wrf ) {
 
@@ -1679,14 +1681,14 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 C3Vec xn0_XYZ(p.c1, p.c2, p.c3);
                 C3Vec xn0 = XYZ_to_CYL(xn0_XYZ);
 
-		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL, status );
+		    	float This_vPer = eval_vPer ( p, xn0, fieldMesh, b0_CYL, status );
 #if DEBUG_GC >= 2 
                 cout << "p.vPer: " << p.vPer << endl;
                 cout << "p.vPar: " << p.vPar << endl;
                 cout << "This_vPer: " << This_vPer << endl;
 #endif
-		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB, status );
+		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
+		    	float k1_vPar = dt * eval_aPar ( p, xn0, fieldMesh_gc, bDotGradB, status );
 		    	C3Vec k1_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k1_vgc,"k1_vgc");
@@ -1697,9 +1699,9 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                         return status;
                 }
 #endif    
-		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL, status );
-		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB, status ); 
+		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, fieldMesh, b0_CYL, status );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
+		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, fieldMesh_gc, bDotGradB, status );
 		    	C3Vec k2_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k2_vgc,"k2_vgc");
@@ -1708,9 +1710,9 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                         return status;
                 }
 #endif 
-		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL, status ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB, status ); 
+		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, fieldMesh, b0_CYL, status );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
+		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, fieldMesh_gc, bDotGradB, status );
 		    	C3Vec k3_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k3_vgc,"k3_vgc");
@@ -1719,9 +1721,9 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                         return status;
                 }
 #endif 
-		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL, status ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB, status );
+		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, fieldMesh, b0_CYL, status );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
+		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, fieldMesh_gc, bDotGradB, status );
 		    	C3Vec k4_vgc  = dt * This_vGC; 
 #if DEBUG_GC >= 2
                 kj_print(k4_vgc,"k4_vgc");
@@ -1742,7 +1744,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update particle with moved position and new vPar & vPer
 
-		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
+		    	float vPer1 = eval_vPer ( p, xn1, fieldMesh, b0_CYL, status );
 
                 p.vPar = vPar1;
                 p.vPer = vPer1;
@@ -1755,7 +1757,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update the XYZ velocity also
 
-                C3Vec this_b0_CYL = kj_interp ( xn1.c1, r_b0, b0_CYL, status );
+                C3Vec this_b0_CYL = kj_interp ( xn1.c1, fieldMesh, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
                 C3Vec v_abp;
@@ -2430,6 +2432,8 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
 
+        fieldMeshClass fieldMesh_gc(r_gc);
+
 		// Rotate the e & b fields to XYZ
 
 		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
@@ -2627,7 +2631,6 @@ int main ( int argc, char **argv )
                     }
                 }
             
-                cout << "hello, got vars from netcdf field and deleted arrays" << endl;
                 // Here im reading a single species' density from a multi species array,
                 // i.e., density[nSpec,nR] and I only want density[1,*] for example where
                 // the species is specified by "species_number" in the cfg file
@@ -2641,22 +2644,13 @@ int main ( int argc, char **argv )
                 count[0] = 1;
             
                 cout << "species number        " << species_number << endl;
-                cout << "about to get n_m3     " << endl;
-                //nc_density.getVar(start, count, n_m3_2D);
-            
                 nc_density.getVar(n_m3_2D);
-            
-                cout << "got n_m3" << endl;
 
  				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
                         n_m3[i][j] = n_m3_2D[i*nZ + j];
                     }
-                //cout << "n_m3[i][j]    " << n_m3[i][0] << endl;
-
                 }
-
-                cout << "got and stored n_m3" << endl;
 
 				for(int i=0; i<nR; i++) {
                     for (int j = 0; j< nZ; j++){
@@ -2682,6 +2676,8 @@ int main ( int argc, char **argv )
                 delete [] b_r_im_2D;
 				delete [] b_p_im_2D;
 				delete [] b_z_im_2D;
+            
+                cout << "Got vars from netcdf field and deleted tmp arrays" << endl;
             
                 vector<complex<float> > e_r_tmp, e_p_tmp, e_z_tmp;
 
@@ -2782,9 +2778,12 @@ int main ( int argc, char **argv )
 		string gc_fName = cfg.lookup("gc_fName");	
 		cout << "Reading GC terms data file " << gc_fName << endl;
 
-		vector<float> r_gc, curv_r, curv_p, curv_z,
+        vector<float> r_gc, z_gc;
+
+		vector< vector<float> > curv_r, curv_p, curv_z,
             grad_r, grad_p, grad_z, bDotGradB;
-		vector<C3Vec> curv_CYL, grad_CYL;
+    
+		vector< vector<C3Vec> > curv_CYL, grad_CYL;
 		
 		ifstream gc_file(gc_fName.c_str());
 		if(!gc_file.good()) {
@@ -2796,12 +2795,17 @@ int main ( int argc, char **argv )
 				NcFile dataFile ( gc_fName.c_str(), NcFile::read );
 	
 				NcDim gc_nc_nR(dataFile.getDim("nR"));
+				NcDim gc_nc_nZ(dataFile.getDim("nZ"));
+
 				NcDim gc_nc_scalar(dataFile.getDim("scalar"));
 	
 				int nR_gc = gc_nc_nR.getSize();
+				int nZ_gc = gc_nc_nZ.getSize();
                 cout << "nR_gc: " << nR_gc << endl;
+                cout << "nZ_gc: " << nZ_gc << endl;
 
 				NcVar gc_nc_r(dataFile.getVar("r"));
+				NcVar gc_nc_z(dataFile.getVar("z"));
 
 				NcVar gc_nc_curv_r(dataFile.getVar("curv_r"));
 				NcVar gc_nc_curv_p(dataFile.getVar("curv_t"));
@@ -2814,34 +2818,78 @@ int main ( int argc, char **argv )
 				NcVar gc_nc_bDotGradB(dataFile.getVar("bDotGradB"));
 
 				r_gc.resize(nR_gc);
+				z_gc.resize(nZ_gc);
 
-				curv_r.resize(nR_gc);
-				curv_p.resize(nR_gc);
-				curv_z.resize(nR_gc);
+				for(int i=0; i<nR_gc; i++)
+				{
+					vector<float> row(nZ_gc);
+					vector<C3Vec> rowC3Vec(nZ_gc);
+                    
+					curv_r.push_back(row);
+					curv_p.push_back(row);
+					curv_z.push_back(row);
 
-				grad_r.resize(nR_gc);
-				grad_p.resize(nR_gc);
-				grad_z.resize(nR_gc);
+                    grad_r.push_back(row);
+                    grad_p.push_back(row);
+                    grad_z.push_back(row);
+                    
+                    bDotGradB.push_back(row);
+                    
+                    curv_CYL.push_back(rowC3Vec);
+                    grad_CYL.push_back(rowC3Vec);
+				}
+ 
+                gc_nc_r.getVar(&r_gc[0]);
+                gc_nc_z.getVar(&z_gc[0]);
+            
+                float* curv_r_2D = new float[nR_gc*nZ_gc];
+				float* curv_p_2D = new float[nR_gc*nZ_gc];
+				float* curv_z_2D = new float[nR_gc*nZ_gc];
 
-				bDotGradB.resize(nR_gc);
+                float* grad_r_2D = new float[nR_gc*nZ_gc];
+				float* grad_p_2D = new float[nR_gc*nZ_gc];
+				float* grad_z_2D = new float[nR_gc*nZ_gc];
+            
+                float* bDotGradB_2D = new float[nR_gc*nZ_gc];
+          
+                gc_nc_curv_r.getVar(curv_r_2D);
+                gc_nc_curv_p.getVar(curv_p_2D);
+                gc_nc_curv_z.getVar(curv_z_2D);
 
-				gc_nc_r.getVar(&r_gc[0]);
+                gc_nc_grad_r.getVar(grad_r_2D);
+                gc_nc_grad_p.getVar(grad_p_2D);
+                gc_nc_grad_z.getVar(grad_z_2D);
 
-				gc_nc_curv_r.getVar(&curv_r[0]);
-				gc_nc_curv_p.getVar(&curv_p[0]);
-				gc_nc_curv_z.getVar(&curv_z[0]);
-
-				gc_nc_grad_r.getVar(&grad_r[0]);
-				gc_nc_grad_p.getVar(&grad_p[0]);
-				gc_nc_grad_z.getVar(&grad_z[0]);
-
-                gc_nc_bDotGradB.getVar(&bDotGradB[0]);
-
-				curv_CYL.resize(nR_gc);
-				grad_CYL.resize(nR_gc);
+            
 				for(int i=0; i<nR_gc; i++) {
-						curv_CYL[i] = C3Vec(curv_r[i],curv_p[i],curv_z[i]);
-		                grad_CYL[i] = C3Vec(grad_r[i],grad_p[i],grad_z[i]);
+                    for (int j = 0; j< nZ_gc; j++){
+						curv_r[i][j] = curv_r_2D[j*nR_gc+i];
+						curv_p[i][j] = curv_p_2D[j*nR_gc+i];
+						curv_z[i][j] = curv_z_2D[j*nR_gc+i];
+
+						grad_r[i][j] = grad_r_2D[j*nR_gc+i];
+						grad_p[i][j] = grad_p_2D[j*nR_gc+i];
+						grad_z[i][j] = grad_z_2D[j*nR_gc+i];
+
+						bDotGradB[i][j] = bDotGradB_2D[j*nR_gc+i];
+                    }
+                }
+            
+                delete [] curv_r_2D;
+                delete [] curv_p_2D;
+                delete [] curv_z_2D;
+
+                delete [] grad_r_2D;
+                delete [] grad_p_2D;
+                delete [] grad_z_2D;
+
+                delete [] bDotGradB_2D;
+
+				for(int i=0; i<nR_gc; i++) {
+                    for(int j=0; j<nZ_gc; j++) {
+						curv_CYL[i][j] = C3Vec(curv_r[i][j],curv_p[i][j],curv_z[i][j]);
+		                grad_CYL[i][j] = C3Vec(grad_r[i][j],grad_p[i][j],grad_z[i][j]);
+                    }
 				}
 
 		}
@@ -2850,6 +2898,8 @@ int main ( int argc, char **argv )
 				e.what();
 				exit(1);
 		}
+    
+        fieldMeshClass fieldMesh_gc(r_gc,z_gc);
 
 		// Rotate the e & b fields to XYZ
 		vector< vector<C3Vec> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
@@ -3253,7 +3303,7 @@ int main ( int argc, char **argv )
 				thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
 #if GC_ORBITS >=1 
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
-                                r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
+                                fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
 #else
 				 int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, fieldMesh );
 
