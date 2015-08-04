@@ -1,13 +1,6 @@
 // Current hacks:
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
-/*
-
-TO-DO:  Assume uniform grid in R,Vpar, Vperp, save those vectors and
-        make Dvpar, Dvper of dim (nRGrid, nVparGrid, nVperpGrid) instead of
-        a 1D vector of length (nList)
-
-*/
 
 #include <string>
 #include <iostream>
@@ -858,16 +851,13 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 }
 
 /////////////////////////////////////////////////////////// CHANGE x TO r FOR 2D INTERPOLATION, OR USE MORE GENERAL c1, c2, c3 ???
-//// 2D templated interp w/ Cparticle input
+//// 2D templated interp w/ Cparticle input, interpolates by value not by indexa as is done in 1D
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
 
     status = 0;
     float x = Loc.c1;
     float z = Loc.c3;
-    
-  //  cout << "x   " << x << endl;
-  //  cout << "z   " << z << endl;
     
 	float _x, x0, x1, _z, z0, z1;
     
@@ -952,24 +942,9 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
-	//x0 = floor(_x);
 	ix = (int) floor(_x);
-    //x1 = ceil(_x);
 
-	//z0 = floor(_z);
 	iz = (int) floor(_z);
-	//z1 = ceil(_z);
-	// Catch for particle at point
-//	if(x0==x1) {
-//#if DEBUG_INTERP >= 2
-//        cout << "Particle version of kj_interp" << endl;
-//		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-//		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-//#endif
-//		return fVec[x0][z0];
-//	}
-//	else {
-
 		TYPE2 f00 = fVec[ix][iz];
 		TYPE2 f01 = fVec[ix][iz + 1];
 		TYPE2 f10 = fVec[ix + 1][iz];
@@ -1002,24 +977,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         z0 = fieldMesh.z[iz];
         z1 = fieldMesh.z[iz + 1];
         
-       // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
-/*
-        cout << "x0   " << x0 << endl;
-        cout << "x1   " << x1 << endl;
-        cout << "x   " << x << endl;
-
-        cout << "z0   " << z0 << endl;
-        cout << "z1   " << z1 << endl;
-        cout << "z   " << z << endl;
-
-        cout << "f00   " << f00 << endl;
-        cout << "f01   " << f01 << endl;
-        cout << "f10   " << f10 << endl;
-        cout << "f11   " << f11 << endl;
-        cout << "result   " << result << endl;
-*/
-    
 
 #if DEBUG_INTERP >=1
         if(isnan(result)) {
@@ -1043,8 +1001,7 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 	//}
 }
 
-
-//// 2D templated interp w/o Cparticle input
+//// 2D templated interp w/o Cparticle input, interpolates by value not by indexa as is done in 1D
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, int &status ) {
 
@@ -1129,24 +1086,9 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
 		_z = (zTmp-fieldMesh.z.front())/(fieldMesh.z.back()-fieldMesh.z.front())*(fieldMesh.z.size()-1);
 	//}
 
-	//x0 = floor(_x);
 	ix = (int) floor(_x);
-    //x1 = ceil(_x);
 
-	//z0 = floor(_z);
 	iz = (int) floor(_z);
-	//z1 = ceil(_z);
-
-	// Catch for particle at point
-	//if(x0==x1 || z0==z1) {
-//#if DEBUG_INTERP >= 2
-//        cout << "Particle version of kj_interp" << endl;
-//		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-//		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-//#endif
-//		return fVec[ix][iz];
-//	}
-	//else {
 
 		TYPE2 f00 = fVec[ix][iz];
 		TYPE2 f01 = fVec[ix][iz + 1];
@@ -1179,7 +1121,6 @@ TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vecto
         z0 = fieldMesh.z[iz];
         z1 = fieldMesh.z[iz + 1];
         
-       // TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - _x)*(z1 - _z) + f01*(_x - x0)*(z1 - _z) + f10*(x1 - _x)*(_z - z0) + f11*(_x - x0)*(z - z0) );
         TYPE2 result = (1.0/( (x1 - x0)*(z1 - z0) ))*(f00*(x1 - x)*(z1 - z) + f01*(x - x0)*(z1 - z) + f10*(x1 - x)*(z - z0) + f11*(x - x0)*(z - z0) );
 
 #if DEBUG_INTERP >=1
@@ -1590,13 +1531,11 @@ int rk4_move ( CParticle &p, float dt, float t0,
         return status;
 }
 
-///////////////////////////////////// NEED TO CHANGE FIRST ARGUMENT OF kj_interp TO A C3Vec FOR GUIDING CENTER
-//////////////////////////////////////////////
-
 // Parallel acceleration
-float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB, int &status ) {
+template<class bdotgradTYPE>
+float eval_aPar ( CParticle &p, const C3Vec r, const fieldMeshClass &fieldMesh_gc, const bdotgradTYPE &bDotGradB, int &status ) {
 
-    float This_bDotGradB = kj_interp ( r.c1, r_GC, bDotGradB, p, status );
+    float This_bDotGradB = kj_interp ( r, fieldMesh_gc, bDotGradB, p, status );
 #if DEBUG_EVAL_APAR >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_aPar"<<endl;
@@ -1615,18 +1554,20 @@ float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const 
 }
 
 // Perpendicular velocity
-float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, int &status ) {
+template<class b0TYPE>
+float eval_vPer ( CParticle &p, const C3Vec r, const fieldMeshClass &fieldMesh, const b0TYPE &b0_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp ( r.c1, r_b0, b0_CYL, p, status );
+	C3Vec This_b0_CYL = kj_interp ( r, fieldMesh, b0_CYL, p, status );
     return sqrt ( 2.0 * p.u * mag(This_b0_CYL) / p.m );
 }
 
 // Guiding center veclocity
-C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar, 
-                const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, 
-                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, int &status ) {
+template<class b0TYPE, class curvTYPE, class gradTYPE, class bdotgradTYPE>
+C3Vec eval_vGC ( CParticle &p, const C3Vec &r, const float &vPer, const float &vPar,
+                const fieldMeshClass &fieldMesh, const b0TYPE &b0_CYL,
+                const fieldMeshClass &fieldMesh_gc, const curvTYPE &curv_CYL, const gradTYPE &grad_CYL, int &status ) {
 
-	C3Vec This_b0_CYL = kj_interp ( r.c1, r_b0, b0_CYL, p, status );
+	C3Vec This_b0_CYL = kj_interp ( r, fieldMesh, b0_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_vGC"<<endl;
@@ -1634,7 +1575,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_curv_CYL = kj_interp ( r.c1, r_GC, curv_CYL, p, status );
+	C3Vec This_curv_CYL = kj_interp ( r, fieldMesh_gc, curv_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 2 in eval_vGC"<<endl;
@@ -1642,7 +1583,7 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_grad_CYL = kj_interp ( r.c1, r_GC, grad_CYL, p, status );
+	C3Vec This_grad_CYL = kj_interp ( r, fieldMesh_gc, grad_CYL, p, status );
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 3 in eval_vGC"<<endl;
@@ -1670,12 +1611,11 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
 }
 
 // Guiding center orbit
-
-template<class b0TYPE>
+template<class b0TYPE, class curvTYPE, class gradTYPE, class bdotgradTYPE>
 int rk4_move_gc ( CParticle &p, const float &dt, const float &t0, 
 				const fieldMeshClass &fieldMesh, const b0TYPE &b0_CYL, const fieldMeshClass &fieldMesh_gc,
-                const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, 
-                const vector<float> &bDotGradB, const float wrf ) {
+                const curvTYPE &curv_CYL, const gradTYPE &grad_CYL,
+                const bdotgradTYPE &bDotGradB, const float wrf ) {
 
                 int status=0;
                 C3Vec xn0_XYZ(p.c1, p.c2, p.c3);
@@ -1687,7 +1627,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 cout << "p.vPar: " << p.vPar << endl;
                 cout << "This_vPer: " << This_vPer << endl;
 #endif
-		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
+		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar, fieldMesh, b0_CYL, fieldMesh_gc, curv_CYL, grad_CYL, status );
 		    	float k1_vPar = dt * eval_aPar ( p, xn0, fieldMesh_gc, bDotGradB, status );
 		    	C3Vec k1_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
@@ -1757,7 +1697,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update the XYZ velocity also
 
-                C3Vec this_b0_CYL = kj_interp ( xn1.c1, fieldMesh, b0_CYL, status );
+                C3Vec this_b0_CYL = kj_interp ( xn1, fieldMesh, b0_CYL, status );
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
                 C3Vec v_abp;
@@ -2121,8 +2061,10 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 
 
 
-// Calculate the jP given some known E and f(v)
 
+
+
+// Calculate diffusion coefficients Dvpar, Dvperp knowing B0 and E1
 int main ( int argc, char **argv )
 {
 
