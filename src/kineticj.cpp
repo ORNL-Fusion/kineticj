@@ -1,6 +1,14 @@
 // Current hacks:
 // the E-field is being multiplied by some factor (e.g. 1e3) in rk4_evalf
 
+/*
+
+TO-DO:  Assume uniform grid in R,Vpar, Vperp, save those vectors and
+        make Dvpar, Dvper of dim (nRGrid, nVparGrid, nVperpGrid) instead of
+        a 1D vector of length (nList)
+
+*/
+
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -2949,17 +2957,8 @@ int main ( int argc, char **argv )
 //////////// Initialize primary phase space worklist:
 	float rGridMin = cfg.lookup("rGridMin");
 	float rGridMax = cfg.lookup("rGridMax");
-
-	float zGridMin = cfg.lookup("zGridMin");
-	float zGridMax = cfg.lookup("zGridMax");
-
-	float phiGridMin = cfg.lookup("phiGridMin");
-	float phiGridMax = cfg.lookup("phiGridMax");
     
 	int nRGrid = cfg.lookup("nRGrid");
-	int nZGrid = cfg.lookup("nZGrid");
-	int nPhiGrid = cfg.lookup("nPhiGrid");
-
 	int nVparGrid = cfg.lookup("nVparGrid");
 	int nVperGrid = cfg.lookup("nVperGrid");
 
@@ -2968,7 +2967,7 @@ int main ( int argc, char **argv )
     nList = nRGrid*nVparGrid*nVperGrid*nPhaseGrid;
     cout << "nList     " << nList << endl;
 
-	vector<float> rGrid(nRGrid), zGrid(nZGrid), phiGrid(nPhiGrid);
+	vector<float> rGrid(nRGrid);
     vector<float> density_m3(nList), T_keV(nList), wrf_wc(nList);
     
     vector<C3Vec> b0_XYZ_T_at_List(nList);
@@ -2983,26 +2982,10 @@ int main ( int argc, char **argv )
     
     float rGridRng = 0;
 	float rGridStep = 0;
-
-    float zGridRng = 0;
-	float zGridStep = 0;
-
-    float phiGridRng = 0;
-	float phiGridStep = 0;
 	
 	if(nRGrid>1) {
 		rGridRng = rGridMax-rGridMin;
 		rGridStep = rGridRng/(nRGrid-1);
-	}
-
-	if(nZGrid>1) {
-		zGridRng = zGridMax-zGridMin;
-		zGridStep = zGridRng/(nZGrid-1);
-	}
-
-	if(nPhiGrid>1) {
-		phiGridRng = phiGridMax-phiGridMin;
-		phiGridStep = phiGridRng/(nPhiGrid-1);
 	}
 
     for (int iList=0;iList<nList;iList++){
@@ -3014,14 +2997,6 @@ int main ( int argc, char **argv )
     /// initialize (rGrid, VparGrid, VperGrid)
 	for(int iR=0;iR<nRGrid;iR++) {
 		rGrid[iR] = rGridMin+iR*rGridStep;
-    }
-
-	for(int iPhi=0;iPhi<nPhiGrid;iPhi++) {
-		phiGrid[iPhi] = phiGridMin+iPhi*phiGridStep;
-    }
-
-	for(int iZ=0;iZ<nZGrid;iZ++) {
-		zGrid[iZ] = zGridMin+iZ*zGridStep;
     }
     
 	for(int iVpar=0;iVpar<nVparGrid;iVpar++) {
@@ -3039,40 +3014,23 @@ int main ( int argc, char **argv )
     // initialize primary worklist (assuming y,z,gyrophase = 0)
     for (int iList=0;iList<nList;iList++){
             int iR = iList % nRGrid;
-            int iPhi = int(floor(iList/nRGrid)) % nPhiGrid;
-            int iZ = int(floor(iList/nRGrid*nPhiGrid)) % nZGrid;
         
-            int iVpar = int(floor( iList/nRGrid*nZGrid*nPhiGrid)) % nVparGrid;
-            int iVper = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid))) % nVperGrid;
-            int iPhase = int(floor(iList/(nRGrid*nZGrid*nPhiGrid*nVparGrid*nVperGrid)));
+            int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
+            int iVper = int(floor(iList/(nRGrid*nVparGrid))) % nVperGrid;
+            int iPhase = int(floor(iList/(nRGrid*nVparGrid*nVperGrid)));
         
-            cout << "iList   = " << iList << "    iPhase = " << iPhase << "   PhaseGrid[iPhase] = " << PhaseGrid[iPhase]
-            << ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR]
-            << ",          iZ    =  "     << iZ << "     " << "z[iZ] = " << zGrid[iZ]
-            << ",          iPhi    =  "     << iPhi << "     " << "phi[iPhi] = " << phiGrid[iPhi]
+            cout<< ",          iR    =  "     << iR << "     " << "r[iR] = " << rGrid[iR]
             << ",          iVpar   =  "     << iR << "     " << "Vpar[iVpar] = " << VparGrid[iVpar]
             << ",          iVper    =  "     << iR << "     " << "Vper[iVper] = " << VperGrid[iVper] << endl;
         
-           PrimaryWorkList[iList] = CParticle(rGrid[iR], phiGrid[iPhi],zGrid[iZ], VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
+           PrimaryWorkList[iList] = CParticle(rGrid[iR], 0.0,0.0, VparGrid[iVpar],VperGrid[iVper],0.0,amu,Z,0.0, PhaseGrid[iPhase]);
     }
-
-/*
-    for (int i = 0; i< fieldMesh.r.size(); i++){
-            cout << fieldMesh.r[i] << endl;
-    }
-
-    for (int i = 0; i< fieldMesh.z.size(); i++){
-            cout << fieldMesh.z[i] << endl;
-    }
-*/
     
     // Initialize other variables on worklist, density, Bfield, etc
     for (int iList=0;iList<nList;iList++){
         int iStat;
         density_m3[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,n_m3,iStat);
-        cout << "density_m3 from kj_interp    " << density_m3[iList] << endl;
         b0_XYZ_T_at_List[iList] = kj_interp(C3Vec(PrimaryWorkList[iList].c1,PrimaryWorkList[iList].c2,PrimaryWorkList[iList].c3),fieldMesh,b0_XYZ,iStat);
-        cout << "b0 from kj_interp    " << b0_XYZ_T_at_List[iList] << endl;
     }
 
     for (int iList=0;iList<nList;iList++){
@@ -4088,35 +4046,42 @@ int main ( int argc, char **argv )
     }
     
     try{
-        int nDimPosVel = 6;
-        float tmpData[nList][nDimPosVel];
-        for (int iList = 0; iList < nList; iList++){
-                    tmpData[iList][0] = PrimaryWorkList[iList].c1;
-                    tmpData[iList][1] = PrimaryWorkList[iList].c2;
-                    tmpData[iList][2] = PrimaryWorkList[iList].c3;
 
-                    tmpData[iList][3] = PrimaryWorkList[iList].v_c1;
-                    tmpData[iList][4] = PrimaryWorkList[iList].v_c2;
-                    tmpData[iList][5] = PrimaryWorkList[iList].v_c3;
-        }
-        
         NcFile outFile("output/solution.nc", NcFile::replace);
         
-        NcDim listDim = outFile.addDim("nList", nList);
-        NcDim worklistCol = outFile.addDim("nDimPosVel", nDimPosVel);
+        NcDim rdim = outFile.addDim("nR",nRGrid);
+        NcDim vParDim = outFile.addDim("nVpar",nVparGrid);
+        NcDim vPerDim = outFile.addDim("nVper",nVperGrid);
+
+        vector <NcDim> DvDims;
+        DvDims.push_back(rdim);
+        DvDims.push_back(vParDim);
+        DvDims.push_back(vPerDim);
         
-        vector <NcDim> worklistDims;
-        worklistDims.push_back(listDim);
-        worklistDims.push_back(worklistCol);
+        NcVar rGridNC = outFile.addVar("R",ncFloat,rdim);
+        NcVar VparGridNC = outFile.addVar("Vpar",ncFloat,vParDim);
+        NcVar VperGridNC = outFile.addVar("Vper",ncFloat,vPerDim);
         
-        NcVar worklist = outFile.addVar("workList", ncFloat,worklistDims);
+        NcVar DvparNC = outFile.addVar("Dvpar", ncFloat,DvDims);
+        NcVar DvperNC = outFile.addVar("Dvperp", ncFloat,DvDims);
         
-        NcVar DvparNC = outFile.addVar("Dvpar", ncFloat,listDim);
-        NcVar DvperNC = outFile.addVar("Dvperp", ncFloat,listDim);
+        float tmpDataPar[nRGrid][nVparGrid][nVperGrid];
+        float tmpDataPerp[nRGrid][nVparGrid][nVperGrid];
+
+        for (int iList = 0; iList < nList; iList++){
+            int iR = iList % nRGrid;
+            int iVpar = int(floor( iList/nRGrid)) % nVparGrid;
+            int iVper = int(floor(iList/(nRGrid*nVparGrid))) % nVperGrid;
+
+            tmpDataPar[iR][iVpar][iVper] = Dvpar[iList];
+            tmpDataPerp[iR][iVpar][iVper] = Dvperp[iList];
+        }
+        rGridNC.putVar(&rGrid[0]);
+        VparGridNC.putVar(&VparGrid[0]);
+        VperGridNC.putVar(&VparGrid[0]);
         
-        worklist.putVar(tmpData);
-        DvparNC.putVar(&Dvpar[0]);
-        DvperNC.putVar(&Dvperp[0]);
+        DvparNC.putVar(tmpDataPar);
+        DvperNC.putVar(tmpDataPerp);
     }
             catch(exceptions::NcException &e) {
                     cout << "NetCDF: unknown error" << endl;
@@ -4125,9 +4090,7 @@ int main ( int argc, char **argv )
     }
 
 	// Write current(s) to file
-	
 	//cout << "Writing jP to file ... ";
-
 
 ////////////////////////////////////////////////////////////////////// COMMENTED OUT COMPUTING OF J
 /*
