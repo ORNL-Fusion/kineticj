@@ -847,14 +847,13 @@ TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector
 #endif
 		return result;
 	}
-
 }
+
 
 /////////////////////////////////////////////////////////// CHANGE x TO r FOR 2D INTERPOLATION, OR USE MORE GENERAL c1, c2, c3 ???
 //// 2D templated interp w/ Cparticle input, interpolates by value not by indexa as is done in 1D
 template<class TYPE2>
 TYPE2 kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector< vector< TYPE2 > > &fVec, CParticle &p, int &status ) {
-
 
     status = 0;
     float x = Loc.c1;
@@ -1961,6 +1960,13 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
 
                 float bMag = mag (b0_XYZ);
                 float vMag = mag (thisV_XYZ);
+            
+                C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+                pList[cnt].vPar = thisV_abp.c3;
+            
+                pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+                pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
+                pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_MAXWELLIAN >=2 
                     cout<<"ThisVx: "<<thisvx<<endl;
@@ -2039,13 +2045,13 @@ vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float 
                 float bMag = mag (b0_XYZ);
                 float vMag = mag (thisV_XYZ);
             
-                    C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+                C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
 
-                    pList[cnt].vPar = thisV_abp.c3;
-                    
-                    pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
-                    pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
-                    pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
+                pList[cnt].vPar = thisV_abp.c3;
+                
+                pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
+                pList[cnt].gyroPhase = GetGyroPhase(thisV_abp); 
+                pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer,2) / ( 2.0 * bMag );
 
 #if DEBUG_MAXWELLIAN >=2 
                     cout<<"ThisVx: "<<thisvx<<endl;
@@ -2278,9 +2284,9 @@ int main ( int argc, char **argv )
 				nc_b_z_im.getVar(&b_z_im[0]);
 
 				for(int i=0; i<nR; i++){
-						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
-						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
-						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
+						e_r.push_back(complex<float>(e_r_re[i], e_r_im[i] ));
+						e_p.push_back(complex<float>(e_p_re[i], e_p_im[i] ));
+						e_z.push_back(complex<float>(e_z_re[i], e_z_im[i] ));
 				}
 
 				for(int i=0; i<nR; i++){
@@ -2811,7 +2817,6 @@ int main ( int argc, char **argv )
                 gc_nc_grad_z.getVar(grad_z_2D);
 
                 gc_nc_bDotGradB.getVar(bDotGradB_2D);
-
             
 				for(int i=0; i<nR_gc; i++) {
                     for (int j = 0; j< nZ_gc; j++){
@@ -3131,8 +3136,7 @@ int main ( int argc, char **argv )
 
 #if LOWMEM >= 1
 
- // START OF THE LOWMEM CODING vvv
-
+// START OF THE LOWMEM CODING vvv
 
 //// kineticj: 1-D create nPx*nPy*nPZ phase space particles
 //        vector<CParticle> ThisParticleList(create_particles(PrimaryWorkList[iList].c1,amu,Z,T_keV[iList],density_m3[iList],
