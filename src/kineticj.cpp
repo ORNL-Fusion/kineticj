@@ -645,6 +645,40 @@ fieldMeshClass::fieldMeshClass ( vector<float> _r) {
 		r = _r;
 }
 
+class fieldMeshClassArr {
+    public:
+        float* r;
+        float* z;
+    
+        fieldMeshClassArr ( vector<float> r, vector<float> z);
+        fieldMeshClassArr ( vector<float> r);
+};
+
+fieldMeshClassArr::fieldMeshClassArr ( vector<float> _r, vector<float> _z) {
+		int nr = _r.size();
+		int nz = _z.size();
+    
+        r = new float[nr];
+        z = new float[nz];
+
+        for (int i = 0; i< nr; i++){
+            r[i] = _r[i];
+        }
+
+        for (int i = 0; i< nz; i++){
+            z[i] = _z[i];
+        }
+}
+
+fieldMeshClassArr::fieldMeshClassArr ( vector<float> _r) {
+		int nr = _r.size();
+    
+        r = new float[nr];
+        for (int i = 0; i< nr; i++){
+            r[i] = _r[i];
+        }
+}
+
 ////1D w/o a Cparticle input
 template<class TYPE>
 TYPE kj_interp ( const C3Vec &Loc, const fieldMeshClass &fieldMesh, const vector<TYPE> &fVec, int &status ) {
@@ -1905,7 +1939,6 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
         return pList;
 }
 
-
 // Blob of particles to integrate at each point in velocity space
 // Initially created as the phase space particles of Larmor radius about the configuration space point
 vector<CParticle> create_particle_blob ( CParticle P, float amu, float Z, float T_keV,
@@ -2141,6 +2174,7 @@ int main ( int argc, char **argv )
 		//cfg.writeFile(cfgName.c_str());
 		
 		// Open the config file
+
 		cfg.readFile(cfgName.c_str());
 
 	    int species_number = cfg.lookup("species_number");
@@ -2314,6 +2348,8 @@ int main ( int argc, char **argv )
 		}
     
         fieldMeshClass fieldMesh(r);
+        fieldMeshClassArr fieldMeshArr(r);
+
 
 		// Read the guiding center terms from file
 		string gc_fName = cfg.lookup("gc_fName");
@@ -2389,6 +2425,8 @@ int main ( int argc, char **argv )
 		}
 
         fieldMeshClass fieldMesh_gc(r_gc);
+        fieldMeshClassArr fieldMesh_gcArr(r_gc);
+
 
 		// Rotate the e & b fields to XYZ
 
@@ -2444,6 +2482,13 @@ int main ( int argc, char **argv )
 
             vector< vector<complex<float> > > e_r, e_p, e_z;
             vector <vector<complex<float> > > b_r, b_p, b_z;
+    
+//////////// conversion to array for openacc (ideally should elimate use of vectors since we
+/// (1) load into netcdf using arrays then
+/// (2) define vectores from arrays -- nice for non-openacc version
+/// (3) define arrays from vectors -- hack to make previous version work with openacc
+///     (3)(a) Only good benefit of this is that one can use .size feature of the defined vectors to
+///            define the size of the arrays, which is why this is currently kept.
 
 		try {
 				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
@@ -2687,6 +2732,7 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
         fieldMeshClass fieldMesh(r,z);
+        fieldMeshClassArr fieldMeshArr(r,z);
     
     // make sure z is monotonically increasing, and if not flip Z and all the scalar fields
     if (fieldMesh.z.front() > fieldMesh.z.back()){
@@ -2726,7 +2772,6 @@ int main ( int argc, char **argv )
                 reverse(b_r[i].begin(), b_r[i].end());
                 reverse(b_p[i].begin(), b_p[i].end());
                 reverse(b_z[i].begin(), b_z[i].end());
-                
         }
     }
     
@@ -2856,6 +2901,8 @@ int main ( int argc, char **argv )
 		}
     
         fieldMeshClass fieldMesh_gc(r_gc,z_gc);
+        fieldMeshClassArr fieldMesh_gcArr(r_gc,z_gc);
+
 
 		// Rotate the e & b fields to XYZ
 		vector< vector<C3Vec> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
@@ -2902,11 +2949,50 @@ int main ( int argc, char **argv )
             b1Im_XYZ[i][j] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i][j], 1);
             }
 		}
+
+////////////// coversion to arrays for openacc
+            int nR_DATA = e_r.size();
+            int nZ_DATA = e_r[0].size();
+ 
+            float e1Re_x_kjGrid[nR_DATA][nZ_DATA];
+            float e1Re_y_kjGrid[nR_DATA][nZ_DATA];
+            float e1Re_z_kjGrid[nR_DATA][nZ_DATA];
+
+            float e1Im_x_kjGrid[nR_DATA][nZ_DATA];
+            float e1Im_y_kjGrid[nR_DATA][nZ_DATA];
+            float e1Im_z_kjGrid[nR_DATA][nZ_DATA];
+
+            float b0_r_kjGrid[nR_DATA][nZ_DATA];
+            float b0_t_kjGrid[nR_DATA][nZ_DATA];
+            float b0_z_kjGrid[nR_DATA][nZ_DATA];
+
+            float n_m3_kjGrid[nR_DATA][nZ_DATA];
+
+
+            for (int i = 0; i<e_r.size(); i++){
+                for (int j = 0; j<e_r.size(); j++){
+                    e1Re_x_kjGrid[i][j] = e1Re_XYZ[i][j].c1;
+                    e1Re_y_kjGrid[i][j] = e1Re_XYZ[i][j].c2;
+                    e1Re_z_kjGrid[i][j] = e1Re_XYZ[i][j].c3;
+                    
+                    e1Im_x_kjGrid[i][j] = e1Im_XYZ[i][j].c1;
+                    e1Im_y_kjGrid[i][j] = e1Im_XYZ[i][j].c2;
+                    e1Im_z_kjGrid[i][j] = e1Im_XYZ[i][j].c3;
+
+                    b0_r_kjGrid[i][j] = b0_XYZ[i][j].c1;
+                    b0_t_kjGrid[i][j] = b0_XYZ[i][j].c2;
+                    b0_z_kjGrid[i][j] = b0_XYZ[i][j].c3;
+                    
+                    n_m3_kjGrid[i][j] = n_m3[i][j];
+                }
+            }
+
+    
 #endif
     
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////// NOTHING BELOW HERE SEEMS TO DEPEND ON WHETHER DOING A 1D OR A 2D CALCULATION
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	float wrf = freq * 2 * _pi;
 
@@ -2970,6 +3056,9 @@ int main ( int argc, char **argv )
 	int nPhaseGrid = cfg.lookup("nPhaseGrid");
 
     nList = nRGrid*nVparGrid*nVperGrid*nPhaseGrid;
+    /////// This nP assumes doing both toroidal + Gyrhphase averaging for particle blob
+    nP = nPGyro*nPTor;
+
     cout << "nList     " << nList << endl;
 
 	vector<float> rGrid(nRGrid);
@@ -3051,7 +3140,6 @@ int main ( int argc, char **argv )
 	//int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
     bool SaveSingleOrbit = cfg.lookup("SaveSingleOribt");
 
-
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
     cout << "Cyclotron Period: "<< cyclotronPeriod<<endl;
@@ -3089,12 +3177,35 @@ int main ( int argc, char **argv )
 		hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
 
+/*      comment out vector definitions and replace with array (to-do: remove comment)
 	vector<vector<float> > j1x(nList), j1y(nList), j1z(nList);
 #if LOWMEM >= 1
 	vector<complex<float> > j1xc(nList), j1yc(nList), j1zc(nList);
 #else
 	vector<vector<complex<float> > >j1xc(nList), j1yc(nList), j1zc(nList);
 #endif
+*/
+
+//// Allocate variables here before loop for openacc (maybe needed? following David's code here...need to define array versions anyway)
+    C3Vec thisOrbit_re_XYZ[nSteps];
+    C3Vec thisOrbit_im_XYZ[nSteps];
+
+    C3Vec thisOrbit_XYZ[nSteps];
+    
+    /// David define PODS?
+    
+    float j1x[nList];
+    float j1y[nList];
+    float j1z[nList];
+
+    complex<float> j1xc[nList];
+    complex<float> j1yc[nList];
+    complex<float> j1zc[nList];
+
+    float j1xc_re[nList];
+    
+
+///////////////////////////////////////////////////////////////////////////////////// Main loop is here
 
 
 	#pragma omp parallel for private(istat)
