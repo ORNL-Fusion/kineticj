@@ -1,0 +1,4 @@
+CC := pgcc
+
+### netcdf
+LIBS += -lnetcdf_c++4
