@@ -1,4 +1,13 @@
-CC := pgcc
+CPP := pgc++
 
 ### netcdf
+#LIBS += -lnetcdf_c++4
+
+#INCLUDEFLAGS += -I${NETCDFINCLUDE}
+#LFLAGS += -L${NETCDFDIR}
+#LIBS += -lnetcdf
+
+NETCDF_DIR := /home/dvk/code/netcdf-cxx4/pgi
+INCLUDEFLAGS += -I${NETCDF_DIR}/include
+LFLAGS += -L${NETCDF_DIR}/lib
 LIBS += -lnetcdf_c++4

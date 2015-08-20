@@ -19,7 +19,7 @@ PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
 CC := gcc
-CPP := g++
+CPP := pg++
 NVCC := $(CUDADIR)/bin/nvcc
 
 VENDOR := GNU_
@@ -55,7 +55,7 @@ CPPFLAGS += -DLOWMEM=1
 CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
 CPPFLAGS += -DCOMPLEX_WRF=0
 
-LINK := $(CPP) ${CXXFLAGS} 
+LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
 # You shouldn't have to go below here
 #
