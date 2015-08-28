@@ -1,4 +1,4 @@
-function kj_read_kj_jp, FileName, r, rH=r_;, PerSpecies = PerSpecies
+function kj_read_kj_jp, FileName, r, rH = r_
 
 ; Read in jP on some grid
 
@@ -7,114 +7,122 @@ function kj_read_kj_jp, FileName, r, rH=r_;, PerSpecies = PerSpecies
     nCdf_varGet, cdfId, 'freq', freq
     nCdf_varGet, cdfId, 'r', kj_r
 
-	nCdf_varGet, cdfId, 'jP_r_re', kj_jpR_re
-	nCdf_varGet, cdfId, 'jP_r_im', kj_jpR_im
-	nCdf_varGet, cdfId, 'jP_p_re', kj_jpT_re
-	nCdf_varGet, cdfId, 'jP_p_im', kj_jpT_im
-	nCdf_varGet, cdfId, 'jP_z_re', kj_jpZ_re
-	nCdf_varGet, cdfId, 'jP_z_im', kj_jpZ_im
-
-	nCdf_varGet, cdfId, 'jP_r_re_spec',  kj_jpR_spec_re
-	nCdf_varGet, cdfId, 'jP_r_im_spec',  kj_jpR_spec_im
-	nCdf_varGet, cdfId, 'jP_p_re_spec',  kj_jpT_spec_re
-	nCdf_varGet, cdfId, 'jP_p_im_spec',  kj_jpT_spec_im
-	nCdf_varGet, cdfId, 'jP_z_re_spec',  kj_jpZ_spec_re
-	nCdf_varGet, cdfId, 'jP_z_im_spec',  kj_jpZ_spec_im
+	nCdf_varGet, cdfId, 'jP_r_re', kj_jPr_re
+	nCdf_varGet, cdfId, 'jP_r_im', kj_jPr_im
+	nCdf_varGet, cdfId, 'jP_t_re', kj_jPt_re
+	nCdf_varGet, cdfId, 'jP_t_im', kj_jPt_im
+	nCdf_varGet, cdfId, 'jP_z_re', kj_jPz_re
+	nCdf_varGet, cdfId, 'jP_z_im', kj_jPz_im
 
 	ncdf_close, cdfId
 
     nR = n_elements(r)
-    nS = n_elements(kj_jpR_spec_re[0,*])
+    if keyword_set(nH) then nR_ = n_elements(r_) else nR_ = !null
 
-	kj_jpR = complex(kj_jpR_re,kj_jpR_im)
-	kj_jpT = complex(kj_jpT_re,kj_jpT_im)
-	kj_jpZ = complex(kj_jpZ_re,kj_jpZ_im)
+	kj_jpR_spec = complex(kj_jpR_re,kj_jpR_im)
+	kj_jpT_spec = complex(kj_jpT_re,kj_jpT_im)
+	kj_jpZ_spec = complex(kj_jpZ_re,kj_jpZ_im)
 
-	kj_jpR_spec =  complex(kj_jpR_spec_re, kj_jpR_spec_im)
-	kj_jpT_spec =  complex(kj_jpT_spec_re, kj_jpT_spec_im)
-	kj_jpZ_spec =  complex(kj_jpZ_spec_re, kj_jpZ_spec_im)
+    kj_nR = n_elements(kj_jPr_spec[*,0,0])
+    kj_nZ = n_elements(kj_jPr_spec[0,*,0])
+    kj_nS = n_elements(kj_jPr_spec[0,0,*])
 
-	kj_jpR_spec =  complex(kj_jpR_spec_re, kj_jpR_spec_im)
-	kj_jpT_spec =  complex(kj_jpT_spec_re, kj_jpT_spec_im)
-	kj_jpZ_spec =  complex(kj_jpZ_spec_re, kj_jpZ_spec_im)
+    ;_shift = [0,0,2]
+    ;kj_jPr_spec = shift(kj_jPr_spec,_shift)
+    ;kj_jPt_spec = shift(kj_jPt_spec,_shift)
+    ;kj_jPz_spec = shift(kj_jPz_spec,_shift)
 
 ; Now interpolate to the desired grid(s)
+
+    iiBad = where(r lt min(kj_r)*0.9999 or r gt max(kj_r)*1.0001,iiBadCnt)
+    if iiBadCnt gt 0 then stop
 
     spline_sigma = 0.01
 
     ; Interpolate to the full grid
 
-    jpR = complex(spline(kj_r,real_part(kj_jpR),r,spline_sigma),spline(kj_r,imaginary(kj_jpR),r,spline_sigma))
-    jpT = complex(spline(kj_r,real_part(kj_jpT),r,spline_sigma),spline(kj_r,imaginary(kj_jpT),r,spline_sigma))
-    jpZ = complex(spline(kj_r,real_part(kj_jpZ),r,spline_sigma),spline(kj_r,imaginary(kj_jpZ),r,spline_sigma))
+    jpR_spec = complexArr(nR,kj_nS) 
+	jpT_spec = complexArr(nR,kj_nS)
+	jpZ_spec = complexArr(nR,kj_nS)
 
-    jpR_spec = complexArr(nR,nS) 
-	jpT_spec = complexArr(nR,nS)
-	jpZ_spec = complexArr(nR,nS)
-
-    for s=0,nS-1 do begin
-        jpR_spec[*,s] = complex(spline(kj_r,real_part(kj_jpR_spec[*,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpR_spec[*,s]),r,spline_sigma))
-        jpT_spec[*,s] = complex(spline(kj_r,real_part(kj_jpT_spec[*,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpT_spec[*,s]),r,spline_sigma))
-        jpZ_spec[*,s] = complex(spline(kj_r,real_part(kj_jpZ_spec[*,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpZ_spec[*,s]),r,spline_sigma))
+    if kj_nZ eq 1 then begin
+    for s=0,kj_nS-1 do begin
+        jpR_spec[*,s] = complex(spline(kj_r,real_part(kj_jpR_spec[*,0,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpR_spec[*,0,s]),r,spline_sigma))
+        jpT_spec[*,s] = complex(spline(kj_r,real_part(kj_jpT_spec[*,0,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpT_spec[*,0,s]),r,spline_sigma))
+        jpZ_spec[*,s] = complex(spline(kj_r,real_part(kj_jpZ_spec[*,0,s]),r,spline_sigma),spline(kj_r,imaginary(kj_jpZ_spec[*,0,s]),r,spline_sigma))
     endfor
- 
+    endif else begin
+            print, 'Have not implemented 2D interp yet'
+            stop
+    endelse 
     ; Interpolate to the half grid
     if keyword_set(r_) then begin
 
+        iiBad_ = where(r_ lt min(kj_r) or r_ gt max(kj_r),iiBadCnt_)
+        if iiBadCnt_ gt 0 then stop
+
 		nR_ = n_elements(r_)
 
-        jpR_ = complex(spline(kj_r,real_part(kj_jpR),r_,spline_sigma),spline(kj_r,imaginary(kj_jpR),r_,spline_sigma))
-        jpT_ = complex(spline(kj_r,real_part(kj_jpT),r_,spline_sigma),spline(kj_r,imaginary(kj_jpT),r_,spline_sigma))
-        jpZ_ = complex(spline(kj_r,real_part(kj_jpZ),r_,spline_sigma),spline(kj_r,imaginary(kj_jpZ),r_,spline_sigma))
+        jpR_spec_ = complexArr(nR_,kj_nS) 
+	    jpT_spec_ = complexArr(nR_,kj_nS)
+	    jpZ_spec_ = complexArr(nR_,kj_nS)
 
-        jpR_spec_ = complexArr(nR_,nS) 
-	    jpT_spec_ = complexArr(nR_,nS)
-	    jpZ_spec_ = complexArr(nR_,nS)
-
-        for s=0,nS-1 do begin
-            jpR_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpR_spec[*,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpR_spec[*,s]),r_,spline_sigma))
-            jpT_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpT_spec[*,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpT_spec[*,s]),r_,spline_sigma))
-            jpZ_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpZ_spec[*,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpZ_spec[*,s]),r_,spline_sigma))
+        if kj_nZ eq 1 then begin
+        for s=0,kj_nS-1 do begin
+            jpR_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpR_spec[*,0,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpR_spec[*,0,s]),r_,spline_sigma))
+            jpT_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpT_spec[*,0,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpT_spec[*,0,s]),r_,spline_sigma))
+            jpZ_spec_[*,s] = complex(spline(kj_r,real_part(kj_jpZ_spec[*,0,s]),r_,spline_sigma),spline(kj_r,imaginary(kj_jpZ_spec[*,0,s]),r_,spline_sigma))
         endfor
+        endif else begin
+            print, 'Have not implemented 2D interp yet'
+            stop
+        endelse
 
 	endif
 
 
 	if not keyword_set(r_)then begin
+        r_=!null
+        jPr_spec_ = !null
+        jPt_spec_ = !null
+        jPz_spec_ = !null
+     
+    endif
 
-    	kjIn = { $
-    	    freq : freq, $
-    	    r : r, $
-    	    r_ : r_, $
-    	    jpR : jpR, $
-    	    jpT : jpT, $
-    	    jpZ : jpZ, $
-    	    jpR_spec : jpR_spec, $
-    	    jpT_spec : jpT_spec, $
-    	    jpZ_spec : jpZ_spec $
-    	}
+    if size(jPr_spec,/n_dim) le 1 then begin
+        jPr = jPr_spec
+        jPt = jPt_spec
+        jPz = jPz_spec
+        jPr_ = jPr_spec_
+        jPt_ = jPt_spec_
+        jPz_ = jPz_spec_
+    endif else begin
+        sumDim = 2
+        jPr = total(jPr_spec,sumDim)
+        jPt = total(jPt_spec,sumDim)
+        jPz = total(jPz_spec,sumDim)
+        jPr_ = total(jPr_spec_,sumDim)
+        jPt_ = total(jPt_spec_,sumDim)
+        jPz_ = total(jPz_spec_,sumDim)
+    endelse
 
-	endif else begin
-
-    	kjIn = { $
-    	    freq : freq, $
-    	    r : r, $
-    	    r_ : r_, $
-    	    jpR : jpR, $
-    	    jpT : jpT, $
-    	    jpZ : jpZ, $
-    	    jpR_ : jpR_, $
-    	    jpT_ : jpT_, $
-    	    jpZ_ : jpZ_, $
-    	    jpR_spec : jpR_spec, $
-    	    jpT_spec : jpT_spec, $
-    	    jpZ_spec : jpZ_spec, $
-    	    jpR_spec_ : jpR_spec_, $
-    	    jpT_spec_ : jpT_spec_, $
-    	    jpZ_spec_ : jpZ_spec_ $
-    	}
-
-	endelse
+    kjIn = { $
+        freq : freq, $
+        r : r, $
+        r_ : r_, $
+        jPr_spec : jPr_spec, $
+        jPt_spec : jPt_spec, $
+        jPz_spec : jPz_spec, $
+        jPr_spec_ : jPr_spec_, $
+        jPt_spec_ : jPt_spec_, $
+        jPz_spec_ : jPz_spec_, $
+        jPr : jPr, $
+        jPt : jPt, $
+        jPz : jPz, $
+        jPr_ : jPr_, $
+        jPt_ : jPt_, $
+        jPz_ : jPz_ $
+   }
 
     return, kjIn
 

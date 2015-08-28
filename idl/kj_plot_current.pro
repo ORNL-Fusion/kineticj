@@ -1,5 +1,9 @@
 pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, noIterate=noIterate
 
+    noInterp = 1
+    noTimeDep = 1
+    noIterate = 1
+
 	@constants
 
 	cd, current=currentDir
@@ -308,7 +312,7 @@ if not keyword_set(noIterate) then begin
 endif
 
     jpRange = max(abs([j1x,j1y,j1z]))
-    jpRange = 1.0
+    ;jpRange = 1.0
     p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x')
     p=plot(xf,imaginary(j1x),/over,color='r')
     p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y')

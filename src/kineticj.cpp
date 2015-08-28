@@ -2082,7 +2082,7 @@ int main ( int argc, char **argv )
 			ofstream df0dv_File;
 
             int write_iX = 156;
-            int write_iP = 1;
+            int write_iP = 31;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
                 cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
