@@ -311,16 +311,37 @@ if not keyword_set(noIterate) then begin
 
 endif
 
+    OverplotAR2 = 1
+    if(OverplotAR2)then begin
+        ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba'
+        ar2 = ar2_read_solution(ar2Run,1) 
+        ar2SpecNo = fix(cfg['species_number'])
+    endif
+
     jpRange = max(abs([j1x,j1y,j1z]))
-    ;jpRange = 1.0
     p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x')
     p=plot(xf,imaginary(j1x),/over,color='r')
+    if(OverPlotAR2)then begin
+        p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+    endif
+
     p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y')
     p=plot(xf,imaginary(j1y),/over,color='r')
+    if(OverPlotAR2)then begin
+        p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+    endif
+
     p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1z')
     p=plot(xf,imaginary(j1z),/over,color='r')
+    if(OverPlotAR2)then begin
+        p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+    endif
+
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
-
+stop
 end
