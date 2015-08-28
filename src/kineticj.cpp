@@ -75,7 +75,6 @@ class CParticle: public CSpecies {
 				int number;
 				float weight;
 				int status;
-                //float df0_dvx, df0_dvy, df0_dvz;
                 float dvx, dvy, dvz, d3v;
                 float vPar, vPer, gyroPhase, u, vTh;
                 float vAlp, vBet, phs;
@@ -122,6 +121,7 @@ class C3VecI {
 		public:
 				complex<float> c1, c2, c3;
 
+                C3VecI (int _const) {c1=_const;c2=_const;c3=_const;};
 				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
 				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 
@@ -466,6 +466,16 @@ float mag ( const C3Vec &in ) {
 		return sqrt(pow(in.c1,2)+pow(in.c2,2)+pow(in.c3,2));
 }
 
+// This is not really a usefule magnitude
+// and is only used to reduce a complex valued
+// vector to a number for checking for Inf & NaNs
+float mag ( const C3VecI &in ) {
+        float c1 = abs(in.c1);
+        float c2 = abs(in.c2);
+        float c3 = abs(in.c3);
+		return sqrt(pow(c1,2)+pow(c2,2)+pow(c3,2));
+}
+
 C3Vec pow ( const C3Vec &in, const int arg ) {
 		C3Vec out;
 		out.c1 = pow(in.c1,arg);
@@ -498,25 +508,8 @@ C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
 		return out;
 }
 
-C3VecI cross ( const C3VecI A, const C3Vec B ) {
-
-        C3VecI answer;
-        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
-        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
-        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
-        return answer;
-}
-
-C3VecI cross ( const C3VecI A, const C3VecI B ) {
-
-        C3VecI answer;
-        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
-        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
-        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
-        return answer;
-}
-
-C3VecI cross ( const C3Vec A, const C3VecI B ) {
+template <typename C3T1, typename C3T2>
+C3VecI cross ( const C3T1 A, const C3T2 B ) {
 
         C3VecI answer;
         answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
@@ -588,17 +581,25 @@ void kj_print ( const float arg, string name ) {
 
 int isnan ( const C3Vec arg ) {
     int answer = 0;
-    if(isnan(arg.c1)) answer = 1;
-    if(isnan(arg.c2)) answer = 1;
-    if(isnan(arg.c3)) answer = 1;
+    if(isnan(mag(arg))) answer = 1;
+    return answer;
+}
+
+int isnan ( const C3VecI arg ) {
+    int answer = 0;
+    if( isnan( mag(arg) ) ) answer = 1;
     return answer;
 }
 
 int isinf ( const C3Vec arg ) {
     int answer = 0;
-    if(isinf(arg.c1)) answer = 1;
-    if(isinf(arg.c2)) answer = 1;
-    if(isinf(arg.c3)) answer = 1;
+    if(isinf(mag(arg))) answer = 1;
+    return answer;
+}
+
+int isinf ( const C3VecI arg ) {
+    int answer = 0;
+    if(isinf(mag(arg))) answer = 1;
     return answer;
 }
 
@@ -625,16 +626,13 @@ C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v, const C3Vec &x,
 	C3Vec b0(0,0,0), F;
 
 	C3Vec v_x_b0 ( v.c2*b0.c3-v.c3*b0.c2, -1.0*(v.c1*b0.c3-v.c3*b0.c1), v.c1*b0.c2-v.c2*b0.c1); 
-	//C3Vec F ( real(e1.c1) * cos ( wrf * t ) + imag(e1.c1) * sin ( wrf * t ) + v_x_b0.c1,
-	//	  	real(e1.c2) * cos ( wrf * t ) + imag(e1.c2) * sin ( wrf * t ) + v_x_b0.c2,
-	//	  	real(e1.c3) * cos ( wrf * t ) + imag(e1.c3) * sin ( wrf * t ) + v_x_b0.c3 );
 
 	return F*(p.q/p.m);	
 }
 
-C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Vec> &yVec, int &status ) {
+template<class TYPE>
+TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, int &status ) {
 
-    status = 0;
 	float _x, x0, x1;
 	float xTmp;
 	xTmp = x;
@@ -642,14 +640,24 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 #if _PARTICLE_BOUNDARY == 1
 	if(x<xVec.front()||x>xVec.back()) {
 			// Particle absorbing walls
+#if DEBUG_INTERP >= 1
+            if(xVec.size()!=yVec.size()) {
+#if DEBUG_INTERP >= 2
+                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
+#endif
+                status = 1;
+                return TYPE(0);
+            }
 #if DEBUG_INTERP >= 2
 			cout<<"Particle absorbed at "<<x<<endl;
+            cout<<"Particle number: "<<p.number<<endl;
             cout<<"x:"<<x<<endl;
             cout<<"xVec.front():"<<xVec.front()<<endl;
             cout<<"xVec.back():"<<xVec.back()<<endl;
 #endif
+#endif
 			status = 1;
-			return C3Vec(0,0,0);
+			return TYPE(0);
 	}
 #elif _PARTICLE_BOUNDARY == 2
 			// Periodic 
@@ -666,90 +674,10 @@ C3Vec kj_interp1D ( const float &x, const vector<float> &xVec, const vector<C3Ve
 #if DEBUG_INTERP >= 2
 			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
 #endif
-			return C3Vec(0,0,0);
-	}
-#endif
-	//else
-	//{
-		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
-	//}
-
-	x0 = floor(_x);
-	x1 = ceil(_x);
-	
-	// Catch for particle at point
-	if(x0==x1) {
-#if DEBUG_INTERP >= 2
-        cout << "status version of kj_interp1D" << endl;
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-#endif
-		return yVec[x0];
-	}
-	else {
-		C3Vec y0 = yVec[x0];
-		C3Vec y1 = yVec[x1];
-
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
-	}
-
-}
-
-template<class TYPE>
-TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, CParticle &p, int &status ) {
-
-    status = 0;
-	float _x, x0, x1;
-	float xTmp;
-	xTmp = x;
-
-#if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()) {
-			// Particle absorbing walls
-#if DEBUG_INTERP >= 1
-            if(xVec.size()!=yVec.size()) {
-#if DEBUG_INTERP >= 2
-                cout<<"ERROR: xVec and yVec are not the same size for interpolation!"<<endl;
-#endif
-                p.status = 1;
-                status = 1;
-                return TYPE(0);
-            }
-#if DEBUG_INTERP >= 2
-			cout<<"Particle absorbed at "<<x<<endl;
-            cout<<"Particle number: "<<p.number<<endl;
-            cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec.front()<<endl;
-            cout<<"xVec.back():"<<xVec.back()<<endl;
-#endif
-#endif
-            status = 1;
-			p.status = 1;
-			return TYPE(0);
-	}
-#elif _PARTICLE_BOUNDARY == 2
-			// Periodic 
-			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
-#elif _PARTICLE_BOUNDARY == 3
-			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
-#endif
-
-#if DEBUG_INTERP >= 1    
-	if(p.status>0){
-#if DEBUG_INTERP >= 2
-			cout<<"ERROR: Should never get here with _PARTICLE_BOUNDARY ==2|3"<<endl;
-#endif
-            status = 1;
 			return TYPE(0);
 	}
 #endif
-	//else
-	//{
-		_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
-	//}
+	_x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
 
 	x0 = floor(_x);
 	x1 = ceil(_x);
@@ -782,8 +710,7 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
                 cout<<"x: "<<x<<endl;
                 cout<<"xVec.size(): "<<xVec.size()<<endl;
                 cout<<"yVec.size(): "<<yVec.size()<<endl;
-                ++p.status;
-                status = 1;
+                status=1;
                 return TYPE(0);
         }
 #endif
@@ -794,15 +721,13 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 #if DEBUG_INTERP >= 2
                 cout<<"ERROR: interpolation produced a NaN"<<endl;
 #endif
-                ++p.status;
-                status = 1;
+                status=1;
                 return TYPE(0);
         } 
         if(isinf(result)) {
 #if DEBUG_INTERP >= 2
                 cout<<"ERROR: interpolation produced a INF"<<endl;
 #endif
-                ++p.status;
                 status = 1;
                 return TYPE(0);
         }
@@ -812,60 +737,16 @@ TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE>
 
 }
 
-
-
-float kj_interp1D ( const float &x, const vector<float> &xVec, const vector<float> &yVec, int &status ) {
-
-    status = 0;
-	float _x, x0, x1;
-	float xTmp;
-	xTmp = x;
-
-#if _PARTICLE_BOUNDARY == 1
-	if(x<xVec.front()||x>xVec.back()) {
-#if DEBUG_INTERP >= 1
-            cout<<"Non-particle interpolator"<<endl;
-            cout<<"x:"<<x<<endl;
-            cout<<"xVec.front():"<<xVec.front()<<endl;
-            cout<<"xVec.back():"<<xVec.back()<<endl;
-#endif
-            status = 1;
-			return 0;
-	}
-#elif _PARTICLE_BOUNDARY == 2
-			// Periodic 
-			if(xTmp<xVec.front()) xTmp = xVec.back()-(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.front()+(xTmp-xVec.back());			
-#elif _PARTICLE_BOUNDARY == 3
-			// Particle reflecting walls
-			if(xTmp<xVec.front()) xTmp = xVec.front()+(xVec.front()-xTmp);			
-			if(xTmp>xVec.back()) xTmp = xVec.back()-(xTmp-xVec.back());			
-#endif
-	
-    _x = (xTmp-xVec.front())/(xVec.back()-xVec.front())*(xVec.size()-1);
-
-	x0 = floor(_x);
-	x1 = ceil(_x);
-	
-	// Catch for particle at point
-	if(x0==x1) {
-#if DEBUG_INTERP >= 2
-        cout << "Non-particle version of kj_interp1D" << endl;
-		cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << endl;
-		cout << "Interpolation request lies at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << endl;
-#endif
-		return yVec[x0];
-	}
-	else {
-		float y0 = yVec[x0];
-		float y1 = yVec[x1];
-
-		return y0+(_x-x0)*(y1-y0)/(x1-x0);
-	}
-}
-
 C3Vec operator* ( const float A[][3], const C3Vec x ) {
         C3Vec B;
+        B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
+        B.c2 = A[1][0]*x.c1 + A[1][1]*x.c2 + A[1][2]*x.c3;
+        B.c3 = A[2][0]*x.c1 + A[2][1]*x.c2 + A[2][2]*x.c3;
+        return B;
+}
+
+C3VecI operator* ( const float A[][3], const C3VecI x ) {
+        C3VecI B;
         B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
         B.c2 = A[1][0]*x.c1 + A[1][1]*x.c2 + A[1][2]*x.c3;
         B.c3 = A[2][0]*x.c1 + A[2][1]*x.c2 + A[2][2]*x.c3;
@@ -891,7 +772,8 @@ void transpose ( float A[][3] ) {
         A = B;
 }
 
-C3Vec rot_CYL_to_XYZ ( const float t, const C3Vec vec, const int direction ) {
+template <typename T>
+T rot_CYL_to_XYZ ( const float t, const T vec, const int direction ) {
 
     // t here is the the cylindrical angle position in rtz (radians)        
 
@@ -1055,75 +937,74 @@ float GetBetComp ( const float vPer, const float phs ) {
 }
 
 
+C3Vec getB_XYZ ( CParticle &p_XYZ, const vector<float> &rVec, const vector<C3Vec> &b0Vec_CYL ) {
 
+	float _r = sqrt ( pow(p_XYZ.c1,2) + pow(p_XYZ.c2,2) );
+	float _p = atan2 ( p_XYZ.c2, p_XYZ.c1 );
+
+	C3Vec b0_CYL, b0_XYZ;
+
+    int status = 0;
+	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, status );
+    p_XYZ.status = max(p_XYZ.status,status);
+
+    b0_XYZ = rot_CYL_to_XYZ ( _p, b0_CYL, 1 );
+
+    return b0_XYZ;
+}
+
+C3VecI getE1_XYZ ( CParticle &p_XYZ, const vector<float> &rVec, const vector<C3VecI> &E1Vec_CYL, int nPhi ) {
+
+	float _r = sqrt ( pow(p_XYZ.c1,2) + pow(p_XYZ.c2,2) );
+	float _p = atan2 ( p_XYZ.c2, p_XYZ.c1 );
+
+	C3VecI E1_CYL, E1_XYZ;
+
+    int status = 0;
+	E1_CYL = kj_interp1D ( _r, rVec, E1Vec_CYL, status );
+    p_XYZ.status = max(p_XYZ.status,status);
+
+    complex<float> ii(0,1);
+
+    E1_XYZ = exp(ii*float(nPhi*_p)) * rot_CYL_to_XYZ ( _p, E1_CYL, 1 ) ;
+
+    return E1_XYZ;
+}
 
 // Zero-order orbits
 C3Vec rk4_evalf ( CParticle &p, const float &t, 
 				const C3Vec &v_XYZ, const C3Vec &x, const vector<C3Vec> &b0Vec_CYL,
-			  	const vector<float> &rVec, int &status ) {
+			  	const vector<float> &rVec ) {
 
-	// Interpolate b0 at location in CYL
-	
-	float _r = sqrt ( pow(x.c1,2) + pow(x.c2,2) );
-	float _p = atan2 ( x.c2, x.c1 );
-    _p = 0; // Really need to do something about this.
+    C3Vec b0_XYZ;
+    b0_XYZ = getB_XYZ(p,rVec,b0Vec_CYL);
 
-#if DEBUGLEVEL >= 3
-	cout << "\t\t\tx: " << x.c1 << " y: " << x.c2 << " z: " << x.c3 << endl;
-	cout << "\t\t\tr: " << _r << " p: " << _p << endl;
-	cout << "\t\t\trVec.front(): " << rVec.front() << endl;
-	cout << "\t\t\tv_XYZ: " << v_XYZ.c1 << "  " << v_XYZ.c2 << "  " << v_XYZ.c3 << endl;
-#endif
-
-	C3Vec b0_CYL, b0_XYZ;
-
-	b0_CYL = kj_interp1D ( _r, rVec, b0Vec_CYL, p, status );
-
-	b0_XYZ = C3Vec( cos(_p)*b0_CYL.c1-sin(_p)*b0_CYL.c2+0,
-					sin(_p)*b0_CYL.c1+cos(_p)*b0_CYL.c2+0,
-					0+0+1*b0_CYL.c3 );
-
-    //cout << "\tb0_XYZ: " << b0_XYZ.c1 <<"  "<< b0_XYZ.c2 <<"  "<< b0_XYZ.c3 << endl;
-
-	//C3Vec v_x_b0 ( v_XYZ.c2*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c2, 
-	//				-1.0*(v_XYZ.c1*b0_XYZ.c3-v_XYZ.c3*b0_XYZ.c1), 
-	//				v_XYZ.c1*b0_XYZ.c2-v_XYZ.c2*b0_XYZ.c1);
     C3Vec v_x_b0 = cross(v_XYZ,b0_XYZ);
-
-#if DEBUGLEVEL >= 3
-	cout << "\tvxb0: " << v_x_b0.c1 << "  " << v_x_b0.c2 << "  " << v_x_b0.c3 << endl;
-	cout << "\tp.q/p.m: " << p.q/p.m << endl;
-#endif
 
 	return v_x_b0*(p.q/p.m);	
 }
 
 // Zero-order orbits
 int rk4_move ( CParticle &p, const float &dt, const float &t0, 
-				const vector<C3Vec> &b0, const vector<float> &r ) {
+				const vector<float> &r, const vector<C3Vec> &b0 ) {
 
-        int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
-		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r, status ) * dt;	
+		k1 = rk4_evalf ( p, t0 + 0.0*dt, yn0         , xn0         , b0, r ) * dt;	
 		x1 = yn0 * dt;
-        //cout << "dx1: " << x1.c1 << endl;
 
-		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r, status ) * dt;	
+		k2 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k1, xn0 + 0.5*x1, b0, r ) * dt;	
 		x2 = (yn0 + 0.5*k1) * dt;
-        //cout << "dx2: " << x2.c1 << endl;
 
-		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r, status ) * dt;	
+		k3 = rk4_evalf ( p, t0 + 0.5*dt, yn0 + 0.5*k2, xn0 + 0.5*x2, b0, r ) * dt;	
 		x3 = (yn0 + 0.5*k2) * dt;
-        //cout << "dx3: " << x3.c1 << endl;
 
-		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r, status ) * dt;	
+		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, r ) * dt;	
 		x4 = (yn0 + 1.0*k3) * dt;
-        //cout << "dx4: " << x4.c1 << endl;
 
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4) * (1-p.status); // the * (1-p.status) sets the move to zero for dead particles;
+		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4) * (1-p.status);
 
 		p.c1 = xn1.c1;
 		p.c2 = xn1.c2;
@@ -1178,13 +1059,15 @@ int rk4_move ( CParticle &p, const float &dt, const float &t0,
 		cout << "\tv1_XYZ: " << yn1.c1 << "  " << yn1.c2 << "  " << yn1.c3 << endl;
 		cout << "\tE: " << 0.5 * p.m * sqrt (pow(p.v_c1,2)+pow(p.v_c2,2)+pow(p.v_c3,2))/_e << endl;
 #endif
-        return status;
+        return p.status;
 }
 
 // Parallel acceleration
-float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB, int &status ) {
+float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const vector<float> &bDotGradB ) {
 
-    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, p, status );
+    int status = 0;
+    float This_bDotGradB = kj_interp1D ( r.c1, r_GC, bDotGradB, status );
+    p.status = max(p.status,status);
 #if DEBUG_EVAL_APAR >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_aPar"<<endl;
@@ -1203,18 +1086,22 @@ float eval_aPar ( CParticle &p, const C3Vec r, const vector<float> &r_GC, const 
 }
 
 // Perpendicular velocity
-float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, int &status ) {
+float eval_vPer ( CParticle &p, const C3Vec r, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
+    int status = 0;         
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, status );
+    p.status = max(p.status,status);
     return sqrt ( 2.0 * p.u * mag(This_b0_CYL) / p.m );
 }
 
 // Guiding center veclocity
 C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar, 
                 const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, 
-                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, int &status ) {
+                const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL ) {
 
-	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, p, status );
+    int status = 0; 
+	C3Vec This_b0_CYL = kj_interp1D ( r.c1, r_b0, b0_CYL, status );
+    p.status = max(p.status,status);
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 1 in eval_vGC"<<endl;
@@ -1222,7 +1109,10 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, p, status );
+    status = 0;
+	C3Vec This_curv_CYL = kj_interp1D ( r.c1, r_GC, curv_CYL, status );
+    p.status = max(p.status,status);
+
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 2 in eval_vGC"<<endl;
@@ -1230,7 +1120,9 @@ C3Vec eval_vGC ( CParticle &p, const C3Vec r, const float vPer, const float vPar
     }
 #endif
 
-	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, p, status );
+    status = 0;
+	C3Vec This_grad_CYL = kj_interp1D ( r.c1, r_GC, grad_CYL, status );
+    p.status = max(p.status,status);
 #if DEBUG_EVAL_VGC >= 1
     if(status>0) {
             cout<<"ERROR 3 in eval_vGC"<<endl;
@@ -1263,74 +1155,73 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, 
                 const vector<float> &bDotGradB, const float wrf ) {
 
-                int status=0;
                 C3Vec xn0_XYZ(p.c1, p.c2, p.c3);
                 C3Vec xn0 = XYZ_to_CYL(xn0_XYZ);
 
-		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL, status );
+		    	float This_vPer = eval_vPer ( p, xn0, r_b0, b0_CYL );
 #if DEBUG_GC >= 2 
                 cout << "p.vPer: " << p.vPer << endl;
                 cout << "p.vPar: " << p.vPar << endl;
                 cout << "This_vPer: " << This_vPer << endl;
 #endif
-		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB, status );
+		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB );
 		    	C3Vec k1_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k1_vgc,"k1_vgc");
                 kj_print(xn0,"xn0");
-                cout<<"Status: "<<status<<endl;
-                if(isnan(k1_vgc)||isinf(k1_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
-                        status = 1;
-                        return status;
+                cout<<"Status: "<<p.status<<endl;
+                if(isnan(k1_vgc)||isinf(k1_vgc)||isnan(xn0)||isinf(xn0)||p.status>0) {
+                        p.status = 1;
+                        return p.status;
                 }
 #endif    
-		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL, status );
-		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB, status ); 
+		    	This_vPer = eval_vPer ( p, xn0 + k1_vgc / 2.0, r_b0, b0_CYL );
+		    	This_vGC  = eval_vGC  ( p, xn0 + k1_vgc / 2.0, This_vPer, p.vPar + k1_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k2_vPar = dt * eval_aPar ( p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB ); 
 		    	C3Vec k2_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k2_vgc,"k2_vgc");
-                if(isnan(k2_vgc)||isinf(k2_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
-                        status = 1;
-                        return status;
+                if(isnan(k2_vgc)||isinf(k2_vgc)||isnan(xn0)||isinf(xn0)||p.status>0) {
+                        p.status = 1;
+                        return p.status;
                 }
 #endif 
-		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL, status ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB, status ); 
+		    	This_vPer = eval_vPer ( p, xn0 + k2_vgc / 2.0, r_b0, b0_CYL ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k2_vgc / 2.0, This_vPer, p.vPar + k2_vPar / 2.0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k3_vPar = dt * eval_aPar ( p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB ); 
 		    	C3Vec k3_vgc  = dt * This_vGC;
 #if DEBUG_GC >= 2
                 kj_print(k3_vgc,"k3_vgc");
-                if(isnan(k3_vgc)||isinf(k3_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
-                        status = 1;
-                        return status;
+                if(isnan(k3_vgc)||isinf(k3_vgc)||isnan(xn0)||isinf(xn0)||p.status>0) {
+                        p.status = 1;
+                        return p.status;
                 }
 #endif 
-		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL, status ); 
-		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL, status );
-		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB, status );
+		    	This_vPer = eval_vPer ( p, xn0 + k3_vgc, r_b0, b0_CYL ); 
+		    	This_vGC  = eval_vGC  ( p, xn0 + k3_vgc, This_vPer, p.vPar + k3_vPar, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
+		    	float k4_vPar = dt * eval_aPar ( p, xn0 + k3_vgc, r_GC, bDotGradB );
 		    	C3Vec k4_vgc  = dt * This_vGC; 
 #if DEBUG_GC >= 2
                 kj_print(k4_vgc,"k4_vgc");
-                if(isnan(k4_vgc)||isinf(k4_vgc)||isnan(xn0)||isinf(xn0)||status>0) {
-                        status = 1;
-                        return status;
+                if(isnan(k4_vgc)||isinf(k4_vgc)||isnan(xn0)||isinf(xn0)||p.status>0) {
+                        p.status = 1;
+                        return p.status;
                 }
 #endif 	
-		    	float vPar1 = p.vPar + ( k1_vPar + 2.0 * k2_vPar + 2.0 * k3_vPar + k4_vPar ) / 6.0;
-		    	C3Vec xn1 = xn0 + ( k1_vgc + 2.0 * k2_vgc + 2.0 * k3_vgc + k4_vgc ) / 6.0;
+		    	float vPar1 = p.vPar + ( k1_vPar + 2.0 * k2_vPar + 2.0 * k3_vPar + k4_vPar ) / 6.0 * (1-p.status);
+		    	C3Vec xn1 = xn0 + ( k1_vgc + 2.0 * k2_vgc + 2.0 * k3_vgc + k4_vgc ) / 6.0* (1-p.status);
 
 #if DEBUG_GC >=1 
                 if(isnan(xn1)||isinf(xn1)) {
-                        status = 1;
-                        return status;
+                        p.status = 1;
+                        return p.status;
                 }
 #endif
 
                 // Update particle with moved position and new vPar & vPer
 
-		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL, status ); 
+		    	float vPer1 = eval_vPer ( p, xn1, r_b0, b0_CYL ); 
 
                 p.vPar = vPar1;
                 p.vPer = vPer1;
@@ -1343,7 +1234,10 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 
                 // Update the XYZ velocity also
 
+                int status = 0;
                 C3Vec this_b0_CYL = kj_interp1D ( xn1.c1, r_b0, b0_CYL, status );
+                p.status = max(p.status,status);
+
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( xn1.c2, this_b0_CYL, 1 );
  
                 C3Vec v_abp;
@@ -1363,7 +1257,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 p.v_c2 = this_v_XYZ.c2;
                 p.v_c3 = this_v_XYZ.c3;
 
-                return status;
+                return p.status;
 }
 
 
@@ -1371,7 +1265,6 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
 int rk4_move ( CParticle &p, float dt, float t0, 
 				const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf ) {
 
-        int status = 0;
 		C3Vec yn0(p.v_c1,p.v_c2,p.v_c3), xn0(p.c1, p.c2, p.c3);
 		C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1; 
 
@@ -1384,8 +1277,8 @@ int rk4_move ( CParticle &p, float dt, float t0,
 		k4 = rk4_evalf ( p, t0 + 1.0*dt, yn0 + 1.0*k3, xn0 + 1.0*x3, b0, e1, wrf ) * dt;	
 		x4 = k4 * dt;
 
-		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4);
-		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4);
+		yn1 = yn0 + 1.0/6.0 * (k1+2.0*k2+2.0*k3+k4) * (1-p.status); // the * (1-p.status) sets the move to zero for dead particles
+		xn1 = xn0 + 1.0/6.0 * (x1+2.0*x2+2.0*x3+x4) * (1-p.status);
 
 		p.c1 = xn1.c1;
 		p.c2 = xn1.c2;
@@ -1394,7 +1287,13 @@ int rk4_move ( CParticle &p, float dt, float t0,
 		p.v_c2 = yn1.c2;
 		p.v_c3 = yn1.c3;
 
-        return status;
+#if DEBUG_RK4 >= 1
+        if(p.status!=0){
+            cout<<"ERROR: p.status != 0"<<endl;
+            //exit(1)
+        }
+#endif
+        return p.status;
 }
 
 float maxwellian ( float vx, float vy, float vz, float vTh ) {
@@ -1474,8 +1373,6 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 # if DEBUG_MAXWELLIAN >= 1
         cout <<"amu: "<< amu<<endl;
         cout <<"Z: "<< Z<<endl;
-        //cout <<"m: "<< m<<endl;
-        //cout <<"q: "<< q<<endl;
         cout <<"vTh: "<< vTh<<endl;
 #endif
 
@@ -1736,10 +1633,8 @@ int main ( int argc, char **argv )
 				nc_density.getVar(start, count, &n_m3[0]);
 
 				b0_CYL.resize(nR);
-				b0_XYZ.resize(nR);
 				for(int i=0; i<nR; i++) {
 						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
-                        b0_XYZ[i] = rot_CYL_to_XYZ(0,b0_CYL[i],1);
 				}
 
 				nc_e_r_re.getVar(&e_r_re[0]);
@@ -1863,16 +1758,14 @@ int main ( int argc, char **argv )
 		// Rotate the e & b fields to XYZ
 
 		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+        vector<C3VecI> e1_CYL;
+
 		e1Re_CYL.resize(e_r.size());
 		e1Im_CYL.resize(e_r.size());
 		b1Re_CYL.resize(e_r.size());
 		b1Im_CYL.resize(e_r.size());
 
-		vector<C3Vec> e1Re_XYZ, e1Im_XYZ, b1Re_XYZ, b1Im_XYZ;
-		e1Re_XYZ.resize(e_r.size());
-		e1Im_XYZ.resize(e_r.size());
-		b1Re_XYZ.resize(e_r.size());
-		b1Im_XYZ.resize(e_r.size());
+		e1_CYL.resize(e_r.size());
 
 		for(int i=0;i<e_r.size();i++) {
 
@@ -1890,12 +1783,9 @@ int main ( int argc, char **argv )
 			b1Im_CYL[i].c2 = imag(b_p[i]);
 			b1Im_CYL[i].c3 = imag(b_z[i]);
 
-			float _p = 0;
-
-            e1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Re_CYL[i], 1);
-            e1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, e1Im_CYL[i], 1);
-            b1Re_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Re_CYL[i], 1);
-            b1Im_XYZ[i] = rot_CYL_to_XYZ ( _p, b1Im_CYL[i], 1);
+            e1_CYL[i].c1 = e_r[i];
+            e1_CYL[i].c2 = e_r[i];
+            e1_CYL[i].c3 = e_z[i];
 
 		}
 
@@ -1905,7 +1795,7 @@ int main ( int argc, char **argv )
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
 	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid), wrf_wc(nXGrid);
-    vector<C3Vec> b0_XYZ_T_at_xGrid(nXGrid);
+    vector<float> bMag_kjGrid(nXGrid);
 	float xGridRng = 0;
 	float xGridStep = 0;
 	
@@ -1918,12 +1808,11 @@ int main ( int argc, char **argv )
 		xGrid[iX] = xGridMin+iX*xGridStep;
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
-        b0_XYZ_T_at_xGrid[iX] = kj_interp1D(xGrid[iX],r,b0_XYZ,iStat);
-        //T_keV[iX] = 0.0000001;//kj_interp1D(xGrid[iX],r,n_m3);
+        bMag_kjGrid[iX] = mag(kj_interp1D(xGrid[iX],r,b0_CYL,iStat));
         T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
-    float MaxB0 = maxC3VecAbs(b0_XYZ_T_at_xGrid);
+    float MaxB0 = *max_element(bMag_kjGrid.begin(),bMag_kjGrid.end());
 
 	//string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
 	//ProfilerStart(googlePerfFileName.c_str());
@@ -1960,7 +1849,7 @@ int main ( int argc, char **argv )
 	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
 
 	for(int iX=0;iX<nXGrid;iX++) {
-		float this_wc =	Z*_e*mag(b0_XYZ_T_at_xGrid[iX])/(amu*_mi);
+		float this_wc =	Z*_e*bMag_kjGrid[iX]/(amu*_mi);
 		wrf_wc[iX] =  wrf / this_wc;
 	}
 
@@ -2025,7 +1914,7 @@ int main ( int argc, char **argv )
 #endif
         float dv;
         vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
-                                nPx,nPy,nPz,nThermal,dv,b0_XYZ_T_at_xGrid[iX]));
+                                nPx,nPy,nPz,nThermal,dv,bMag_kjGrid[iX]));
 #if !(LOWMEM >= 1)
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
@@ -2092,7 +1981,7 @@ int main ( int argc, char **argv )
 
                 OrbitFile.open("output/orbit.txt", ios::out | ios::trunc);
 				OrbitFile<<"wc / wrf: "<< wrf_wc[iX]<<endl;
-                OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3)"<<endl;
+                OrbitFile<<" t  x  y  z  re(e1)  im(e1)  re(e2)  im(e2)  re(e3)  im(e3)  re(b1)  im(b1)  re(b2)  im(b2)  re(b3)  im(b3) status"<<endl;
                 v1File.open("output/orbit_v1.txt", ios::out | ios::trunc);
                 v1File<<" t  re(v11)  im(v11)  re(v12)  im(v12)  re(v13)  im(v13)"<<endl;
                 e1_dot_grad_File.open("output/orbit_e1_dot_grad_df0_dv.txt", ios::out | ios::trunc);
@@ -2116,15 +2005,15 @@ int main ( int argc, char **argv )
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
                                 r, b0_CYL, r_gc, curv_CYL, grad_CYL, bDotGradB, wrf );
 #else
-				int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], b0_CYL, r );
+				int MoveStatus = rk4_move ( thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL );
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status,MoveStatus);
 #if DEBUG_MOVE >=1 
-                cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
                 if(MoveStatus>0) {
-                    cout<<"ERROR: rk4_move_gc threw an error"<<endl;
+                    cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
+                    cout<<"ERROR: rk4_move* threw an error"<<endl;
                     cout<<"MoveStatus: "<<MoveStatus<<endl;
-                    exit(1); 
+                    //exit(1); 
                 }
 #endif
             
@@ -2136,54 +2025,11 @@ int main ( int argc, char **argv )
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
-				C3Vec e1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Re_XYZ, istat );
-				C3Vec e1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, e1Im_XYZ, istat );
-				C3Vec b1ReTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Re_XYZ, istat );
-				C3Vec b1ImTmp_XYZ = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b1Im_XYZ, istat );
-	
-				thisOrbitE1_re_XYZ[i] = e1ReTmp_XYZ*(1-OverallStatus);
-				thisOrbitE1_im_XYZ[i] = e1ImTmp_XYZ*(1-OverallStatus);
-				thisOrbitB1_re_XYZ[i] = b1ReTmp_XYZ*(1-OverallStatus);
-				thisOrbitB1_im_XYZ[i] = b1ImTmp_XYZ*(1-OverallStatus);
-
-				float tTmp = thisT[i];
-				float weight = hanningWeight[i];
-                float phs = -(wrf * tTmp); 
+                C3VecI E1_XYZ;
                 complex<float> _i(0,1);
-                complex<float> exp_inphi = exp(_i*(float)nPhi*this_Theta);
-
-				thisE1c_XYZ[i] = exp_inphi * C3VecI(
-								weight*complex<float>(
-										thisOrbitE1_re_XYZ[i].c1*cos(phs)-thisOrbitE1_im_XYZ[i].c1*sin(phs),
-										thisOrbitE1_im_XYZ[i].c1*cos(phs)+thisOrbitE1_re_XYZ[i].c1*sin(phs)),
-								weight*complex<float>(
-										thisOrbitE1_re_XYZ[i].c2*cos(phs)-thisOrbitE1_im_XYZ[i].c2*sin(phs),
-										thisOrbitE1_im_XYZ[i].c2*cos(phs)+thisOrbitE1_re_XYZ[i].c2*sin(phs)),
-								weight*complex<float>(
-										thisOrbitE1_re_XYZ[i].c3*cos(phs)-thisOrbitE1_im_XYZ[i].c3*sin(phs),
-										thisOrbitE1_im_XYZ[i].c3*cos(phs)+thisOrbitE1_re_XYZ[i].c3*sin(phs))
-								);	
-
-				thisB1c_XYZ[i] = exp_inphi * C3VecI(
-								weight*complex<float>(
-										thisOrbitB1_re_XYZ[i].c1*cos(phs)-thisOrbitB1_im_XYZ[i].c1*sin(phs),
-										thisOrbitB1_im_XYZ[i].c1*cos(phs)+thisOrbitB1_re_XYZ[i].c1*sin(phs)),
-								weight*complex<float>(
-										thisOrbitB1_re_XYZ[i].c2*cos(phs)-thisOrbitB1_im_XYZ[i].c2*sin(phs),
-										thisOrbitB1_im_XYZ[i].c2*cos(phs)+thisOrbitB1_re_XYZ[i].c2*sin(phs)),
-								weight*complex<float>(
-										thisOrbitB1_re_XYZ[i].c3*cos(phs)-thisOrbitB1_im_XYZ[i].c3*sin(phs),
-										thisOrbitB1_im_XYZ[i].c3*cos(phs)+thisOrbitB1_re_XYZ[i].c3*sin(phs))
-								);	
-
-                //complex<float> _i(0,1);
-				//complex<float> phs = -(_i*wrf*tTmp);
-                //complex<float> amp1(thisOrbitE_re_XYZ[i].c1,thisOrbitE_im_XYZ[i].c1);
-                //complex<float> amp2(thisOrbitE_re_XYZ[i].c2,thisOrbitE_im_XYZ[i].c2);
-                //complex<float> amp3(thisOrbitE_re_XYZ[i].c3,thisOrbitE_im_XYZ[i].c3);
-                //complex<float> expPart = exp(phs);
-                //thisE1c[i] = weight*C3VecI(amp1*expPart,amp2*expPart,amp3*expPart); 
-
+                E1_XYZ = hanningWeight[i] * exp(-_i*wrf*thisT[i]) * getE1_XYZ(thisParticle_XYZ,r,e1_CYL,nPhi);
+                thisE1c_XYZ[i] = E1_XYZ * (1-thisParticle_XYZ.status);
+	
 #if DEBUG_MOVE >= 2
                 cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
                 cout << "thisE1c[i].c2: "<<thisE1c_XYZ[i].c2<<endl;
@@ -2208,10 +2054,6 @@ int main ( int argc, char **argv )
 
 #endif
                 this_e1_dot_gradvf0[i] = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
-
-				//this_e1_dot_df0dv[i].c1 = thisE1c[i].c1 * thisdf0_dv.c1;  
-				//this_e1_dot_df0dv[i].c2 = thisE1c[i].c2 * thisdf0_dv.c2;  
-				//this_e1_dot_df0dv[i].c3 = thisE1c[i].c3 * thisdf0_dv.c3;  
 
 #if LOWMEM_ORBIT_WRITE >= 1
                 if(iX==write_iX && iP==write_iP) {
@@ -2249,6 +2091,7 @@ int main ( int argc, char **argv )
                             <<"    "<< imag(thisB1c_XYZ[i].c2)
                             <<"    "<< real(thisB1c_XYZ[i].c3)
                             <<"    "<< imag(thisB1c_XYZ[i].c3)
+                            <<"    "<< thisParticle_XYZ.status 
                             << endl;
                 }
                 if(iX==write_iX && iP==write_iP) {
@@ -2272,21 +2115,15 @@ int main ( int argc, char **argv )
 
                 complex<float> tmp = 0.0;
                 for(int i=0;i<nSteps;i++) {
-						//float tmp_vTh = get_vTh ( thisParticle_XYZ.amu, thisParticle_XYZ.Z, T_keV[iX] );
                         tmp += -qOverm * this_e1_dot_gradvf0[i] * dtMin;
                         v1File<<thisT[i]
                                 <<"    "<< real(tmp)
                                 <<"    "<< imag(tmp)
                                 << endl;
                 }
-				//cout<<"tmp: "<<tmp.c1<<"  "<<tmp.c2<<"  "<<tmp.c3<<endl;
-				//cout<<"thisV1c: "<<thisV1c.c1<<"  "<<thisV1c.c2<<"  "<<thisV1c.c3<<endl;
             }
 #endif
 			f1c[iP] = -this_f1c;
-			//f1xc[iP] = -thisV1c.c1;
-			//f1yc[iP] = -thisV1c.c2;
-			//f1zc[iP] = -thisV1c.c3;
 
 			float v0x_i = ThisParticleList[iP].v_c1;
 			float v0y_i = ThisParticleList[iP].v_c2;
@@ -2296,10 +2133,6 @@ int main ( int argc, char **argv )
 
 			#pragma omp critical // "atomic" does not work for complex numbers
 			{
-				//j1xc[iX] += h * ( v0x_i*f1xc[iP] ); 
-				//j1yc[iX] += h * ( v0y_i*f1yc[iP] ); 
-				//j1zc[iX] += h * ( v0z_i*f1zc[iP] ); 
-
 				j1xc[iX] += h * ( v0x_i*f1c[iP] ); 
 				j1yc[iX] += h * ( v0y_i*f1c[iP] ); 
 				j1zc[iX] += h * ( v0z_i*f1c[iP] ); 

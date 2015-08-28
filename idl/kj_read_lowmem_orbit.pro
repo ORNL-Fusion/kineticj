@@ -19,12 +19,14 @@ pro kj_read_lowmem_orbit
     b2 = complexArr(nLines-offset)
     b3 = complexArr(nLines-offset)
 
+    status = intArr(nLines-offset)
+
     skip_lun, lun, offset, /lines
     for l=0,nLines-1-offset do begin
 
         readf, lun, _t, _x, _y, _z, $
                 _e1_re, _e1_im, _e2_re, _e2_im, _e3_re, _e3_im, $
-                _b1_rb, _b1_im, _b2_rb, _b2_im, _b3_rb, _b3_im
+                _b1_rb, _b1_im, _b2_rb, _b2_im, _b3_rb, _b3_im, _stat
 
         t[l] = _t
         x[l] = _x
@@ -38,6 +40,8 @@ pro kj_read_lowmem_orbit
         b1[l] = complex(_b1_rb,_b1_im)
         b2[l] = complex(_b2_rb,_b2_im)
         b3[l] = complex(_b3_rb,_b3_im)
+
+        status[l] = _stat
 
     endfor
 	free_lun, lun
