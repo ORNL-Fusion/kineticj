@@ -5,16 +5,20 @@ ALGLIBDIR := ${HOME}/code/alglib/cpp/src
 NETCDF_DIR := /opt/local/lib
 NETCDFINCDIR := /opt/local/include 
 INCLUDEFLAGS += -I$(NETCDFINCDIR)
-LIBS += -lnetcdf_c++4 -lconfig++
+LIBS += -lnetcdf_c++4 
 LFLAGS += -L $(NETCDF_DIR)
 
 CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
 CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
-LIBCONFIGDIR := /opt/local
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
+
+LIBCONFIGDIR := ${HOME}/code/libconfig/gcc48
+INCLUDEFLAGS += -I${LIBCONFIGDIR}/include
+LFLAGS += -L${LIBCONFIGDIR}/lib
+LIBS += -lconfig++
 
 CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
