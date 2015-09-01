@@ -1784,7 +1784,7 @@ int main ( int argc, char **argv )
 			b1Im_CYL[i].c3 = imag(b_z[i]);
 
             e1_CYL[i].c1 = e_r[i];
-            e1_CYL[i].c2 = e_r[i];
+            e1_CYL[i].c2 = e_p[i];
             e1_CYL[i].c3 = e_z[i];
 
 		}
@@ -2020,8 +2020,6 @@ int main ( int argc, char **argv )
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
 				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
-
-                //float this_Theta = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
 
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
 
