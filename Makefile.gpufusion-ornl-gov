@@ -1,8 +1,7 @@
-ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
+#ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
 
-LIBCONFIG_DIR := ${HOME}/code/libconfig/gcc48
-INCLUDEFLAGS += -I${LIBCONFIG_DIR}/include
-LFLAGS += -L${LIBCONFIG_DIR}/lib
+INCLUDEFLAGS += -I${LIBCONFIGINCLUDE}
+LFLAGS += -L${LIBCONFIGDIR}
 LIBS += -lconfig++
 
 INCLUDEFLAGS += -I${NETCDFCXX4INCLUDE} -I${NETCDFINCLUDE}

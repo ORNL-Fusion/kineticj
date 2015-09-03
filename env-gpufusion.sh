@@ -6,3 +6,4 @@ module load netcdf4/gcc/64/4.3.1.1
 module load blas/gcc/64/1
 module load lapack/gcc/64/3.5.0
 module load blacs/openmpi/gcc/64/1.1patch03
+module load libconfig/gcc/64/1.5
