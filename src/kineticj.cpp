@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
-#include <omp.h>
+//#include <omp.h>
 
 #if CLOCK >= 1 
 #include <ctime>
@@ -1163,6 +1163,7 @@ int rk4_move_gc ( CParticle &p, const float &dt, const float &t0,
                 cout << "p.vPer: " << p.vPer << endl;
                 cout << "p.vPar: " << p.vPar << endl;
                 cout << "This_vPer: " << This_vPer << endl;
+                if(isnan(p.vPer)) exit(1);
 #endif
 		    	C3Vec This_vGC  = eval_vGC  ( p, xn0, This_vPer, p.vPar + 0, r_b0, b0_CYL, r_GC, curv_CYL, grad_CYL );
 		    	float k1_vPar = dt * eval_aPar ( p, xn0, r_GC, bDotGradB );
@@ -1360,7 +1361,7 @@ C3Vec maxwellian_df0_dv (const C3Vec _v, const float _T_keV, const float _n_m3, 
 
 
 vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, float n_m3, 
-                int nPx, int nPy, int nPz, int nThermal, float &dv, C3Vec b0_XYZ) {
+                int nPx, int nPy, int nPz, int nThermal, float &dv, vector<float> &r, vector<C3Vec> &b0_CYL) {
 
         vector<CParticle> pList;
 
@@ -1412,21 +1413,16 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
 
                     pList[cnt].d3v = dv;
 
-                    //// Get the 3 components of df0_dv at this point in velocity space
-
-					//C3Vec thisVel(thisvx,thisvy,thisvz);
-					//C3Vec _df0_dv = maxwellian_df0_dv ( thisVel, T_keV, amu, Z );
-
                     // Get vPar, vPer and mu for guiding center integration
 
                     C3Vec thisV_XYZ(thisvx,thisvy,thisvz); 
-                    float bMag = mag (b0_XYZ);
+                    int iStat = 0;
+                    C3Vec this_b0_CYL = kj_interp1D(x,r,b0_CYL,iStat);
+                    C3Vec this_b0_XYZ = rot_CYL_to_XYZ ( 0, this_b0_CYL, 1 );
+                    float bMag = mag (this_b0_XYZ);
                     float vMag = mag (thisV_XYZ);
 
-                    //float vPar = (thisvx*b0_XYZ.c1 + thisvy*b0_XYZ.c2 + thisvz*b0_XYZ.c3) / bMag;
-		            //float vPer = sqrt ( pow(vMag,2) - pow(vPar,2) );
-
-                    C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, b0_XYZ, 0 );
+                    C3Vec thisV_abp = rot_XYZ_to_abp ( thisV_XYZ, this_b0_XYZ, 0 );
 
                     pList[cnt].vPar = thisV_abp.c3;
                     pList[cnt].vPer = sqrt(pow(thisV_abp.c1,2)+pow(thisV_abp.c2,2));
@@ -1437,11 +1433,13 @@ vector<CParticle> create_particles ( float x, float amu, float Z, float T_keV, f
                     cout<<"ThisVx: "<<thisvx<<endl;
                     cout<<"ThisVy: "<<thisvy<<endl;
                     cout<<"ThisVz: "<<thisvz<<endl;
+                    cout<<"b0_XYZ: "<<this_b0_XYZ.c1<<", "<<this_b0_XYZ.c2<<", "<<this_b0_XYZ.c3<<endl;
                     cout<<"vMag: "<<vMag<<endl;
                     cout<<"vPer: "<<pList[cnt].vPer<<endl;
                     cout<<"vPar: "<<pList[cnt].vPar<<endl;
                     cout<<"u: "<<pList[cnt].u<<endl<<endl;
                     if(isnan(pList[cnt].u)) exit(1);
+                    if(vMag>3e8) exit(1);
 #endif                    
                     cnt++;
                 }
@@ -1746,6 +1744,7 @@ int main ( int argc, char **argv )
 						curv_CYL[i] = C3Vec(curv_r[i],curv_p[i],curv_z[i]);
 		                grad_CYL[i] = C3Vec(grad_r[i],grad_p[i],grad_z[i]);
 				}
+                cout <<"Finished reading gc_terms file"<<endl;
 
 		}
 		catch(exceptions::NcException &e) {
@@ -1754,6 +1753,9 @@ int main ( int argc, char **argv )
 				exit(1);
 		}
 
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
 
 		// Rotate the e & b fields to XYZ
 
@@ -1789,20 +1791,62 @@ int main ( int argc, char **argv )
 
 		}
 
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
 
 	float wrf = freq * 2 * _pi;
 	float xGridMin = cfg.lookup("xGridMin");
 	float xGridMax = cfg.lookup("xGridMax");
 	int nXGrid = cfg.lookup("nXGrid");
-	vector<float> xGrid(nXGrid), density_m3(nXGrid), T_keV(nXGrid), wrf_wc(nXGrid);
+    cout<<"nXGrid: "<<nXGrid<<endl;
+
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
+	vector<float> xGrid(nXGrid);
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
+    vector<float> density_m3(nXGrid);
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
+    vector<float> T_keV(nXGrid);
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
+
+    vector<float> wrf_wc(nXGrid);
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
     vector<float> bMag_kjGrid(nXGrid);
+
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
 	float xGridRng = 0;
 	float xGridStep = 0;
-	
+
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
+
 	if(nXGrid>1) {
 		xGridRng = xGridMax-xGridMin;
 		xGridStep = xGridRng/(nXGrid-1);
 	}
+
+#if DEBUG_LINES >=1
+    cout <<__LINE__<<endl;
+#endif
 
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
@@ -1914,7 +1958,7 @@ int main ( int argc, char **argv )
 #endif
         float dv;
         vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
-                                nPx,nPy,nPz,nThermal,dv,bMag_kjGrid[iX]));
+                                nPx,nPy,nPz,nThermal,dv,r,b0_CYL));
 #if !(LOWMEM >= 1)
 		j1x[iX].resize(nJp);
 		j1xc[iX].resize(nJp);
@@ -1999,7 +2043,10 @@ int main ( int argc, char **argv )
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
-
+#if DEBUG_MOVE >=1 
+                cout << "Position Before Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
+                cout << "p.status: "<<thisParticle_XYZ.status << endl;
+#endif
 				thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
 #if GC_ORBITS >=1 
                 int MoveStatus = rk4_move_gc ( thisParticle_XYZ, dtMin, thisT[i], 
@@ -2013,7 +2060,7 @@ int main ( int argc, char **argv )
                     cout << "Position After Move: " << thisParticle_XYZ.c1 << "  " << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
                     cout<<"ERROR: rk4_move* threw an error"<<endl;
                     cout<<"MoveStatus: "<<MoveStatus<<endl;
-                    //exit(1); 
+                    exit(1); 
                 }
 #endif
             
@@ -2156,425 +2203,7 @@ int main ( int argc, char **argv )
 
 #else // END OF LOWMEM CODING ^^^
 
-		vector<CParticle> this_particles_XYZ(particles_XYZ);
-		for(int iP=0;iP<particles_XYZ.size();iP++) {
-				this_particles_XYZ[iP].c1 = xGrid[iX];
-		}
-		// Generate linear orbits
-		vector<vector<C3Vec> > orbits_XYZ(this_particles_XYZ.size());
-		vector<vector<C3Vec> > orbits_v_XYZ(this_particles_XYZ.size());
 
-		vector<vector<int> > status(this_particles_XYZ.size());
-
-		vector<int> nStepsTaken(this_particles_XYZ.size(),0);
-		//vector<float> t;
-
-		//t.resize(nSteps);
-
-		//#pragma omp parallel for firstprivate(b0_CYL,r)
-		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-		//for(int iP=100;iP<101;iP++) {
-
-			orbits_XYZ[iP].resize(nSteps);
-			orbits_v_XYZ[iP].resize(nSteps);
-			status[iP].resize(nSteps);
-
-	 		for(int i=0;i<nSteps;i++) {	
-
-#if DEBUGLEVEL >= 3
-					cout << "\tE: " << 
-							0.5 * this_particles_XYZ[iP].m * 
-							sqrt (pow(this_particles_XYZ[iP].v_c1,2)
-											+pow(this_particles_XYZ[iP].v_c2,2)
-											+pow(this_particles_XYZ[iP].v_c3,2))/_e << endl;
-#endif	
-					//t[i]=i*dtMin;
-					if(this_particles_XYZ[iP].status==0) {
-						orbits_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].c1,this_particles_XYZ[iP].c2,this_particles_XYZ[iP].c3);
-						orbits_v_XYZ[iP][i] = C3Vec(this_particles_XYZ[iP].v_c1,this_particles_XYZ[iP].v_c2,this_particles_XYZ[iP].v_c3);
-						//if(iP==495||iP==496||iP==497) {
-						//}
-						rk4_move ( this_particles_XYZ[iP], dtMin, thisT[i], b0_CYL, r );
-						//cout<<"p: "<<iP<<" i: "<<i<<" vx: "<<orbits_v_XYZ[iP][i].c1
-                        //        <<" x: "<<orbits_XYZ[iP][i].c1<<endl;
-                        //cout<<"r.Front: "<<r.front()<<endl;
-                        //cout<<"r.Back: "<<r.back()<<endl;
-
-						if(this_particles_XYZ[iP].status==0) {
-							status[iP][i] = 0;
-							nStepsTaken[iP]++;
-						}
-						else {
-							status[iP][i] = 1;
-						}
-					}
-					else {
-						status[iP][i] = 1;
-#if _PARTICLE_BOUNDARY == 2
-						cout<<"ERROR: particle should never hit the wall with -D_PARTICLE_BOUNDARY=2"<<endl;
-#endif
-					}
-			}
-		}
-
-		//// -- HACK DEBUGGING HERE --
-		//for(int p=0;p<nP;p++) {
-		//		cout<<"p: "<<p<<" last x: "<<orbits_XYZ[p][nSteps-1].c1<<endl;
-		//}	
-
-		//cout << "\tnSteps: " << nSteps << endl;
-		//cout << "DONE" << endl;
-#if USEPAPI >= 1
-		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-		printf("\nOribit calculation performance ...\n");
-		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
-					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-#endif
-		//cout << "Interpolating complex E field along trajectories for xGrid " << iX << endl;
-
-		vector<C3Vec> dv(nSteps);	
-		vector<vector<C3Vec> >e1(this_particles_XYZ.size());
-		vector<vector<C3VecI> >e1c(this_particles_XYZ.size());
-		vector<vector<vector<C3Vec> > >v1(this_particles_XYZ.size());
-		vector<vector<vector<C3VecI> > >v1c(this_particles_XYZ.size());
-
-		vector<vector<C3Vec> >e1ReHere_XYZ(this_particles_XYZ.size());
-		vector<vector<C3Vec> >e1ImHere_XYZ(this_particles_XYZ.size());
-
-		//#pragma omp parallel for
-		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
-			e1ReHere_XYZ[iP].resize(nSteps);
-			e1ImHere_XYZ[iP].resize(nSteps);
-
-			for(int i=0;i<nSteps;i++) {
-
-					if(i<=nStepsTaken[iP]&&status[iP][i]==0) {
-
-						istat = 0;
-						C3Vec e1ReTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Re_XYZ, istat );
-						istat = 0;
-						C3Vec e1ImTmp_XYZ = kj_interp1D ( orbits_XYZ[iP][i].c1, r, e1Im_XYZ, istat );
-
-						e1ReHere_XYZ[iP][i] = e1ReTmp_XYZ;
-						e1ImHere_XYZ[iP][i] = e1ImTmp_XYZ;
-
-						//if(iP==0)
-						//cout<<"x: "<<orbits_XYZ[iP][i].c1<<" \teRe: "<<e1ReHere_XYZ[iP][i].c1<<endl;
-
-						if(e1ReHere_XYZ[iP][i].c1 != e1ReHere_XYZ[iP][i].c1) {
-							cout << "\tERROR: NaN detected in e1ReHere_XYZ." << endl;
-							cout << "\tDETAILS: c1: "<<orbits_XYZ[iP][i].c1<<endl;
-							cout << "\t\t e1Re: "<<e1ReHere_XYZ[iP][i].c1<<endl;
-
-							exit(1);
-						}
-						if(e1ImHere_XYZ[iP][i].c1 != e1ImHere_XYZ[iP][i].c1) {
-							cout << "\tERROR: NaN detected in e1ImHere_XYZ." << endl;
-							exit(1);
-						}
-	
-					}
-					else {
-						//printf("\t%s line: %i\n",__FILE__,__LINE__);
-						//cout<<"i < nStepsTaken[iP]"<<endl;
-						e1ReHere_XYZ[iP][i] = C3Vec(0,0,0);
-						e1ImHere_XYZ[iP][i] = C3Vec(0,0,0);
-				}
-
-			}
-
-		}
-		
-		//cout << "DONE" << endl;
-#if USEPAPI >= 1
-		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-		printf("\nOribit E interpolation performance ...\n");
-		printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
-					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
-#endif
-		// Calculate jP1 for each time at the spatial point
-
-
-#if DEBUGLEVEL >= 1
-		cout << "\tnThermal: " << nThermal << endl;
-		cout << "\tvTh: " << vTh << endl;
-#endif
-
-		// Check density using non-grid method
-		float densityCheck = 0;
-		for(int iP=1;iP<particles_XYZ_0.size();iP++){
-				densityCheck += -(particles_XYZ_0[iP-1].v_c1-particles_XYZ_0[iP].v_c1)*
-						(particles_XYZ_0[iP-1].weight+particles_XYZ_0[iP].weight)/2;
-		}
-
-		//cout << "Density on f0 using gridded method: " << densityCheck << endl;
-
-		//cout << "DONE" << endl;
-
-
-		for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
-				e1[iP].resize(nSteps);
-				e1c[iP].resize(nSteps);
-
-				for(int i=0;i<nSteps;i++) e1[iP][i] = C3Vec(0,0,0);
-				for(int i=0;i<nSteps;i++) e1c[iP][i] = C3VecI();
-
-				v1[iP].resize(nJp);
-				v1c[iP].resize(nJp);
-
-				for(int iJ=0;iJ<nJp;iJ++) {
-
-					v1[iP][iJ].resize(nSteps);
-					v1c[iP][iJ].resize(nSteps);
-
-				}
-		}
-#if USEPAPI >= 1
-		float eT_cpuTime=0, eT_realTime=0, eT_flpIns=0, eT_mFlops=0;
-		float vT_cpuTime=0, vT_realTime=0, vT_flpIns=0, vT_mFlops=0;
-#endif
-
-
-		//#pragma omp parallel for firstprivate(e1,e1c)
-		for(int jt=0;jt<nJp;jt++) {
-
-			// Get e1 magnitude along orbit
-			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
-				for(int i=0;i<nSteps;i++) {
-					v1[iP][jt][i] = C3Vec(0,0,0);
-					v1c[iP][jt][i] = C3VecI();
-				}
-#if USEPAPI >= 1
-				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-#endif	
-				for(int i=0;i<nSteps;i++) {	
-
-					float phs = 0;//-2*_pi/37.4;
-					float tTmp = tJp[jt]+thisT[i];
-					//if(tTmp>=-tRF*(nRFCycles-nJpCycles)) { //i<=nStepsTaken[iP]) { 
-						// Get E(t) along orbit 
-						//int iOff = nStepsPerCycle*nJpCycles-(tJp[jt]/tRF*nStepsPerCycle);
-						// Remember we are changing from -iwt to +iwt to get the correct particle motion
-						// relative to the electric field, i.e., doppler shift was messed up before
-						//float gamma = 1/sqrt( 1-pow(particles_XYZ_0[iP].v_c1,2)/pow(_c,2) );
-						//if(1-pow(particles_XYZ_0[iP].v_c1,2)/pow(_c,2)<0) {
-						//		cout << "particle faster than light ... problem" << endl;
-						//		cout << "v: " << particles_XYZ_0[iP].v_c1 << " m/s" << endl;
-						//		exit(1);
-						//}
-						//cout << "gamma: " << gamma << endl;
-#if COMPLEX_WRF < 1
-						//e1[iP][i] = hanningWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
-						float weight = expWeight[i]*hanningWeight[i];
-						e1[iP][i] = weight*(e1ReHere_XYZ[iP][i]*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i]*sin(-(wrf*tTmp+phs)));
-						e1c[iP][i] = C3VecI(
-										weight*complex<float>(e1ReHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))-e1ImHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs)),
-												e1ImHere_XYZ[iP][i].c1*cos(-(wrf*tTmp+phs))+e1ReHere_XYZ[iP][i].c1*sin(-(wrf*tTmp+phs))),
-										weight*complex<float>(e1ReHere_XYZ[iP][i].c2,e1ImHere_XYZ[iP][i].c2),
-										weight*complex<float>(e1ReHere_XYZ[iP][i].c3,e1ImHere_XYZ[iP][i].c3));
-						//if(jt==0&&iP==0)
-						//		cout<<"t: "<<tTmp<<" \tx: "<<orbits_XYZ[iP][i].c1<<" \te: "<<e1c[iP][i].c1<<endl;
-
-						//if(i==0&&jt==0){
-						//		cout<<"x: "<<orbits_XYZ[iP][i].c1<<" e: "<<e1c[iP][i].c1<<endl;
-						//}
-						//if(hanningWeight[i+iOff] != hanningWeight[i+iOff]) {
-						//	cout << "\tERROR: NaN detected in hanningWeight at i=" <<
-						//			i+iOff<<" with value="<<hanningWeight[i+iOff]<<endl;
-						//	exit(1);
-						//}
-#else
-						e1[iP][i] = expWeight[i+iOff]*(e1ReHere_XYZ[iP][i]*cos(-wrf*tTmp)+e1ImHere_XYZ[iP][i]*sin(-wrf*tTmp));
-						if(expWeight[i+iOff] != expWeight[i+iOff]) {
-							cout << "\tERROR: NaN detected in expWeight at i=" <<
-									i+iOff<<" with value="<<expWeight[i+iOff]<<endl;
-							exit(1);
-						}
-
-#endif
-					//}
-					//else {
-					//	e1[iP][i] = C3Vec(0,0,0);
-					//}	
-				}
-#if USEPAPI >= 1
-				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-
-				eT_realTime += (realTime-realTime0);
-				eT_cpuTime += (cpuTime-cpuTime0);
-				eT_flpIns += (flpIns-flpIns0);
-				eT_mFlops += mFlops;
-#endif
-				// Intergrate e1 from t=-inf to 0 to get v1
-				v1[iP][jt][nSteps-1].c1=0;v1[iP][jt][nSteps-1].c2=0;v1[iP][jt][nSteps-1].c3=0;
-				complex<float> c0 = complex<float>(0,0);
-				v1c[iP][jt][nSteps-1].c1=c0;v1c[iP][jt][nSteps-1].c2=c0;v1c[iP][jt][nSteps-1].c3=c0;
-
-				float trapInt1=0, trapInt2=0, trapInt3=0;
-				complex<float> trapInt1c=c0;
-				float simpInt1=0, simpInt2=0, simpInt3=0;
-
-				double qOverm =  this_particles_XYZ[iP].q/this_particles_XYZ[iP].m;
-				float h = -(thisT[1]-thisT[0])*qOverm;
-				//for(int i=nSteps-1;i>0;i--) { // integrate from t=-inf to t=0
-				for(int i=0;i<nSteps;i++) { // integrate from t=-inf to t=0
-
-					//if(i==0||i==nSteps-1) { // n intervals must be even so nSteps mush be odd
-					//	simpInt1 += h/3 * (e1[iP][i].c1);
-					//} else if (i%2==0) {
-					//	simpInt1 += h/3 * (2*e1[iP][i].c1);
-					//} else {
-					//	simpInt1 += h/3 * (4*e1[iP][i].c1);
-					//}
-
-					if(i>0) {
-						trapInt1 += h/2.0 * (e1[iP][i-1].c1+e1[iP][i].c1);
-						trapInt2 += h/2.0 * (e1[iP][i-1].c2+e1[iP][i].c2);
-						trapInt3 += h/2.0 * (e1[iP][i-1].c3+e1[iP][i].c3);
-
-						trapInt1c += h/2 * (e1c[iP][i-1].c1+e1c[iP][i].c1);
-					} else {
-						trapInt1 = 0;
-						trapInt2 = 0;
-						trapInt3 = 0;
-
-						trapInt1c = c0;
-					}
-
-					//if(jt==0)
-					//cout<<trapInt1c<<endl;
-
-					v1[iP][jt][i].c1 = trapInt1;
-					v1[iP][jt][i].c2 = trapInt2;
-					v1[iP][jt][i].c3 = trapInt3;
-
-					v1c[iP][jt][i].c1 = trapInt1c;
-
-				}
-
-#if USEPAPI >= 1
-				cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-				papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-
-				vT_realTime += (realTime-realTime0);
-				vT_cpuTime += (cpuTime-cpuTime0);
-				vT_flpIns += (flpIns-flpIns0);
-				vT_mFlops += mFlops;
-#endif
-			}
-#if USEPAPI >= 1
-			cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
-			papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
-#endif
-
-			j1x[iX][jt] = 0;
-			j1xc[iX][jt] = complex<float>(0,0);
-#if _PARTICLE_BOUNDARY == 1 || _PARTICLE_BOUNDARY == 2
-			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
-					// Integrate over velocity space with trapazoidal rule.
-					if(iP>0){
-						float qe = particles_XYZ_0[0].q;
-						float f0_i = particles_XYZ_0[iP].weight;
-						float f0_im1 = particles_XYZ_0[iP-1].weight;
-
-						float f1_i = -v1[iP][jt][nSteps-1].c1*df0_dv[iP];
-						float f1_im1 = -v1[iP-1][jt][nSteps-1].c1*df0_dv[iP-1];
-						float v0_i = particles_XYZ_0[iP].v_c1;
-						float v0_im1 = particles_XYZ_0[iP-1].v_c1;
-						float dv = -(v0_im1-v0_i);
-						float h = dv*qe;
-
-						j1x[iX][jt] += (qe*dv/2) * ( v0_im1*f1_im1 + v0_i*f1_i);
-
-						complex<float> f1c_i = -v1c[iP][jt][nSteps-1].c1*df0_dv[iP];
-						complex<float> f1c_im1 = -v1c[iP-1][jt][nSteps-1].c1*df0_dv[iP-1];
-						j1xc[iX][jt] += (qe*dv/2) * ( v0_im1*f1c_im1 + v0_i*f1c_i);
-	
-					}
-
-					//if(jt==0)	
-					//cout<<"iP: "<<iP<<" \tv0: "<<particles_XYZ_0[iP].v_c1<<" \tv1: " << v1c[iP][jt][nSteps-1].c1 << endl;
-#if DEBUGLEVEL >= 2
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[iX][jt]: "<<j1x[iX][jt]<<endl;
-#endif
-			//		//j1x[jt] -= (particles_XYZ_0[iP].v_c1)*particles_XYZ_0[iP].weight;
-			}
-			//if(jt==0)
-			//cout<<"x: "<<xGrid[iX]<<" \tj1xc[jt]: "<<j1xc[jt]<<" \tsig33[jt]: "<<j1xc[jt]/e1c[0][0].c1<<" \te1c[jt]: "<<e1c[0][0].c1<<endl;
-#else	
-			for(int iP=0;iP<this_particles_XYZ.size();iP++) {
-
-					vector<float> _j1xR(nJp,0), _j1xL(nJp,0);		
-					vector<int> AvgCntrR(nJp,0), AvgCntrL(nJp,0);
-
-					for(int i=0;i<nSteps-2;i++) { // remember the first pt, i=0, has no value due to integration above
-						float _x = orbits_XYZ[iP][i].c1;
-						if(i==0) // This is the non-reflective current as above
-						{
-							j1x[iX][jt] += (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-						}
-						else // This is the reflective piece of the current
-						{
-							if(
-								(orbits_XYZ[iP][i].c1>xGrid[iX]&&orbits_XYZ[iP][i-1].c1<xGrid[iX]) ||
-						   		(orbits_XYZ[iP][i].c1<xGrid[iX]&&orbits_XYZ[iP][i-1].c1>xGrid[iX]) ){
-
-								float _t = tJp[jt]+thisT[i];
-								float _jt_float;
-								int _jt;
-								if(_t>=0) {
-									_jt_float = (fmod(_t,tRF*nJpCycles)+dtJp/2.0)/dtJp;
-#if DEBUGLEVEL >= 1
-									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
-#endif
-									_jt = _jt_float;
-									if(_jt>nJp-1)_jt=0;
-								}
-								else {
-									_jt_float = ((tRF*nJpCycles+fmod(_t,tRF*nJpCycles))+dtJp/2.0)/dtJp;
-#if DEBUGLEVEL >= 1
-									cout<<"i: "<<i<<" _t: "<<_t<<" fmod: "<<fmod(_t,tRF*nJpCycles)<<" tRF*nJpCycles: "<<tRF*nJpCycles<<" nJpCycles: "<<nJpCycles<<" _jt_float: "<<_jt_float<<endl;
-#endif
-									_jt = _jt_float;
-									if(_jt>nJp-1)_jt=0;
-								}
-								float jA=0, jB=0;	
-								//jA = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-								//jB = (particles_XYZ_0[iP].v_c1+v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
-								jA = (v1[iP][jt][i].c1)*particles_XYZ_0[iP].weight;
-								jB = (v1[iP][jt][i-1].c1)*particles_XYZ_0[iP].weight;
-								j1x[iX][_jt] +=	(jA+jB)/2.0;						
-#if DEBUGLEVEL >= 1
-								cout<<"Extra left/right going "<<"iP: "<<iP<<" i: "<<i<<endl;
-#endif
-							} 
-						}
-					}
-
-#if DEBUGLEVEL >= 1
-					cout<<"iP: "<<iP<<" i: "<<0<<" jt: "<<jt<<" nJp: "<<nJp<<" j1x[iX][jt]: "<<j1x[iX][jt]<<endl;
-#endif
-			}
-#endif
-		}
-
-//		float qe = this_particles_XYZ[0].q;
-//		for(int jt=0;jt<nJp;jt++)
-//		{
-//			j1x[jt] = j1x[jt] * qe;
-//#if DEBUGLEVEL >= 1
-//			cout<<j1x[jt]<<"  ";
-//#endif
-//		}
-//		cout<<endl;
 
 #endif // END OF HIGHMEM CODING ^^^
 
