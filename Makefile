@@ -10,7 +10,6 @@ CUDADIR := ${HOME}/code/cuda/4.1/cuda
 CUDALIBDIR = ${CUDADIR}/lib64
 CUDA_ARCH := sm_13
 CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
-LIBCONFIGDIR := ${HOME}/code/libconfig
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
