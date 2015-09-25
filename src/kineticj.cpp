@@ -13,7 +13,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
-//#include <omp.h>
+#include <omp.h>
+#include "read_gc_file.hpp"
+#include "c3vec.hpp"
+#include "read_e_field.hpp"
+#include <new> // for stl::bad_alloc
 
 #if CLOCK >= 1 
 #include <ctime>
@@ -26,7 +30,6 @@
 #if LOWMEM_USEPAPI >= 1
 #include <papi.h>
 #endif
-
 
 //#include <google/profiler.h>
 
@@ -115,279 +118,6 @@ CParticle::CParticle
 }
 
 CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
-}
-
-class C3VecI {
-		public:
-				complex<float> c1, c2, c3;
-
-                C3VecI (int _const) {c1=_const;c2=_const;c3=_const;};
-				C3VecI () {c1=complex<float>(0.0f,0.0f);c2=complex<float>(0.0f,0.0f);c3=complex<float>(0.0f,0.0f);};
-				C3VecI ( complex<float> _c1, complex<float> _c2, complex<float> _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
-
-				C3VecI& operator = (const C3VecI &rhs);
-				C3VecI& operator += (const C3VecI &rhs);
-				C3VecI& operator += (const float &rhs);
-				C3VecI& operator -= (const C3VecI &rhs);
-				C3VecI& operator -= (const float &rhs);
-				C3VecI& operator *= (const C3VecI &rhs);
-				C3VecI& operator *= (const float &rhs);
-				C3VecI& operator /= (const C3VecI &rhs);
-				C3VecI& operator /= (const float &rhs);
-
-
-				C3VecI operator + (const C3VecI &other);
-				C3VecI operator + (const float &other);
-				C3VecI operator - (const C3VecI &other);
-				C3VecI operator - (const float &other);
-				C3VecI operator * (const C3VecI &other);
-				C3VecI operator * (const float &other);
-				friend C3VecI operator * (const float &other, const C3VecI &rhs);
-				C3VecI operator / (const C3VecI &other);
-				C3VecI operator / (const float &other);
-};
-
-class C3Vec {
-		public:
-				float c1, c2, c3;
-
-                C3Vec (int _const) {c1=_const;c2=_const;c3=_const;};
-				C3Vec () {c1=0;c2=0;c3=0;};
-				C3Vec ( float _c1, float _c2, float _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
-
-				C3Vec& operator = (const C3Vec &rhs);
-				C3Vec& operator += (const C3Vec &rhs);
-				C3Vec& operator += (const float &rhs);
-				C3Vec& operator -= (const C3Vec &rhs);
-				C3Vec& operator -= (const float &rhs);
-				C3Vec& operator *= (const C3Vec &rhs);
-				C3Vec& operator *= (const float &rhs);
-				C3Vec& operator /= (const C3Vec &rhs);
-				C3Vec& operator /= (const float &rhs);
-
-				C3Vec operator + (const C3Vec &other);
-				C3Vec operator + (const float &other);
-				C3Vec operator - (const C3Vec &other);
-				C3Vec operator - (const float &other);
-				C3Vec operator * (const C3Vec &other);
-				C3Vec operator * (const float &other);
-				friend C3Vec operator * (const float &other, const C3Vec &rhs);
-				C3Vec operator / (const C3Vec &other);
-				C3Vec operator / (const float &other);
-};
-
-C3Vec& C3Vec::operator= (const C3Vec &rhs ) {
-		if (this != &rhs) {
-				c1 = rhs.c1;
-				c2 = rhs.c2;
-				c3 = rhs.c3;
-		}
-		return *this;
-}
-C3VecI& C3VecI::operator= (const C3VecI &rhs ) {
-		if (this != &rhs) {
-				c1 = rhs.c1;
-				c2 = rhs.c2;
-				c3 = rhs.c3;
-		}
-		return *this;
-}
-C3Vec& C3Vec::operator+= (const C3Vec &rhs ) {
-		c1 += rhs.c1;
-		c2 += rhs.c2;
-		c3 += rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator+= (const float &rhs ) {
-		c1 += rhs;
-		c2 += rhs;
-		c3 += rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator-= (const C3Vec &rhs ) {
-		c1 -= rhs.c1;
-		c2 -= rhs.c2;
-		c3 -= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator-= (const float &rhs ) {
-		c1 -= rhs;
-		c2 -= rhs;
-		c3 -= rhs;
-		return *this;
-}
-C3VecI& C3VecI::operator-= (const C3VecI &rhs ) {
-		c1 -= rhs.c1;
-		c2 -= rhs.c2;
-		c3 -= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator-= (const float &rhs ) {
-		c1 -= rhs;
-		c2 -= rhs;
-		c3 -= rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator*= (const C3Vec &rhs ) {
-		c1 *= rhs.c1;
-		c2 *= rhs.c2;
-		c3 *= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator*= (const float &rhs ) {
-		c1 *= rhs;
-		c2 *= rhs;
-		c3 *= rhs;
-		return *this;
-}
-
-C3Vec& C3Vec::operator/= (const C3Vec &rhs ) {
-		c1 /= rhs.c1;
-		c2 /= rhs.c2;
-		c3 /= rhs.c3;
-		return *this;
-}
-
-C3Vec& C3Vec::operator/= (const float &rhs ) {
-		c1 /= rhs;
-		c2 /= rhs;
-		c3 /= rhs;
-		return *this;
-}
-
-C3VecI& C3VecI::operator/= (const C3VecI &rhs ) {
-		c1 /= rhs.c1;
-		c2 /= rhs.c2;
-		c3 /= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator/= (const float &rhs ) {
-		c1 /= rhs;
-		c2 /= rhs;
-		c3 /= rhs;
-		return *this;
-}
-C3Vec C3Vec::operator+ (const C3Vec &other) {
-		return C3Vec(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
-}
-
-C3Vec C3Vec::operator+ (const float &other) {
-		return C3Vec(*this)+=other;
-}
-
-C3Vec C3Vec::operator- (const C3Vec &other) {
-		return C3Vec(*this)-=other;
-}
-
-C3Vec C3Vec::operator- (const float &other) {
-		return C3Vec(*this)-=other;
-}
-
-C3VecI C3VecI::operator- (const C3VecI &other) {
-		return C3VecI(*this)-=other;
-}
-
-C3VecI C3VecI::operator- (const float &other) {
-		return C3VecI(*this)-=other;
-}
-
-C3Vec C3Vec::operator* (const C3Vec &other) {
-		return C3Vec(*this)*=other;
-}
-
-C3Vec C3Vec::operator* (const float &other) {
-		return C3Vec(*this)*=other;
-}
-
-C3Vec C3Vec::operator/ (const C3Vec &other) {
-		return C3Vec(*this)/=other;
-}
-
-C3Vec C3Vec::operator/ (const float &other) {
-		return C3Vec(*this)/=other;
-}
-
-C3VecI C3VecI::operator/ (const C3VecI &other) {
-		return C3VecI(*this)/=other;
-}
-
-C3VecI C3VecI::operator/ (const float &other) {
-		return C3VecI(*this)/=other;
-}
-// C3VecI 
-
-C3VecI& C3VecI::operator+= (const C3VecI &rhs ) {
-		c1 += rhs.c1;
-		c2 += rhs.c2;
-		c3 += rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator+= (const float &rhs ) {
-		c1 += rhs;
-		c2 += rhs;
-		c3 += rhs;
-		return *this;
-}
-
-C3VecI& C3VecI::operator*= (const C3VecI &rhs ) {
-		c1 *= rhs.c1;
-		c2 *= rhs.c2;
-		c3 *= rhs.c3;
-		return *this;
-}
-
-C3VecI& C3VecI::operator*= (const float &rhs ) {
-		c1 *= rhs;
-		c2 *= rhs;
-		c3 *= rhs;
-		return *this;
-}
-C3VecI C3VecI::operator+ (const C3VecI &other) {
-		return C3VecI(this->c1+other.c1,this->c2+other.c2,this->c3+other.c3);
-}
-
-C3VecI C3VecI::operator+ (const float &other) {
-		return C3VecI(*this)+=other;
-}
-C3VecI C3VecI::operator* (const C3VecI &other) {
-		return C3VecI(*this)*=other;
-}
-
-C3VecI C3VecI::operator* (const float &other) {
-		return C3VecI(*this)*=other;
-}
-
-// Global (not member) functions for lhs operators
-
-C3Vec operator* ( const float &other, const C3Vec &rhs ) {
-		return C3Vec(rhs)*=other;
-}
-
-C3VecI operator* ( const float &other, const C3VecI &rhs ) {
-		return C3VecI(rhs)*=other;
-}
-
-C3VecI operator* ( const complex<float> &other, const C3VecI &rhs ) {
-        C3VecI tmp;
-        tmp.c1 = other * rhs.c1;
-        tmp.c2 = other * rhs.c2;
-        tmp.c3 = other * rhs.c3;
-		return tmp;
-}
-
-C3Vec operator+ ( const C3Vec &other, const C3Vec &rhs) {
-		return C3Vec(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
-}
-C3VecI operator+ ( const C3VecI &other, const C3VecI &rhs) {
-		return C3VecI(other.c1+rhs.c1,other.c2+rhs.c2,other.c3+rhs.c3);
 }
 
 ostream& operator<< ( ostream &os, const C3Vec &v ) {
@@ -1500,300 +1230,42 @@ int main ( int argc, char **argv )
 					   realTime, cpuTime, flpIns, mFlops);
 #endif
 
+        // Read config file
+
 		libconfig::Config cfg;
 		string cfgName = "kj.cfg";
 
-		// Write a config file if required
-		//libconfig::Setting &root = cfg.getRoot();
-		//root.add("xGridMin", libconfig::Setting::TypeFloat) = 98.0;
-		//root.add("xGridMax", libconfig::Setting::TypeFloat) = 100.0;
-		//root.add("nXGrid", libconfig::Setting::TypeInt) = 20;
-		//root.add("nRFCycles", libconfig::Setting::TypeFloat) = 10;
-		//root.add("nStepsPerCycle", libconfig::Setting::TypeInt) = 100;
-		//root.add("nJpCycles", libconfig::Setting::TypeInt) = 6;
-		//root.add("nJpPerCycle", libconfig::Setting::TypeInt) = 20;
-		//root.add("eField_fName", libconfig::Setting::TypeString) = "data/kj_aorsa_1d.nc";
-		//root.add("particleList_fName", libconfig::Setting::TypeString) = "data/f.nc";
-		//cfg.writeFile(cfgName.c_str());
-		
-		// Open the config file
-		cfg.readFile(cfgName.c_str());
+        try {
+            cfg.readFile(cfgName.c_str());
+        }
+        catch(const libconfig::FileIOException &fioex) {
+            std::cerr << "I/O error while reading file." << std::endl;
+            return(EXIT_FAILURE);
+        }
+        catch(const libconfig::ParseException &pex) {
+            std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                << " - " << pex.getError() << std::endl;
+            return(EXIT_FAILURE);
+        }
 
 	    int species_number = cfg.lookup("species_number");
 
 		// Read E
 		string eField_fName = cfg.lookup("eField_fName");	
-		cout << "Reading eField data file " << eField_fName << endl;
-
-		// Here we are using the cxx-4 netcdf interface by Lynton Appel
-		// This needs netCDF 4.1.1 or later build with
-		// ./configure --enable-cxx-4 [plus other options]
-
-		vector<float> r, b0_r, b0_p, b0_z,
-				e_r_re, e_p_re, e_z_re,
-				e_r_im, e_p_im, e_z_im, n_m3,
-				b_r_re, b_p_re, b_z_re,
-				b_r_im, b_p_im, b_z_im;
-		vector<C3Vec> b0_CYL, b0_XYZ;
-		
-		float freq;
-
-		vector<complex<float> > e_r, e_p, e_z;	
-		vector<complex<float> > b_r, b_p, b_z;	
-
-		ifstream file(eField_fName.c_str());
-		if(!file.good()) {
-			cout << "ERROR: Cannot find file " << eField_fName << endl;
-			exit(1);
-		}
-
-
-		try {
-				NcFile dataFile ( eField_fName.c_str(), NcFile::read );
-	
-				NcDim nc_nR(dataFile.getDim("nR"));
-				NcDim nc_nSpec(dataFile.getDim("nSpec"));
-				NcDim nc_scalar(dataFile.getDim("scalar"));
-	
-				int nR = nc_nR.getSize();
-				int nSpec = nc_nSpec.getSize();
-
-                if(species_number>nSpec-1) {
-                        cout << "ERROR: Asking for species that does not exist in density data" << endl;
-                        exit(1);
-                }
-	
-				cout << "\tnR: " << nR << endl;
-	
-				NcVar nc_r(dataFile.getVar("r"));
-				NcVar nc_freq(dataFile.getVar("freq"));
-
-				NcVar nc_b0_r(dataFile.getVar("B0_r"));
-				NcVar nc_b0_p(dataFile.getVar("B0_p"));
-				NcVar nc_b0_z(dataFile.getVar("B0_z"));
-
-				NcVar nc_e_r_re(dataFile.getVar("e_r_re"));
-				NcVar nc_e_p_re(dataFile.getVar("e_p_re"));
-				NcVar nc_e_z_re(dataFile.getVar("e_z_re"));
-				NcVar nc_e_r_im(dataFile.getVar("e_r_im"));
-				NcVar nc_e_p_im(dataFile.getVar("e_p_im"));
-				NcVar nc_e_z_im(dataFile.getVar("e_z_im"));
-
-				NcVar nc_b_r_re(dataFile.getVar("b_r_re"));
-				NcVar nc_b_p_re(dataFile.getVar("b_p_re"));
-				NcVar nc_b_z_re(dataFile.getVar("b_z_re"));
-				NcVar nc_b_r_im(dataFile.getVar("b_r_im"));
-				NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
-				NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
-
-				NcVar nc_density(dataFile.getVar("density_m3"));
-
-				r.resize(nR);
-
-				b0_r.resize(nR);
-				b0_p.resize(nR);
-				b0_z.resize(nR);
-
-				e_r_re.resize(nR);
-				e_p_re.resize(nR);
-				e_z_re.resize(nR);
-				e_r_im.resize(nR);
-				e_p_im.resize(nR);
-				e_z_im.resize(nR);
-
-				b_r_re.resize(nR);
-				b_p_re.resize(nR);
-				b_z_re.resize(nR);
-				b_r_im.resize(nR);
-				b_p_im.resize(nR);
-				b_z_im.resize(nR);
-
-                n_m3.resize(nR);
-
-				nc_r.getVar(&r[0]);
-				nc_freq.getVar(&freq);
-
-				nc_b0_r.getVar(&b0_r[0]);
-				nc_b0_p.getVar(&b0_p[0]);
-				nc_b0_z.getVar(&b0_z[0]);
-
-                // Here im reading a single species' density from a multi species array, 
-                // i.e., density[nSpec,nR] and I only want density[1,*] for example where
-                // the species is specified by "species_number" in the cfg file
-                vector<size_t> start, count;
-                start.resize(2);
-                count.resize(2);
-                start[1] = 0;
-                start[0] = species_number;
-                count[1] = nR;
-                count[0] = 1;
-
-				nc_density.getVar(start, count, &n_m3[0]);
-
-				b0_CYL.resize(nR);
-				for(int i=0; i<nR; i++) {
-						b0_CYL[i] = C3Vec(b0_r[i],b0_p[i],b0_z[i]);
-				}
-
-				nc_e_r_re.getVar(&e_r_re[0]);
-				nc_e_p_re.getVar(&e_p_re[0]);
-				nc_e_z_re.getVar(&e_z_re[0]);
-				nc_e_r_im.getVar(&e_r_im[0]);
-				nc_e_p_im.getVar(&e_p_im[0]);
-				nc_e_z_im.getVar(&e_z_im[0]);
-
-				nc_b_r_re.getVar(&b_r_re[0]);
-				nc_b_p_re.getVar(&b_p_re[0]);
-				nc_b_z_re.getVar(&b_z_re[0]);
-				nc_b_r_im.getVar(&b_r_im[0]);
-				nc_b_p_im.getVar(&b_p_im[0]);
-				nc_b_z_im.getVar(&b_z_im[0]);
-
-				for(int i=0; i<nR; i++){
-						e_r.push_back(complex<float>( e_r_re[i], e_r_im[i] ) );
-						e_p.push_back(complex<float>( e_p_re[i], e_p_im[i] ) );
-						e_z.push_back(complex<float>( e_z_re[i], e_z_im[i] ) );
-				}
-
-				for(int i=0; i<nR; i++){
-						b_r.push_back(complex<float>( b_r_re[i], b_r_im[i] ) );
-						b_p.push_back(complex<float>( b_p_re[i], b_p_im[i] ) );
-						b_z.push_back(complex<float>( b_z_re[i], b_z_im[i] ) );
-				}
-
-				vector<float>::iterator min = min_element(b0_p.begin(),b0_p.end());
-				vector<float>::iterator max = max_element(b0_p.begin(),b0_p.end());
-#if DEBUGLEVEL >= 1 
-				cout << "\tR[0]: " << r[0] << ", R["<<nR<<"]: " << r[r.size()-1] << endl;
-				cout << "\tfreq: " << freq << endl;
-				cout << "\tmin(b0_p): " << *min << endl;
-				cout << "\tmax(b0_p): " << *max << endl;
-				cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR/2]) << endl;
-				cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR/2]) << endl;
-				cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR/2]) << endl;
-#endif
-		}
-		catch(exceptions::NcException &e) {
-				cout << "NetCDF: unknown error" << endl;
-				e.what();
-				exit(1);
-		}
-
-		// Read the guiding center terms from file
-		string gc_fName = cfg.lookup("gc_fName");	
-		cout << "Reading GC terms data file " << gc_fName << endl;
-
-		vector<float> r_gc, curv_r, curv_p, curv_z,
-            grad_r, grad_p, grad_z, bDotGradB;
-		vector<C3Vec> curv_CYL, grad_CYL;
-		
-		ifstream gc_file(gc_fName.c_str());
-		if(!gc_file.good()) {
-			cout << "ERROR: Cannot find file " << gc_fName << endl;
-			exit(1);
-		}
-
-		try {
-				NcFile dataFile ( gc_fName.c_str(), NcFile::read );
-	
-				NcDim gc_nc_nR(dataFile.getDim("nR"));
-				NcDim gc_nc_scalar(dataFile.getDim("scalar"));
-	
-				int nR_gc = gc_nc_nR.getSize();
-                cout << "nR_gc: " << nR_gc << endl;
-
-				NcVar gc_nc_r(dataFile.getVar("r"));
-
-				NcVar gc_nc_curv_r(dataFile.getVar("curv_r"));
-				NcVar gc_nc_curv_p(dataFile.getVar("curv_t"));
-				NcVar gc_nc_curv_z(dataFile.getVar("curv_z"));
-
-				NcVar gc_nc_grad_r(dataFile.getVar("grad_r"));
-				NcVar gc_nc_grad_p(dataFile.getVar("grad_t"));
-				NcVar gc_nc_grad_z(dataFile.getVar("grad_z"));
-
-				NcVar gc_nc_bDotGradB(dataFile.getVar("bDotGradB"));
-
-				r_gc.resize(nR_gc);
-
-				curv_r.resize(nR_gc);
-				curv_p.resize(nR_gc);
-				curv_z.resize(nR_gc);
-
-				grad_r.resize(nR_gc);
-				grad_p.resize(nR_gc);
-				grad_z.resize(nR_gc);
-
-				bDotGradB.resize(nR_gc);
-
-				gc_nc_r.getVar(&r_gc[0]);
-
-				gc_nc_curv_r.getVar(&curv_r[0]);
-				gc_nc_curv_p.getVar(&curv_p[0]);
-				gc_nc_curv_z.getVar(&curv_z[0]);
-
-				gc_nc_grad_r.getVar(&grad_r[0]);
-				gc_nc_grad_p.getVar(&grad_p[0]);
-				gc_nc_grad_z.getVar(&grad_z[0]);
-
-                gc_nc_bDotGradB.getVar(&bDotGradB[0]);
-
-				curv_CYL.resize(nR_gc);
-				grad_CYL.resize(nR_gc);
-				for(int i=0; i<nR_gc; i++) {
-						curv_CYL[i] = C3Vec(curv_r[i],curv_p[i],curv_z[i]);
-		                grad_CYL[i] = C3Vec(grad_r[i],grad_p[i],grad_z[i]);
-				}
-                cout <<"Finished reading gc_terms file"<<endl;
-
-		}
-		catch(exceptions::NcException &e) {
-				cout << "NetCDF: unknown error." << endl;
-				e.what();
-				exit(1);
-		}
-
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
-		// Rotate the e & b fields to XYZ
-
 		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
-        vector<C3VecI> e1_CYL;
+        vector<C3VecI> e1_CYL, b1_CYL;
+		vector<C3Vec> b0_CYL, b0_XYZ;
+        vector<float> r, n_m3;
+		float freq;
+        int eReadStat = read_e_field( eField_fName, species_number, freq, r, n_m3,  
+                        e1_CYL, b1_CYL, e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL, b0_CYL);
 
-		e1Re_CYL.resize(e_r.size());
-		e1Im_CYL.resize(e_r.size());
-		b1Re_CYL.resize(e_r.size());
-		b1Im_CYL.resize(e_r.size());
+        // Read GC terms
+        string gc_fName = cfg.lookup("gc_fName");	
+        vector<C3Vec> curv_CYL, grad_CYL;
+        std::vector<float> r_gc, bDotGradB;
+        int gcReadStat = read_gc_file( gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB );
 
-		e1_CYL.resize(e_r.size());
-
-		for(int i=0;i<e_r.size();i++) {
-
-			e1Re_CYL[i].c1 = real(e_r[i]);
-			e1Re_CYL[i].c2 = real(e_p[i]);
-			e1Re_CYL[i].c3 = real(e_z[i]);
-			e1Im_CYL[i].c1 = imag(e_r[i]);
-			e1Im_CYL[i].c2 = imag(e_p[i]);
-			e1Im_CYL[i].c3 = imag(e_z[i]);
-
-			b1Re_CYL[i].c1 = real(b_r[i]);
-			b1Re_CYL[i].c2 = real(b_p[i]);
-			b1Re_CYL[i].c3 = real(b_z[i]);
-			b1Im_CYL[i].c1 = imag(b_r[i]);
-			b1Im_CYL[i].c2 = imag(b_p[i]);
-			b1Im_CYL[i].c3 = imag(b_z[i]);
-
-            e1_CYL[i].c1 = e_r[i];
-            e1_CYL[i].c2 = e_p[i];
-            e1_CYL[i].c3 = e_z[i];
-
-		}
-
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
 
 	float wrf = freq * 2 * _pi;
 	float xGridMin = cfg.lookup("xGridMin");
@@ -1801,58 +1273,26 @@ int main ( int argc, char **argv )
 	int nXGrid = cfg.lookup("nXGrid");
     cout<<"nXGrid: "<<nXGrid<<endl;
 
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
 	vector<float> xGrid(nXGrid);
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
     vector<float> density_m3(nXGrid);
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
     vector<float> T_keV(nXGrid);
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
-
     vector<float> wrf_wc(nXGrid);
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
     vector<float> bMag_kjGrid(nXGrid);
-
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
 
 	float xGridRng = 0;
 	float xGridStep = 0;
-
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
 
 	if(nXGrid>1) {
 		xGridRng = xGridMax-xGridMin;
 		xGridStep = xGridRng/(nXGrid-1);
 	}
 
-#if DEBUG_LINES >=1
-    cout <<__LINE__<<endl;
-#endif
-
 	for(int iX=0;iX<nXGrid;iX++) {
 		xGrid[iX] = xGridMin+iX*xGridStep;
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX],r,n_m3,iStat);
-        bMag_kjGrid[iX] = mag(kj_interp1D(xGrid[iX],r,b0_CYL,iStat));
+        C3Vec this_b0= kj_interp1D(xGrid[iX],r,b0_CYL,iStat);
+        bMag_kjGrid[iX] = mag(this_b0);
         T_keV[iX] = 2.0;//kj_interp1D(xGrid[iX],r,n_m3);
 	}
 
@@ -1887,9 +1327,7 @@ int main ( int argc, char **argv )
 	int nP = nPx*nPy*nPz;
     float wc = Z*_e*MaxB0/(amu*_mi);
     float cyclotronPeriod = 2*_pi / wc;
-	//float dtMin 	= -tRF/nStepsPerCycle;
     float dtMin 	= -cyclotronPeriod/nStepsPerCycle;
-	//int nSteps 	= nRFCycles*nStepsPerCycle+1;
 	int nSteps 		= nRFCycles*tRF/abs(dtMin)+1;
 
 	for(int iX=0;iX<nXGrid;iX++) {
@@ -1897,24 +1335,26 @@ int main ( int argc, char **argv )
 		wrf_wc[iX] =  wrf / this_wc;
 	}
 
-	//vector<CParticle> particles_XYZ_0(particles_XYZ);
-
 
 #if PRINT_INFO >= 1
     cout << "dtMin [s]: " << dtMin << endl;
     cout << "Cyclotron Period: "<< cyclotronPeriod<<endl;
     cout << "RF Period: " << tRF << endl;
     cout << "nSteps: " << nSteps << endl;
+    cout << "nStepsPerCycle: " << nStepsPerCycle << endl;
     cout << "freq: " << freq << endl;
+    cout << "Max B0: " << MaxB0 << endl;
 #endif
 	
-#if !(LOWMEM >= 1)
-	vector<float> tJp(nJp,0);
-	for(int jt=0;jt<nJp;jt++) {
-		tJp[jt] = jt*dtJp;//-0.33*dtJp;
-	}
-#endif
-	vector<float> thisT(nSteps);
+    vector<float> thisT;
+    try {
+	    thisT.resize(nSteps);
+    }
+    catch ( const std::bad_alloc &error ) {
+        cout<<"Allocation error at "<<__FILE__<<__LINE__<<endl;
+        cout<<error.what();
+    }
+
 	for(int i=0;i<nSteps;i++) {	
 		thisT[i]=i*dtMin;//+1.5*dtMin;
 	}
@@ -1940,56 +1380,39 @@ int main ( int argc, char **argv )
 
 
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
-#if LOWMEM >= 1
 	vector<complex<float> > j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
-#else
-	vector<vector<complex<float> > >j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
-#endif
 
 #if defined(_OPENMP)
-        int nThreads;
+        int nThreads, tid, spoken = 0;
 #endif
  
-	#pragma omp parallel for private(istat)
+	#pragma omp parallel for private(istat, tid, spoken)
 	for(int iX=0;iX<nXGrid;iX++) {
 
 #if defined(_OPENMP)
         nThreads = omp_get_num_threads();
+        tid = omp_get_thread_num();
+        if( tid == 0 && spoken == 0 ) {
+            cout<<"tid : "<<tid<<endl;
+            cout<<"OMP_NUM_THREADS: "<<nThreads<<endl;
+            spoken = 1;
+        }
 #endif
         float dv;
         vector<CParticle> ThisParticleList(create_particles(xGrid[iX],amu,Z,T_keV[iX],density_m3[iX],
                                 nPx,nPy,nPz,nThermal,dv,r,b0_CYL));
-#if !(LOWMEM >= 1)
-		j1x[iX].resize(nJp);
-		j1xc[iX].resize(nJp);
 
-		j1y[iX].resize(nJp);
-		j1yc[iX].resize(nJp);
-
-		j1z[iX].resize(nJp);
-		j1zc[iX].resize(nJp);
-#endif
 #if CLOCK >= 1
         clock_t startTime = clock();
 #endif
-#if LOWMEM >= 1
         j1xc[iX] = complex<float>(0,0);
         j1yc[iX] = complex<float>(0,0);
         j1zc[iX] = complex<float>(0,0);
-#else
-		for(int jt=0;jt<nJp;jt++) {
-            j1xc[iX][jt] = complex<float>(0,0);
-            j1yc[iX][jt] = complex<float>(0,0);
-            j1zc[iX][jt] = complex<float>(0,0);
-        }
-#endif
 
 #if LOWMEM_USEPAPI >= 1
 		cpuTime0=cpuTime;realTime0=realTime;flpIns0=flpIns;
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif	
-
-#if LOWMEM >= 1 // START OF THE LOWMEM CODING vvv
 
 		vector<float> f1(nP);
 		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
@@ -2067,8 +1490,14 @@ int main ( int argc, char **argv )
                 C3Vec thisPos(thisParticle_XYZ.c1,thisParticle_XYZ.c2,thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1,thisParticle_XYZ.v_c2,thisParticle_XYZ.v_c3);
 				C3Vec thisB0 = kj_interp1D ( thisOrbit_XYZ[i].c1, r, b0_CYL, istat );
-
+#if GC_ORBITS >= 1
+                thisVel_XYZ = thisB0 / mag(thisB0) * thisParticle_XYZ.vPar; // vPar vector in XYZ
+                cout<<thisParticle_XYZ.vPar<<"  "<<thisParticle_XYZ.vPer<<endl;
+                kj_print(thisVel_XYZ,"thisVel_XYZ");
 				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
+#else
+				C3Vec gradv_f0_XYZ = maxwellian_df0_dv ( thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z );
+#endif
 
                 C3VecI E1_XYZ;
                 complex<float> _i(0,1);
@@ -2098,7 +1527,25 @@ int main ( int argc, char **argv )
                 cout << "thisVel_XYZ.c3: "<<thisVel_XYZ.c3<<endl;
 
 #endif
+
+#if GC_ORBITS >= 1
+                // For GC orbits (electrons) use only the orbit parallel piece, 
+                // since the perp peice will cancel due to E not varying within
+                // a cyclotron period.
+                //
+                // NO - WE DO NOT HAVE thisVel_XYZ for GC!!!!!
+                C3Vec orbitParallelUnitVector_XYZ = thisB0 / mag(thisB0);
+                //kj_print(orbitParallelUnitVector_XYZ,"unit");
+                complex<float> orbitParallel_E = dot(thisE1c_XYZ[i], orbitParallelUnitVector_XYZ);
+                float orbitParallel_gradv_f0 = dot(gradv_f0_XYZ, orbitParallelUnitVector_XYZ);
+                //cout<<"E : "<<orbitParallel_E<<" gf0: "<<orbitParallel_gradv_f0<<endl;
+                this_e1_dot_gradvf0[i] = orbitParallel_E * orbitParallel_gradv_f0;
+                //cout<<this_e1_dot_gradvf0[i]<<" e1dotgrad"<<endl;
+                complex<float> _full = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
+                //cout<<"_full : "<<_full<<endl;
+#else
                 this_e1_dot_gradvf0[i] = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
+#endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
                 if(iX==write_iX && iP==write_iP) {
@@ -2200,12 +1647,6 @@ int main ( int argc, char **argv )
 		    printf("Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
 					   realTime-realTime0, cpuTime-cpuTime0, flpIns-flpIns0, mFlops);
 #endif
-
-#else // END OF LOWMEM CODING ^^^
-
-
-
-#endif // END OF HIGHMEM CODING ^^^
 
 
 #if USEPAPI >= 1
@@ -2438,7 +1879,6 @@ int main ( int argc, char **argv )
 		vector<size_t> startp (1,0);
 		vector<size_t> countp (1,nJp);
 
-#if LOWMEM >= 1
 		float tmpJxRe = real(j1xc[iX]);
 		float tmpJxIm = imag(j1xc[iX]);
 		nc_j1xc_re.putVar(&tmpJxRe);
@@ -2453,28 +1893,7 @@ int main ( int argc, char **argv )
 		float tmpJzIm = imag(j1zc[iX]);
 		nc_j1zc_re.putVar(&tmpJzRe);
 		nc_j1zc_im.putVar(&tmpJzIm);
-#else 
-		nc_t.putVar(startp,countp,&tJp[0]);
-
-		nc_j1x.putVar(startp,countp,&j1x[iX][0]);
-		nc_j1y.putVar(startp,countp,&j1y[iX][0]);
-		nc_j1z.putVar(startp,countp,&j1z[iX][0]);
-
-		float tmpJxRe = real(j1xc[iX][0]);
-		float tmpJxIm = imag(j1xc[iX][0]);
-		nc_j1xc_re.putVar(&tmpJxRe);
-		nc_j1xc_im.putVar(&tmpJxIm);
-
-		float tmpJyRe = real(j1yc[iX][0]);
-		float tmpJyIm = imag(j1yc[iX][0]);
-		nc_j1yc_re.putVar(&tmpJyRe);
-		nc_j1yc_im.putVar(&tmpJyIm);
-
-	    float tmpJzRe = real(j1zc[iX][0]);
-		float tmpJzIm = imag(j1zc[iX][0]);
-		nc_j1zc_re.putVar(&tmpJzRe);
-		nc_j1zc_im.putVar(&tmpJzIm);
-#endif	
+	
 	}
 
 	//ProfilerStop();
