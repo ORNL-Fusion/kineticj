@@ -683,7 +683,7 @@ C3Vec getB_XYZ ( CParticle &p_XYZ, const vector<float> &rVec, const vector<C3Vec
     return b0_XYZ;
 }
 
-C3VecI getE1_XYZ ( CParticle &p_XYZ, const vector<float> &rVec, const vector<C3VecI> &E1Vec_CYL, int nPhi ) {
+C3VecI getE1orB1_XYZ ( CParticle &p_XYZ, const vector<float> &rVec, const vector<C3VecI> &E1Vec_CYL, int nPhi ) {
 
 	float _r = sqrt ( pow(p_XYZ.c1,2) + pow(p_XYZ.c2,2) );
 	float _p = atan2 ( p_XYZ.c2, p_XYZ.c1 );
@@ -1437,7 +1437,7 @@ int main ( int argc, char **argv )
 			ofstream e1_dot_grad_File;
 			ofstream df0dv_File;
 
-            int write_iX = 156;
+            int write_iX = 75;
             int write_iP = 31;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
@@ -1464,6 +1464,7 @@ int main ( int argc, char **argv )
 			vector<C3VecI> thisB1c_XYZ(nSteps,C3VecI());
 			C3VecI thisV1c_(0,0,0), dVc(0,0,0), crossTerm(0,0,0);
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
+            vector<C3VecI> this_vCrossB1(nSteps);
 
 	 		for(int i=0;i<nSteps;i++) {	
 #if DEBUG_MOVE >=1 
@@ -1501,8 +1502,12 @@ int main ( int argc, char **argv )
 
                 C3VecI E1_XYZ;
                 complex<float> _i(0,1);
-                E1_XYZ = hanningWeight[i] * exp(-_i*wrf*thisT[i]) * getE1_XYZ(thisParticle_XYZ,r,e1_CYL,nPhi);
+                E1_XYZ = hanningWeight[i] * exp(-_i*wrf*thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ,r,e1_CYL,nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1-thisParticle_XYZ.status);
+
+	            C3VecI B1_XYZ;
+                B1_XYZ = hanningWeight[i] * exp(-_i*wrf*thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ,r,b1_CYL,nPhi);
+                thisB1c_XYZ[i] = B1_XYZ * (1-thisParticle_XYZ.status);
 	
 #if DEBUG_MOVE >= 2
                 cout << "thisE1c[i].c1: "<<thisE1c_XYZ[i].c1<<endl;
@@ -1544,7 +1549,9 @@ int main ( int argc, char **argv )
                 complex<float> _full = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
                 //cout<<"_full : "<<_full<<endl;
 #else
-                this_e1_dot_gradvf0[i] = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
+                this_vCrossB1[i] = cross(thisVel_XYZ,thisB1c_XYZ[i]);
+                C3VecI this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
+                this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
 #endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -1583,6 +1590,12 @@ int main ( int argc, char **argv )
                             <<"    "<< imag(thisB1c_XYZ[i].c2)
                             <<"    "<< real(thisB1c_XYZ[i].c3)
                             <<"    "<< imag(thisB1c_XYZ[i].c3)
+                            <<"    "<< real(this_vCrossB1[i].c1)
+                            <<"    "<< imag(this_vCrossB1[i].c1)
+                            <<"    "<< real(this_vCrossB1[i].c2)
+                            <<"    "<< imag(this_vCrossB1[i].c2)
+                            <<"    "<< real(this_vCrossB1[i].c3)
+                            <<"    "<< imag(this_vCrossB1[i].c3)
                             <<"    "<< thisParticle_XYZ.status 
                             << endl;
                 }

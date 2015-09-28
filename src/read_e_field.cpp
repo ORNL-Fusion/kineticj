@@ -186,6 +186,7 @@ int read_e_field( std::string eField_fName, int &species_number, float &freq,
 		b1Im_CYL.resize(e_r.size());
 
 		e1_CYL.resize(e_r.size());
+		b1_CYL.resize(b_r.size());
 
 		for(int i=0;i<e_r.size();i++) {
 
@@ -206,6 +207,10 @@ int read_e_field( std::string eField_fName, int &species_number, float &freq,
             e1_CYL[i].c1 = e_r[i];
             e1_CYL[i].c2 = e_p[i];
             e1_CYL[i].c3 = e_z[i];
+
+            b1_CYL[i].c1 = b_r[i];
+            b1_CYL[i].c2 = b_p[i];
+            b1_CYL[i].c3 = b_z[i];
 
 		}
 

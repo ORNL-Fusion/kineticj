@@ -1,7 +1,8 @@
 ; Iterate kj with rsfwc with file based communiction
 
-pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
+pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, useAR2=useAR2
 
+    if keyword_set(useAR2) then useAORSA = 1 else useAORSA = 0
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
 
@@ -11,15 +12,24 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
 	cd, current=RootRunDir
     RootRunDir = RootRunDir+'/'
     RunDir0 = 'mpe_0/k_0/'
-    RsDir = 'rsfwc/'
-    RsRunDir0 = RootRunDir+RunDir0+RsDir
-	RsCfg = kj_read_rsfwc_cfg(RsRunDir0)
+
+    if useAORSA then begin
+        ar2Dir = 'ar2/'
+        ar2RunDir0 = RootRunDir+RunDir0+ar2Dir
+        ar2nml = ar2_read_namelist(ar2RunDir0)
+        ar2_read_ar2input(ar2RunDir0+'input/ar2Input.nc',ar2=ar2input)
+        ar2_FileName = 'ar2_kj.nc'
+    endif else begin
+        RsDir = 'rsfwc/'
+        RsRunDir0 = RootRunDir+RunDir0+RsDir
+	    RsCfg = kj_read_rsfwc_cfg(RsRunDir0)
+        rs_FileName = 'rsfwc_1d.nc'
+    endelse
 
     kj_jP_FileName = 'kj_jp.nc'
-    rs_FileName = 'rsfwc_1d.nc'
 
     kjSpecies = ['spec_D','spec_H','spec_e'] ; The order here MUST match the RSFWC spec order (i.e., electrons last)
-    ElectronSpecStr = kjSpecies[0]
+    ElectronSpecStr = kjSpecies[2]
 
     kjConfigs = []
     nS = n_elements(kjSpecies)
@@ -60,21 +70,33 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations
                 file_copy, jGuessFileList[k-1], ThisRsRunFolder
             endif
 
-			RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
+            if not useAORSA then RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
 
 			if(k eq 0 and not keyword_set(jPFile) ) then begin
-				RsCfg['kjInput']=0 
-				RsCfg['kj_jP_fileName'] = ''
+                if useAORSA then begin
+                endif else begin
+				    RsCfg['kjInput']=0 
+				    RsCfg['kj_jP_fileName'] = ''
+                endelse
 			endif else if(k eq 0 and keyword_set(jPFile) ) then begin
 				print, 'Continuing withh file ... ', jPFile
-				RsCfg['kjInput']=1 
-				RsCfg['kj_jP_fileName'] = jPFile
+                if useAORSA then begin
+                endif else begin
+				    RsCfg['kjInput']=1 
+				    RsCfg['kj_jP_fileName'] = jPFile
+                endelse
 			endif else begin
-				RsCfg['kjInput']=1
-				RsCfg['kj_jP_fileName'] = 'kj_jP.nc'
+                if useAORSA then begin
+                endif else begin
+				    RsCfg['kjInput']=1
+				    RsCfg['kj_jP_fileName'] = 'kj_jP.nc'
+                endelse
 			endelse
 
-			kj_write_rsfwc_cfg, RsCfg, ThisRsRunFolder
+            if useAORSA then begin
+            endif else begin
+			    kj_write_rsfwc_cfg, RsCfg, ThisRsRunFolder
+            endelse
 
 			cd, ThisRsRunFolder
 			spawn, 'idl -quiet run_rsfwc'

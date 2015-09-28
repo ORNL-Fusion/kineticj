@@ -1,8 +1,7 @@
-pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, noIterate=noIterate
+pro kj_plot_current, noIterate=noIterate
 
-    noInterp = 1
-    noTimeDep = 1
-    noIterate = 1
+    noIterate = 0
+    useAORSA = 1
 
 	@constants
 
@@ -14,17 +13,6 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
-		sheath = 0
-		if(strMatch(cfg['eField_fName'],'*sheath*') $
-				or strMatch(cfg['eField_fName'],'*mets*') $
-                or strMatch(cfg['eField_fName'],'*single*') $
-                or strMatch(cfg['eField_fName'],'*upshift*') $
-                or strMatch(cfg['eField_fName'],'*ar2_kj*') )then begin
-			if(strMatch(cfg['eField_fName'],'*sheath*'))then sheath = 1
-			r_ = r[0:-2]+(r[1]-r[0])/2.0
-		endif else begin
-			ncdf_varget, cdfId, 'r_', r_
-		endelse
 
 		ncdf_varget, cdfId, 'e_r_re', er_re
 		ncdf_varget, cdfId, 'e_r_im', er_im
@@ -44,17 +32,7 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 
 	wrf = freq * 2 * !pi
 
-	r_prevIterate = r
-
-	jPr_prevIterate = complex ( jPr_re, jPr_im ) 
-	jPt_prevIterate = complex ( jPt_re, jPt_im ) 
-	jPz_prevIterate = complex ( jPz_re, jPz_im ) 
-
 	spline_sigma = 0.01
-
-	jPr_prevIterate_ = complex(spline(r,jPr_re,r_,spline_sigma),spline(r,jPr_im,r_,spline_sigma))
-	jPt_prevIterate_ = complex(spline(r,jPt_re,r_,spline_sigma),spline(r,jPt_im,r_,spline_sigma))
-	jPz_prevIterate_ = complex(spline(r,jPz_re,r_,spline_sigma),spline(r,jPz_im,r_,spline_sigma))
 
 	fileList = file_search ( 'output/jP*' )
 
@@ -77,20 +55,12 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 
 	xF = fltArr ( nF )
 
-	;hanWindow = hanning (nT, alpha=0.5 )
-
 	for f=0,nF-1 do begin
 
 		cdfId = ncdf_open(fileList[f])
 
 			ncdf_varget, cdfId, 'x', x
 			ncdf_varget, cdfId, 't', t
-
-			if not keyword_set(noTimeDep) then begin
-				ncdf_varget, cdfId, 'j1x', j1x_0 
-				ncdf_varget, cdfId, 'j1y', j1y_0 
-				ncdf_varget, cdfId, 'j1z', j1z_0 
-			endif
 
 			ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
 			ncdf_varget, cdfId, 'j1xc_im', j1xc_im
@@ -110,188 +80,48 @@ pro kj_plot_current, noInterp = noInterp, sig33 = sig33, noTimeDep = noTimeDep, 
 		j1yc[f] = complex(j1yc_re,j1yc_im)
 		j1zc[f] = complex(j1zc_re,j1zc_im)
 
-		if not keyword_set(noTimeDep) then begin
-
-			j1x[*,f] = j1x_0;-mean(j1x_0) ; not sure if there is a nicer way to do this
-
-			dt = t[1]-t[0]
-
-			;; Test code
-			;ampRe = 1000.0
-			;ampIm = -300.0
-			;amp = sqrt(ampRe^2+ampIm^2)
-			;phs = atan(ampIm,ampRe)
-			;j1x = (amp * exp (-II*(wrf*t+phs)))
-
-			jrFFT = fft ( j1x[0:-1,f], /center )
-			freqAxis = (fIndGen(nT)-(nT/2)) / (nT*dt)
-			freqNorm = freqAxis / freq
-
-			;p=plot(freqNorm,abs(jrFFT)^2);,xRange=[0,5])
-			;p=plot(freqNorm,imaginary(jrFFT),color='blue');,xRange=[0,5])
-
-			; Positive (right) frequency 
-			iiAntFreq = where(abs(freqNorm-1) eq min(abs(freqNorm-1)),iiAntFreqCnt)
-			rpL = real_part ( jrFFT[iiAntFreq[0]] )
-			ipL = imaginary ( jrFFT[iiAntFreq[0]] )
-			; Negative (left) frequency 
-			iiAntFreq = where(abs(freqNorm+1) eq min(abs(freqNorm+1)),iiAntFreqCnt)
-			rpR = real_part ( jrFFT[iiAntFreq[0]] )
-			ipR = -imaginary ( jrFFT[iiAntFreq[0]] )
-
-			print, 'Re: ', rpL, rpR, rpL+rpR
-			print, 'Im: ', ipL, ipR, ipL+ipR
-
-			j1x[f] = complex ( rpL+rpR, ipL+ipR )
-
-		endif else begin
-            j1x[f] = j1xc[f]
-            j1y[f] = j1yc[f]
-            j1z[f] = j1zc[f]
-        endelse
+        j1x[f] = j1xc[f]
+        j1y[f] = j1yc[f]
+        j1z[f] = j1zc[f]
 	
 	endfor
 
-	; Create Debye length axis
-
-	n = 1.1d14
-	n_20 = n/10d0^20
-	T_keV = 0.0001
-   	lambda_D = 2.35d-5*sqrt(T_keV/n_20)
-	print, "Debye Length: ", lambda_D
-
-
 if not keyword_set(noIterate) then begin
 
-	if not keyword_set(noTimeDep) then begin
+	jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
+	jTOut  = complex(spline(xf,real_part(j1y),r,spline_sigma),spline(xf,imaginary(j1y),r,spline_sigma))    
+	jZOut  = complex(spline(xf,real_part(j1z),r,spline_sigma),spline(xf,imaginary(j1z),r,spline_sigma))    
 
-		; Fudge Factoring
-		j1 = conj(j1) ; Not sure why we neet a conj here. Most likely due to the way I'm doing the fft
-
-		; Create a jP for rsfcw_1d
-
-		jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
-		jROut_ = complex(spline(xf,real_part(j1x),r_,spline_sigma),spline(xf,imaginary(j1x),r_,spline_sigma))
-
-		jTOut = jROut*0
-		jTOut_ = jROut_*0
-
-		jZOut = jROut*0
-		jZOut_ = jROut_*0
-
-		; Average the iterations to test stability and convergence.
-
-	endif else begin
-
-
-		jROut  = complex(spline(xf,real_part(j1x),r,spline_sigma),spline(xf,imaginary(j1x),r,spline_sigma))
-		jROut_ = complex(spline(xf,real_part(j1x),r_,spline_sigma),spline(xf,imaginary(j1x),r_,spline_sigma))
-
-		jTOut  = complex(spline(xf,real_part(j1y),r,spline_sigma),spline(xf,imaginary(j1y),r,spline_sigma))    
-		jTOut_ = complex(spline(xf,real_part(j1y),r_,spline_sigma),spline(xf,imaginary(j1y),r_,spline_sigma))  
-
-		jZOut  = complex(spline(xf,real_part(j1z),r,spline_sigma),spline(xf,imaginary(j1z),r,spline_sigma))    
-		jZOut_ = complex(spline(xf,real_part(j1z),r_,spline_sigma),spline(xf,imaginary(j1z),r_,spline_sigma))  
-
-	endelse
-
-	relaxFactor = 0.0
-
-	jROut = jROut*(1-relaxFactor) + jPr_prevIterate*relaxFactor
-	jTOut = jTOut*(1-relaxFactor) + jPt_prevIterate*relaxFactor
-	jZOut = jZOut*(1-relaxFactor) + jPz_prevIterate*relaxFactor
-	
-	jROut_ = jROut_*(1-relaxFactor) + jPr_prevIterate_*relaxFactor
-	jTOut_ = jTOut_*(1-relaxFactor) + jPt_prevIterate_*relaxFactor
-	jZOut_ = jZOut_*(1-relaxFactor) + jPz_prevIterate_*relaxFactor
-
-	; Write the iteration error to a file for analysis
-
-	nc_id = nCdf_create ('output/kj_itErr.nc', /clobber )
-
-		nCdf_control, nc_id, /verbose
-
-		nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
-		r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
-
-		jP_err_re_id = nCdf_varDef ( nc_id, 'jP_err_re', nr_id, /float )
-		jP_err_im_id = nCdf_varDef ( nc_id, 'jP_err_im', nr_id, /float )
-
-		nCdf_control, nc_id, /enDef
-
-		nCdf_varPut, nc_id, r_id, r
-		jP_err = jROut - jPr_prevIterate
-		nCdf_varPut, nc_id, jP_err_re_id, real_part(jP_err)
-		nCdf_varPut, nc_id, jP_err_im_id, imaginary(jP_err) 
-
-	nCdf_close, nc_id
-
-
-	;; Plot comparison with previous iterate
-
-	;xrange = [min(r),max(r)]
-
-	;if not keyword_set(sig33) then begin
-	;if(not sheath)then begin
-	;	c_pb_re=plot(r_prevIterate,jPr_prevIterate,$
-	;			thick=3.0,$
-	;			xrange=xRange,$
-	;			name='prevIterate_re',$
-	;			color='b',$
-	;			window_title='kj',$
-	;			buffer=1,$
-	;			dimensions=[1200,400])
-	;	c_pb_im=plot(r_prevIterate,imaginary(jPr_prevIterate),thick=2.0,xrange=xRange,/over,name='prevIterate_im',color='b')
-	;endif	
-	;if(sheath)then begin
-	;	pk_re=plot(xF/lambda_D,j1x,thick=3.0,name='kj_re',color='black')
-	;	pk_im=plot(xF/lambda_D,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
-	;endif else begin
-	;	pk_re=plot(xF,j1x,thick=3.0,name='kj_re',color='black',/over)
-	;	pk_im=plot(xF,imaginary(j1x),/over,color='black',thick=2.0,name='kj_im')
-	;endelse
-
-	;if(not sheath)then begin
-	;l=legend(target=[c_pb_re,c_pb_im,pk_re,pk_im],$
-	;		position=[0.98,0.9],/norm,font_size=10,horizontal_alignment='RIGHT')
-	;endif
-	;c_pb_re.save, 'kj_jP.png', resolution=72
-	;endif
-
-	; Write kj_jP in file for next iterate
+	; Write kj_jP in file
 
 	nc_id = nCdf_create ('output/kj_jP.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
 	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
-	nrH_id = nCdf_dimDef ( nc_id, 'nR_', n_elements(r_) )
+	nx_id = nCdf_dimDef ( nc_id, 'nX', n_elements(r) )
+	ny_id = nCdf_dimDef ( nc_id, 'nY', 1 )
+	ns_id = nCdf_dimDef ( nc_id, 'nSpec', 1 )
 	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
 
 	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
 	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
-	rH_id = nCdf_varDef ( nc_id, 'r_', nrH_id, /float )
+	z_id = nCdf_varDef ( nc_id, 'z', ny_id, /float )
 
-	jP_r_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
-	jP_r_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
-	jP_p_re_id = nCdf_varDef ( nc_id, 'jP_p_re', nr_id, /float )
-	jP_p_im_id = nCdf_varDef ( nc_id, 'jP_p_im', nr_id, /float )
-	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
-	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
-
-	jP_r_re_id_ = nCdf_varDef ( nc_id, 'jP_r_re_', nrH_id, /float )
-	jP_r_im_id_ = nCdf_varDef ( nc_id, 'jP_r_im_', nrH_id, /float )
-	jP_p_re_id_ = nCdf_varDef ( nc_id, 'jP_p_re_', nrH_id, /float )
-	jP_p_im_id_ = nCdf_varDef ( nc_id, 'jP_p_im_', nrH_id, /float )
-	jP_z_re_id_ = nCdf_varDef ( nc_id, 'jP_z_re_', nrH_id, /float )
-	jP_z_im_id_ = nCdf_varDef ( nc_id, 'jP_z_im_', nrH_id, /float )
+	jP_r_re_id = nCdf_varDef ( nc_id, 'jP_r_re', [nx_id,ny_id,ns_id], /float )
+	jP_r_im_id = nCdf_varDef ( nc_id, 'jP_r_im', [nx_id,ny_id,ns_id], /float )
+	jP_p_re_id = nCdf_varDef ( nc_id, 'jP_t_re', [nx_id,ny_id,ns_id], /float )
+	jP_p_im_id = nCdf_varDef ( nc_id, 'jP_t_im', [nx_id,ny_id,ns_id], /float )
+	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', [nx_id,ny_id,ns_id], /float )
+	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', [nx_id,ny_id,ns_id], /float )
 
 	nCdf_control, nc_id, /enDef
 
 	nCdf_varPut, nc_id, freq_id, freq
 
 	nCdf_varPut, nc_id, r_id, r
-	nCdf_varPut, nc_id, rH_id, r_
+    z = [0]
+	nCdf_varPut, nc_id, z_id, z
 
 	nCdf_varPut, nc_id, jP_r_re_id, real_part(jROut)
 	nCdf_varPut, nc_id, jP_r_im_id, imaginary(jROut) 
@@ -300,46 +130,38 @@ if not keyword_set(noIterate) then begin
 	nCdf_varPut, nc_id, jP_z_re_id, real_part(jZOut)
 	nCdf_varPut, nc_id, jP_z_im_id, imaginary(jZOut) 
 
-	nCdf_varPut, nc_id, jP_r_re_id_, real_part(jROut_)
-	nCdf_varPut, nc_id, jP_r_im_id_, imaginary(jROut_) 
-	nCdf_varPut, nc_id, jP_p_re_id_, real_part(jTOut_)
-	nCdf_varPut, nc_id, jP_p_im_id_, imaginary(jTOut_) 
-	nCdf_varPut, nc_id, jP_z_re_id_, real_part(jZOut_)
-	nCdf_varPut, nc_id, jP_z_im_id_, imaginary(jZOut_) 
-
 	nCdf_close, nc_id
 
 endif
 
     OverplotAR2 = 1
     if(OverplotAR2)then begin
-        ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba'
+        ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference'
         ar2 = ar2_read_solution(ar2Run,1) 
         ar2SpecNo = fix(cfg['species_number'])
     endif
 
     jpRange = max(abs([j1x,j1y,j1z]))
-    p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x')
-    p=plot(xf,imaginary(j1x),/over,color='r')
+    p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x',thick=2)
+    p=plot(xf,imaginary(j1x),/over,color='r',thick=2)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+        p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
     endif
 
-    p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y')
-    p=plot(xf,imaginary(j1y),/over,color='r')
+    p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y',thick=3)
+    p=plot(xf,imaginary(j1y),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+        p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
     endif
 
-    p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1z')
-    p=plot(xf,imaginary(j1z),/over,color='r')
+    p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1z',thick=3)
+    p=plot(xf,imaginary(j1z),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='b',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='b',lineStyle=2)
+        p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
+        p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
     endif
-
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
