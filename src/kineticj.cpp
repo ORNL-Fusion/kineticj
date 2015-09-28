@@ -18,6 +18,8 @@
 #include "c3vec.hpp"
 #include "read_e_field.hpp"
 #include <new> // for stl::bad_alloc
+#include "cspecies.hpp"
+#include "cparticle.hpp"
 
 #if CLOCK >= 1 
 #include <ctime>
@@ -43,227 +45,13 @@ using namespace std;
 using namespace netCDF;
 using namespace exceptions;
 
-class CSpecies {
-		public:
-				double m, q;
-				double amu;
-				int Z;
-				string name;
+float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
 
-				CSpecies () {};
-				CSpecies ( const double amu, const int Z);
-				CSpecies ( const double amu, const int Z, const char *_s);
-};
-
-CSpecies::CSpecies ( const double _amu, const int _Z ) {
-
-		amu = _amu;
-		Z = _Z;
-		m = amu * _mi;
-		q = Z * _e;
-		name = " ";
-}
-
-CSpecies::CSpecies ( const double _amu, const int _Z, const char *_s ) {
-		amu = _amu;
-		Z = _Z;
-		m = amu * _mi;
-		q = Z * _e;
-		name = string(_s);
-}
-
-class CParticle: public CSpecies {
-		public:
-				float c1, c2, c3, v_c1, v_c2, v_c3;
-				int number;
-				float weight;
-				int status;
-                float dvx, dvy, dvz, d3v;
-                float vPar, vPer, gyroPhase, u, vTh;
-                float vAlp, vBet, phs;
-
-				CParticle ();
-				CParticle ( double _amu, int _Z);
-				CParticle (float c1, float c2, float c3, 
-								float v_c1, float v_c2, float v_c3, 
-								double _amu, int _Z, float _weight );
-				CParticle (CSpecies _species);
-};
-
-CParticle::CParticle () {
-		status = 0;
-}
-
-CParticle::CParticle ( double _amu, int _Z ): CSpecies(_amu,_Z) {
-		status = 0;
-}
-
-CParticle::CParticle 
-	(float _c1, float _c2, float _c3, 
-	 float _v_c1, float _v_c2, float _v_c3, 
-	 double _amu, int _Z, float _weight ) :
-	CSpecies (_amu, _Z) {
-
-	c1 = _c1;
-	c2 = _c2;
-	c3 = _c3;
-
-	v_c1 = _v_c1;
-	v_c2 = _v_c2;
-	v_c3 = _v_c3;
-
-	weight = _weight;
-	
-	status = 0;
-}
-
-CParticle::CParticle ( CSpecies _species ) : CSpecies(_species) {
-}
-
-ostream& operator<< ( ostream &os, const C3Vec &v ) {
-        os << v.c1 << ", "<< v.c2 << ", " << v.c3;
-        return os;
-}
-
-ostream& operator<< ( ostream &os, const C3VecI &v ) {
-        os << v.c1 << ", "<< v.c2 << ", " << v.c3;
-        return os;
-}
-
-
-vector<C3Vec> operator- ( const vector<C3Vec> &other, const C3Vec &rhs) {
-		vector<C3Vec> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 - rhs.c1;
-				out[i].c2 = other[i].c2 - rhs.c2;
-				out[i].c3 = other[i].c3 - rhs.c3;
-		}
-		return out;
-}
-
-vector<C3Vec> operator+ ( const vector<C3Vec> &other, const C3Vec &rhs) {
-		vector<C3Vec> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 + rhs.c1;
-				out[i].c2 = other[i].c2 + rhs.c2;
-				out[i].c3 = other[i].c3 + rhs.c3;
-		}
-		return out;
-}
-vector<C3VecI> operator+ ( const vector<C3VecI> &other, const C3VecI &rhs) {
-		vector<C3VecI> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 + rhs.c1;
-				out[i].c2 = other[i].c2 + rhs.c2;
-				out[i].c3 = other[i].c3 + rhs.c3;
-		}
-		return out;
-}
-vector<C3Vec> operator- ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) {
-		assert(other.size()==rhs.size());
-		vector<C3Vec> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 - rhs[i].c1;
-				out[i].c2 = other[i].c2 - rhs[i].c2;
-				out[i].c3 = other[i].c3 - rhs[i].c3;
-		}
-		return out;
-}
-
-vector<C3Vec> operator+ ( const vector<C3Vec> &other, const vector<C3Vec> &rhs) {
-		assert(other.size()==rhs.size());
-		vector<C3Vec> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 + rhs[i].c1;
-				out[i].c2 = other[i].c2 + rhs[i].c2;
-				out[i].c3 = other[i].c3 + rhs[i].c3;
-		}
-		return out;
-}
-
-vector<C3Vec> operator* ( const vector<C3Vec> &other, const vector<float> &rhs) {
-		assert(other.size()==rhs.size());
-		vector<C3Vec> out(other.size());
-		for(int i=0;i<other.size();i++) {
-				out[i].c1 = other[i].c1 * rhs[i];
-				out[i].c2 = other[i].c2 * rhs[i];
-				out[i].c3 = other[i].c3 * rhs[i];
-		}
-		return out;
-}
-
-float mag ( const C3Vec &in ) {
-		return sqrt(pow(in.c1,2)+pow(in.c2,2)+pow(in.c3,2));
-}
-
-// This is not really a usefule magnitude
-// and is only used to reduce a complex valued
-// vector to a number for checking for Inf & NaNs
-float mag ( const C3VecI &in ) {
-        float c1 = abs(in.c1);
-        float c2 = abs(in.c2);
-        float c3 = abs(in.c3);
-		return sqrt(pow(c1,2)+pow(c2,2)+pow(c3,2));
-}
-
-C3Vec pow ( const C3Vec &in, const int arg ) {
-		C3Vec out;
-		out.c1 = pow(in.c1,arg);
-		out.c2 = pow(in.c2,arg);
-		out.c3 = pow(in.c3,arg);
-		return out;
-}
-
-C3Vec sqrt ( const C3Vec &in ) {
-		C3Vec out;
-		out.c1 = sqrt(in.c1);
-		out.c2 = sqrt(in.c2);
-		out.c3 = sqrt(in.c3);
-		return out;
-}
-
-float dot ( const C3Vec &Y, const C3Vec &X ) {
-		return Y.c1*X.c1 + Y.c2*X.c2 + Y.c3*X.c3;
-}
-
-complex<float> dot ( const C3VecI &Y, const C3Vec &X ) {
-		return Y.c1*X.c1 + Y.c2*X.c2 + Y.c3*X.c3;
-}
-
-C3Vec atan2 ( const C3Vec &Y, const C3Vec &X ) {
-		C3Vec out;
-		out.c1 = atan2(Y.c1,X.c1);
-		out.c2 = atan2(Y.c2,X.c2);
-		out.c3 = atan2(Y.c3,X.c3);
-		return out;
-}
-
-template <typename C3T1, typename C3T2>
-C3VecI cross ( const C3T1 A, const C3T2 B ) {
-
-        C3VecI answer;
-        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
-        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
-        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
-        return answer;
-}
-
-C3Vec cross ( const C3Vec A, const C3Vec B ) {
-
-        C3Vec answer;
-        answer.c1 =  (A.c2*B.c3 - A.c3*B.c2);
-        answer.c2 = -(A.c1*B.c3 - A.c3*B.c1);
-        answer.c3 =  (A.c1*B.c2 - A.c2*B.c1);
-        return answer;
-}
-
-float maxC3VecAbs ( const vector<C3Vec> &input ) {
-
-	vector<float> inputAbs(input.size());
+	std::vector<float> inputAbs(input.size());
 	for(int i=0;i<input.size();i++) {
 		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
 	}
-	return *max_element(inputAbs.begin(),inputAbs.end());
+	return *std::max_element(inputAbs.begin(),inputAbs.end());
 }
 
 complex<float> intVecArray ( const vector<float> &x, const vector<complex<float> > &f ) {
@@ -307,30 +95,6 @@ void kj_print ( const C3Vec arg, string name ) {
 void kj_print ( const float arg, string name ) {
     cout << name <<": "<< arg << endl;
     return;
-}
-
-int isnan ( const C3Vec arg ) {
-    int answer = 0;
-    if(isnan(mag(arg))) answer = 1;
-    return answer;
-}
-
-int isnan ( const C3VecI arg ) {
-    int answer = 0;
-    if( isnan( mag(arg) ) ) answer = 1;
-    return answer;
-}
-
-int isinf ( const C3Vec arg ) {
-    int answer = 0;
-    if(isinf(mag(arg))) answer = 1;
-    return answer;
-}
-
-int isinf ( const C3VecI arg ) {
-    int answer = 0;
-    if(isinf(mag(arg))) answer = 1;
-    return answer;
 }
 
 C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
@@ -1371,10 +1135,11 @@ int main ( int argc, char **argv )
 		if(i<nSteps/2) hanningWeight[i]=1; //Regular
 		//if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
 
-		complex<float> _i (0.0,1.0);	
-		complex<float> wrf_c (wrf,wrf*0.0025);
-		expWeight[i] = abs(exp(-_i*wrf_c*thisT[i]));
-		hanningWeight[i] = hanningWeight[i] * expWeight[i];
+		//complex<float> _i (0.0,1.0);	
+		//complex<float> wrf_c (wrf,wrf*0.0025);
+		//expWeight[i] = 1.0;//abs(exp(-_i*wrf_c*thisT[i]));
+
+		//hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
 
 
@@ -1414,6 +1179,15 @@ int main ( int argc, char **argv )
 		papiReturn = PAPI_flops ( &realTime, &cpuTime, &flpIns, &mFlops );
 #endif	
 
+#if F1_WRITE >= 1
+        int f1_write_iX = 75;
+        ofstream f1File;
+        if(iX==f1_write_iX) {
+            f1File.open("output/f1.txt", ios::out | ios::trunc);
+            f1File<<" vx  vy  vz  re(f1) im(f1) "<<endl;
+       }
+#endif    
+	
 		vector<float> f1(nP);
 		//vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
 		vector<complex<float> > f1c(nP);
@@ -1438,7 +1212,7 @@ int main ( int argc, char **argv )
 			ofstream df0dv_File;
 
             int write_iX = 75;
-            int write_iP = 31;
+            int write_iP = 33;
             if(iX==write_iX && iP==write_iP) {
                 cout<<"Write Particle Properties:"<<endl;
                 cout<<" vTh: "<<thisParticle_XYZ.vTh<<endl;
@@ -1642,6 +1416,15 @@ int main ( int argc, char **argv )
 				j1yc[iX] += h * ( v0y_i*f1c[iP] ); 
 				j1zc[iX] += h * ( v0z_i*f1c[iP] ); 
 			}
+
+#if F1_WRITE >= 1 
+            if(iX==f1_write_iX) {
+                f1File<<scientific;
+                f1File<<showpos;
+                f1File<<v0x_i<<"    "<<v0y_i<<"    "<<v0z_i<<"    "<<real(f1c[iP])<<"    "<<imag(f1c[iP])<<endl;
+            }
+#endif
+
 		}
 
 #if CLOCK >= 1

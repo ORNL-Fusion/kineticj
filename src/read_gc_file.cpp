@@ -4,6 +4,7 @@
 #include "c3vec.hpp"
 #include <iostream>
 #include <fstream>
+#include "cspecies.hpp"
 
 using namespace netCDF;
 using namespace exceptions;
