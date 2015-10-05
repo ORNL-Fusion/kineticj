@@ -149,8 +149,9 @@ endif
         p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
     endif
 
-    p=plot(xf,j1y,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y',thick=3)
-    p=plot(xf,imaginary(j1y),/over,color='r',thick=3)
+	fudgeFac = 1
+    p=plot(xf,j1y/fudgeFac,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y',thick=3)
+    p=plot(xf,imaginary(j1y/fudgeFac),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
         p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
         p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)

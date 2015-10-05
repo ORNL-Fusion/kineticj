@@ -19,6 +19,10 @@ pro kj_read_lowmem_orbit
     b2 = complexArr(nLines-offset)
     b3 = complexArr(nLines-offset)
 
+    vxb1 = complexArr(nLines-offset)
+    vxb2 = complexArr(nLines-offset)
+    vxb3 = complexArr(nLines-offset)
+
     status = intArr(nLines-offset)
 
     skip_lun, lun, offset, /lines
@@ -26,7 +30,8 @@ pro kj_read_lowmem_orbit
 
         readf, lun, _t, _x, _y, _z, $
                 _e1_re, _e1_im, _e2_re, _e2_im, _e3_re, _e3_im, $
-                _b1_rb, _b1_im, _b2_rb, _b2_im, _b3_rb, _b3_im, _stat
+                _b1_rb, _b1_im, _b2_rb, _b2_im, _b3_rb, _b3_im, $
+      		_vxb1_rb, _vxb1_im, _vxb2_rb, _vxb2_im, _vxb3_rb, _vxb3_im, _stat
 
         t[l] = _t
         x[l] = _x
@@ -40,6 +45,11 @@ pro kj_read_lowmem_orbit
         b1[l] = complex(_b1_rb,_b1_im)
         b2[l] = complex(_b2_rb,_b2_im)
         b3[l] = complex(_b3_rb,_b3_im)
+
+        vxb1[l] = complex(_vxb1_rb,_vxb1_im)
+        vxb2[l] = complex(_vxb2_rb,_vxb2_im)
+        vxb3[l] = complex(_vxb3_rb,_vxb3_im)
+
 
         status[l] = _stat
 
@@ -131,6 +141,8 @@ pro kj_read_lowmem_orbit
     p=plot3d(x,y,z,clip=0,aspect_ratio=1.0,aspect_z=1.0, xRange=[0.95,1.7], yRange=[-0.1,0.1], zRange=[-0.1,0.1], thick=3, color='b')
 
 	fs = 12
+	
+	p = plot(t,x, title="x(t)",font_size=fs)
     p=plot(t,e1,layout=[1,3,1], title="e1(t')", font_size=fs)
     p=plot(t,imaginary(e1),/over,color='r')
     p=plot(t,e2,layout=[1,3,2],/current, font_size=fs)
@@ -138,6 +150,14 @@ pro kj_read_lowmem_orbit
     p=plot(t,e3,layout=[1,3,3],/current, font_size=fs)
     p=plot(t,imaginary(e3),/over,color='r')
 
+    p=plot(t,vxb1,layout=[1,3,1], title="vCrossB1(t')", font_size=fs)
+    p=plot(t,imaginary(vxb1),/over,color='r')
+    p=plot(t,vxb2,layout=[1,3,2],/current, font_size=fs)
+    p=plot(t,imaginary(vxb2),/over,color='r')
+    p=plot(t,vxb3,layout=[1,3,3],/current, font_size=fs)
+    p=plot(t,imaginary(vxb3),/over,color='r')
+
+ 
     p=plot(t,e1_dot_grad,layout=[1,3,1], title="e1 . gradv f0 (t')", font_size=fs)
     p=plot(t,f1,layout=[1,3,2],/current, title='f1', font_size=fs)
 
@@ -157,6 +177,27 @@ pro kj_read_lowmem_orbit
     p=plot(t,df0dv_y,layout=[1,3,2],/current, font_size=fs)
     p=plot(t,df0dv_z,layout=[1,3,3],/current, font_size=fs)
 
+
+	r = sqrt(x^2+y^2)
+	_t = atan(y,x)	
+
+	er = cos(_t)*e1 + sin(_t)*e2
+	et = -sin(_t)*e1 + cos(_t)*e2
+	ez = e3
+
+	hanning = hanning(n_elements(t))
+	_ii = where(t gt min(t)/2,iiCnt)
+	hanning[_ii] = 1
+
+	rng = 1.0
+	p=plot(t,er/hanning,layout=[1,3,1],yrange=[-1,1]*rng,title="e_CYL/hanning")
+	p=plot(t,et/hanning,layout=[1,3,2],yrange=[-1,1]*rng,/current)
+	p=plot(t,ez/hanning,layout=[1,3,3],yrange=[-1,1]*rng,/current)
+
+	nPhi = 13
+	@constants
+	p=plot(t,exp(ii*nPhi*_t))
+	p=plot(t,r,title="r(t)")
 
 stop
 end
