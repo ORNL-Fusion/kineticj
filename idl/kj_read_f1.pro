@@ -156,11 +156,12 @@ stop
 	c=contour(-this,vx,vz,/fill,$
 		layout=[2,2,1],rgb_table=7,c_value=levels,c_color=colors,/current)
 	
-	this = rxz*transpose(rebin(vz,nz,nx))
-	c=contour(this,vx,vz,/fill,$
-		layout=[2,2,2],/current,rgb_table=1,c_value=levels,c_color=colors,title='vz moment')
-	c=contour(-this,vx,vz,/fill,$
-		layout=[2,2,2],rgb_table=7,c_value=levels,c_color=colors,/current)
+	;this = rxz*transpose(rebin(vz,nz,nx))
+	;c=contour(this,vz,vx,/fill,$
+	;	layout=[2,2,2],/current,rgb_table=1,c_value=levels,c_color=colors,title='vz moment',$
+    ;    xtitle='vz',ytitle='vx')
+	;c=contour(-this,vz,vx,/fill,$
+	;	layout=[2,2,2],rgb_table=7,c_value=levels,c_color=colors,/current)
 	
 stop
 end

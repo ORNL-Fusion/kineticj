@@ -1,7 +1,7 @@
-pro kj_plot_current, noIterate=noIterate
+pro kj_plot_current, noIterate=_noIterate, OverPlotAR2 = _OverPlotAR2
 
-    noIterate = 0
-    useAORSA = 1
+    if keyword_set(_OverPlotAR2) then OverPlotAR2 = _OverPlotAR2 else OverPlotAR2 = 0
+    if keyword_set(_noIterate) then noIterate = _noIterate else noIterate = 0
 
 	@constants
 
@@ -134,34 +134,35 @@ if not keyword_set(noIterate) then begin
 
 endif
 
-    OverplotAR2 = 1
     if(OverplotAR2)then begin
         ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference'
         ar2 = ar2_read_solution(ar2Run,1) 
         ar2SpecNo = fix(cfg['species_number'])
     endif
 
-    jpRange = max(abs([j1x,j1y,j1z]))
-    p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1x',thick=2)
+    jpRange = max(abs([j1x]))
+    p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1_r',thick=2, ytitle='j1 [Amp/m^2]',margin=[0.2,0.1,0.05,0.2])
     p=plot(xf,imaginary(j1x),/over,color='r',thick=2)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
+        p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
 	fudgeFac = 1
-    p=plot(xf,j1y/fudgeFac,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1y',thick=3)
+    jpRange = max(abs([j1y]))
+    p=plot(xf,j1y/fudgeFac,layout=[1,3,2],/current,yRange=[-jpRange,jpRange],title='j1_t',thick=3, ytitle='j1 [Amp/m^2]',margin=[0.2,0.1,0.05,0.2])
     p=plot(xf,imaginary(j1y/fudgeFac),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
+        p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
-    p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1z',thick=3)
+    jpRange = max(abs([j1y]))
+    p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1_z',thick=3, ytitle='j1 [Amp/m^2]', xtitle='r [m]',margin=[0.2,0.1,0.05,0.2])
     p=plot(xf,imaginary(j1z),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
-        p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='black',lineStyle=0)
-        p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='r',lineStyle=0)
+        p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
 	; Interpolate the E field to the Jp locations to calculated sig33

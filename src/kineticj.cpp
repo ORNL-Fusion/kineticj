@@ -1325,7 +1325,20 @@ int main ( int argc, char **argv )
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ,thisB1c_XYZ[i]);
                 C3VecI this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
+
+                //C3VecI this_force_CYL;
+                //float this_t = sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
+                //this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1); 
+                //this_force_CYL.c1 = 0;
+                //this_force_CYL.c3 = 0;
+                //this_force = rot_CYL_to_XYZ ( this_t, this_force_CYL, +1); 
+                      
                 this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
+
+                //C3Vec  this_gradv_f0_CYL;
+                //this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1); 
+                //this_gradv_f0_CYL = rot_CYL_to_XYZ ( this_t, gradv_f0_XYZ, -1); 
+                //this_e1_dot_gradvf0[i] = dot(this_force_CYL, this_gradv_f0_CYL);
 #endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
