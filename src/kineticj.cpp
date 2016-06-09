@@ -96,41 +96,41 @@ int main ( int argc, char **argv )
 					   realTime, cpuTime, flpIns, mFlops);
 #endif
 
-        // Read config file
+    // Read config file
 
-		libconfig::Config cfg;
-		string cfgName = "kj.cfg";
+	libconfig::Config cfg;
+	string cfgName = "kj.cfg";
 
-        try {
-            cfg.readFile(cfgName.c_str());
-        }
-        catch(const libconfig::FileIOException &fioex) {
-            std::cerr << "I/O error while reading file." << std::endl;
-            return(EXIT_FAILURE);
-        }
-        catch(const libconfig::ParseException &pex) {
-            std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-                << " - " << pex.getError() << std::endl;
-            return(EXIT_FAILURE);
-        }
+    try {
+        cfg.readFile(cfgName.c_str());
+    }
+    catch(const libconfig::FileIOException &fioex) {
+        std::cerr << "I/O error while reading file." << std::endl;
+        return(EXIT_FAILURE);
+    }
+    catch(const libconfig::ParseException &pex) {
+        std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+            << " - " << pex.getError() << std::endl;
+        return(EXIT_FAILURE);
+    }
 
-	    int species_number = cfg.lookup("species_number");
+	int species_number = cfg.lookup("species_number");
 
-		// Read E
-		string eField_fName = cfg.lookup("eField_fName");	
-		vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
-        vector<C3VecI> e1_CYL, b1_CYL;
-		vector<C3Vec> b0_CYL, b0_XYZ;
-        vector<float> r, n_m3;
-		float freq;
-        int eReadStat = read_e_field( eField_fName, species_number, freq, r, n_m3,  
-                        e1_CYL, b1_CYL, e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL, b0_CYL);
+	// Read E
+	string eField_fName = cfg.lookup("eField_fName");	
+	vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+    vector<C3VecI> e1_CYL, b1_CYL;
+	vector<C3Vec> b0_CYL, b0_XYZ;
+    vector<float> r, n_m3;
+	float freq;
+    int eReadStat = read_e_field( eField_fName, species_number, freq, r, n_m3,  
+                    e1_CYL, b1_CYL, e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL, b0_CYL);
 
-        // Read GC terms
-        string gc_fName = cfg.lookup("gc_fName");	
-        vector<C3Vec> curv_CYL, grad_CYL;
-        std::vector<float> r_gc, bDotGradB;
-        int gcReadStat = read_gc_file( gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB );
+    // Read GC terms
+    string gc_fName = cfg.lookup("gc_fName");	
+    vector<C3Vec> curv_CYL, grad_CYL;
+    std::vector<float> r_gc, bDotGradB;
+    int gcReadStat = read_gc_file( gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB );
 
 
 	float wrf = freq * 2 * _pi;
@@ -243,8 +243,6 @@ int main ( int argc, char **argv )
 
 		//hanningWeight[i] = hanningWeight[i] * expWeight[i];
 	}
-
-
 
 	vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
 	vector<complex<float> > j1xc(nXGrid), j1yc(nXGrid), j1zc(nXGrid);
