@@ -365,4 +365,88 @@ int isinf ( const C3VecI arg ) {
     return answer;
 }
 
+float maxC3VecAbs ( const std::vector<C3Vec> &input ) {
+
+	std::vector<float> inputAbs(input.size());
+	for(int i=0;i<input.size();i++) {
+		inputAbs[i] = sqrt(pow(input[i].c1,2)+pow(input[i].c2,2)+pow(input[i].c3,2));
+	}
+	return *std::max_element(inputAbs.begin(),inputAbs.end());
+}
+
+complex<float> intVecArray ( const vector<float> &x, const vector<complex<float> > &f ) {
+
+	complex<float> result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0f*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+C3Vec intVecArray ( const vector<float> &x, const vector<C3Vec> &f ) {
+
+	C3Vec result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+C3VecI intVecArray ( const vector<float> &x, const vector<C3VecI> &f ) {
+
+	C3VecI result;
+	float h = x[1]-x[0];
+	for(int i=1;i<f.size();i++) {
+		result += h/2.0*(f[i-1]+f[i]);
+	}
+
+	return result;
+}
+
+void kj_print ( const C3Vec arg, string name ) {
+    cout << name<<".c1: " << arg.c1 << "  "<< name<<".c2: " << arg.c2 << "  "<<name<<".c3: " << arg.c3 << endl;
+    return;
+}
+
+void kj_print ( const float arg, string name ) {
+    cout << name <<": "<< arg << endl;
+    return;
+}
+
+C3Vec XYZ_to_CYL ( const C3Vec xyz ) {
+        C3Vec cyl;
+        cyl.c1 = sqrt(pow(xyz.c1,2)+pow(xyz.c2,2));
+        cyl.c2 = atan2(xyz.c2,xyz.c1);
+        cyl.c3 = xyz.c3;
+        return cyl;
+}
+
+C3Vec CYL_to_XYZ ( const C3Vec cyl ) {
+        C3Vec xyz;
+        xyz.c1 = cyl.c1*cos(cyl.c2);
+        xyz.c2 = cyl.c1*sin(cyl.c2);
+        xyz.c3 = cyl.c3;
+        return xyz;
+}
+
+C3Vec operator* ( const float A[][3], const C3Vec x ) {
+        C3Vec B;
+        B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
+        B.c2 = A[1][0]*x.c1 + A[1][1]*x.c2 + A[1][2]*x.c3;
+        B.c3 = A[2][0]*x.c1 + A[2][1]*x.c2 + A[2][2]*x.c3;
+        return B;
+}
+
+C3VecI operator* ( const float A[][3], const C3VecI x ) {
+        C3VecI B;
+        B.c1 = A[0][0]*x.c1 + A[0][1]*x.c2 + A[0][2]*x.c3;
+        B.c2 = A[1][0]*x.c1 + A[1][1]*x.c2 + A[1][2]*x.c3;
+        B.c3 = A[2][0]*x.c1 + A[2][1]*x.c2 + A[2][2]*x.c3;
+        return B;
+}
+
 

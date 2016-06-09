@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <algorithm> // for std::max_element
 
+using namespace std;
+
 class C3VecI {
 		public:
 				std::complex<float> c1, c2, c3;
@@ -92,6 +94,16 @@ int isnan ( const C3Vec arg );
 int isnan ( const C3VecI arg );
 int isinf ( const C3Vec arg );
 int isinf ( const C3VecI arg );
+float maxC3VecAbs ( const std::vector<C3Vec> &input );
+std::complex<float> intVecArray ( const std::vector<float> &x, const std::vector<std::complex<float> > &f );
+C3Vec intVecArray ( const std::vector<float> &x, const std::vector<C3Vec> &f );
+C3VecI intVecArray ( const std::vector<float> &x, const std::vector<C3VecI> &f );
+void kj_print ( const C3Vec arg, std::string name );
+void kj_print ( const float arg, std::string name );
+C3Vec XYZ_to_CYL ( const C3Vec xyz );
+C3Vec CYL_to_XYZ ( const C3Vec cyl );
+C3Vec operator* ( const float A[][3], const C3Vec x ); 
+C3VecI operator* ( const float A[][3], const C3VecI x );
 
 #include "c3vec.tpp" // since templated functions need to be in headers
 
