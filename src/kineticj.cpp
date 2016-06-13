@@ -55,8 +55,10 @@ int main ( int argc, char **argv )
 {
 
         // Make sure the "output/" directory exists
+
 		stringstream outputDirName;
 		outputDirName << "output/";
+
 		// check directory exists
 		struct stat st;
         int dirTest = stat(outputDirName.str().c_str(),&st);

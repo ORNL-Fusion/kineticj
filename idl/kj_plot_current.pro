@@ -136,6 +136,7 @@ endif
 
     if(OverplotAR2)then begin
         ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference'
+        ar2Run = 'aorsa'
         ar2 = ar2_read_solution(ar2Run,1) 
         ar2SpecNo = fix(cfg['species_number'])
     endif
