@@ -395,6 +395,16 @@ C3Vec cross(const C3Vec A, const C3Vec B)
     return answer;
 }
 
+C3VecI cross(const C3Vec A, const C3VecI B)
+{
+
+    C3VecI answer;
+    answer.c1 = (A.c2 * B.c3 - A.c3 * B.c2);
+    answer.c2 = -(A.c1 * B.c3 - A.c3 * B.c1);
+    answer.c3 = (A.c1 * B.c2 - A.c2 * B.c1);
+    return answer;
+}
+
 int isnan(const C3Vec arg)
 {
     int answer = 0;

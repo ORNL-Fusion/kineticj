@@ -27,9 +27,11 @@ C3Vec rk4_evalf(CParticle& p, const float& t,
 }
 
 // Zero-order orbits
-int rk4_move(CParticle& p, const float& dt, const float& t0,
+int rk4_move(CParticle& p, const float& dt, 
     const vector<float>& r, const vector<C3Vec>& b0)
 {
+
+    float t0 = 0;            
 
     C3Vec yn0(p.v_c1, p.v_c2, p.v_c3), xn0(p.c1, p.c2, p.c3);
     C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1;
@@ -102,7 +104,7 @@ int rk4_move(CParticle& p, const float& dt, const float& t0,
 }
 
 // Guiding center orbit
-int rk4_move_gc(CParticle& p, const float& dt, const float& t0,
+int rk4_move_gc(CParticle& p, const float& dt, float& t0,
     const vector<float>& r_b0, const vector<C3Vec>& b0_CYL, const vector<float>& r_GC,
     const vector<C3Vec>& curv_CYL, const vector<C3Vec>& grad_CYL,
     const vector<float>& bDotGradB, const float wrf)

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <assert.h>
 #include <algorithm> // for std::max_element
+#include "cparticle.hpp"
 
 using namespace std;
 
@@ -90,6 +91,7 @@ float dot ( const C3Vec &Y, const C3Vec &X );
 std::complex<float> dot ( const C3VecI &Y, const C3Vec &X );
 C3Vec atan2 ( const C3Vec &Y, const C3Vec &X );
 C3Vec cross ( const C3Vec A, const C3Vec B );
+C3VecI cross ( const C3Vec A, const C3VecI B );
 int isnan ( const C3Vec arg );
 int isnan ( const C3VecI arg );
 int isinf ( const C3Vec arg );
@@ -106,5 +108,24 @@ C3Vec operator* ( const float A[][3], const C3Vec x );
 C3VecI operator* ( const float A[][3], const C3VecI x );
 
 #include "c3vec.tpp" // since templated functions need to be in headers
+
+// Functor to wrap cross and dot 
+
+struct vCross 
+{
+    C3VecI operator() (CParticle &p, C3VecI &field) {
+        C3Vec thisVel_XYZ(p.v_c1, p.v_c2, p.v_c3);
+        C3VecI result = cross(thisVel_XYZ,field);
+        return result;
+    }
+};
+
+struct doDotProduct 
+{
+    complex<float> operator() (C3VecI &a, C3Vec &b) {
+        complex<float> result = dot(a,b);
+        return result;
+    }
+};
 
 #endif

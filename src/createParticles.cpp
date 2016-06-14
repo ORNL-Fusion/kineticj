@@ -121,7 +121,7 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
 
                 TestIntegratedValue += weight * dv;
 
-                CParticle p(x, 0, 0, thisvx, thisvy, thisvz, amu, Z, weight);
+                CParticle p(x, 0, 0, thisvx, thisvy, thisvz, amu, Z, weight, T_keV, n_m3);
                 pList[cnt] = p;
                 pList[cnt].number = cnt;
                 pList[cnt].vTh = vTh;

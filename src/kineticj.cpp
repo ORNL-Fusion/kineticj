@@ -168,9 +168,6 @@ int main(int argc, char** argv)
 
     float MaxB0 = *max_element(bMag_kjGrid.begin(), bMag_kjGrid.end());
 
-// string googlePerfFileName = "/home/dg6/code/kineticj/googlep";
-// ProfilerStart(googlePerfFileName.c_str());
-//
 #if USEPAPI >= 1
     cpuTime0 = cpuTime;
     realTime0 = realTime;
@@ -236,16 +233,13 @@ int main(int argc, char** argv)
         // linearWeight[i]=thisT[i]*1.0/(tRF*nRFCycles)+1.0;
         hanningWeight[i] = 0.5 * (1 - cos(2 * _pi * i / (nSteps - 1))); // Regular
         // hanningWeight[i]=0.5*(1-cos(2*_pi*i/(nSteps*0.25-1))); //Sharper
-
         // hanningWeight[i] = linearWeight[i];
         if (i < nSteps / 2)
             hanningWeight[i] = 1; // Regular
         // if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
-
         // complex<float> _i (0.0,1.0);
         // complex<float> wrf_c (wrf,wrf*0.0025);
         // expWeight[i] = 1.0;//abs(exp(-_i*wrf_c*thisT[i]));
-
         // hanningWeight[i] = hanningWeight[i] * expWeight[i];
     }
 
@@ -255,6 +249,74 @@ int main(int argc, char** argv)
 #if defined(_OPENMP)
     int nThreads, tid, spoken = 0;
 #endif
+
+#if CLOCK >= 1
+        clock_t startTimeFunctor = clock();
+#endif
+
+    float dv;
+
+    // Create worklist of nX * nP items
+
+    long int nWork = nXGrid * nPx * nPy * nPz;
+
+    vector<CParticle> particleWorkList;
+    for (int iX = 0; iX < nXGrid; iX++) {
+
+        vector<CParticle> moreWork(
+            create_particles(xGrid[iX], amu, Z, T_keV[iX], density_m3[iX], nPx, nPy,
+                nPz, nThermal, dv, r, b0_CYL));
+
+        particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
+
+    }
+
+    // Move particles
+    cout << "Moving particles with for_each ..." << endl;
+
+    vector<C3Vec> df0_dv_XYZ(nWork);
+    vector<C3VecI> E1(nWork);
+    vector<C3VecI> B1(nWork);
+    vector<C3VecI> vCrossB(nWork);
+    vector<C3VecI> vCrossB_E1(nWork);
+    vector<complex<float> > forceDotGradf0(nWork);
+
+    for (int i = 0; i < nSteps; i++) {
+
+        // Move particle
+        for_each( particleWorkList.begin(), particleWorkList.end(), moveParticle(dtMin, r, b0_CYL) ); 
+       
+        // Get df0/dv at new velocity 
+        transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), get_df0_dv() ); 
+
+        // Get e1 at new position
+        transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), getPerturbedField(r,e1_CYL,nPhi,hanningWeight[i]) ); 
+
+        // Get b1 at new position
+        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), getPerturbedField(r,b1_CYL,nPhi,hanningWeight[i]) ); 
+
+        // Get v x B1 term
+        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross() );
+
+        // Sum to get total force term ... E1 + v x B1
+        transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), std::plus<C3VecI>() );
+
+        //  (E1 + v x B1) . grad_v(f0(v))
+        transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), doDotProduct() );
+
+    }
+    cout << "DONE" << endl;
+
+#if CLOCK >= 1
+#if not defined(_OPENMP)
+        clock_t endTimeFunctor = clock();
+        double timeInSecondsFunctor = (endTimeFunctor - startTimeFunctor) / (double)CLOCKS_PER_SEC;
+        cout << "Time for this spatial point: " << timeInSecondsFunctor << endl;
+        cout << "Time per particle: " << timeInSecondsFunctor / nWork << endl;
+#endif
+#endif
+
+cout << "Continuing with non functor approach ..." << endl;
 
 #pragma omp parallel for private(istat, tid, spoken)
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -268,7 +330,6 @@ int main(int argc, char** argv)
             spoken = 1;
         }
 #endif
-        float dv;
         vector<CParticle> ThisParticleList(
             create_particles(xGrid[iX], amu, Z, T_keV[iX], density_m3[iX], nPx, nPy,
                 nPz, nThermal, dv, r, b0_CYL));
@@ -368,7 +429,7 @@ int main(int argc, char** argv)
                 int MoveStatus = rk4_move_gc(thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc,
                     curv_CYL, grad_CYL, bDotGradB, wrf);
 #else
-                int MoveStatus = rk4_move(thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL);
+                int MoveStatus = rk4_move(thisParticle_XYZ, dtMin, r, b0_CYL);
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status, MoveStatus);
 #if DEBUG_MOVE >= 1
@@ -399,6 +460,7 @@ int main(int argc, char** argv)
 
                 C3VecI E1_XYZ;
                 complex<float> _i(0, 1);
+                // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
                 E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
