@@ -297,7 +297,6 @@ int main(int argc, char** argv)
 #endif
 
         vector<float> f1(nP);
-        // vector<complex<float> > f1xc(nP), f1yc(nP), f1zc(nP);
         vector<complex<float> > f1c(nP);
 
         for (int iP = 0; iP < nP; iP++) {
@@ -446,7 +445,7 @@ int main(int argc, char** argv)
                 this_e1_dot_gradvf0[i] = orbitParallel_E * orbitParallel_gradv_f0;
                 // cout<<this_e1_dot_gradvf0[i]<<" e1dotgrad"<<endl;
                 complex<float> _full = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
-// cout<<"_full : "<<_full<<endl;
+                // cout<<"_full : "<<_full<<endl;
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ, thisB1c_XYZ[i]);
                 C3VecI this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
@@ -461,10 +460,10 @@ int main(int argc, char** argv)
 
                 this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
 
-// C3Vec  this_gradv_f0_CYL;
-// this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
-// this_gradv_f0_CYL = rot_CYL_to_XYZ ( this_t, gradv_f0_XYZ, -1);
-// this_e1_dot_gradvf0[i] = dot(this_force_CYL, this_gradv_f0_CYL);
+                // C3Vec  this_gradv_f0_CYL;
+                // this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
+                // this_gradv_f0_CYL = rot_CYL_to_XYZ ( this_t, gradv_f0_XYZ, -1);
+                // this_e1_dot_gradvf0[i] = dot(this_force_CYL, this_gradv_f0_CYL);
 #endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
