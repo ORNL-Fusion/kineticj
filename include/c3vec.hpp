@@ -128,4 +128,24 @@ struct doDotProduct
     }
 };
 
+struct runningIntegral
+{
+    float intFactor;
+    runningIntegral( float _intFactor ) : intFactor(_intFactor) {}
+
+    complex<float> operator() (complex<float> &integral, complex<float> &y) {
+        complex<float> result = integral + intFactor * y;
+        return result;
+    }
+};
+
+struct multiplyByChargeOverMass
+{
+    complex<float> operator() (complex<float> &integral, CParticle &p) {
+        complex<float> result = -(float)(p.q / p.m) * integral;
+        return result;
+    }
+};
+
+
 #endif

@@ -274,37 +274,58 @@ int main(int argc, char** argv)
     // Move particles
     cout << "Moving particles with for_each ..." << endl;
 
-    vector<C3Vec> df0_dv_XYZ(nWork);
-    vector<C3VecI> E1(nWork);
-    vector<C3VecI> B1(nWork);
-    vector<C3VecI> vCrossB(nWork);
-    vector<C3VecI> vCrossB_E1(nWork);
-    vector<complex<float> > forceDotGradf0(nWork);
+    // Velocity space calculation
+
+    vector<C3Vec> df0_dv_XYZ(nWork,0);
+    vector<C3VecI> E1(nWork,0);
+    vector<C3VecI> B1(nWork,0);
+    vector<C3VecI> vCrossB(nWork,0);
+    vector<C3VecI> vCrossB_E1(nWork,0);
+    vector<complex<float> > forceDotGradf0(nWork,0);
+    vector<complex<float> > dtIntegral(nWork,0);
+    vector<complex<float> > f1(nWork,0);
 
     for (int i = 0; i < nSteps; i++) {
+
+        float dtIntFac = 1;
+        if (i > 0) dtIntFac = 2;
+
+        dtIntFac = dtMin / 2.0 * dtIntFac;
 
         // Move particle
         for_each( particleWorkList.begin(), particleWorkList.end(), moveParticle(dtMin, r, b0_CYL) ); 
        
-        // Get df0/dv at new velocity 
+        // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), get_df0_dv() ); 
 
-        // Get e1 at new position
+        // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), getPerturbedField(r,e1_CYL,nPhi,hanningWeight[i]) ); 
 
-        // Get b1 at new position
+        // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), getPerturbedField(r,b1_CYL,nPhi,hanningWeight[i]) ); 
 
-        // Get v x B1 term
+        // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross() );
 
-        // Sum to get total force term ... E1 + v x B1
+        // E1 + v x B1
         transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), std::plus<C3VecI>() );
 
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), doDotProduct() );
 
+        // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running integral
+        transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), runningIntegral(dtIntFac) );
+
+        // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
+        transform( dtIntegral.begin(), dtIntegral.end(), particleWorkList.begin(), f1.begin(), multiplyByChargeOverMass() ); 
     }
+
+    for (int i=0;i<nWork;i++) {
+            cout<< f1[i].real() << "  " << f1[i].imag()<<endl;
+    }
+
+    // Reduce velocity space to current via the first velocity moment
+
     cout << "DONE" << endl;
 
 #if CLOCK >= 1
