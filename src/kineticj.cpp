@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <numeric>
 
 #if CLOCK >= 1
 #include <ctime>
@@ -193,7 +194,7 @@ int main(int argc, char** argv)
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
-    int nP = nPx * nPy * nPz;
+    long int nP = nPx * nPy * nPz;
     float wc = Z * _e * MaxB0 / (amu * _mi);
     float cyclotronPeriod = 2 * _pi / wc;
     float dtMin = -cyclotronPeriod / nStepsPerCycle;
@@ -256,9 +257,9 @@ int main(int argc, char** argv)
 
     float dv;
 
-    // Create worklist of nX * nP items
+    // Create worklist of nX * nP particles
 
-    long int nWork = nXGrid * nPx * nPy * nPz;
+    long int nWork = nXGrid * nP;
 
     vector<CParticle> particleWorkList;
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -268,8 +269,17 @@ int main(int argc, char** argv)
                 nPz, nThermal, dv, r, b0_CYL));
 
         particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
-
     }
+
+    // Create the vx,vy,vz iterators
+
+    vector<float> vx(nWork,0);
+    vector<float> vy(nWork,0);
+    vector<float> vz(nWork,0);
+
+    transform( vx.begin(), vx.end(), particleWorkList.begin(), vx.begin(), set_vx() );
+    transform( vy.begin(), vy.end(), particleWorkList.begin(), vy.begin(), set_vy() );
+    transform( vz.begin(), vz.end(), particleWorkList.begin(), vz.begin(), set_vz() );
 
     // Move particles
     cout << "Moving particles with for_each ..." << endl;
@@ -284,6 +294,9 @@ int main(int argc, char** argv)
     vector<complex<float> > forceDotGradf0(nWork,0);
     vector<complex<float> > dtIntegral(nWork,0);
     vector<complex<float> > f1(nWork,0);
+    vector<complex<float> > vxf1(nWork,0);
+    vector<complex<float> > vyf1(nWork,0);
+    vector<complex<float> > vzf1(nWork,0);
 
     for (int i = 0; i < nSteps; i++) {
 
@@ -313,18 +326,73 @@ int main(int argc, char** argv)
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), doDotProduct() );
 
-        // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running integral
+        // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), runningIntegral(dtIntFac) );
 
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         transform( dtIntegral.begin(), dtIntegral.end(), particleWorkList.begin(), f1.begin(), multiplyByChargeOverMass() ); 
-    }
 
-    for (int i=0;i<nWork;i++) {
-            cout<< f1[i].real() << "  " << f1[i].imag()<<endl;
+        // q . f1(v) // first step in velocity momemnt for current calculation 
+        transform( f1.begin(), f1.end(), particleWorkList.begin(), f1.begin(), multiplyByCharge() ); 
+
+        // q . vx . f1(v) 
+        transform( f1.begin(), f1.end(), vx.begin(), vxf1.begin(), std::multiplies< complex<float> >() ); 
+
+        // q . vy . f1(v) 
+        transform( f1.begin(), f1.end(), vy.begin(), vyf1.begin(), std::multiplies< complex<float> >() ); 
+
+        // q . vz . f1(v) 
+        transform( f1.begin(), f1.end(), vz.begin(), vzf1.begin(), std::multiplies< complex<float> >() ); 
     }
 
     // Reduce velocity space to current via the first velocity moment
+
+    for (int i=0;i<nXGrid;i++) {
+        j1xc[i] = -dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
+        j1yc[i] = -dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
+        j1zc[i] = -dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
+        cout << j1xc[i].real() << "  " << j1xc[i].imag() << endl;
+    }
+
+    stringstream ncjPFileName2("jP2.nc");
+
+    NcFile ncjPFile(ncjPFileName2.str().c_str(), NcFile::replace);
+
+    NcDim nc_nX = ncjPFile.addDim("nJp", nXGrid);
+
+    NcVar nc_x = ncjPFile.addVar("x", ncFloat, nc_nX);
+
+    NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re", ncFloat, nc_nX);
+    NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im", ncFloat, nc_nX);
+
+    NcVar nc_j1yc_re = ncjPFile.addVar("j1yc_re", ncFloat, nc_nX);
+    NcVar nc_j1yc_im = ncjPFile.addVar("j1yc_im", ncFloat, nc_nX);
+
+    NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re", ncFloat, nc_nX);
+    NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im", ncFloat, nc_nX);
+
+    vector<float> JxRe(nXGrid,0);
+    vector<float> JxIm(nXGrid,0);
+    vector<float> JyRe(nXGrid,0);
+    vector<float> JyIm(nXGrid,0);
+    vector<float> JzRe(nXGrid,0);
+    vector<float> JzIm(nXGrid,0);
+
+    for (int i=0;i<nXGrid;i++) {
+       JxRe[i] = j1xc[i].real(); 
+       JxIm[i] = j1xc[i].imag(); 
+       JyRe[i] = j1yc[i].real(); 
+       JyIm[i] = j1yc[i].imag(); 
+       JzRe[i] = j1zc[i].real(); 
+       JzIm[i] = j1zc[i].imag(); 
+    }
+    nc_x.putVar(&xGrid[0]);
+    nc_j1xc_re.putVar(&JxRe[0]);
+    nc_j1xc_im.putVar(&JxIm[0]);
+    nc_j1yc_re.putVar(&JyRe[0]);
+    nc_j1yc_im.putVar(&JyIm[0]);
+    nc_j1zc_re.putVar(&JzRe[0]);
+    nc_j1zc_im.putVar(&JzIm[0]);
 
     cout << "DONE" << endl;
 
