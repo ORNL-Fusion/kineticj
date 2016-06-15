@@ -158,7 +158,7 @@ endif
         p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
-    jpRange = max(abs([j1y]))
+    jpRange = max(abs([j1z]))
     p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1_z',thick=3, ytitle='j1 [Amp/m^2]', xtitle='r [m]',margin=[0.2,0.1,0.05,0.2])
     p=plot(xf,imaginary(j1z),/over,color='r',thick=3)
     if(OverPlotAR2)then begin
@@ -168,5 +168,32 @@ endif
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
+
+	cdfId = ncdf_open('jP2.nc')
+
+		ncdf_varget, cdfId, 'x', x2 
+
+		ncdf_varget, cdfId, 'j1xc_re', jPr_re2
+		ncdf_varget, cdfId, 'j1xc_im', jPr_im2
+		ncdf_varget, cdfId, 'j1yc_re', jPt_re2
+		ncdf_varget, cdfId, 'j1yc_im', jPt_im2
+		ncdf_varget, cdfId, 'j1zc_re', jPz_re2
+		ncdf_varget, cdfId, 'j1zc_im', jPz_im2
+
+	ncdf_close, cdfId
+
+    jPr2=complex(jPr_re2,jPr_im2)
+    jPt2=complex(jPt_re2,jPt_im2)
+    jPz2=complex(jPz_re2,jPz_im2)
+
+    p=plot(x2,jPr2,layout=[1,3,1])
+    p=plot(x2,imaginary(jPr2),/over,color='r')
+    p=plot(x2,jPt2,layout=[1,3,2],/current)
+    p=plot(x2,imaginary(jPt2),/over,color='r')
+    p=plot(x2,jPz2,layout=[1,3,3],/current)
+    p=plot(x2,imaginary(jPz2),/over,color='r')
+
+
+
 stop
 end
