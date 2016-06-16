@@ -348,9 +348,9 @@ int main(int argc, char** argv)
     // Reduce velocity space to current via the first velocity moment
 
     for (int i=0;i<nXGrid;i++) {
-        j1xc[i] = -dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
-        j1yc[i] = -dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
-        j1zc[i] = -dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
+        j1xc[i] = dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
+        j1yc[i] = dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
+        j1zc[i] = dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
         cout << j1xc[i].real() << "  " << j1xc[i].imag() << endl;
     }
 
@@ -550,11 +550,13 @@ cout << "Continuing with non functor approach ..." << endl;
                 C3VecI E1_XYZ;
                 complex<float> _i(0, 1);
                 // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
-                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
+                //E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
+                E1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
                 C3VecI B1_XYZ;
-                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
+                //B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
+                B1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
 #if DEBUG_MOVE >= 2

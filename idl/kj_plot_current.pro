@@ -193,7 +193,5 @@ endif
     p=plot(x2,jPz2,layout=[1,3,3],/current)
     p=plot(x2,imaginary(jPz2),/over,color='r')
 
-
-
 stop
 end
