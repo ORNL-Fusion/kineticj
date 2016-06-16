@@ -1,5 +1,5 @@
 template<class TYPE>
-TYPE kj_interp1D ( const float &x, const vector<float> &xVec, const vector<TYPE> &yVec, int &status ) {
+TYPE kj_interp1D ( const float &x, const std::vector<float> &xVec, const std::vector<TYPE> &yVec, int &status ) {
 
 	float _x, x0, x1;
 	float xTmp;

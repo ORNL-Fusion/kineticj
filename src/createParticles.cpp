@@ -15,9 +15,9 @@ float GetGyroPhase(const C3Vec v_abp)
 float maxwellian(float vx, float vy, float vz, float vTh)
 {
 
-    float weight_x = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vx, 2) / pow(vTh, 2));
-    float weight_y = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vy, 2) / pow(vTh, 2));
-    float weight_z = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vz, 2) / pow(vTh, 2));
+    float weight_x = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vx, 2) / pow(vTh, 2));
+    float weight_y = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vy, 2) / pow(vTh, 2));
+    float weight_z = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vz, 2) / pow(vTh, 2));
 
     return weight_x * weight_y * weight_z;
 }
@@ -25,9 +25,9 @@ float maxwellian(float vx, float vy, float vz, float vTh)
 float get_vTh(const float _amu, const float _Z, const float _T_keV)
 {
 
-    float m = _amu * _mi;
-    float q = _Z * _e;
-    float kT_joule = _T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
+    float m = _amu * physConstants::mi;
+    float q = _Z * physConstants::e;
+    float kT_joule = _T_keV * 1e3 * physConstants::e; // This may actually be E_keV so may need a 3/2 somewhere
     float vTh = sqrt(2.0 * kT_joule / m);
 
     return vTh;
@@ -83,7 +83,7 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
     int nP = nPx * nPy * nPz;
     pList.resize(nP);
 
-    float m = amu * _mi;
+    float m = amu * physConstants::mi;
     float vTh = get_vTh(amu, Z, T_keV);
 
 #if DEBUG_MAXWELLIAN >= 1

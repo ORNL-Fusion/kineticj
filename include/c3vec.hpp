@@ -8,8 +8,6 @@
 #include <algorithm> // for std::max_element
 #include "cparticle.hpp"
 
-using namespace std;
-
 class C3VecI {
 		public:
 				std::complex<float> c1, c2, c3;
@@ -122,8 +120,8 @@ struct vCross
 
 struct doDotProduct 
 {
-    complex<float> operator() (C3VecI &a, C3Vec &b) {
-        complex<float> result = dot(a,b);
+    std::complex<float> operator() (C3VecI &a, C3Vec &b) {
+        std::complex<float> result = dot(a,b);
         return result;
     }
 };
@@ -133,24 +131,24 @@ struct runningIntegral
     float intFactor;
     runningIntegral( float _intFactor ) : intFactor(_intFactor) {}
 
-    complex<float> operator() (complex<float> &integral, complex<float> &y) {
-        complex<float> result = integral + intFactor * y;
+    std::complex<float> operator() (std::complex<float> &integral, std::complex<float> &y) {
+        std::complex<float> result = integral + intFactor * y;
         return result;
     }
 };
 
 struct multiplyByChargeOverMass
 {
-    complex<float> operator() (complex<float> &integral, CParticle &p) {
-        complex<float> result = -(float)(p.q / p.m) * integral;
+    std::complex<float> operator() (std::complex<float> &integral, CParticle &p) {
+        std::complex<float> result = -(float)(p.q / p.m) * integral;
         return result;
     }
 };
 
 struct multiplyByCharge
 {
-    complex<float> operator() (complex<float> &x, CParticle &p) {
-        complex<float> result = -(float)(p.q) * x;
+    std::complex<float> operator() (std::complex<float> &x, CParticle &p) {
+        std::complex<float> result = -(float)(p.q) * x;
         return result;
     }
 };

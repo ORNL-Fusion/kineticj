@@ -1,4 +1,10 @@
 #include "c3vec.hpp"
+#ifdef __CUDACC__
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#endif
+
+
 #include "constants.hpp"
 #include "cparticle.hpp"
 #include "createParticles.hpp"
@@ -25,11 +31,6 @@
 #include <unistd.h>
 #include <vector>
 #include <numeric>
-
-#ifdef __CUDACC__
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
-#endif
 
 #if CLOCK >= 1
 #include <ctime>
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
     std::vector<float> r_gc, bDotGradB;
     int gcReadStat = read_gc_file(gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB);
 
-    float wrf = freq * 2 * _pi;
+    float wrf = freq * 2 * physConstants::pi;
     float xGridMin = cfg.lookup("xGridMin");
     float xGridMax = cfg.lookup("xGridMax");
     int nXGrid = cfg.lookup("nXGrid");
@@ -186,7 +187,7 @@ int main(int argc, char** argv)
 
     float nRFCycles = cfg.lookup("nRFCycles");
     float nStepsPerCycle = cfg.lookup("nStepsPerCycle");
-    float tRF = (2 * _pi) / wrf;
+    float tRF = (2 * physConstants::pi) / wrf;
     int nJpCycles = cfg.lookup("nJpCycles");
     int nJpPerCycle = cfg.lookup("nJpPerCycle");
     int nPhi = cfg.lookup("nPhi");
@@ -200,13 +201,13 @@ int main(int argc, char** argv)
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
     long int nP = nPx * nPy * nPz;
-    float wc = Z * _e * MaxB0 / (amu * _mi);
-    float cyclotronPeriod = 2 * _pi / wc;
+    float wc = Z * physConstants::e * MaxB0 / (amu * physConstants::mi);
+    float cyclotronPeriod = 2 * physConstants::pi / wc;
     float dtMin = -cyclotronPeriod / nStepsPerCycle;
     int nSteps = nRFCycles * tRF / abs(dtMin) + 1;
 
     for (int iX = 0; iX < nXGrid; iX++) {
-        float this_wc = Z * _e * bMag_kjGrid[iX] / (amu * _mi);
+        float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::mi);
         wrf_wc[iX] = wrf / this_wc;
     }
 
@@ -237,8 +238,8 @@ int main(int argc, char** argv)
     vector<float> linearWeight(nSteps);
     for (int i = 0; i < nSteps; i++) {
         // linearWeight[i]=thisT[i]*1.0/(tRF*nRFCycles)+1.0;
-        hanningWeight[i] = 0.5 * (1 - cos(2 * _pi * i / (nSteps - 1))); // Regular
-        // hanningWeight[i]=0.5*(1-cos(2*_pi*i/(nSteps*0.25-1))); //Sharper
+        hanningWeight[i] = 0.5 * (1 - cos(2 * physConstants::pi * i / (nSteps - 1))); // Regular
+        // hanningWeight[i]=0.5*(1-cos(2*physConstants::pi*i/(nSteps*0.25-1))); //Sharper
         // hanningWeight[i] = linearWeight[i];
         if (i < nSteps / 2)
             hanningWeight[i] = 1; // Regular
@@ -277,7 +278,7 @@ int main(int argc, char** argv)
     }
 
 #ifdef __CUDACC__
-    thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
+    //thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
 #endif
 
     // Create the vx,vy,vz iterators

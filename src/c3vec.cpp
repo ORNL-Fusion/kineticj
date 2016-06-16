@@ -338,8 +338,8 @@ float mag(const C3Vec& in)
 }
 
 // This is not really a usefule magnitude
-// and is only used to reduce a complex valued
-// vector to a number for checking for Inf & NaNs
+// and is only used to reduce a std::complex valued
+// std::vector to a number for checking for Inf & NaNs
 float mag(const C3VecI& in)
 {
     float c1 = abs(in.c1);
@@ -447,10 +447,10 @@ float maxC3VecAbs(const std::vector<C3Vec>& input)
     return *std::max_element(inputAbs.begin(), inputAbs.end());
 }
 
-complex<float> intVecArray(const vector<float>& x, const vector<complex<float> >& f)
+std::complex<float> intVecArray(const std::vector<float>& x, const std::vector<std::complex<float> >& f)
 {
 
-    complex<float> result;
+    std::complex<float> result;
     float h = x[1] - x[0];
     for (int i = 1; i < f.size(); i++) {
         result += h / 2.0f * (f[i - 1] + f[i]);
@@ -459,7 +459,7 @@ complex<float> intVecArray(const vector<float>& x, const vector<complex<float> >
     return result;
 }
 
-C3Vec intVecArray(const vector<float>& x, const vector<C3Vec>& f)
+C3Vec intVecArray(const std::vector<float>& x, const std::vector<C3Vec>& f)
 {
 
     C3Vec result;
@@ -471,7 +471,7 @@ C3Vec intVecArray(const vector<float>& x, const vector<C3Vec>& f)
     return result;
 }
 
-C3VecI intVecArray(const vector<float>& x, const vector<C3VecI>& f)
+C3VecI intVecArray(const std::vector<float>& x, const std::vector<C3VecI>& f)
 {
 
     C3VecI result;
@@ -483,15 +483,15 @@ C3VecI intVecArray(const vector<float>& x, const vector<C3VecI>& f)
     return result;
 }
 
-void kj_print(const C3Vec arg, string name)
+void kj_print(const C3Vec arg, std::string name)
 {
-    cout << name << ".c1: " << arg.c1 << "  " << name << ".c2: " << arg.c2 << "  " << name << ".c3: " << arg.c3 << endl;
+    std::cout << name << ".c1: " << arg.c1 << "  " << name << ".c2: " << arg.c2 << "  " << name << ".c3: " << arg.c3 << std::endl;
     return;
 }
 
-void kj_print(const float arg, string name)
+void kj_print(const float arg, std::string name)
 {
-    cout << name << ": " << arg << endl;
+    std::cout << name << ": " << arg << std::endl;
     return;
 }
 
