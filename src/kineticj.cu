@@ -26,6 +26,11 @@
 #include <vector>
 #include <numeric>
 
+#ifdef __CUDACC__
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#endif
+
 #if CLOCK >= 1
 #include <ctime>
 #endif
@@ -270,6 +275,10 @@ int main(int argc, char** argv)
 
         particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
     }
+
+#ifdef __CUDACC__
+    thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
+#endif
 
     // Create the vx,vy,vz iterators
 

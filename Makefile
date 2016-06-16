@@ -1,19 +1,15 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
+USECUDA:=1
+
 NAME := bin/kineticj
 
 LIBS :=  
 INCLUDEFLAGS :=  
 
-CUDADIR := ${HOME}/code/cuda/4.1/cuda
-CUDALIBDIR = ${CUDADIR}/lib64
-CUDA_ARCH := sm_13
-CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
-
-CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
 GCCDIR :=  
 PGIDIR := 
@@ -21,12 +17,11 @@ PGIDIR :=
 VENDOR := GCC_
 CC := gcc
 CPP := g++
+NVCC := nvcc
 
 #VENDOR := PGI_
 #CC := pgcc
 #CPP := pgcpp
-
-NVCC := $(CUDADIR)/bin/nvcc
 
 ThisMachine := $(shell uname -n)
 
@@ -90,10 +85,15 @@ CXXFLAGS += $(INCLUDEFLAGS)
 NVCCFLAGS += $(INCLUDEFLAGS) 
 
 # determine the object files
-SRCTYPES := c cpp 
+SRCTYPES := c cpp cu 
+LINK := $(CPP) $(CXXFLAGS) $(LFLAGS)
+
 ifeq ($(USECUDA),1)
-SRCTYPES += cu
+LINK := $(NVCC) $(NVCCFLAGS) $(LFLAGS)
+else
+NVCCFLAGS += --x c++
 endif
+
 OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildcard $(patsubst %, %/*.$(srctype), $(MODULES)))))
 
 # link the program
