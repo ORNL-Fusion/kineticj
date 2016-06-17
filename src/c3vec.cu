@@ -1,8 +1,14 @@
 #include "c3vec.hpp"
 
 #ifdef __CUDACC__
-__host__ __device__
+#define HOST __host__ 
+#define DEVICE __device__
+#else
+#define HOST 
+#define DEVICE
 #endif
+
+HOST DEVICE
 C3Vec& C3Vec::operator=(const C3Vec& rhs)
 {
     if (this != &rhs) {
@@ -13,6 +19,7 @@ C3Vec& C3Vec::operator=(const C3Vec& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator=(const C3VecI& rhs)
 {
     if (this != &rhs) {
@@ -23,6 +30,7 @@ C3VecI& C3VecI::operator=(const C3VecI& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator+=(const C3Vec& rhs)
 {
     c1 += rhs.c1;
@@ -31,6 +39,7 @@ C3Vec& C3Vec::operator+=(const C3Vec& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator+=(const float& rhs)
 {
     c1 += rhs;
@@ -39,6 +48,7 @@ C3Vec& C3Vec::operator+=(const float& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator-=(const C3Vec& rhs)
 {
     c1 -= rhs.c1;
@@ -47,6 +57,7 @@ C3Vec& C3Vec::operator-=(const C3Vec& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator-=(const float& rhs)
 {
     c1 -= rhs;
@@ -54,6 +65,8 @@ C3Vec& C3Vec::operator-=(const float& rhs)
     c3 -= rhs;
     return *this;
 }
+
+HOST DEVICE
 C3VecI& C3VecI::operator-=(const C3VecI& rhs)
 {
     c1 -= rhs.c1;
@@ -62,6 +75,7 @@ C3VecI& C3VecI::operator-=(const C3VecI& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator-=(const float& rhs)
 {
     c1 -= rhs;
@@ -70,6 +84,7 @@ C3VecI& C3VecI::operator-=(const float& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator*=(const C3Vec& rhs)
 {
     c1 *= rhs.c1;
@@ -78,6 +93,7 @@ C3Vec& C3Vec::operator*=(const C3Vec& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator*=(const float& rhs)
 {
     c1 *= rhs;
@@ -86,6 +102,7 @@ C3Vec& C3Vec::operator*=(const float& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator/=(const C3Vec& rhs)
 {
     c1 /= rhs.c1;
@@ -94,6 +111,7 @@ C3Vec& C3Vec::operator/=(const C3Vec& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3Vec& C3Vec::operator/=(const float& rhs)
 {
     c1 /= rhs;
@@ -102,6 +120,7 @@ C3Vec& C3Vec::operator/=(const float& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator/=(const C3VecI& rhs)
 {
     c1 /= rhs.c1;
@@ -110,6 +129,7 @@ C3VecI& C3VecI::operator/=(const C3VecI& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator/=(const float& rhs)
 {
     c1 /= rhs;
@@ -117,67 +137,81 @@ C3VecI& C3VecI::operator/=(const float& rhs)
     c3 /= rhs;
     return *this;
 }
+
+HOST DEVICE
 C3Vec C3Vec::operator+(const C3Vec& other)
 {
     return C3Vec(this->c1 + other.c1, this->c2 + other.c2, this->c3 + other.c3);
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator+(const float& other)
 {
     return C3Vec(*this) += other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator-(const C3Vec& other)
 {
     return C3Vec(*this) -= other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator-(const float& other)
 {
     return C3Vec(*this) -= other;
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator-(const C3VecI& other)
 {
     return C3VecI(*this) -= other;
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator-(const float& other)
 {
     return C3VecI(*this) -= other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator*(const C3Vec& other)
 {
     return C3Vec(*this) *= other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator*(const float& other)
 {
     return C3Vec(*this) *= other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator/(const C3Vec& other)
 {
     return C3Vec(*this) /= other;
 }
 
+HOST DEVICE
 C3Vec C3Vec::operator/(const float& other)
 {
     return C3Vec(*this) /= other;
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator/(const C3VecI& other)
 {
     return C3VecI(*this) /= other;
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator/(const float& other)
 {
     return C3VecI(*this) /= other;
 }
 // C3VecI
 
+HOST DEVICE
 C3VecI& C3VecI::operator+=(const C3VecI& rhs)
 {
     c1 += rhs.c1;
@@ -186,6 +220,7 @@ C3VecI& C3VecI::operator+=(const C3VecI& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator+=(const float& rhs)
 {
     c1 += rhs;
@@ -194,6 +229,7 @@ C3VecI& C3VecI::operator+=(const float& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator*=(const C3VecI& rhs)
 {
     c1 *= rhs.c1;
@@ -202,6 +238,7 @@ C3VecI& C3VecI::operator*=(const C3VecI& rhs)
     return *this;
 }
 
+HOST DEVICE
 C3VecI& C3VecI::operator*=(const float& rhs)
 {
     c1 *= rhs;
@@ -209,20 +246,26 @@ C3VecI& C3VecI::operator*=(const float& rhs)
     c3 *= rhs;
     return *this;
 }
+
+HOST DEVICE
 C3VecI C3VecI::operator+(const C3VecI& other)
 {
     return C3VecI(this->c1 + other.c1, this->c2 + other.c2, this->c3 + other.c3);
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator+(const float& other)
 {
     return C3VecI(*this) += other;
 }
+
+HOST DEVICE
 C3VecI C3VecI::operator*(const C3VecI& other)
 {
     return C3VecI(*this) *= other;
 }
 
+HOST DEVICE
 C3VecI C3VecI::operator*(const float& other)
 {
     return C3VecI(*this) *= other;
@@ -230,16 +273,19 @@ C3VecI C3VecI::operator*(const float& other)
 
 // Global (not member) functions for lhs operators
 
+HOST DEVICE
 C3Vec operator*(const float& other, const C3Vec& rhs)
 {
     return C3Vec(rhs) *= other;
 }
 
+HOST DEVICE
 C3VecI operator*(const float& other, const C3VecI& rhs)
 {
     return C3VecI(rhs) *= other;
 }
 
+HOST DEVICE
 C3VecI operator*(const std::complex<float>& other, const C3VecI& rhs)
 {
     C3VecI tmp;
@@ -249,27 +295,33 @@ C3VecI operator*(const std::complex<float>& other, const C3VecI& rhs)
     return tmp;
 }
 
+HOST DEVICE
 C3Vec operator+(const C3Vec& other, const C3Vec& rhs)
 {
     return C3Vec(other.c1 + rhs.c1, other.c2 + rhs.c2, other.c3 + rhs.c3);
 }
+
+HOST DEVICE
 C3VecI operator+(const C3VecI& other, const C3VecI& rhs)
 {
     return C3VecI(other.c1 + rhs.c1, other.c2 + rhs.c2, other.c3 + rhs.c3);
 }
 
+HOST
 std::ostream& operator<<(std::ostream& os, const C3Vec& v)
 {
     os << v.c1 << ", " << v.c2 << ", " << v.c3;
     return os;
 }
 
+HOST
 std::ostream& operator<<(std::ostream& os, const C3VecI& v)
 {
     os << v.c1 << ", " << v.c2 << ", " << v.c3;
     return os;
 }
 
+HOST DEVICE
 std::vector<C3Vec> operator-(const std::vector<C3Vec>& other, const C3Vec& rhs)
 {
     std::vector<C3Vec> out(other.size());
@@ -281,6 +333,7 @@ std::vector<C3Vec> operator-(const std::vector<C3Vec>& other, const C3Vec& rhs)
     return out;
 }
 
+HOST DEVICE
 std::vector<C3Vec> operator+(const std::vector<C3Vec>& other, const C3Vec& rhs)
 {
     std::vector<C3Vec> out(other.size());
@@ -291,6 +344,8 @@ std::vector<C3Vec> operator+(const std::vector<C3Vec>& other, const C3Vec& rhs)
     }
     return out;
 }
+
+HOST DEVICE
 std::vector<C3VecI> operator+(const std::vector<C3VecI>& other, const C3VecI& rhs)
 {
     std::vector<C3VecI> out(other.size());
@@ -301,6 +356,8 @@ std::vector<C3VecI> operator+(const std::vector<C3VecI>& other, const C3VecI& rh
     }
     return out;
 }
+
+HOST DEVICE
 std::vector<C3Vec> operator-(const std::vector<C3Vec>& other, const std::vector<C3Vec>& rhs)
 {
     assert(other.size() == rhs.size());
@@ -313,6 +370,7 @@ std::vector<C3Vec> operator-(const std::vector<C3Vec>& other, const std::vector<
     return out;
 }
 
+HOST DEVICE
 std::vector<C3Vec> operator+(const std::vector<C3Vec>& other, const std::vector<C3Vec>& rhs)
 {
     assert(other.size() == rhs.size());
@@ -325,6 +383,7 @@ std::vector<C3Vec> operator+(const std::vector<C3Vec>& other, const std::vector<
     return out;
 }
 
+HOST DEVICE
 std::vector<C3Vec> operator*(const std::vector<C3Vec>& other, const std::vector<float>& rhs)
 {
     assert(other.size() == rhs.size());
@@ -337,6 +396,7 @@ std::vector<C3Vec> operator*(const std::vector<C3Vec>& other, const std::vector<
     return out;
 }
 
+HOST DEVICE
 float mag(const C3Vec& in)
 {
     return sqrt(pow(in.c1, 2) + pow(in.c2, 2) + pow(in.c3, 2));
@@ -345,6 +405,8 @@ float mag(const C3Vec& in)
 // This is not really a usefule magnitude
 // and is only used to reduce a std::complex valued
 // std::vector to a number for checking for Inf & NaNs
+
+HOST DEVICE
 float mag(const C3VecI& in)
 {
     float c1 = abs(in.c1);
@@ -353,6 +415,7 @@ float mag(const C3VecI& in)
     return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
 }
 
+HOST DEVICE
 C3Vec pow(const C3Vec& in, const int arg)
 {
     C3Vec out;
@@ -362,6 +425,7 @@ C3Vec pow(const C3Vec& in, const int arg)
     return out;
 }
 
+HOST DEVICE
 C3Vec sqrt(const C3Vec& in)
 {
     C3Vec out;
@@ -371,16 +435,19 @@ C3Vec sqrt(const C3Vec& in)
     return out;
 }
 
+HOST DEVICE
 float dot(const C3Vec& Y, const C3Vec& X)
 {
     return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
 }
 
+HOST DEVICE
 std::complex<float> dot(const C3VecI& Y, const C3Vec& X)
 {
     return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
 }
 
+HOST DEVICE
 C3Vec atan2(const C3Vec& Y, const C3Vec& X)
 {
     C3Vec out;
@@ -390,6 +457,7 @@ C3Vec atan2(const C3Vec& Y, const C3Vec& X)
     return out;
 }
 
+HOST DEVICE
 C3Vec cross(const C3Vec A, const C3Vec B)
 {
 
@@ -400,6 +468,7 @@ C3Vec cross(const C3Vec A, const C3Vec B)
     return answer;
 }
 
+HOST DEVICE
 C3VecI cross(const C3Vec A, const C3VecI B)
 {
 
@@ -410,6 +479,7 @@ C3VecI cross(const C3Vec A, const C3VecI B)
     return answer;
 }
 
+HOST DEVICE
 int isnan(const C3Vec arg)
 {
     int answer = 0;
@@ -418,6 +488,7 @@ int isnan(const C3Vec arg)
     return answer;
 }
 
+HOST DEVICE
 int isnan(const C3VecI arg)
 {
     int answer = 0;
@@ -426,6 +497,7 @@ int isnan(const C3VecI arg)
     return answer;
 }
 
+HOST DEVICE
 int isinf(const C3Vec arg)
 {
     int answer = 0;
@@ -434,6 +506,7 @@ int isinf(const C3Vec arg)
     return answer;
 }
 
+HOST DEVICE
 int isinf(const C3VecI arg)
 {
     int answer = 0;
@@ -442,6 +515,7 @@ int isinf(const C3VecI arg)
     return answer;
 }
 
+HOST DEVICE
 float maxC3VecAbs(const std::vector<C3Vec>& input)
 {
 
@@ -452,6 +526,7 @@ float maxC3VecAbs(const std::vector<C3Vec>& input)
     return *std::max_element(inputAbs.begin(), inputAbs.end());
 }
 
+HOST DEVICE
 std::complex<float> intVecArray(const std::vector<float>& x, const std::vector<std::complex<float> >& f)
 {
 
@@ -464,6 +539,7 @@ std::complex<float> intVecArray(const std::vector<float>& x, const std::vector<s
     return result;
 }
 
+HOST DEVICE
 C3Vec intVecArray(const std::vector<float>& x, const std::vector<C3Vec>& f)
 {
 
@@ -476,6 +552,7 @@ C3Vec intVecArray(const std::vector<float>& x, const std::vector<C3Vec>& f)
     return result;
 }
 
+HOST DEVICE
 C3VecI intVecArray(const std::vector<float>& x, const std::vector<C3VecI>& f)
 {
 
@@ -488,18 +565,21 @@ C3VecI intVecArray(const std::vector<float>& x, const std::vector<C3VecI>& f)
     return result;
 }
 
+HOST
 void kj_print(const C3Vec arg, std::string name)
 {
     std::cout << name << ".c1: " << arg.c1 << "  " << name << ".c2: " << arg.c2 << "  " << name << ".c3: " << arg.c3 << std::endl;
     return;
 }
 
+HOST
 void kj_print(const float arg, std::string name)
 {
     std::cout << name << ": " << arg << std::endl;
     return;
 }
 
+HOST DEVICE
 C3Vec XYZ_to_CYL(const C3Vec xyz)
 {
     C3Vec cyl;
@@ -509,6 +589,7 @@ C3Vec XYZ_to_CYL(const C3Vec xyz)
     return cyl;
 }
 
+HOST DEVICE
 C3Vec CYL_to_XYZ(const C3Vec cyl)
 {
     C3Vec xyz;
@@ -518,6 +599,7 @@ C3Vec CYL_to_XYZ(const C3Vec cyl)
     return xyz;
 }
 
+HOST DEVICE
 C3Vec operator*(const float A[][3], const C3Vec x)
 {
     C3Vec B;
@@ -527,6 +609,7 @@ C3Vec operator*(const float A[][3], const C3Vec x)
     return B;
 }
 
+HOST DEVICE
 C3VecI operator*(const float A[][3], const C3VecI x)
 {
     C3VecI B;

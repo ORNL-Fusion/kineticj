@@ -30,34 +30,16 @@ struct moveParticle
     int n;
 
     moveParticle( float &_dt, float *_r, C3Vec *_b, int _n) : dt(_dt), r(_r), b(_b), n(_n) {}
+#ifdef __CUDACC__
     moveParticle( float &_dt, thrust::device_ptr<float> _r, thrust::device_ptr<C3Vec> _b, int _n) : 
             dt(_dt), r(thrust::raw_pointer_cast(_r)), b(thrust::raw_pointer_cast(_b)), n(_n) {}
     __host__ __device__
+#endif
     void operator() (CParticle &p) {
         rk4_move(p,dt,r,b,n);
     }
 
 };
-
-//#ifdef __CUDACC__
-//struct moveParticle_device
-//{
-//
-//    float dt;
-//    thrust::device_ptr<float> r;
-//    thrust::device_ptr<C3Vec> b;
-//    int n;
-//
-//    moveParticle_device( float &_dt, thrust::device_ptr<float> _r, thrust::device_ptr<C3Vec> _b, int _n) : 
-//            dt(_dt), r(_r), b(_b), n(_n) {}
-//
-//    __device__
-//    void operator() (CParticle &p) {
-//        rk4_move(p,dt,r,b,n);
-//    }
-//
-//};
-//#endif
 
 #endif
 
