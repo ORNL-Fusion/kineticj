@@ -1,7 +1,7 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA:=0
+USECUDA:=1
 
 NAME := bin/kineticj
 

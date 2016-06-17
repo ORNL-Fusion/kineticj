@@ -215,38 +215,3 @@ int rk4_move_gc(CParticle& p, const float& dt, float& t0,
     return p.status;
 }
 
-//// First-order orbits
-//int rk4_move(CParticle& p, float dt, float t0,
-//    const vector<C3Vec>& b0, const vector<C3VecI>& e1, const float wrf)
-//{
-//
-//    C3Vec yn0(p.v_c1, p.v_c2, p.v_c3), xn0(p.c1, p.c2, p.c3);
-//    C3Vec k1, k2, k3, k4, yn1, x1, x2, x3, x4, xn1;
-//
-//    k1 = rk4_evalf(p, t0 + 0.0 * dt, yn0 + 0. * yn0, xn0, b0, e1, wrf) * dt;
-//    x1 = k1 * dt;
-//    k2 = rk4_evalf(p, t0 + 0.5 * dt, yn0 + 0.5 * k1, xn0 + 0.5 * x1, b0, e1, wrf) * dt;
-//    x2 = k2 * dt;
-//    k3 = rk4_evalf(p, t0 + 0.5 * dt, yn0 + 0.5 * k2, xn0 + 0.5 * x2, b0, e1, wrf) * dt;
-//    x3 = k3 * dt;
-//    k4 = rk4_evalf(p, t0 + 1.0 * dt, yn0 + 1.0 * k3, xn0 + 1.0 * x3, b0, e1, wrf) * dt;
-//    x4 = k4 * dt;
-//
-//    yn1 = yn0 + 1.0 / 6.0 * (k1 + 2.0 * k2 + 2.0 * k3 + k4) * (1 - p.status); // the * (1-p.status) sets the move to zero for dead particles
-//    xn1 = xn0 + 1.0 / 6.0 * (x1 + 2.0 * x2 + 2.0 * x3 + x4) * (1 - p.status);
-//
-//    p.c1 = xn1.c1;
-//    p.c2 = xn1.c2;
-//    p.c3 = xn1.c3;
-//    p.v_c1 = yn1.c1;
-//    p.v_c2 = yn1.c2;
-//    p.v_c3 = yn1.c3;
-//
-//#if DEBUG_RK4 >= 1
-//    if (p.status != 0) {
-//        cout << "ERROR: p.status != 0" << endl;
-//        //exit(1)
-//    }
-//#endif
-//    return p.status;
-//}

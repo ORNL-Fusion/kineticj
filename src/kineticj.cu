@@ -329,7 +329,10 @@ int main(int argc, char** argv)
     // Also copy across the fields to be interpolated to the device
 
     thrust::device_vector<float> r_device(r);
-    thrust::device_vector<float> b0_CYL_device(b0_CYL);
+    thrust::device_vector<C3Vec> b0_CYL_device(b0_CYL);
+
+    thrust::device_ptr<float> r_dPtr(r_device.data());
+    thrust::device_ptr<C3Vec> b0_dPtr(b0_CYL_device.data());
 
 #endif
 
@@ -346,7 +349,7 @@ int main(int argc, char** argv)
         // Move particle
         for_each( particleWorkList.begin(), particleWorkList.end(), moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
 #ifdef __CUDACC__
-        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r, b0_CYL) ); 
+        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r_dPtr, b0_dPtr, r.size()) ); 
 #endif 
         // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), get_df0_dv() ); 
