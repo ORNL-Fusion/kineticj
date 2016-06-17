@@ -75,7 +75,7 @@ C3Vec maxwellian_df0_dv(const C3Vec _v, const float _T_keV, const float _n_m3, c
 }
 
 vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, float n_m3,
-    int nPx, int nPy, int nPz, int nThermal, float& dv, vector<float>& r, vector<C3Vec>& b0_CYL)
+    int nPx, int nPy, int nPz, int nThermal, float& dv, float *r, C3Vec *b0_CYL, int nR)
 {
 
     vector<CParticle> pList;
@@ -132,7 +132,7 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
 
                 C3Vec thisV_XYZ(thisvx, thisvy, thisvz);
                 int iStat = 0;
-                C3Vec this_b0_CYL = kj_interp1D(x, r, b0_CYL, iStat);
+                C3Vec this_b0_CYL = kj_interp1D(x, r, b0_CYL, nR, iStat);
                 C3Vec this_b0_XYZ = rot_CYL_to_XYZ(0, this_b0_CYL, 1);
                 float bMag = mag(this_b0_XYZ);
                 float vMag = mag(thisV_XYZ);

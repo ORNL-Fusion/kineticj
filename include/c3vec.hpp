@@ -153,27 +153,4 @@ struct multiplyByCharge
     }
 };
 
-struct set_vx
-{
-    float operator() (float &x, CParticle &p) {
-        return p.v_c1;
-    }
-};
-
-struct set_vy
-{
-    float operator() (float &x, CParticle &p) {
-        return p.v_c2;
-    }
-};
-
-struct set_vz
-{
-    float operator() (float &x, CParticle &p) {
-        return p.v_c3;
-    }
-};
-
-
-
 #endif

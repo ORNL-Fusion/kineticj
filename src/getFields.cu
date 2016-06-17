@@ -1,6 +1,6 @@
 #include "getFields.hpp"
 
-C3Vec getB_XYZ(CParticle& p_XYZ, const vector<float>& rVec, const vector<C3Vec>& b0Vec_CYL)
+C3Vec getB_XYZ(CParticle& p_XYZ, float *rVec, C3Vec *b0Vec_CYL, int nB)
 {
 
     float _r = sqrt(pow(p_XYZ.c1, 2) + pow(p_XYZ.c2, 2));
@@ -9,7 +9,7 @@ C3Vec getB_XYZ(CParticle& p_XYZ, const vector<float>& rVec, const vector<C3Vec>&
     C3Vec b0_CYL, b0_XYZ;
 
     int status = 0;
-    b0_CYL = kj_interp1D(_r, rVec, b0Vec_CYL, status);
+    b0_CYL = kj_interp1D(_r, rVec, b0Vec_CYL, nB, status);
     p_XYZ.status = max(p_XYZ.status, status);
 
     b0_XYZ = rot_CYL_to_XYZ(_p, b0_CYL, 1);
@@ -17,7 +17,7 @@ C3Vec getB_XYZ(CParticle& p_XYZ, const vector<float>& rVec, const vector<C3Vec>&
     return b0_XYZ;
 }
 
-C3VecI getE1orB1_XYZ(CParticle& p_XYZ, const vector<float>& rVec, const vector<C3VecI>& E1Vec_CYL, int nPhi)
+C3VecI getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3VecI *E1Vec_CYL, int nR, int nPhi)
 {
 
     float _r = sqrt(pow(p_XYZ.c1, 2) + pow(p_XYZ.c2, 2));
@@ -26,7 +26,7 @@ C3VecI getE1orB1_XYZ(CParticle& p_XYZ, const vector<float>& rVec, const vector<C
     C3VecI E1_CYL, E1_XYZ;
 
     int status = 0;
-    E1_CYL = kj_interp1D(_r, rVec, E1Vec_CYL, status);
+    E1_CYL = kj_interp1D(_r, rVec, E1Vec_CYL, nR, status);
     p_XYZ.status = max(p_XYZ.status, status);
 
     complex<float> ii(0, 1);

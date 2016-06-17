@@ -1,5 +1,8 @@
 #include "c3vec.hpp"
 
+#ifdef __CUDACC__
+__host__ __device__
+#endif
 C3Vec& C3Vec::operator=(const C3Vec& rhs)
 {
     if (this != &rhs) {
@@ -9,6 +12,7 @@ C3Vec& C3Vec::operator=(const C3Vec& rhs)
     }
     return *this;
 }
+
 C3VecI& C3VecI::operator=(const C3VecI& rhs)
 {
     if (this != &rhs) {
@@ -18,6 +22,7 @@ C3VecI& C3VecI::operator=(const C3VecI& rhs)
     }
     return *this;
 }
+
 C3Vec& C3Vec::operator+=(const C3Vec& rhs)
 {
     c1 += rhs.c1;

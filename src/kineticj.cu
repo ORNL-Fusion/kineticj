@@ -1,10 +1,4 @@
 #include "c3vec.hpp"
-#ifdef __CUDACC__
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
-#endif
-
-
 #include "constants.hpp"
 #include "cparticle.hpp"
 #include "createParticles.hpp"
@@ -31,6 +25,11 @@
 #include <unistd.h>
 #include <vector>
 #include <numeric>
+
+#ifdef __CUDACC__
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#endif
 
 #if CLOCK >= 1
 #include <ctime>
@@ -167,8 +166,8 @@ int main(int argc, char** argv)
     for (int iX = 0; iX < nXGrid; iX++) {
         xGrid[iX] = xGridMin + iX * xGridStep;
         int iStat;
-        density_m3[iX] = kj_interp1D(xGrid[iX], r, n_m3, iStat);
-        C3Vec this_b0 = kj_interp1D(xGrid[iX], r, b0_CYL, iStat);
+        density_m3[iX] = kj_interp1D(xGrid[iX], &r[0], &n_m3[0], r.size(), iStat);
+        C3Vec this_b0 = kj_interp1D(xGrid[iX], &r[0], &b0_CYL[0], r.size(), iStat);
         bMag_kjGrid[iX] = mag(this_b0);
         T_keV[iX] = 2.0; // kj_interp1D(xGrid[iX],r,n_m3);
     }
@@ -272,16 +271,25 @@ int main(int argc, char** argv)
 
         vector<CParticle> moreWork(
             create_particles(xGrid[iX], amu, Z, T_keV[iX], density_m3[iX], nPx, nPy,
-                nPz, nThermal, dv, r, b0_CYL));
+                nPz, nThermal, dv, &r[0], &b0_CYL[0], r.size() ));
 
         particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
     }
 
 #ifdef __CUDACC__
-    //thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
-#endif
+    cout<<"Copying particle worklist to device ..."<<endl;
+    thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
 
-    // Create the vx,vy,vz iterators
+    thrust::device_vector<float> vx_device(nWork,0);
+    thrust::device_vector<float> vy_device(nWork,0);
+    thrust::device_vector<float> vz_device(nWork,0);
+
+    thrust::transform( vx_device.begin(), vx_device.end(), particleWorkList_device.begin(), vx_device.begin(), set_vx() );
+    thrust::transform( vy_device.begin(), vy_device.end(), particleWorkList_device.begin(), vy_device.begin(), set_vy() );
+    thrust::transform( vz_device.begin(), vz_device.end(), particleWorkList_device.begin(), vz_device.begin(), set_vz() );
+
+    cout<<"DONE"<<endl;
+#endif
 
     vector<float> vx(nWork,0);
     vector<float> vy(nWork,0);
@@ -290,9 +298,6 @@ int main(int argc, char** argv)
     transform( vx.begin(), vx.end(), particleWorkList.begin(), vx.begin(), set_vx() );
     transform( vy.begin(), vy.end(), particleWorkList.begin(), vy.begin(), set_vy() );
     transform( vz.begin(), vz.end(), particleWorkList.begin(), vz.begin(), set_vz() );
-
-    // Move particles
-    cout << "Moving particles with for_each ..." << endl;
 
     // Velocity space calculation
 
@@ -308,6 +313,29 @@ int main(int argc, char** argv)
     vector<complex<float> > vyf1(nWork,0);
     vector<complex<float> > vzf1(nWork,0);
 
+#ifdef __CUDACC__
+    thrust::device_vector<C3Vec> df0_dv_XYZ_device(nWork,0);
+    thrust::device_vector<C3VecI> E1_device(nWork,0);
+    thrust::device_vector<C3VecI> B1_device(nWork,0);
+    thrust::device_vector<C3VecI> vCrossB_device(nWork,0);
+    thrust::device_vector<C3VecI> vCrossB_E1_device(nWork,0);
+    thrust::device_vector<complex<float> > forceDotGradf0_device(nWork,0);
+    thrust::device_vector<complex<float> > dtIntegral_device(nWork,0);
+    thrust::device_vector<complex<float> > f1_device(nWork,0);
+    thrust::device_vector<complex<float> > vxf1_device(nWork,0);
+    thrust::device_vector<complex<float> > vyf1_device(nWork,0);
+    thrust::device_vector<complex<float> > vzf1_device(nWork,0);
+
+    // Also copy across the fields to be interpolated to the device
+
+    thrust::device_vector<float> r_device(r);
+    thrust::device_vector<float> b0_CYL_device(b0_CYL);
+
+#endif
+
+    // Move particles
+    cout << "Moving particles with for_each ..." << endl;
+
     for (int i = 0; i < nSteps; i++) {
 
         float dtIntFac = 1;
@@ -316,16 +344,18 @@ int main(int argc, char** argv)
         dtIntFac = dtMin / 2.0 * dtIntFac;
 
         // Move particle
-        for_each( particleWorkList.begin(), particleWorkList.end(), moveParticle(dtMin, r, b0_CYL) ); 
-       
+        for_each( particleWorkList.begin(), particleWorkList.end(), moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
+#ifdef __CUDACC__
+        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r, b0_CYL) ); 
+#endif 
         // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), get_df0_dv() ); 
 
         // E1(x) 
-        transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), getPerturbedField(r,e1_CYL,nPhi,hanningWeight[i]) ); 
+        transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // B1(x) 
-        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), getPerturbedField(r,b1_CYL,nPhi,hanningWeight[i]) ); 
+        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross() );
@@ -431,7 +461,7 @@ cout << "Continuing with non functor approach ..." << endl;
 #endif
         vector<CParticle> ThisParticleList(
             create_particles(xGrid[iX], amu, Z, T_keV[iX], density_m3[iX], nPx, nPy,
-                nPz, nThermal, dv, r, b0_CYL));
+                nPz, nThermal, dv, &r[0], &b0_CYL[0], r.size() ));
 
 #if CLOCK >= 1
         clock_t startTime = clock();
@@ -528,7 +558,7 @@ cout << "Continuing with non functor approach ..." << endl;
                 int MoveStatus = rk4_move_gc(thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc,
                     curv_CYL, grad_CYL, bDotGradB, wrf);
 #else
-                int MoveStatus = rk4_move(thisParticle_XYZ, dtMin, r, b0_CYL);
+                int MoveStatus = rk4_move(thisParticle_XYZ, dtMin, &r[0], &b0_CYL[0], r.size());
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status, MoveStatus);
 #if DEBUG_MOVE >= 1
@@ -545,7 +575,7 @@ cout << "Continuing with non functor approach ..." << endl;
                     thisParticle_XYZ.c3);
                 C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2,
                     thisParticle_XYZ.v_c3);
-                C3Vec thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, r, b0_CYL, istat);
+                C3Vec thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), istat);
 #if GC_ORBITS >= 1
                 thisVel_XYZ = thisB0 / mag(thisB0) * thisParticle_XYZ.vPar; // vPar vector in XYZ
                 cout << thisParticle_XYZ.vPar << "  " << thisParticle_XYZ.vPer << endl;
@@ -561,12 +591,12 @@ cout << "Continuing with non functor approach ..." << endl;
                 complex<float> _i(0, 1);
                 // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
                 //E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
-                E1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
+                E1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
                 C3VecI B1_XYZ;
                 //B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
-                B1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
+                B1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
 #if DEBUG_MOVE >= 2
