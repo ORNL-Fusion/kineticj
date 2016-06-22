@@ -10,12 +10,26 @@
 #include <thrust/device_ptr.h>
 #endif
 
+#ifdef __CUDACC__
+#define HOST __host__ 
+#define DEVICE __device__
+#else
+#define HOST 
+#define DEVICE
+#endif
+
 using namespace std;
 
-C3Vec rk4_evalf ( CParticle &p, const float &t, const C3Vec &v_XYZ, const C3Vec &x, float *rVec, C3Vec *b0Vec_CYL, int nR ); 
-int rk4_move_gc ( CParticle &p, const float &dt, const float &t0, const vector<float> &r_b0, const vector<C3Vec> &b0_CYL, const vector<float> &r_GC, const vector<C3Vec> &curv_CYL, const vector<C3Vec> &grad_CYL, const vector<float> &bDotGradB, const float wrf );
-int rk4_move ( CParticle &p, float dt, float t0, const vector<C3Vec> &b0, const vector<C3VecI> &e1, const float wrf );
-int rk4_move ( CParticle &p, const float &dt, float *r, C3Vec *b0, int n );
+HOST DEVICE
+C3<float> rk4_evalf ( CParticle &p, const float &t, const C3<float> &v_XYZ, const C3<float> &x, float *rVec, C3<float> *b0Vec_CYL, int nR ); 
+
+HOST DEVICE
+int rk4_move_gc ( CParticle &p, const float &dt, const float &t0, const vector<float> &r_b0, const vector<C3<float> > &b0_CYL, const vector<float> &r_GC, const vector<C3<float> > &curv_CYL, const vector<C3<float> > &grad_CYL, const vector<float> &bDotGradB, const float wrf );
+
+//int rk4_move ( CParticle &p, float dt, float t0, const vector<C3<float>> &b0, const vector<C3<float>I> &e1, const float wrf );
+
+HOST DEVICE
+int rk4_move ( CParticle &p, const float &dt, float *r, C3<float> *b0, int n );
 
 #include "rk4.tpp"
 
@@ -26,15 +40,16 @@ struct moveParticle
 
     float dt;
     float *r;
-    C3Vec *b;
+    C3<float> *b;
     int n;
 
-    moveParticle( float &_dt, float *_r, C3Vec *_b, int _n) : dt(_dt), r(_r), b(_b), n(_n) {}
+    moveParticle( float &_dt, float *_r, C3<float> *_b, int _n) : dt(_dt), r(_r), b(_b), n(_n) {}
 #ifdef __CUDACC__
-    moveParticle( float &_dt, thrust::device_ptr<float> _r, thrust::device_ptr<C3Vec> _b, int _n) : 
+    moveParticle( float &_dt, thrust::device_ptr<float> _r, thrust::device_ptr<C3<float> > _b, int _n) : 
             dt(_dt), r(thrust::raw_pointer_cast(_r)), b(thrust::raw_pointer_cast(_b)), n(_n) {}
-    __host__ __device__
 #endif
+
+    HOST DEVICE 
     void operator() (CParticle &p) {
         rk4_move(p,dt,r,b,n);
     }

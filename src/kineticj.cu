@@ -29,6 +29,7 @@
 #ifdef __CUDACC__
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <thrust/complex.h>
 #endif
 
 #if CLOCK >= 1
@@ -129,9 +130,9 @@ int main(int argc, char** argv)
 
     // Read E
     string eField_fName = cfg.lookup("eField_fName");
-    vector<C3Vec> e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
-    vector<C3VecI> e1_CYL, b1_CYL;
-    vector<C3Vec> b0_CYL, b0_XYZ;
+    vector<C3<float> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
+    vector<C3<std::complex<float> > > e1_CYL, b1_CYL;
+    vector<C3<float> > b0_CYL, b0_XYZ;
     vector<float> r, n_m3;
     float freq;
     int eReadStat = read_e_field(eField_fName, species_number, freq, r, n_m3, e1_CYL, b1_CYL,
@@ -139,7 +140,7 @@ int main(int argc, char** argv)
 
     // Read GC terms
     string gc_fName = cfg.lookup("gc_fName");
-    vector<C3Vec> curv_CYL, grad_CYL;
+    vector<C3<float> > curv_CYL, grad_CYL;
     std::vector<float> r_gc, bDotGradB;
     int gcReadStat = read_gc_file(gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB);
 
@@ -167,7 +168,7 @@ int main(int argc, char** argv)
         xGrid[iX] = xGridMin + iX * xGridStep;
         int iStat;
         density_m3[iX] = kj_interp1D(xGrid[iX], &r[0], &n_m3[0], r.size(), iStat);
-        C3Vec this_b0 = kj_interp1D(xGrid[iX], &r[0], &b0_CYL[0], r.size(), iStat);
+        C3<float> this_b0 = kj_interp1D(xGrid[iX], &r[0], &b0_CYL[0], r.size(), iStat);
         bMag_kjGrid[iX] = mag(this_b0);
         T_keV[iX] = 2.0; // kj_interp1D(xGrid[iX],r,n_m3);
     }
@@ -191,7 +192,7 @@ int main(int argc, char** argv)
     int nJpPerCycle = cfg.lookup("nJpPerCycle");
     int nPhi = cfg.lookup("nPhi");
     int nJp = nJpCycles * nJpPerCycle;
-    float dtJp = tRF / nJpPerCycle;
+    //float dtJp = tRF / nJpPerCycle;
     int istat = 0;
     int nPx = cfg.lookup("nPx");
     int nPy = cfg.lookup("nPy");
@@ -301,11 +302,11 @@ int main(int argc, char** argv)
 
     // Velocity space calculation
 
-    vector<C3Vec> df0_dv_XYZ(nWork,0);
-    vector<C3VecI> E1(nWork,0);
-    vector<C3VecI> B1(nWork,0);
-    vector<C3VecI> vCrossB(nWork,0);
-    vector<C3VecI> vCrossB_E1(nWork,0);
+    vector<C3<float> > df0_dv_XYZ(nWork,0);
+    vector<C3<std::complex<float> > > E1(nWork,0);
+    vector<C3<std::complex<float> > > B1(nWork,0);
+    vector<C3<std::complex<float> > > vCrossB(nWork,0);
+    vector<C3<std::complex<float> > > vCrossB_E1(nWork,0);
     vector<complex<float> > forceDotGradf0(nWork,0);
     vector<complex<float> > dtIntegral(nWork,0);
     vector<complex<float> > f1(nWork,0);
@@ -314,29 +315,31 @@ int main(int argc, char** argv)
     vector<complex<float> > vzf1(nWork,0);
 
 #ifdef __CUDACC__
-    thrust::device_vector<C3Vec> df0_dv_XYZ_device(nWork,0);
-    thrust::device_vector<C3VecI> E1_device(nWork,0);
-    thrust::device_vector<C3VecI> B1_device(nWork,0);
-    thrust::device_vector<C3VecI> vCrossB_device(nWork,0);
-    thrust::device_vector<C3VecI> vCrossB_E1_device(nWork,0);
-    thrust::device_vector<complex<float> > forceDotGradf0_device(nWork,0);
-    thrust::device_vector<complex<float> > dtIntegral_device(nWork,0);
-    thrust::device_vector<complex<float> > f1_device(nWork,0);
-    thrust::device_vector<complex<float> > vxf1_device(nWork,0);
-    thrust::device_vector<complex<float> > vyf1_device(nWork,0);
-    thrust::device_vector<complex<float> > vzf1_device(nWork,0);
+    thrust::device_vector<C3<float> > df0_dv_XYZ_device(nWork,0);
+    thrust::device_vector<C3<thrust::complex<float> > > E1_device(nWork,0);
+    thrust::device_vector<C3<thrust::complex<float> > > B1_device(nWork,0);
+    thrust::device_vector<C3<thrust::complex<float> > > vCrossB_device(nWork,0);
+    thrust::device_vector<C3<thrust::complex<float> > > vCrossB_E1_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > forceDotGradf0_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > dtIntegral_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > f1_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > vxf1_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > vyf1_device(nWork,0);
+    thrust::device_vector<thrust::complex<float> > vzf1_device(nWork,0);
 
     // Also copy across the fields to be interpolated to the device
 
-    thrust::device_vector<float> r_device(r);
-    thrust::device_vector<C3Vec> b0_CYL_device(b0_CYL);
-    thrust::device_vector<C3VecI> e1_CYL_device(e1_CYL);
-    thrust::device_vector<C3VecI> b1_CYL_device(b1_CYL);
+    thrust::device_vector<float> r_device = r;
+    thrust::device_vector<C3<float> > b0_CYL_device = b0_CYL;
+    //vector<thrust::complex<float> > e1_CYL_thrust(e1_CYL);
+    //vector<thrust::complex<float> > b1_CYL_thrust(b1_CYL);
+    //thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL;
+    //thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL;
 
     thrust::device_ptr<float> r_dPtr(r_device.data());
-    thrust::device_ptr<C3Vec> b0_dPtr(b0_CYL_device.data());
-    thrust::device_ptr<C3VecI> e1_dPtr(e1_CYL_device.data());
-    thrust::device_ptr<C3VecI> b1_dPtr(b1_CYL_device.data());
+    thrust::device_ptr<C3<float> > b0_dPtr(b0_CYL_device.data());
+    //thrust::device_ptr<C3<thrust::complex<float> > > e1_dPtr(e1_CYL_device.data());
+    //thrust::device_ptr<C3<thrust::complex<float> > > b1_dPtr(b1_CYL_device.data());
 
 #endif
 
@@ -352,7 +355,7 @@ int main(int argc, char** argv)
 
 #ifdef __CUDACC__
         thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r_dPtr, b0_dPtr, r.size()) ); 
-        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), get_df0_dv() ); 
+        //thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), get_df0_dv() ); 
 #endif 
  
         // Move particle
@@ -362,19 +365,21 @@ int main(int argc, char** argv)
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), get_df0_dv() ); 
 
         // E1(x) 
-        transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+        transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
+                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // B1(x) 
-        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
+                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // v x B1 
-        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross() );
+        transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross<std::complex<float> >() );
 
         // E1 + v x B1
-        transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), std::plus<C3VecI>() );
+        transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), std::plus<C3<std::complex<float> > >() );
 
         //  (E1 + v x B1) . grad_v(f0(v))
-        transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), doDotProduct() );
+        transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), doDotProduct<std::complex<float>,float>() );
 
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), runningIntegral(dtIntFac) );
@@ -501,11 +506,11 @@ cout << "Continuing with non functor approach ..." << endl;
 
         for (int iP = 0; iP < nP; iP++) {
 
-            vector<C3Vec> thisOrbitE1_re_XYZ(nSteps, C3Vec(0, 0, 0));
-            vector<C3Vec> thisOrbitE1_im_XYZ(nSteps, C3Vec(0, 0, 0));
+            vector<C3<float> > thisOrbitE1_re_XYZ(nSteps, C3<float>(0, 0, 0));
+            vector<C3<float> > thisOrbitE1_im_XYZ(nSteps, C3<float>(0, 0, 0));
 
-            vector<C3Vec> thisOrbitB1_re_XYZ(nSteps, C3Vec(0, 0, 0));
-            vector<C3Vec> thisOrbitB1_im_XYZ(nSteps, C3Vec(0, 0, 0));
+            vector<C3<float> > thisOrbitB1_re_XYZ(nSteps, C3<float>(0, 0, 0));
+            vector<C3<float> > thisOrbitB1_im_XYZ(nSteps, C3<float>(0, 0, 0));
 
             CParticle thisParticle_XYZ(ThisParticleList[iP]);
 
@@ -549,12 +554,12 @@ cout << "Continuing with non functor approach ..." << endl;
 #endif
             // generate orbit and get time-harmonic e along it
 
-            vector<C3Vec> thisOrbit_XYZ(nSteps);
-            vector<C3VecI> thisE1c_XYZ(nSteps, C3VecI());
-            vector<C3VecI> thisB1c_XYZ(nSteps, C3VecI());
-            C3VecI thisV1c_(0, 0, 0), dVc(0, 0, 0), crossTerm(0, 0, 0);
+            vector<C3<float> > thisOrbit_XYZ(nSteps);
+            vector<C3<std::complex<float> > > thisE1c_XYZ(nSteps, C3<std::complex<float> >());
+            vector<C3<std::complex<float> > > thisB1c_XYZ(nSteps, C3<std::complex<float> >());
+            C3<std::complex<float> > thisV1c_(0, 0, 0), dVc(0, 0, 0), crossTerm(0, 0, 0);
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
-            vector<C3VecI> this_vCrossB1(nSteps);
+            vector<C3<std::complex<float> > > this_vCrossB1(nSteps);
 
             for (int i = 0; i < nSteps; i++) {
 #if DEBUG_MOVE >= 1
@@ -562,7 +567,7 @@ cout << "Continuing with non functor approach ..." << endl;
                      << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << endl;
                 cout << "p.status: " << thisParticle_XYZ.status << endl;
 #endif
-                thisOrbit_XYZ[i] = C3Vec(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
+                thisOrbit_XYZ[i] = C3<float>(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
                     thisParticle_XYZ.c3);
 #if GC_ORBITS >= 1
                 int MoveStatus = rk4_move_gc(thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc,
@@ -581,30 +586,30 @@ cout << "Continuing with non functor approach ..." << endl;
                 }
 #endif
 
-                C3Vec thisPos(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
+                C3<float> thisPos(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
                     thisParticle_XYZ.c3);
-                C3Vec thisVel_XYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2,
+                C3<float> thisVel_XYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2,
                     thisParticle_XYZ.v_c3);
-                C3Vec thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), istat);
+                C3<float> thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), istat);
 #if GC_ORBITS >= 1
                 thisVel_XYZ = thisB0 / mag(thisB0) * thisParticle_XYZ.vPar; // vPar vector in XYZ
                 cout << thisParticle_XYZ.vPar << "  " << thisParticle_XYZ.vPer << endl;
                 kj_print(thisVel_XYZ, "thisVel_XYZ");
-                C3Vec gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
+                C3<float> gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
                     thisParticle_XYZ.amu, thisParticle_XYZ.Z);
 #else
-                C3Vec gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
+                C3<float> gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
                     thisParticle_XYZ.amu, thisParticle_XYZ.Z);
 #endif
 
-                C3VecI E1_XYZ;
-                complex<float> _i(0, 1);
+                C3<std::complex<float> > E1_XYZ;
+                //complex<float> _i(0, 1);
                 // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
                 //E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
                 E1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
-                C3VecI B1_XYZ;
+                C3<std::complex<float> > B1_XYZ;
                 //B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
                 B1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
@@ -639,7 +644,7 @@ cout << "Continuing with non functor approach ..." << endl;
                 // a cyclotron period.
                 //
                 // NO - WE DO NOT HAVE thisVel_XYZ for GC!!!!!
-                C3Vec orbitParallelUnitVector_XYZ = thisB0 / mag(thisB0);
+                C3<float> orbitParallelUnitVector_XYZ = thisB0 / mag(thisB0);
                 // kj_print(orbitParallelUnitVector_XYZ,"unit");
                 complex<float> orbitParallel_E = dot(thisE1c_XYZ[i], orbitParallelUnitVector_XYZ);
                 float orbitParallel_gradv_f0 = dot(gradv_f0_XYZ, orbitParallelUnitVector_XYZ);
@@ -651,9 +656,9 @@ cout << "Continuing with non functor approach ..." << endl;
                 // cout<<"_full : "<<_full<<endl;
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ, thisB1c_XYZ[i]);
-                C3VecI this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
+                C3<std::complex<float> > this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
 
-                // C3VecI this_force_CYL;
+                // C3<std::complex<float> > this_force_CYL;
                 // float this_t =
                 // sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
                 // this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
@@ -663,7 +668,7 @@ cout << "Continuing with non functor approach ..." << endl;
 
                 this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
 
-                // C3Vec  this_gradv_f0_CYL;
+                // C3<float>  this_gradv_f0_CYL;
                 // this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
                 // this_gradv_f0_CYL = rot_CYL_to_XYZ ( this_t, gradv_f0_XYZ, -1);
                 // this_e1_dot_gradvf0[i] = dot(this_force_CYL, this_gradv_f0_CYL);

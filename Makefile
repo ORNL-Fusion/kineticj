@@ -17,7 +17,7 @@ PGIDIR :=
 VENDOR := GCC_
 CC := gcc
 CPP := g++
-NVCC := nvcc
+NVCC := nvcc -g -G
 
 #VENDOR := PGI_
 #CC := pgcc
@@ -39,7 +39,9 @@ DEBUGFLAGS := $($(VENDOR)DEBUGFLAGS)
 OPTFLAGS := $($(VENDOR)OPTFLAGS)
 
 CFLAGS := 
+
 CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTFLAGS} 
+
 CPPFLAGS :=
 CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DDEBUG_LINES=0
@@ -62,6 +64,8 @@ CPPFLAGS += -DLOWMEM_ORBIT_WRITE=1
 CPPFLAGS += -DDEBUG_ROTATION=0
 CPPFLAGS += -DF1_WRITE=1
 CPPFLAGS += -std=c++11
+
+NVCCFLAGS := -dc --expt-relaxed-constexpr
 
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
@@ -90,7 +94,7 @@ SRCTYPES := c cpp cu
 LINK := $(CPP) $(CXXFLAGS) $(LFLAGS)
 
 ifeq ($(USECUDA),1)
-LINK := $(NVCC) $(NVCCFLAGS) $(LFLAGS)
+LINK := $(NVCC) $(LFLAGS)
 else
 NVCCFLAGS += --x c++
 endif

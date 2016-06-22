@@ -10,7 +10,7 @@ using namespace netCDF;
 using namespace exceptions;
 
 int read_gc_file(std::string fName,
-    std::vector<float>& r_gc, std::vector<C3Vec>& curv_CYL, std::vector<C3Vec>& grad_CYL,
+    std::vector<float>& r_gc, std::vector<C3<float> >& curv_CYL, std::vector<C3<float> >& grad_CYL,
     std::vector<float>& bDotGradB)
 {
 
@@ -87,8 +87,8 @@ int read_gc_file(std::string fName,
     curv_CYL.resize(nR_gc);
     grad_CYL.resize(nR_gc);
     for (int i = 0; i < nR_gc; i++) {
-        curv_CYL[i] = C3Vec(curv_r[i], curv_p[i], curv_z[i]);
-        grad_CYL[i] = C3Vec(grad_r[i], grad_p[i], grad_z[i]);
+        curv_CYL[i] = C3<float>(curv_r[i], curv_p[i], curv_z[i]);
+        grad_CYL[i] = C3<float>(grad_r[i], grad_p[i], grad_z[i]);
     }
     std::cout << "Finished reading gc_terms file" << std::endl;
 

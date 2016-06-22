@@ -20,32 +20,33 @@ void transpose(float A[][3])
     A = B;
 }
 
-C3Vec rot_XYZ_to_abp(const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int direction)
+C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const int direction)
 {
 
     // If direction<1 then the inverse rotation is applied, i.e., abp_to_XYZ
 
-    C3Vec A_abp;
+    C3<float> A_abp;
 
-    C3Vec xu_xyz(1, 0, 0);
-    C3Vec yu_xyz(0, 1, 0);
-    C3Vec zu_xyz(0, 0, 1);
+    C3<float> xu_xyz(1, 0, 0);
+    C3<float> yu_xyz(0, 1, 0);
+    C3<float> zu_xyz(0, 0, 1);
 
-    C3Vec pu_xyz = bUnit_XYZ;
+    C3<float> pu_xyz = bUnit_XYZ;
 
     // alp is mostly in the +/- x / r direction depending on B toroidal direction
     // bet is mostly z direction
 
-    C3Vec a_xyz = cross(zu_xyz, pu_xyz);
-    C3Vec au_xyz = a_xyz / mag(a_xyz);
+    C3<float> a_xyz = cross(zu_xyz, pu_xyz);
+    //C3<float> au_xyz = a_xyz / mag(a_xyz);
+    C3<float> au_xyz = ( static_cast<float>(1.0) / mag(a_xyz) ) * a_xyz;
 
-    C3Vec b_xyz = cross(pu_xyz, au_xyz);
-    C3Vec bu_xyz = b_xyz / mag(b_xyz);
+    C3<float> b_xyz = cross(pu_xyz, au_xyz);
+    C3<float> bu_xyz = b_xyz / mag(b_xyz);
 
 #if DEBUG_ROTATION >= 1
-    C3Vec au_xyz2 = au_xyz;
-    C3Vec bu_xyz2 = bu_xyz;
-    C3Vec pu_xyz2 = pu_xyz;
+    C3<float> au_xyz2 = au_xyz;
+    C3<float> bu_xyz2 = bu_xyz;
+    C3<float> pu_xyz2 = pu_xyz;
 
     cout << "au_xyz: " << au_xyz << endl;
     cout << "bu_xyz: " << bu_xyz << endl;
@@ -69,15 +70,15 @@ C3Vec rot_XYZ_to_abp(const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int directi
 
     float rot1[3][3];
 
-    rot1[0][0] = pow(q0, 2) + pow(q1, 2) - pow(q2, 2) - pow(q3, 2);
+    rot1[0][0] = pow(q0, 2.0) + pow(q1, 2.0) - pow(q2, 2.0) - pow(q3, 2.0);
     rot1[0][1] = 2 * (q1 * q2 - q0 * q3);
     rot1[0][2] = 2 * (q1 * q3 + q0 * q2);
     rot1[1][0] = 2 * (q2 * q1 + q0 * q3);
-    rot1[1][1] = pow(q0, 2) - pow(q1, 2) + pow(q2, 2) - pow(q3, 2);
+    rot1[1][1] = pow(q0, 2.0) - pow(q1, 2.0) + pow(q2, 2.0) - pow(q3, 2.0);
     rot1[1][2] = 2 * (q2 * q3 - q0 * q1);
     rot1[2][0] = 2 * (q3 * q1 - q0 * q2);
     rot1[2][1] = 2 * (q3 * q2 + q0 * q1);
-    rot1[2][2] = pow(q0, 2) - pow(q1, 2) - pow(q2, 2) + pow(q3, 2);
+    rot1[2][2] = pow(q0, 2.0) - pow(q1, 2.0) - pow(q2, 2.0) + pow(q3, 2.0);
 
     if (direction < 0) {
         transpose(rot1);
@@ -109,15 +110,15 @@ C3Vec rot_XYZ_to_abp(const C3Vec A_XYZ, const C3Vec bUnit_XYZ, const int directi
 
     float rot2[3][3];
 
-    rot2[0][0] = pow(q0, 2) + pow(q1, 2) - pow(q2, 2) - pow(q3, 2);
+    rot2[0][0] = pow(q0, 2.0) + pow(q1, 2.0) - pow(q2, 2.0) - pow(q3, 2.0);
     rot2[0][1] = 2 * (q1 * q2 - q0 * q3);
     rot2[0][2] = 2 * (q1 * q3 + q0 * q2);
     rot2[1][0] = 2 * (q2 * q1 + q0 * q3);
-    rot2[1][1] = pow(q0, 2) - pow(q1, 2) + pow(q2, 2) - pow(q3, 2);
+    rot2[1][1] = pow(q0, 2.0) - pow(q1, 2.0) + pow(q2, 2.0) - pow(q3, 2.0);
     rot2[1][2] = 2 * (q2 * q3 - q0 * q1);
     rot2[2][0] = 2 * (q3 * q1 - q0 * q2);
     rot2[2][1] = 2 * (q3 * q2 + q0 * q1);
-    rot2[2][2] = pow(q0, 2) - pow(q1, 2) - pow(q2, 2) + pow(q3, 2);
+    rot2[2][2] = pow(q0, 2.0) - pow(q1, 2.0) - pow(q2, 2.0) + pow(q3, 2.0);
 
     if (direction < 0) {
         transpose(rot2);
