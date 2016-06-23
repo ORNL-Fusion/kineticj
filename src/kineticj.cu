@@ -336,9 +336,8 @@ int main(int argc, char** argv)
 
     float *r_dPtr_raw = thrust::raw_pointer_cast(r_device.data());
     C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
-
-    //thrust::device_ptr<C3<thrust::complex<float> > > e1_dPtr(e1_CYL_device.data());
-    //thrust::device_ptr<C3<thrust::complex<float> > > b1_dPtr(b1_CYL_device.data());
+    C3<thrust::complex<float> > *e1_dPtr_raw = thrust::raw_pointer_cast(e1_CYL_device.data());
+    C3<thrust::complex<float> > *b1_dPtr_raw = thrust::raw_pointer_cast(b1_CYL_device.data());
 
 #endif
 
@@ -356,7 +355,11 @@ int main(int argc, char** argv)
 
 #ifdef __CUDACC__
         thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
-        //thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), get_df0_dv() ); 
+        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), get_df0_dv() ); 
+        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
+                        getPerturbedField<thrust::complex<float> >(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
+        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
+                        getPerturbedField<thrust::complex<float> >(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
 #endif 
  
         // Move particle
@@ -367,11 +370,11 @@ int main(int argc, char** argv)
 
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
-                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField<std::complex<float> >(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
-                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField<std::complex<float> >(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), vCross<std::complex<float> >() );

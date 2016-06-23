@@ -7,10 +7,6 @@
 #include "gcTerms.hpp"
 
 #ifdef __CUDACC__
-#include <thrust/device_ptr.h>
-#endif
-
-#ifdef __CUDACC__
 #define HOST __host__ 
 #define DEVICE __device__
 #else

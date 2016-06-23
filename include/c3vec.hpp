@@ -26,6 +26,10 @@
 #define PRAGMA
 #endif
 
+#ifdef __CUDACC__
+#include <thrust/complex.h>
+#endif
+
 template <typename T>
 class C3 {
 		public:

@@ -20,29 +20,36 @@
 #define PRAGMA
 #endif
 
+#ifdef __CUDACC__
+#include <thrust/complex.h>
+#endif
+
 using namespace std;
 
 #include "getFields.tpp"
 
 // Functor to wrap these 
 
+template <typename T>
 struct getPerturbedField 
 {
 
     float *r;
-    C3<std::complex<float> > *field_CYL;
+    C3<T> *field_CYL;
     int nR;
     int nPhi;
     float weight;
 
-    getPerturbedField( float *_r, C3<std::complex<float> > *_field_CYL, int _nR, int _nPhi, float _weight) : 
+    getPerturbedField( float *_r, C3<T> *_field_CYL, int _nR, int _nPhi, float _weight) : 
             r(_r), field_CYL(_field_CYL), nR(_nR), nPhi(_nPhi), weight(_weight) {}
-    C3<std::complex<float> > operator() (CParticle &p) {
+
+    HOST DEVICE
+    C3<T> operator() (CParticle &p) {
         // --- CHECK THIS COMMENTED PIECE ---
         //complex<float> _i(0, 1);
         //E1_XYZ = weight * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(p, r, f, nPhi);
-        C3<std::complex<float> > E1_XYZ = weight * getE1orB1_XYZ(p, r, field_CYL, nR, nPhi);
-        C3<std::complex<float> > field_XYZ = E1_XYZ * (1 - p.status);
+        C3<T> E1_XYZ = weight * getE1orB1_XYZ(p, r, field_CYL, nR, nPhi);
+        C3<T> field_XYZ = E1_XYZ * (1 - p.status);
         return field_XYZ;
     }
 };

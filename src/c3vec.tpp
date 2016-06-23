@@ -173,6 +173,20 @@ C3<T> operator*(const std::complex<float>& other, const C3<T>& rhs)
     return tmp;
 }
 
+#ifdef __CUDACC__
+PRAGMA
+inline
+HOST DEVICE
+C3<thrust::complex<float> > operator*(const thrust::complex<float>& other, const C3<thrust::complex<float> >& rhs)
+{
+    C3<thrust::complex<float> > tmp;
+    tmp.c1 = other * rhs.c1;
+    tmp.c2 = other * rhs.c2;
+    tmp.c3 = other * rhs.c3;
+    return tmp;
+}
+#endif
+
 PRAGMA
 template <typename T>
 HOST DEVICE
