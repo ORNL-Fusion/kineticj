@@ -57,7 +57,8 @@ C3<thrust::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<thru
 
     thrust::complex<float> ii(0, 1);
 
-    E1_XYZ = thrust::exp(ii * float(nPhi * _p)) * rot_CYL_to_XYZ(_p, E1_CYL, 1);
+    printf("%f,%f\n",E1_CYL.c1.real(),E1_CYL.c1.imag());
+    E1_XYZ = E1_CYL;//thrust::exp(ii * float(nPhi * _p)) * rot_CYL_to_XYZ(_p, E1_CYL, 1);
 
     return E1_XYZ;
 }

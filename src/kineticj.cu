@@ -328,7 +328,10 @@ int main(int argc, char** argv)
     thrust::device_vector<thrust::complex<float> > vyf1_device(nWork,0);
     thrust::device_vector<thrust::complex<float> > vzf1_device(nWork,0);
 
+    thrust::host_vector<CParticle> p_host(nWork);
     thrust::host_vector<C3<float> > df0_dv_XYZ_host(nWork,0);
+    thrust::host_vector<C3<std::complex<float> > > E1_host(nWork,0);
+    thrust::host_vector<C3<thrust::complex<float> > > B1_host(nWork,0);
 
     // Also copy across the fields to be interpolated to the device
 
@@ -336,6 +339,21 @@ int main(int argc, char** argv)
     thrust::device_vector<C3<float> > b0_CYL_device = b0_CYL;
     thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL;
     thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL;
+
+    thrust::host_vector<C3<thrust::complex<float> > > e1_CYL_host(e1_CYL.size());
+    thrust::host_vector<C3<thrust::complex<float> > > b1_CYL_host(e1_CYL.size());
+
+    thrust::copy(e1_CYL_device.begin(),e1_CYL_device.end(),e1_CYL_host.begin());
+    thrust::copy(b1_CYL_device.begin(),b1_CYL_device.end(),b1_CYL_host.begin());
+
+    vector<C3<std::complex<float> > > e1_CYL_host_std(e1_CYL.size());
+
+    for(int i=0;i<e1_CYL.size();i++){
+        cout<<e1_CYL[i]<<endl;
+        cout<<e1_CYL_host[i]<<endl;
+        e1_CYL_host_std[i] = e1_CYL_host[i];
+        cout<<e1_CYL_host_std[i]<<endl;
+    }
 
     float *r_dPtr_raw = thrust::raw_pointer_cast(r_device.data());
     C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
@@ -360,18 +378,23 @@ int main(int argc, char** argv)
         // Move particle
         thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), 
                         moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
+        thrust::copy(particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
+
         // df0(v)/dv 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
                         get_df0_dv() ); 
-    
         thrust::copy(df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
 
         // E1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
                         getPerturbedField<thrust::complex<float> >(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
+        thrust::copy(E1_device.begin(),E1_device.end(),E1_host.begin());
+
         // B1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
                         getPerturbedField<thrust::complex<float> >(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
+        thrust::copy(B1_device.begin(),B1_device.end(),B1_host.begin());
+
         // v x B1 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
                         vCross<thrust::complex<float> >() );
@@ -406,6 +429,7 @@ int main(int argc, char** argv)
         // Move particle
         for_each( particleWorkList.begin(), particleWorkList.end(), 
                         moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
+        cout<<"CPU: "<<particleWorkList[0].c1<<" GPU: "<<p_host[0].c1<<endl;
 
         // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), 
@@ -416,10 +440,14 @@ int main(int argc, char** argv)
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
                         getPerturbedField<std::complex<float> >(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+        
+        cout<<"CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<endl;
 
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
                         getPerturbedField<std::complex<float> >(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+
+        cout<<"CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<endl;
 
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), 
