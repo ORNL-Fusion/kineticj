@@ -94,7 +94,7 @@ SRCTYPES := c cpp cu
 LINK := $(CPP) $(CXXFLAGS) $(LFLAGS)
 
 ifeq ($(USECUDA),1)
-LINK := $(NVCC) $(LFLAGS)
+LINK := $(NVCC) $(LFLAGS) -lcuda
 else
 NVCCFLAGS += --x c++
 endif

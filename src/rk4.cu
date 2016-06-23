@@ -13,6 +13,7 @@
 //}
 
 // Zero-order orbits
+HOST DEVICE
 C3<float> rk4_evalf(CParticle& p, const float& t,
     const C3<float>& v_XYZ, const C3<float>& x, float *rVec, C3<float> *b0Vec_CYL, int nR)
 {
@@ -26,6 +27,7 @@ C3<float> rk4_evalf(CParticle& p, const float& t,
 }
 
 // Zero-order orbits
+HOST DEVICE
 int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
 {
 

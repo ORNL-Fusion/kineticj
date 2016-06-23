@@ -331,13 +331,12 @@ int main(int argc, char** argv)
 
     thrust::device_vector<float> r_device = r;
     thrust::device_vector<C3<float> > b0_CYL_device = b0_CYL;
-    //vector<thrust::complex<float> > e1_CYL_thrust(e1_CYL);
-    //vector<thrust::complex<float> > b1_CYL_thrust(b1_CYL);
-    //thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL;
-    //thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL;
+    thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL;
+    thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL;
 
-    thrust::device_ptr<float> r_dPtr(r_device.data());
-    thrust::device_ptr<C3<float> > b0_dPtr(b0_CYL_device.data());
+    float *r_dPtr_raw = thrust::raw_pointer_cast(r_device.data());
+    C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
+
     //thrust::device_ptr<C3<thrust::complex<float> > > e1_dPtr(e1_CYL_device.data());
     //thrust::device_ptr<C3<thrust::complex<float> > > b1_dPtr(b1_CYL_device.data());
 
@@ -348,13 +347,15 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < nSteps; i++) {
 
+        std::cout<<"Step "<<i<<" of "<<nSteps<<std::endl;
+
         float dtIntFac = 1;
         if (i > 0) dtIntFac = 2;
 
         dtIntFac = dtMin / 2.0 * dtIntFac;
 
 #ifdef __CUDACC__
-        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r_dPtr, b0_dPtr, r.size()) ); 
+        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
         //thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), get_df0_dv() ); 
 #endif 
  
