@@ -127,6 +127,7 @@ class C3 {
 template <typename T>
 struct vCross 
 {
+    HOST DEVICE
     C3<T> operator() (CParticle &p, C3<T> &field) {
         C3<float> thisVel_XYZ(p.v_c1, p.v_c2, p.v_c3);
         C3<T> result = cross(thisVel_XYZ,field);
@@ -137,35 +138,46 @@ struct vCross
 template <typename T, typename T2>
 struct doDotProduct 
 {
+    PRAGMA
+    HOST DEVICE
     std::complex<float> operator() (C3<T> &a, C3<T2> &b) {
         std::complex<float> result = dot(a,b);
         return result;
     }
 };
 
+template <typename T>
 struct runningIntegral
 {
     float intFactor;
     runningIntegral( float _intFactor ) : intFactor(_intFactor) {}
 
-    std::complex<float> operator() (std::complex<float> &integral, std::complex<float> &y) {
-        std::complex<float> result = integral + intFactor * y;
+    PRAGMA
+    HOST DEVICE
+    T operator() (T &integral, T &y) {
+        T result = integral + intFactor * y;
         return result;
     }
 };
 
+template <typename T>
 struct multiplyByChargeOverMass
 {
-    std::complex<float> operator() (std::complex<float> &integral, CParticle &p) {
-        std::complex<float> result = -(float)(p.q / p.m) * integral;
+    PRAGMA
+    HOST DEVICE
+    T operator() (T &integral, CParticle &p) {
+        T result = -(float)(p.q / p.m) * integral;
         return result;
     }
 };
 
+template <typename T>
 struct multiplyByCharge
 {
-    std::complex<float> operator() (std::complex<float> &x, CParticle &p) {
-        std::complex<float> result = -(float)(p.q) * x;
+    PRAGMA
+    HOST DEVICE
+    T operator() (T &x, CParticle &p) {
+        T result = -(float)(p.q) * x;
         return result;
     }
 };

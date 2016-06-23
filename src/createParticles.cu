@@ -12,6 +12,8 @@ float GetGyroPhase(const C3<float> v_abp)
     return atan2(alp, bet);
 }
 
+PRAGMA
+HOST DEVICE
 float maxwellian(float vx, float vy, float vz, float vTh)
 {
 
@@ -22,6 +24,8 @@ float maxwellian(float vx, float vy, float vz, float vTh)
     return weight_x * weight_y * weight_z;
 }
 
+PRAGMA
+HOST DEVICE
 float get_vTh(const float _amu, const float _Z, const float _T_keV)
 {
 
@@ -32,6 +36,8 @@ float get_vTh(const float _amu, const float _Z, const float _T_keV)
     return vTh;
 }
 
+PRAGMA
+HOST DEVICE
 C3<float> maxwellian_df0_dv(const C3<float> _v, const float _T_keV, const float _n_m3, const float _amu, const float _Z)
 {
 
