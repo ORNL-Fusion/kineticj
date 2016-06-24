@@ -334,26 +334,17 @@ int main(int argc, char** argv)
     thrust::host_vector<C3<thrust::complex<float> > > B1_host(nWork,0);
 
     // Also copy across the fields to be interpolated to the device
+    // For some reason, and only for the thrust::complex<> type, it
+    // seems required to go via a thrust::host_vector<> rather than
+    // directly to the thrust::device_vector<> as with the floats.
+
+    thrust::host_vector<C3<thrust::complex<float> > > e1_CYL_host(e1_CYL);
+    thrust::host_vector<C3<thrust::complex<float> > > b1_CYL_host(b1_CYL);
 
     thrust::device_vector<float> r_device = r;
     thrust::device_vector<C3<float> > b0_CYL_device = b0_CYL;
-    thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL;
-    thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL;
-
-    thrust::host_vector<C3<thrust::complex<float> > > e1_CYL_host(e1_CYL.size());
-    thrust::host_vector<C3<thrust::complex<float> > > b1_CYL_host(e1_CYL.size());
-
-    thrust::copy(e1_CYL_device.begin(),e1_CYL_device.end(),e1_CYL_host.begin());
-    thrust::copy(b1_CYL_device.begin(),b1_CYL_device.end(),b1_CYL_host.begin());
-
-    vector<C3<std::complex<float> > > e1_CYL_host_std(e1_CYL.size());
-
-    for(int i=0;i<e1_CYL.size();i++){
-        cout<<e1_CYL[i]<<endl;
-        cout<<e1_CYL_host[i]<<endl;
-        e1_CYL_host_std[i] = e1_CYL_host[i];
-        cout<<e1_CYL_host_std[i]<<endl;
-    }
+    thrust::device_vector<C3<thrust::complex<float> > > e1_CYL_device = e1_CYL_host;
+    thrust::device_vector<C3<thrust::complex<float> > > b1_CYL_device = b1_CYL_host;
 
     float *r_dPtr_raw = thrust::raw_pointer_cast(r_device.data());
     C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
