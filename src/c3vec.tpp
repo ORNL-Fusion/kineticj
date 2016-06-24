@@ -233,7 +233,6 @@ float mag(const C3<T>& in)
     return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
 }
 
-PRAGMA
 template <typename T>
 HOST DEVICE
 T dot(const C3<T>& Y, const C3<T>& X)
@@ -241,13 +240,21 @@ T dot(const C3<T>& Y, const C3<T>& X)
     return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
 }
 
-PRAGMA
-template <typename T, typename T2>
-HOST DEVICE
-std::complex<float> dot(const C3<T>& Y, const C3<T2>& X)
+inline
+HOST 
+std::complex<float> dot(const C3<std::complex<float> >& Y, const C3<float>& X)
 {
     return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
 }
+
+#ifdef __CUDACC__
+inline
+HOST DEVICE 
+thrust::complex<float> dot(const C3<thrust::complex<float> >& Y, const C3<float>& X)
+{
+    return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
+}
+#endif 
 
 PRAGMA
 template <typename T>

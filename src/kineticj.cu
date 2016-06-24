@@ -330,9 +330,17 @@ int main(int argc, char** argv)
 
     thrust::host_vector<CParticle> p_host(nWork);
     thrust::host_vector<C3<float> > df0_dv_XYZ_host(nWork,0);
-    thrust::host_vector<C3<std::complex<float> > > E1_host(nWork,0);
+    thrust::host_vector<C3<thrust::complex<float> > > E1_host(nWork,0);
     thrust::host_vector<C3<thrust::complex<float> > > B1_host(nWork,0);
-
+    thrust::host_vector<C3<thrust::complex<float> > > vCrossB_host(nWork,0);
+    thrust::host_vector<C3<thrust::complex<float> > > vCrossB_E1_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > forceDotGradf0_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > dtIntegral_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > f1_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > vxf1_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > vyf1_host(nWork,0);
+    thrust::host_vector<thrust::complex<float> > vzf1_host(nWork,0);
+ 
     // Also copy across the fields to be interpolated to the device
     // For some reason, and only for the thrust::complex<> type, it
     // seems required to go via a thrust::host_vector<> rather than
@@ -389,72 +397,95 @@ int main(int argc, char** argv)
         // v x B1 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
                         vCross<thrust::complex<float> >() );
+        thrust::copy(vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
+
         // E1 + v x B1
         thrust::transform( E1_device.begin(), E1_device.end(), vCrossB_device.begin(), vCrossB_E1_device.begin(), 
                         thrust::plus<C3<thrust::complex<float> > >() );
+        thrust::copy(vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
+
         //  (E1 + v x B1) . grad_v(f0(v))
         thrust::transform( vCrossB_E1_device.begin(), vCrossB_E1_device.end(), df0_dv_XYZ_device.begin(), forceDotGradf0_device.begin(), 
-                        doDotProduct<thrust::complex<float>,float>() );
+                        doDotProduct_device() );
+        thrust::copy(forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
+
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         thrust::transform( dtIntegral_device.begin(), dtIntegral_device.end(), forceDotGradf0_device.begin(), dtIntegral_device.begin(), 
                         runningIntegral<thrust::complex<float> >(dtIntFac) );
+        thrust::copy(dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
+
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         thrust::transform( dtIntegral_device.begin(), dtIntegral_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
                         multiplyByChargeOverMass<thrust::complex<float> >() ); 
+        thrust::copy(f1_device.begin(),f1_device.end(),f1_host.begin());
+
         // q . f1(v) // first step in velocity momemnt for current calculation 
         thrust::transform( f1_device.begin(), f1_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
                         multiplyByCharge<thrust::complex<float> >() ); 
         // q . vx . f1(v) 
         thrust::transform( f1_device.begin(), f1_device.end(), vx_device.begin(), vxf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
+
+        thrust::copy(vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
+
         // q . vy . f1(v) 
         thrust::transform( f1_device.begin(), f1_device.end(), vy_device.begin(), vyf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
         // q . vz . f1(v) 
         thrust::transform( f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
- 
+
+
 #endif 
 
 #if DO_CPU_ITERATOR_APPROACH > 0
         // Move particle
         for_each( particleWorkList.begin(), particleWorkList.end(), 
                         moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
-        cout<<"CPU: "<<particleWorkList[0].c1<<" GPU: "<<p_host[0].c1<<endl;
+
+        cout<<"move CPU: "<<particleWorkList[0].c1<<particleWorkList[0].c2<<particleWorkList[0].c3
+                <<" GPU: "<<p_host[0].c1<<p_host[0].c2<<p_host[0].c3<<endl;
 
         // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), 
                         get_df0_dv() ); 
 
-        cout<<"CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<endl;
+        cout<<"df0_dv_XYZ CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<endl;
 
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
                         getPerturbedField<std::complex<float> >(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
         
-        cout<<"CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<endl;
+        cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<endl;
 
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
                         getPerturbedField<std::complex<float> >(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
 
-        cout<<"CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<endl;
+        cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<endl;
 
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), 
                         vCross<std::complex<float> >() );
 
+        cout<<"vCross CPU: "<<vCrossB[0]<<" GPU: "<<vCrossB_host[0]<<endl;
+
         // E1 + v x B1
         transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), 
                         std::plus<C3<std::complex<float> > >() );
 
+        cout<<"vCrosB_E1 CPU: "<<vCrossB_E1[0]<<" GPU: "<<vCrossB_E1_host[0]<<endl;
+
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), 
-                        doDotProduct<std::complex<float>,float>() );
+                        doDotProduct() );
+
+        cout<<"forceDotGradf0 CPU: "<<forceDotGradf0[0]<<" GPU: "<<forceDotGradf0_host[0]<<endl;
 
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), 
                         runningIntegral<std::complex<float> >(dtIntFac) );
+        cout<<"dtIntegral CPU: "<<dtIntegral[0]<<" GPU: "<<dtIntegral_host[0]<<endl;
 
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         transform( dtIntegral.begin(), dtIntegral.end(), particleWorkList.begin(), f1.begin(), 
@@ -467,6 +498,8 @@ int main(int argc, char** argv)
         // q . vx . f1(v) 
         transform( f1.begin(), f1.end(), vx.begin(), vxf1.begin(), 
                         std::multiplies< complex<float> >() ); 
+
+        cout<<"CPU: "<<vxf1[0]<<" GPU: "<<vxf1_host[0]<<endl;
 
         // q . vy . f1(v) 
         transform( f1.begin(), f1.end(), vy.begin(), vyf1.begin(), 
@@ -494,14 +527,14 @@ int main(int argc, char** argv)
 
     // Copy data back from GPU
 
-    thrust::host_vector<std::complex<float> > vxf1_host = vxf1_device;
-    thrust::host_vector<std::complex<float> > vyf1_host = vyf1_device;
-    thrust::host_vector<std::complex<float> > vzf1_host = vzf1_device;
+    thrust::copy(vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
+    thrust::copy(vyf1_device.begin(),vyf1_device.end(),vyf1_host.begin());
+    thrust::copy(vzf1_device.begin(),vzf1_device.end(),vzf1_host.begin());
 
     for (int i=0;i<nXGrid;i++) {
-        j1xc[i] = dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
-        j1yc[i] = dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
-        j1zc[i] = dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
+        j1xc[i] = dv * accumulate( vxf1_host.begin()+nP*i, vxf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
+        j1yc[i] = dv * accumulate( vyf1_host.begin()+nP*i, vyf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
+        j1zc[i] = dv * accumulate( vzf1_host.begin()+nP*i, vzf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
         cout << j1xc[i].real() << "  " << j1xc[i].imag() << endl;
     }
 #endif
@@ -547,6 +580,8 @@ int main(int argc, char** argv)
     nc_j1zc_im.putVar(&JzIm[0]);
 
     cout << "DONE" << endl;
+
+#if DO_CPU_APPROACH > 0
 
 #if CLOCK >= 1
 #if not defined(_OPENMP)
@@ -1186,6 +1221,8 @@ cout << "Continuing with non functor approach ..." << endl;
     cout << "Total Time [s]: " << ProgramTimeInSeconds << endl;
     cout << "Total Time [m]: " << ProgramTimeInSeconds / 60.0 << endl;
     cout << "Total Time [h]: " << ProgramTimeInSeconds / 3600.0 << endl;
+#endif
+
 #endif
     return EXIT_SUCCESS;
 }

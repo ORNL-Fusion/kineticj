@@ -26,10 +26,6 @@
 #define PRAGMA
 #endif
 
-#ifdef __CUDACC__
-#include <thrust/complex.h>
-#endif
-
 template <typename T>
 class C3 {
 		public:
@@ -135,16 +131,24 @@ struct vCross
     }
 };
 
-template <typename T, typename T2>
 struct doDotProduct 
 {
-    PRAGMA
-    HOST DEVICE
-    std::complex<float> operator() (C3<T> &a, C3<T2> &b) {
+    HOST 
+    std::complex<float> operator() (C3<std::complex<float> > &a, C3<float> &b) {
         std::complex<float> result = dot(a,b);
         return result;
     }
 };
+
+struct doDotProduct_device
+{
+    HOST DEVICE
+    thrust::complex<float> operator() (C3<thrust::complex<float> > &a, C3<float> &b) {
+        thrust::complex<float> result = dot(a,b);
+        return result;
+    }
+};
+
 
 template <typename T>
 struct runningIntegral

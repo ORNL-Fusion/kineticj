@@ -26,6 +26,12 @@
 
 using namespace std;
 
+HOST DEVICE
+C3<thrust::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi);
+
+HOST
+C3<std::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, int nPhi);
+
 #include "getFields.tpp"
 
 // Functor to wrap these 

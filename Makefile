@@ -17,7 +17,9 @@ PGIDIR :=
 VENDOR := GCC_
 CC := gcc
 CPP := g++
-NVCC := nvcc -g -G
+#NVCC := nvcc -g -G
+NVCC := nvcc -O3 
+
 
 #VENDOR := PGI_
 #CC := pgcc
@@ -64,7 +66,8 @@ CPPFLAGS += -DLOWMEM_ORBIT_WRITE=1
 CPPFLAGS += -DDEBUG_ROTATION=0
 CPPFLAGS += -DF1_WRITE=1
 CPPFLAGS += -std=c++11
-CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=1
+CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=0
+CPPFLAGS += -DDO_CPU_APPROACH=0
 
 NVCCFLAGS := -dc --expt-relaxed-constexpr
 
