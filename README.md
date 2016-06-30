@@ -1,5 +1,11 @@
 # kineticj
 Given a time harmonic electric wave field calculate the kinetic plasma current
+## Build on gpufusion.ornl.gov
+```
+source env-gpufusion.sh
+make clean
+make
+```
 
 ### Calculate the Guiding Center terms file
 
