@@ -1,17 +1,5 @@
 #include "rk4.hpp"
 
-//// First-order orbits
-//C3Vec rk4_evalf(CParticle& p, const float& t, const C3Vec& v, const C3Vec& x,
-//    const vector<C3Vec>& b0Vec, const vector<C3VecI>& e1, const float wrf)
-//{
-//
-//    C3Vec b0(0, 0, 0), F;
-//
-//    C3Vec v_x_b0(v.c2 * b0.c3 - v.c3 * b0.c2, -1.0 * (v.c1 * b0.c3 - v.c3 * b0.c1), v.c1 * b0.c2 - v.c2 * b0.c1);
-//
-//    return F * (p.q / p.m);
-//}
-
 // Zero-order orbits
 HOST DEVICE
 C3<float> rk4_evalf(CParticle& p, const float& t,
@@ -104,10 +92,11 @@ int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
 }
 
 // Guiding center orbit
-int rk4_move_gc(CParticle& p, const float& dt, float& t0,
-    float *r_b0, C3<float> *b0_CYL, int nB,float *r_GC,
+HOST DEVICE
+int rk4_move_gc(CParticle& p, const float dt, float t0,
+    float *r_b0, C3<float> *b0_CYL, int nB, float *r_GC,
     C3<float> *curv_CYL, C3<float> *grad_CYL,
-    float *bDotGradB, int nGC, const float wrf)
+    float *bDotGradB, int nGC)
 {
 
     C3<float> xn0_XYZ(p.c1, p.c2, p.c3);

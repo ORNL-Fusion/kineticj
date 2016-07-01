@@ -140,6 +140,7 @@ struct doDotProduct
     }
 };
 
+#ifdef __CUDACC__
 struct doDotProduct_device
 {
     HOST DEVICE
@@ -148,7 +149,7 @@ struct doDotProduct_device
         return result;
     }
 };
-
+#endif
 
 template <typename T>
 struct runningIntegral

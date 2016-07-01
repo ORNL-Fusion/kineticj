@@ -386,12 +386,12 @@ int main(int argc, char** argv)
 
         // E1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
-                        getPerturbedField<thrust::complex<float> >(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(E1_device.begin(),E1_device.end(),E1_host.begin());
 
         // B1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
-                        getPerturbedField<thrust::complex<float> >(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(B1_device.begin(),B1_device.end(),B1_host.begin());
 
         // v x B1 
@@ -439,54 +439,67 @@ int main(int argc, char** argv)
 #endif 
 
 #if DO_CPU_ITERATOR_APPROACH > 0
+
         // Move particle
+#if GC_ORBITS >= 1
+        for_each( particleWorkList.begin(), particleWorkList.end(), 
+                        moveParticle_gc(dtMin, thisT[i], &r[0], &b0_CYL[0], r.size(), &r_gc[0], &curv_CYL[0], &grad_CYL[0], &bDotGradB[0], r_gc.size() ) ); 
+#else
         for_each( particleWorkList.begin(), particleWorkList.end(), 
                         moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
-
+#endif
+#ifdef __CUDACC__
         cout<<"move CPU: "<<particleWorkList[0].c1<<particleWorkList[0].c2<<particleWorkList[0].c3
                 <<" GPU: "<<p_host[0].c1<<p_host[0].c2<<p_host[0].c3<<endl;
-
+#endif
         // df0(v)/dv 
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), 
                         get_df0_dv() ); 
 
-        cout<<"df0_dv_XYZ CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<endl;
-
+#ifdef __CUDACC__
+       cout<<"df0_dv_XYZ CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<endl;
+#endif
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
-                        getPerturbedField<std::complex<float> >(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
         
+#ifdef __CUDACC__
         cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<endl;
-
+#endif
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
-                        getPerturbedField<std::complex<float> >(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i]) ); 
+                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
 
+#ifdef __CUDACC__
         cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<endl;
-
+#endif
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), 
                         vCross<std::complex<float> >() );
 
+#ifdef __CUDACC__
         cout<<"vCross CPU: "<<vCrossB[0]<<" GPU: "<<vCrossB_host[0]<<endl;
-
+#endif
         // E1 + v x B1
         transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), 
                         std::plus<C3<std::complex<float> > >() );
 
+#ifdef __CUDACC__
         cout<<"vCrosB_E1 CPU: "<<vCrossB_E1[0]<<" GPU: "<<vCrossB_E1_host[0]<<endl;
-
+#endif
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), 
                         doDotProduct() );
 
+#ifdef __CUDACC__
         cout<<"forceDotGradf0 CPU: "<<forceDotGradf0[0]<<" GPU: "<<forceDotGradf0_host[0]<<endl;
-
+#endif
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), 
                         runningIntegral<std::complex<float> >(dtIntFac) );
+#ifdef __CUDACC__
         cout<<"dtIntegral CPU: "<<dtIntegral[0]<<" GPU: "<<dtIntegral_host[0]<<endl;
-
+#endif
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         transform( dtIntegral.begin(), dtIntegral.end(), particleWorkList.begin(), f1.begin(), 
                         multiplyByChargeOverMass<std::complex<float> >() ); 
@@ -499,8 +512,9 @@ int main(int argc, char** argv)
         transform( f1.begin(), f1.end(), vx.begin(), vxf1.begin(), 
                         std::multiplies< complex<float> >() ); 
 
+#ifdef __CUDACC__
         cout<<"CPU: "<<vxf1[0]<<" GPU: "<<vxf1_host[0]<<endl;
-
+#endif
         // q . vy . f1(v) 
         transform( f1.begin(), f1.end(), vy.begin(), vyf1.begin(), 
                         std::multiplies< complex<float> >() ); 
@@ -702,8 +716,8 @@ cout << "Continuing with non functor approach ..." << endl;
                 thisOrbit_XYZ[i] = C3<float>(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
                     thisParticle_XYZ.c3);
 #if GC_ORBITS >= 1
-                int MoveStatus = rk4_move_gc(thisParticle_XYZ, dtMin, thisT[i], r, b0_CYL, r_gc,
-                    curv_CYL, grad_CYL, bDotGradB, wrf);
+                int MoveStatus = rk4_move_gc(thisParticle_XYZ, dtMin, thisT[i], &r[0], &b0_CYL[0], r.size(), 
+                                &r_gc[0], &curv_CYL[0], &grad_CYL[0], &bDotGradB[0], r_gc.size());
 #else
                 int MoveStatus = rk4_move(thisParticle_XYZ, dtMin, &r[0], &b0_CYL[0], r.size());
 #endif

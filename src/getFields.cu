@@ -1,5 +1,6 @@
 #include "getFields.hpp"
 
+#ifdef __CUDACC__
 HOST DEVICE
 C3<thrust::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi)
 {
@@ -19,6 +20,7 @@ C3<thrust::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<thru
 
     return E1_XYZ;
 }
+#endif
 
 HOST
 C3<std::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, int nPhi)
