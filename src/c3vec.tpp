@@ -227,9 +227,9 @@ template <typename T>
 HOST DEVICE
 float mag(const C3<T>& in)
 {
-    float c1 = abs(in.c1);
-    float c2 = abs(in.c2);
-    float c3 = abs(in.c3);
+    float c1 = std::abs(in.c1);
+    float c2 = std::abs(in.c2);
+    float c3 = std::abs(in.c3);
     return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
 }
 

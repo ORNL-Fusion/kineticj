@@ -6,6 +6,7 @@
 #include <new> // std::bad_alloc
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace netCDF;
 using namespace exceptions;
@@ -167,9 +168,9 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         std::cout << "\tfreq: " << freq << std::endl;
         std::cout << "\tmin(b0_p): " << *min << std::endl;
         std::cout << "\tmax(b0_p): " << *max << std::endl;
-        std::cout << "\tabs(e_r[nR/2]): " << abs(e_r[nR / 2]) << std::endl;
-        std::cout << "\tabs(e_p[nR/2]): " << abs(e_p[nR / 2]) << std::endl;
-        std::cout << "\tabs(e_z[nR/2]): " << abs(e_z[nR / 2]) << std::endl;
+        std::cout << "\tabs(e_r[nR/2]): " << std::abs(e_r[nR / 2]) << std::endl;
+        std::cout << "\tabs(e_p[nR/2]): " << std::abs(e_p[nR / 2]) << std::endl;
+        std::cout << "\tabs(e_z[nR/2]): " << std::abs(e_z[nR / 2]) << std::endl;
 #endif
     } catch (exceptions::NcException& e) {
         std::cout << "NetCDF: unknown error" << std::endl;

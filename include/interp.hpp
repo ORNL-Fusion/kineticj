@@ -19,6 +19,8 @@
 #include <thrust/complex.h>
 #endif
 
+#include <cmath>
+
 #include "interp.tpp"
 
 #endif

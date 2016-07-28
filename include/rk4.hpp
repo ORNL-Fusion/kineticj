@@ -56,12 +56,14 @@ struct moveParticle_gc
     float *bDotGrad;
     int nR, nR_GC;
 
-    moveParticle_gc( float _dt, float _t, float *_r, C3<float> *_b, int _nR, float *_r_GC, C3<float> *_curv, C3<float> *_grad, float *_bDotGrad, int _nR_GC) 
-            : dt(_dt), t(_t), r(_r), b(_b), nR(_nR), r_GC(_r_GC), curv(_curv), grad(_grad), bDotGrad(_bDotGrad), nR_GC(_nR_GC) {}
+    moveParticle_gc( float _dt, float _t, float *_r, C3<float> *_b, int _nR, 
+                    float *_r_GC, C3<float> *_curv, C3<float> *_grad, float *_bDotGrad, int _nR_GC) 
+            : dt(_dt), t(_t), r(_r), b(_b), nR(_nR), 
+                r_GC(_r_GC), curv(_curv), grad(_grad), bDotGrad(_bDotGrad), nR_GC(_nR_GC) {}
 
     HOST DEVICE 
     void operator() (CParticle &p) {
-        rk4_move_gc(p,dt,t,r,b,nR,r_GC,curv,grad,bDotGrad,nR_GC);
+        int status = rk4_move_gc(p,dt,t,r,b,nR,r_GC,curv,grad,bDotGrad,nR_GC);
     }
 
 };

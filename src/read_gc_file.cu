@@ -27,29 +27,14 @@ int read_gc_file(std::string fName,
     }
 
     NcFile dataFile(fName.c_str(), NcFile::read);
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
     NcDim gc_nc_nR(dataFile.getDim("nR"));
     NcDim gc_nc_scalar(dataFile.getDim("scalar"));
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
     if (!dataFile.getVar("z").isNull())
         throw NcException("NcException", "This is a 2D GC terms file", __FILE__, __LINE__);
 
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
     int nR_gc = gc_nc_nR.getSize();
     std::cout << "nR_gc: " << nR_gc << std::endl;
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
     NcVar gc_nc_r(dataFile.getVar("r"));
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
     NcVar gc_nc_curv_r(dataFile.getVar("curv_r"));
     NcVar gc_nc_curv_p(dataFile.getVar("curv_t"));
     NcVar gc_nc_curv_z(dataFile.getVar("curv_z"));
@@ -91,10 +76,6 @@ int read_gc_file(std::string fName,
         grad_CYL[i] = C3<float>(grad_r[i], grad_p[i], grad_z[i]);
     }
     std::cout << "Finished reading gc_terms file" << std::endl;
-
-#if DEBUG_LINES >= 1
-    std::cout << __LINE__ << std::endl;
-#endif
 
     return (0);
 }

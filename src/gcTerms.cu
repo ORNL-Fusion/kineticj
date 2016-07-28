@@ -1,7 +1,7 @@
 #include "gcTerms.hpp"
 
 // Parallel acceleration
-float eval_aPar(CParticle& p, const C3<float> r, float *r_GC, float *bDotGradB, int nGC)
+float eval_aPar(CParticle& p, const C3<float> r, const float *r_GC, const float *bDotGradB, int nGC)
 {
 
     int status = 0;
@@ -25,7 +25,7 @@ float eval_aPar(CParticle& p, const C3<float> r, float *r_GC, float *bDotGradB, 
 }
 
 // Perpendicular velocity
-float eval_vPer(CParticle& p, const C3<float> r, float *r_b0, C3<float> *b0_CYL, int n)
+float eval_vPer(CParticle& p, const C3<float> r, const float *r_b0, const C3<float> *b0_CYL, int n)
 {
 
     int status = 0;
@@ -36,8 +36,8 @@ float eval_vPer(CParticle& p, const C3<float> r, float *r_b0, C3<float> *b0_CYL,
 
 // Guiding center veclocity
 C3<float> eval_vGC(CParticle& p, const C3<float> r, const float vPer, const float vPar,
-    float *r_b0, C3<float> *b0_CYL, int n, 
-    float *r_GC, C3<float> *curv_CYL, C3<float> *grad_CYL, int nGC)
+    const float *r_b0, const C3<float> *b0_CYL, int n, 
+    const float *r_GC, const C3<float> *curv_CYL, const C3<float> *grad_CYL, int nGC)
 {
 
     int status = 0;
@@ -81,7 +81,7 @@ C3<float> eval_vGC(CParticle& p, const C3<float> r, const float vPer, const floa
     cout << "curv_CYL: " << This_curv_CYL.c1 << "  " << This_curv_CYL.c2 << "  " << This_curv_CYL.c3 << endl;
     cout << "grad_CYL: " << This_grad_CYL.c1 << "  " << This_grad_CYL.c2 << "  " << This_grad_CYL.c3 << endl
          << endl;
-    cout << "max(grad_CYL): " << maxC3<float>Abs(grad_CYL) << endl;
+    cout << "max(grad_CYL): " << maxC3VecAbs(grad_CYL) << endl;
 
 #endif
 

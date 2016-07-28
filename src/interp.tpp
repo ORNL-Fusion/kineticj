@@ -10,7 +10,7 @@ T kj_interp1D ( const float &x, const float *xVec, const T *yVec, int n, int &st
 	float _x;
 
 #if _PARTICLE_BOUNDARY == 1
-	if(x<xVec[0]||x>xVec[n-1]) {
+	if(x<xVec[0]||x>xVec[n-1]||status>0) {
 			// Particle absorbing walls
 #if DEBUG_INTERP >= 1
             if(n!=n) {
@@ -58,7 +58,9 @@ T kj_interp1D ( const float &x, const float *xVec, const T *yVec, int n, int &st
 #if DEBUG_INTERP >= 2
         std::cout << "Particle version of kj_interp1D" << std::endl;
 		std::cout << "x0: " << x0 << " x1: " <<x1<< " _x: "<<_x << std::endl;
-		std::cout << "Particle at point catch: " << x0/x1 << "  "  << abs(1.0-x0/x1) << std::endl;
+		std::cout << "Particle at point catch: " << x0/x1 << "  "  << std::abs(1.0-x0/x1) << std::endl;
+		std::cout << "xVec[0]: " << xVec[0] << " xVec[n-1]: " <<xVec[n-1]<< " x: "<<x << " (n-1):" << n-1 <<std::endl;
+        std::cout << "Status: " << status << std::endl;
 #endif
 		return yVec[x0];
 	}

@@ -93,10 +93,10 @@ int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
 
 // Guiding center orbit
 HOST DEVICE
-int rk4_move_gc(CParticle& p, const float dt, float t0,
-    float *r_b0, C3<float> *b0_CYL, int nB, float *r_GC,
-    C3<float> *curv_CYL, C3<float> *grad_CYL,
-    float *bDotGradB, int nGC)
+int rk4_move_gc(CParticle& p, const float dt, const float t0,
+    const float *r_b0, const C3<float> *b0_CYL, int nB, const float *r_GC,
+    const C3<float> *curv_CYL, const C3<float> *grad_CYL,
+    const float *bDotGradB, int nGC)
 {
 
     C3<float> xn0_XYZ(p.c1, p.c2, p.c3);
@@ -114,8 +114,8 @@ int rk4_move_gc(CParticle& p, const float dt, float t0,
     float k1_vPar = dt * eval_aPar(p, xn0, r_GC, bDotGradB, nGC);
     C3<float> k1_vgc = dt * This_vGC;
 #if DEBUG_GC >= 2
-    kj_print(k1_vgc, "k1_vgc");
-    kj_print(xn0, "xn0");
+    std::cout<<"k1_vgc: "<<k1_vgc<<std::endl;
+    std::cout<<"xn0: " <<xn0<<std::endl;
     cout << "Status: " << p.status << endl;
     if (isnan(k1_vgc) || isinf(k1_vgc) || isnan(xn0) || isinf(xn0) || p.status > 0) {
         p.status = 1;
@@ -127,7 +127,7 @@ int rk4_move_gc(CParticle& p, const float dt, float t0,
     float k2_vPar = dt * eval_aPar(p, xn0 + k1_vgc / 2.0, r_GC, bDotGradB, nGC);
     C3<float> k2_vgc = dt * This_vGC;
 #if DEBUG_GC >= 2
-    kj_print(k2_vgc, "k2_vgc");
+    std::cout<<"k2_vgc: "<<k2_vgc<<std::endl;
     if (isnan(k2_vgc) || isinf(k2_vgc) || isnan(xn0) || isinf(xn0) || p.status > 0) {
         p.status = 1;
         return p.status;
@@ -138,7 +138,7 @@ int rk4_move_gc(CParticle& p, const float dt, float t0,
     float k3_vPar = dt * eval_aPar(p, xn0 + k2_vgc / 2.0, r_GC, bDotGradB, nGC);
     C3<float> k3_vgc = dt * This_vGC;
 #if DEBUG_GC >= 2
-    kj_print(k3_vgc, "k3_vgc");
+    std::cout<<"k3_vgc: "<<k3_vgc<<std::endl;
     if (isnan(k3_vgc) || isinf(k3_vgc) || isnan(xn0) || isinf(xn0) || p.status > 0) {
         p.status = 1;
         return p.status;
@@ -149,7 +149,7 @@ int rk4_move_gc(CParticle& p, const float dt, float t0,
     float k4_vPar = dt * eval_aPar(p, xn0 + k3_vgc, r_GC, bDotGradB, nGC);
     C3<float> k4_vgc = dt * This_vGC;
 #if DEBUG_GC >= 2
-    kj_print(k4_vgc, "k4_vgc");
+    std::cout<<"k4_vgc: "<<k4_vgc<<std::endl;
     if (isnan(k4_vgc) || isinf(k4_vgc) || isnan(xn0) || isinf(xn0) || p.status > 0) {
         p.status = 1;
         return p.status;

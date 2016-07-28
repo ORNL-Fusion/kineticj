@@ -1,4 +1,5 @@
 #include "rotation.hpp"
+#include "constants.hpp"
 
 void transpose(float A[][3])
 {
@@ -37,20 +38,25 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
     // bet is mostly z direction
 
     C3<float> a_xyz = cross(zu_xyz, pu_xyz);
-    //C3<float> au_xyz = a_xyz / mag(a_xyz);
-    C3<float> au_xyz = ( static_cast<float>(1.0) / mag(a_xyz) ) * a_xyz;
+    C3<float> au_xyz = a_xyz / mag(a_xyz);
+    //C3<float> au_xyz = ( static_cast<float>(1.0) / mag(a_xyz) ) * a_xyz;
 
     C3<float> b_xyz = cross(pu_xyz, au_xyz);
     C3<float> bu_xyz = b_xyz / mag(b_xyz);
 
 #if DEBUG_ROTATION >= 1
+    
+    std::cout<< "bUnit_XYZ: "<<bUnit_XYZ<<std::endl;
+    std::cout<< "a_xyz: "<<a_xyz<<std::endl;
+    std::cout<< "mag(a_xyz): " << mag(a_xyz) << std::endl;
+
     C3<float> au_xyz2 = au_xyz;
     C3<float> bu_xyz2 = bu_xyz;
     C3<float> pu_xyz2 = pu_xyz;
 
-    cout << "au_xyz: " << au_xyz << endl;
-    cout << "bu_xyz: " << bu_xyz << endl;
-    cout << "pu_xyz: " << pu_xyz << endl;
+    std::cout << "au_xyz: " << au_xyz << std::endl;
+    std::cout << "bu_xyz: " << bu_xyz << std::endl;
+    std::cout << "pu_xyz: " << pu_xyz << std::endl;
 #endif
 
     // Rotation 1
@@ -58,7 +64,12 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
     float theta = acos(dot(xu_xyz, au_xyz));
 
 #if DEBUG_ROTATION >= 1
-    cout << "theta: " << theta * 180.0 / _pi << endl;
+    std::cout << "xu_xyz: " << xu_xyz << std::endl;
+    std::cout << "au_xyz: " << au_xyz << std::endl;
+    std::cout << "dot: " << dot(xu_xyz, au_xyz) << std::endl;
+
+    std::cout << "theta [rad]: " << theta << std::endl;
+    std::cout << "theta [deg]: " << theta * 180.0 / physConstants::pi << std::endl;
 #endif
 
     float q0 = cos(theta / 2.0);
@@ -89,9 +100,9 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
     pu_xyz = rot1 * pu_xyz;
 
 #if DEBUG_ROTATION >= 1
-    cout << "au_rtz 1: " << au_xyz << endl;
-    cout << "bu_rtz 1: " << bu_xyz << endl;
-    cout << "pu_rtz 1: " << pu_xyz << endl;
+    std::cout << "au_rtz 1: " << au_xyz << std::endl;
+    std::cout << "bu_rtz 1: " << bu_xyz << std::endl;
+    std::cout << "pu_rtz 1: " << pu_xyz << std::endl;
 #endif
 
     // Rotation 2
@@ -99,7 +110,7 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
     theta = acos(dot(zu_xyz, pu_xyz));
 
 #if DEBUG_ROTATION >= 1
-    cout << "theta: " << theta * 180.0 / _pi << endl;
+    std::cout << "theta: " << theta * 180.0 / physConstants::pi << std::endl;
 #endif
     q0 = cos(theta / 2.0);
     q1 = sin(theta / 2.0) * (-xu_xyz.c1);
@@ -129,9 +140,9 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
     pu_xyz = rot2 * pu_xyz;
 
 #if DEBUG_ROTATION >= 1
-    cout << "au_xyz 2: " << au_xyz << endl;
-    cout << "bu_xyz 2: " << bu_xyz << endl;
-    cout << "pu_xyz 2: " << pu_xyz << endl;
+    std::cout << "au_xyz 2: " << au_xyz << std::endl;
+    std::cout << "bu_xyz 2: " << bu_xyz << std::endl;
+    std::cout << "pu_xyz 2: " << pu_xyz << std::endl;
 #endif
 
     A_abp = rot2 * (rot1 * A_XYZ);

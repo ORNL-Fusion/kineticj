@@ -2,6 +2,7 @@
 #define C3VEC_HPP
 
 #include <complex> 
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include <assert.h>

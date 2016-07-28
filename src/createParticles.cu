@@ -125,7 +125,7 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
 
                 TestIntegratedValue += weight * dv;
 
-                CParticle p(x, 0, 0, thisvx, thisvy, thisvz, amu, Z, weight, T_keV, n_m3);
+                CParticle p(x, 0.0, 0.0, thisvx, thisvy, thisvz, amu, Z, weight, T_keV, n_m3);
                 pList[cnt] = p;
                 pList[cnt].number = cnt;
                 pList[cnt].vTh = vTh;
@@ -137,6 +137,10 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
                 C3<float> thisV_XYZ(thisvx, thisvy, thisvz);
                 int iStat = 0;
                 C3<float> this_b0_CYL = kj_interp1D(x, r, b0_CYL, nR, iStat);
+                if(iStat>0) {
+                    cout << "ERROR : Interpolation failure on b0_CYL" << endl;
+                    exit(1);
+                }
                 C3<float> this_b0_XYZ = rot_CYL_to_XYZ(0, this_b0_CYL, 1);
                 float bMag = mag(this_b0_XYZ);
                 float vMag = mag(thisV_XYZ);
