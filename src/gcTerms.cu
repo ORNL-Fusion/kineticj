@@ -1,4 +1,5 @@
 #include "gcTerms.hpp"
+#include <cmath>
 
 // Parallel acceleration
 float eval_aPar(CParticle& p, const C3<float> r, const float *r_GC, const float *bDotGradB, int nGC)
@@ -27,11 +28,10 @@ float eval_aPar(CParticle& p, const C3<float> r, const float *r_GC, const float 
 // Perpendicular velocity
 float eval_vPer(CParticle& p, const C3<float> r, const float *r_b0, const C3<float> *b0_CYL, int n)
 {
-
     int status = 0;
     C3<float> This_b0_CYL = kj_interp1D(r.c1, r_b0, b0_CYL, n, status);
     p.status = max(p.status, status);
-    return sqrt(2.0 * p.u * mag(This_b0_CYL) / p.m);
+    return std::sqrt(2.0 * p.u * mag(This_b0_CYL) / p.m);
 }
 
 // Guiding center veclocity
@@ -87,7 +87,8 @@ C3<float> eval_vGC(CParticle& p, const C3<float> r, const float vPer, const floa
 
     C3<float> UnitB_CYL = This_b0_CYL / mag(This_b0_CYL);
 
-    C3<float> vGC = vPar * UnitB_CYL + pow(vPer, 2) * This_grad_CYL + pow(vPar, 2) * This_curv_CYL;
+    C3<float> vGC = vPar * UnitB_CYL + std::pow(vPer, 2) * This_grad_CYL + std::pow(vPar, 2) * This_curv_CYL;
+
     return vGC;
 }
 

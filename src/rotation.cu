@@ -149,3 +149,35 @@ C3<float> rot_XYZ_to_abp(const C3<float> A_XYZ, const C3<float> bUnit_XYZ, const
 
     return A_abp;
 }
+
+C3<float> rot_axis_angle(const C3<float> v, const C3<float> u, const float th_deg) {
+
+        // See https://en.wikipedia.org/wiki/Rotation_matrix#In_three_dimensions
+
+        C3<float> result;
+        float th = th_deg * physConstants::pi / 180.0;
+        float cosTh = cos(th);
+        float sinTh = sin(th);
+
+        float ux = u.c1;
+        float uy = u.c2;
+        float uz = u.c3;
+
+        float R11 = cosTh + std::pow(ux,2)*(1-cosTh);
+        float R12 = ux*uy*(1-cosTh)-uz*sinTh;
+        float R13 = ux*uz*(1-cosTh)+uy*sinTh;
+
+        float R21 = uy*ux*(1-cosTh)+uz*sinTh;
+        float R22 = cosTh+std::pow(uy,2)*(1-cosTh);
+        float R23 = uy*uz*(1-cosTh)-ux*sinTh;
+
+        float R31 = uz*ux*(1-cosTh)-uy*sinTh;
+        float R32 = uz*uy*(1-cosTh)+ux*sinTh;
+        float R33 = cosTh+std::pow(uz,2)*(1-cosTh);
+
+        result.c1 = R11 * v.c1 + R12 * v.c2 + R13 * v.c3;
+        result.c2 = R21 * v.c1 + R22 * v.c2 + R23 * v.c3;
+        result.c3 = R31 * v.c1 + R32 * v.c2 + R33 * v.c3;
+
+        return result;
+}

@@ -218,19 +218,20 @@ std::vector<C3<T> > operator+(const std::vector<C3<T> >& other, const C3<T>& rhs
     return out;
 }
 
-// This is not really a useful magnitude
-// and is only used to reduce a std::complex valued
-// std::vector to a number for checking for Inf & NaNs
-
 PRAGMA
 template <typename T>
 HOST DEVICE
-float mag(const C3<T>& in)
+T mag(const C3<T>& in)
 {
-    float c1 = std::abs(in.c1);
-    float c2 = std::abs(in.c2);
-    float c3 = std::abs(in.c3);
-    return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
+    //float c1 = std::abs(in.c1);
+    //float c2 = std::abs(in.c2);
+    //float c3 = std::abs(in.c3);
+    //return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
+    T c1s = T(std::pow(in.c1, 2));
+    T c2s = T(std::pow(in.c2, 2));
+    T c3s = T(std::pow(in.c3, 2));
+
+    return std::sqrt(c1s + c2s + c3s);
 }
 
 template <typename T>
@@ -326,6 +327,12 @@ std::complex<float> intVecArray(const std::vector<float>& x, const std::vector<s
     float h = x[1] - x[0];
     for (int i = 1; i < f.size(); i++) {
         result += h / 2.0f * (f[i - 1] + f[i]);
+#ifndef __CUDACC__
+#if DEBUG_INTVECARRAY > 0
+        std::cout << "result: " << result << std::endl;
+        std::cout << "f[i]: " << f[i] << std::endl;
+#endif
+#endif
     }
 
     return result;

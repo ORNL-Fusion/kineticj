@@ -677,7 +677,7 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             ofstream e1_dot_grad_File;
             ofstream df0dv_File;
 
-            int write_iX = 75;
+            int write_iX = 15;
             int write_iP = 33;
             if (iX == write_iX && iP == write_iP) {
                 std::cout << "Write Particle Properties:" << std::endl;
@@ -731,41 +731,75 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 #endif
                 int OverallStatus = max(thisParticle_XYZ.status, MoveStatus);
 #if DEBUG_MOVE >= 1
-                if (MoveStatus > 0) {
-                    std::cout << "Position After Move: " << thisParticle_XYZ.c1 << "  "
+                std::cout << "Position After Move: " << thisParticle_XYZ.c1 << "  "
                          << thisParticle_XYZ.c2 << "  " << thisParticle_XYZ.c3 << std::endl;
-                    std::cout << "ERROR: rk4_move* threw an error" << std::endl;
+                if (MoveStatus > 0) {
                     std::cout << "MoveStatus: " << MoveStatus << std::endl;
-                    exit(1);
                 }
 #endif
+                C3<float> thisPos(thisParticle_XYZ.c1, thisParticle_XYZ.c2, thisParticle_XYZ.c3);
+                C3<float> thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
 
-                C3<float> thisPos(thisParticle_XYZ.c1, thisParticle_XYZ.c2,
-                    thisParticle_XYZ.c3);
-                C3<float> thisVel_XYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2,
-                    thisParticle_XYZ.v_c3);
-                C3<float> thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), istat);
 #if GC_ORBITS >= 1
-                thisVel_XYZ = thisB0 / mag(thisB0) * thisParticle_XYZ.vPar; // vPar vector in XYZ
-                std::cout << thisParticle_XYZ.vPar << "  " << thisParticle_XYZ.vPer << std::endl;
-                kj_print(thisVel_XYZ, "thisVel_XYZ");
-                C3<float> gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
-                    thisParticle_XYZ.amu, thisParticle_XYZ.Z);
-#else
-                C3<float> gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX],
-                    thisParticle_XYZ.amu, thisParticle_XYZ.Z);
+                C3<float> par = thisB0 / mag(thisB0);
+                C3<float> per = cross(par,C3<float>(1,0,0));
+                per = per / mag(per);
+                std::vector< C3<float> > gradv_f0_XYZ_GC;
+                int nTh = 12;
+                float dTh = 360.0 / nTh;
+
+                C3<float> initialV_XYZ(ThisParticleList[iP].v_c1, ThisParticleList[iP].v_c2, ThisParticleList[iP].v_c3);
+                C3<float> initial_gradv_f0_XYZ = maxwellian_df0_dv(initialV_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z);
+
+                for(int iTh=0; iTh<nTh; iTh++){
+                        float th = iTh*dTh;
+                        C3<float> thisPer = rot_axis_angle(per,par,th); 
+                        C3<float> this_v = par * thisParticle_XYZ.vPar + thisPer * thisParticle_XYZ.vPer;
+                        gradv_f0_XYZ_GC.push_back( maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
+                        if(thisParticle_XYZ.status>0) gradv_f0_XYZ_GC[iTh] = 0; // To account for the / 0 above.
+
+                        //std::cout<<"iTh: "<<iTh<<std::endl;
+                        //std::cout<<"th: "<<th<<std::endl;
+                        //std::cout<<"thisPer: "<<thisPer<<std::endl;
+                        //std::cout<<"mag(thisPer): "<<mag(thisPer)<<std::endl;
+                        //std::cout<<"mag(thisVel): "<<mag(this_v)<<std::endl;
+                        //std::cout<<"mag(v): "<<std::sqrt(std::pow(thisParticle_XYZ.vPar,2)+std::pow(thisParticle_XYZ.vPer,2))<<std::endl;
+                        //std::cout<<"this_v: "<<this_v<<std::endl;
+                        //std::cout<<"grad_f0: "<<gradv_f0_XYZ_GC[iTh]<<std::endl;
+                        //std::cout<<"grad_f0: "<<maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z)<<std::endl;
+                }
+
+                //exit(1);
+                //per = per / mag(per);
+
+                //thisVel_XYZ = C3<float>(0,thisParticle_XYZ.vPar,thisParticle_XYZ.vPer);//par * thisParticle_XYZ.vPar + per * thisParticle_XYZ.vPer; // vPar vector in XYZ
+                //if(thisParticle_XYZ.status>0) thisVel_XYZ = 0; // To account for the / 0 in the line above.
+#if DEBUG_MOVE >= 2
+                std::cout << "vPar: " << thisParticle_XYZ.vPar << " vPer: " << thisParticle_XYZ.vPer << std::endl;
+                std::cout << "status: " << thisParticle_XYZ.status << std::endl;
+                std::cout << "c1: " << thisOrbit_XYZ[i].c1 << std::endl;
+                std::cout << "thisB0: " << thisB0 << std::endl;
+                std::cout << "mag(thisB0): " << mag(thisB0) << std::endl;
+                std::cout << "thisParticle_XYZ.vPar: " << thisParticle_XYZ.vPar << std::endl;
+                std::cout << "thisVel_XYZ: " << thisVel_XYZ << std::endl;
 #endif
 
-                C3<std::complex<float> > E1_XYZ;
-                //complex<float> _i(0, 1);
+#else
+                C3<float> thisVel_XYZ(thisParticle_XYZ.v_c1, thisParticle_XYZ.v_c2, thisParticle_XYZ.v_c3);
+                C3<float> gradv_f0_XYZ = maxwellian_df0_dv(thisVel_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z);
+                if(thisParticle_XYZ.status>0) gradv_f0_XYZ = 0; // To account for the / 0 above.
+#endif
+
+                complex<float> _i(0, 1);
+
                 // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
-                //E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, e1_CYL, nPhi);
-                E1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
+
+                C3<std::complex<float> > E1_XYZ;
+                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
                 C3<std::complex<float> > B1_XYZ;
-                //B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, r, b1_CYL, nPhi);
-                B1_XYZ = hanningWeight[i] * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
+                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
 #if DEBUG_MOVE >= 2
@@ -793,42 +827,58 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 #endif
 
 #if GC_ORBITS >= 1
-                // For GC orbits (electrons) use only the orbit parallel piece,
-                // since the perp peice will cancel due to E not varying within
-                // a cyclotron period.
-                //
-                // NO - WE DO NOT HAVE thisVel_XYZ for GC!!!!!
-                C3<float> orbitParallelUnitVector_XYZ = thisB0 / mag(thisB0);
-                // kj_print(orbitParallelUnitVector_XYZ,"unit");
-                complex<float> orbitParallel_E = dot(thisE1c_XYZ[i], orbitParallelUnitVector_XYZ);
-                float orbitParallel_gradv_f0 = dot(gradv_f0_XYZ, orbitParallelUnitVector_XYZ);
-                // std::cout<<"E : "<<orbitParallel_E<<" gf0:
-                // "<<orbitParallel_gradv_f0<<std::endl;
-                this_e1_dot_gradvf0[i] = orbitParallel_E * orbitParallel_gradv_f0;
-                // std::cout<<this_e1_dot_gradvf0[i]<<" e1dotgrad"<<std::endl;
-                complex<float> _full = dot(thisE1c_XYZ[i], gradv_f0_XYZ);
-                // std::cout<<"_full : "<<_full<<std::endl;
+
+                C3<std::complex<float> > this_force = thisE1c_XYZ[i];
+                complex<float> average_e1_dot_gradvf0(0);
+                C3<float> average_gradvf0(0);
+
+                for(int iTh=0; iTh<nTh; iTh++){
+                        //average_e1_dot_gradvf0 += dot(this_force, gradv_f0_XYZ_GC[iTh]);
+                        average_e1_dot_gradvf0 = dot(this_force,par) * dot(gradv_f0_XYZ_GC[iTh],par);// / float(2*physConstants::pi);
+                        average_gradvf0 += gradv_f0_XYZ_GC[iTh];
+
+                        //if (iX == write_iX && iP == write_iP) {
+                        //    std::cout << "this grad_f0: " << gradv_f0_XYZ_GC[iTh] << std::endl;
+                        //    std::cout << "average_grad: " << average_gradvf0 << std::endl;
+                        //    std::cout << "this e1_dot_grad: " << dot(this_force, gradv_f0_XYZ_GC[iTh]) << std::endl;
+                        //    std::cout << "average_e1_dot_grad: " << average_e1_dot_gradvf0 << std::endl;
+                        //    std::cout << "e1_dot_average_grad: " << dot(this_force,average_gradvf0) << std::endl;
+                        //    std::cout << "par E * par(average(grad)): " << dot(this_force,par) * dot(average_gradvf0,par) << std::endl;
+                        //    std::cout << "par(E) * par(grad): " << dot(this_force,par) * dot(gradv_f0_XYZ_GC[iTh],par) << std::endl;
+                        //}
+                }
+
+                if (iX == write_iX && iP == write_iP) {
+                    average_e1_dot_gradvf0 += dot(this_force,initial_gradv_f0_XYZ);
+                    if(thisParticle_XYZ.status>0) average_e1_dot_gradvf0 = 0; // To account for the / 0 above.
+                    this_e1_dot_gradvf0[i] = average_e1_dot_gradvf0;// * float(dTh * physConstants::pi/180.0);
+                    complex<float> this_angle = std::acos(dot(this_force,initial_gradv_f0_XYZ) / (mag(this_force)*mag(initial_gradv_f0_XYZ)));
+                    std::cout << "this_angle: " << this_angle*float(180.0/physConstants::pi) << std::endl;
+                    std::cout << "arg to acos: " << dot(this_force,initial_gradv_f0_XYZ) / (mag(this_force)*mag(initial_gradv_f0_XYZ)) << std::endl; 
+                    std::cout << "(E.par)/mag(E): " << dot(this_force,par)/mag(this_force) << std::endl; 
+                    std::cout << "this_force: " << this_force << std::endl; 
+                    std::cout << "par: " << par << std::endl; 
+                    std::cout << "mag(this_force): " << mag(this_force) << std::endl; 
+                    std::cout << "mag(initial_gradv_f0): " << mag(initial_gradv_f0_XYZ) << std::endl; 
+                    std::cout << "max value: " << mag(this_force)*mag(initial_gradv_f0_XYZ) << std::endl;
+                    std::cout << "max value * cos(th): " << mag(this_force)*mag(initial_gradv_f0_XYZ) * std::cos(this_angle) << std::endl;
+                    std::cout << "dot(this_force,initial_gradv_f0): " << dot(this_force,initial_gradv_f0_XYZ) << std::endl;
+                    std::cout << "dot(this_force,initial_gradv_f0) / cost(th): " << dot(this_force,initial_gradv_f0_XYZ) / std::cos(this_angle) << std::endl;
+                    exit(1);
+                }
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ, thisB1c_XYZ[i]);
-                C3<std::complex<float> > this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
+                ////C3<std::complex<float> > this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
+                C3<std::complex<float> > this_force = thisE1c_XYZ[i];
+                C3<float> par = thisB0 / mag(thisB0);
+                // NOTE this MOD!!!!
+                this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ) - dot(this_force,par)*dot(gradv_f0_XYZ,par);
+                if(thisParticle_XYZ.status>0) this_e1_dot_gradvf0[i] = 0; // To account for the / 0 above.
 
-                // C3<std::complex<float> > this_force_CYL;
-                // float this_t =
-                // sqrt(pow(thisParticle_XYZ.c1,2)+pow(thisParticle_XYZ.c2,2));
-                // this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
-                // this_force_CYL.c1 = 0;
-                // this_force_CYL.c3 = 0;
-                // this_force = rot_CYL_to_XYZ ( this_t, this_force_CYL, +1);
-
-                this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
-
-                // C3<float>  this_gradv_f0_CYL;
-                // this_force_CYL = rot_CYL_to_XYZ ( this_t, this_force, -1);
-                // this_gradv_f0_CYL = rot_CYL_to_XYZ ( this_t, gradv_f0_XYZ, -1);
-                // this_e1_dot_gradvf0[i] = dot(this_force_CYL, this_gradv_f0_CYL);
 #endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
+#if GC_ORBITS == 0
                 if (iX == write_iX && iP == write_iP) {
                     df0dv_File << scientific;
                     df0dv_File << thisT[i] << "    " << thisVel_XYZ.c1 << "    "
@@ -839,12 +889,15 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                                << "    " << gradv_f0_XYZ.c1 << "    " << gradv_f0_XYZ.c2
                                << "    " << gradv_f0_XYZ.c3 << std::endl;
                 }
-
+#endif
                 if (iX == write_iX && iP == write_iP) {
                     OrbitFile << scientific;
-                    OrbitFile << thisT[i] << "    " << thisPos.c1 << "    " << thisPos.c2
-                              << "    " << thisPos.c3 << "    " << real(thisE1c_XYZ[i].c1)
-                              << "    " << imag(thisE1c_XYZ[i].c1) << "    "
+                    OrbitFile << thisT[i] << "    " 
+                              << thisPos.c1 << "    " 
+                              << thisPos.c2 << "    " 
+                              << thisPos.c3 << "    " 
+                              << real(thisE1c_XYZ[i].c1) << "    " 
+                              << imag(thisE1c_XYZ[i].c1) << "    "
                               << real(thisE1c_XYZ[i].c2) << "    "
                               << imag(thisE1c_XYZ[i].c2) << "    "
                               << real(thisE1c_XYZ[i].c3) << "    "
@@ -901,6 +954,20 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 j1xc[iX] += h * (v0x_i * f1c[iP]);
                 j1yc[iX] += h * (v0y_i * f1c[iP]);
                 j1zc[iX] += h * (v0z_i * f1c[iP]);
+#if DEBUG_MOVE >= 2
+                std::cout << "v0x_i: " << v0x_i << std::endl;
+                std::cout << "v0y_i: " << v0y_i << std::endl;
+                std::cout << "v0z_i: " << v0z_i << std::endl;
+
+                std::cout << "f1c[iP]: " << f1c[iP] << std::endl;
+                std::cout << "qOverm: " << qOverm << std::endl;
+                std::cout << "dtMin: " << dtMin << std::endl;
+
+                std::cout << "j1xc[iX]: " << j1xc[iX] << std::endl;
+                std::cout << "j1yc[iX]: " << j1yc[iX] << std::endl;
+                std::cout << "j1zc[iX]: " << j1zc[iX] << std::endl;
+                //exit(1);
+#endif
             }
 
 #if F1_WRITE >= 1

@@ -1,4 +1,6 @@
 #include "createParticles.hpp"
+#include "rk4.hpp"
+#include <cmath>
 
 float GetGyroPhase(const C3<float> v_abp)
 {
@@ -17,9 +19,9 @@ HOST DEVICE
 float maxwellian(float vx, float vy, float vz, float vTh)
 {
 
-    float weight_x = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vx, 2) / pow(vTh, 2));
-    float weight_y = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vy, 2) / pow(vTh, 2));
-    float weight_z = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vz, 2) / pow(vTh, 2));
+    float weight_x = 1.0 / (vTh * std::sqrt(physConstants::pi)) * std::exp(-std::pow(vx, 2) / std::pow(vTh, 2));
+    float weight_y = 1.0 / (vTh * std::sqrt(physConstants::pi)) * std::exp(-std::pow(vy, 2) / std::pow(vTh, 2));
+    float weight_z = 1.0 / (vTh * std::sqrt(physConstants::pi)) * std::exp(-std::pow(vz, 2) / std::pow(vTh, 2));
 
     return weight_x * weight_y * weight_z;
 }
@@ -29,9 +31,9 @@ HOST DEVICE
 float get_vTh(const float _amu, const float _Z, const float _T_keV)
 {
 
-    float m = _amu * physConstants::mi;
+    float m = _amu * physConstants::amu;
     float kT_joule = _T_keV * 1e3 * physConstants::e; // This may actually be E_keV so may need a 3/2 somewhere
-    float vTh = sqrt(2.0 * kT_joule / m);
+    float vTh = std::sqrt(2.0 * kT_joule / m);
 
     return vTh;
 }
@@ -148,9 +150,41 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
                 C3<float> thisV_abp = rot_XYZ_to_abp(thisV_XYZ, this_b0_XYZ, 0);
 
                 pList[cnt].vPar = thisV_abp.c3;
-                pList[cnt].vPer = sqrt(pow(thisV_abp.c1, 2) + pow(thisV_abp.c2, 2));
+                //std::cout << "vPar 1: " << pList[cnt].vPar << std::endl;
+                //std::cout << "vPar 2: " << dot(thisV_XYZ,this_b0_XYZ/mag(this_b0_XYZ)) << std::endl;
+                pList[cnt].vPer = std::sqrt(std::pow(thisV_abp.c1, 2) + std::pow(thisV_abp.c2, 2));
+                //std::cout << "vPer 1: " << pList[cnt].vPer << std::endl;
+                //std::cout << "vPer 2: " << std::sqrt(std::pow(mag(thisV_XYZ),2)-std::pow(pList[cnt].vPar,2)) << std::endl;
+ 
                 pList[cnt].gyroPhase = GetGyroPhase(thisV_abp);
-                pList[cnt].u = pList[cnt].m * pow(pList[cnt].vPer, 2) / (2.0 * bMag);
+                pList[cnt].u = pList[cnt].m * std::pow(pList[cnt].vPer, 2) / (2.0 * bMag);
+
+#if GC_ORBITS > 0
+                // Update the starting point to be at the guiding center
+
+                int nTGC = 40;
+                float wc = std::abs(pList[cnt].q * bMag / pList[cnt].m);
+                float dTGC = 2*physConstants::pi/wc/nTGC;
+                CParticle pGC(pList[cnt]);
+                float averageX=0;
+                float averageY=0;
+                float averageZ=0;
+                int MoveStatus = 0;
+                for(int iGC=0; iGC<nTGC; iGC++) {
+                    MoveStatus = rk4_move(pGC, dTGC, r, b0_CYL, nR);
+
+                    averageX += pGC.c1;
+                    averageY += pGC.c2;
+                    averageZ += pGC.c3;
+                }
+                averageX = averageX/nTGC;
+                averageY = averageY/nTGC;
+                averageZ = averageZ/nTGC;
+
+                pList[cnt].c1 = averageX;
+                pList[cnt].c2 = averageY;
+                pList[cnt].c3 = averageZ;
+#endif
 
 #if DEBUG_MAXWELLIAN >= 2
                 cout << "ThisVx: " << thisvx << endl;
