@@ -802,6 +802,12 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
+                //if (iX == write_iX && iP == write_iP) {
+                //    std::cout<<"E1_XYZ: "<<E1_XYZ<<std::endl;
+                //    std::cout<<"status: "<<thisParticle_XYZ.status<<std::endl;
+                //    std::cout<<"hanningWeight: "<<hanningWeight[i]<<std::endl;
+                //}
+
 #if DEBUG_MOVE >= 2
                 std::cout << "thisE1c[i].c1: " << thisE1c_XYZ[i].c1 << std::endl;
                 std::cout << "thisE1c[i].c2: " << thisE1c_XYZ[i].c2 << std::endl;
@@ -860,11 +866,21 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 float offsetReal = (( std::cos(this_angle_perp) - 1.0f ) * mag(perp_force)*mag(perp_gradf)).real();
                 float offsetImag = (( std::sin(this_angle_perp) - 1.0f ) * mag(perp_force)*mag(perp_gradf)).imag();
 
+                // Account for this_force==0 due to hanningWeight==0 at last point.
+                if(i==nSteps-1) {
+                    offsetReal = 0;
+                    offsetImag = 0;
+                }
+
                 average_e1_dot_gradvf0 += std::complex<float>(offsetReal,offsetImag);
                 this_e1_dot_gradvf0[i] = average_e1_dot_gradvf0;
-                if(thisParticle_XYZ.status>0) this_e1_dot_gradvf0 = 0; // To account for the / 0 above.
+                if(thisParticle_XYZ.status>0) this_e1_dot_gradvf0[i] = 0; // To account for the / 0 above.
 
                 //if (iX == write_iX && iP == write_iP) {
+                //    std::cout<<"par: "<<par<<std::endl;
+                //    std::cout<<"thisE1c_XYZ: "<<thisE1c_XYZ[i]<<std::endl;
+                //    std::cout<<"this_force: "<<this_force<<std::endl;
+                //    std::cout<<"this_angle_perp: "<<this_angle_perp<<std::endl;
                 //}
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ, thisB1c_XYZ[i]);
@@ -927,7 +943,12 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             }
 #endif
             complex<float> this_f1c = -qOverm * intVecArray(thisT, this_e1_dot_gradvf0);
-
+            //if (iX == write_iX && iP == write_iP) {
+            //        for(int i=0; i<nSteps;i++){
+            //            std::cout<<"this_e1_dot_gradvf0[i]: "<<this_e1_dot_gradvf0[i]<<std::endl;
+            //        }
+            //        std::cout<<"this_f1c: "<<this_f1c<<std::endl;
+            //}
 #if LOWMEM_ORBIT_WRITE >= 1
             if (iX == write_iX && iP == write_iP) {
 
@@ -946,6 +967,7 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             float v0z_i = ThisParticleList[iP].v_c3;
 
             float h = dv * Ze;
+
 
 #pragma omp critical // "atomic" does not work for complex numbers
             {
@@ -966,6 +988,13 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 std::cout << "j1zc[iX]: " << j1zc[iX] << std::endl;
                 //exit(1);
 #endif
+            }
+
+            if (iX == write_iX && iP == write_iP) {
+                std::cout<<"h: "<<h<<std::endl;
+                std::cout<<"dv: "<<dv<<std::endl;
+                std::cout<<"f1c[iP]: "<<f1c[iP]<<std::endl;
+                std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
             }
 
 #if F1_WRITE >= 1
@@ -1292,6 +1321,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
         float tmpJzIm = imag(j1zc[iX]);
         nc_j1zc_re.putVar(&tmpJzRe);
         nc_j1zc_im.putVar(&tmpJzIm);
+
+        std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
     }
 
     // ProfilerStop();
