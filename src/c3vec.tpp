@@ -162,11 +162,47 @@ C3<T> operator*(const float& other, const C3<T>& rhs)
 }
 
 PRAGMA
-template <typename T>
+inline
 HOST DEVICE
-C3<T> operator*(const std::complex<float>& other, const C3<T>& rhs)
+C3<std::complex<float> > operator*(const std::complex<float>& other, const C3<std::complex<float> >& rhs)
 {
-    C3<T> tmp;
+    C3<std::complex<float> > tmp;
+    tmp.c1 = other * rhs.c1;
+    tmp.c2 = other * rhs.c2;
+    tmp.c3 = other * rhs.c3;
+    return tmp;
+}
+
+PRAGMA
+inline
+HOST DEVICE
+C3<std::complex<float> > operator*(const C3<std::complex<float> >& rhs, const std::complex<float>& other)
+{
+    C3<std::complex<float> > tmp;
+    tmp.c1 = other * rhs.c1;
+    tmp.c2 = other * rhs.c2;
+    tmp.c3 = other * rhs.c3;
+    return tmp;
+}
+
+PRAGMA
+inline
+HOST DEVICE
+C3<std::complex<float> > operator*(const std::complex<float>& other, const C3<float>& rhs)
+{
+    C3<std::complex<float> > tmp;
+    tmp.c1 = other * rhs.c1;
+    tmp.c2 = other * rhs.c2;
+    tmp.c3 = other * rhs.c3;
+    return tmp;
+}
+
+PRAGMA
+inline
+HOST DEVICE
+C3<std::complex<float> > operator*(const C3<float>& rhs, const std::complex<float>& other)
+{
+    C3<std::complex<float> > tmp;
     tmp.c1 = other * rhs.c1;
     tmp.c2 = other * rhs.c2;
     tmp.c3 = other * rhs.c3;

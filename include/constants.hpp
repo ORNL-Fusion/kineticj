@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_HPP_
 #define CONSTANTS_HPP_
 
+#include <complex>
+
 namespace physConstants {
     const double  e = 1.602176e-19;
     const double  me = 9.10938188e-31;
@@ -10,6 +12,7 @@ namespace physConstants {
     const double  amu = 1.66053904e-27;
     const double  mi = 1.00794*amu;
     const double  me_amu = me/amu;
+    const std::complex<float> i (0.0,1.0);
 }
 
 #endif
