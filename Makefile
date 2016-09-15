@@ -1,19 +1,15 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
+USECUDA:=0
+
 NAME := bin/kineticj
 
 LIBS :=  
 INCLUDEFLAGS :=  
 
-CUDADIR := ${HOME}/code/cuda/4.1/cuda
-CUDALIBDIR = ${CUDADIR}/lib64
-CUDA_ARCH := sm_13
-CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
-
-CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
 
 GCCDIR :=  
 PGIDIR := 
@@ -21,12 +17,13 @@ PGIDIR :=
 VENDOR := GCC_
 CC := gcc
 CPP := g++
+NVCC := nvcc -g -G
+#NVCC := nvcc -O3 
+
 
 #VENDOR := PGI_
 #CC := pgcc
 #CPP := pgcpp
-
-NVCC := $(CUDADIR)/bin/nvcc
 
 ThisMachine := $(shell uname -n)
 
@@ -44,7 +41,9 @@ DEBUGFLAGS := $($(VENDOR)DEBUGFLAGS)
 OPTFLAGS := $($(VENDOR)OPTFLAGS)
 
 CFLAGS := 
+
 CXXFLAGS := ${OPENMPFLAGS} ${DEBUGFLAGS} ${OPTFLAGS} 
+
 CPPFLAGS :=
 CPPFLAGS += -DDEBUGLEVEL=0
 CPPFLAGS += -DDEBUG_LINES=0
@@ -59,13 +58,19 @@ CPPFLAGS += -DDEBUG_EVAL_VGC=0
 CPPFLAGS += -DDEBUG_EVAL_APAR=0
 CPPFLAGS += -DCLOCK=1
 CPPFLAGS += -DPRINT_INFO=1
-CPPFLAGS += -DGC_ORBITS=0
+CPPFLAGS += -DGC_ORBITS=1
 CPPFLAGS += -DDEBUG_MAXWELLIAN=0
 CPPFLAGS += -DDEBUG_FORCE_TERM=0
 CPPFLAGS += -DDEBUG_MOVE=0
 CPPFLAGS += -DLOWMEM_ORBIT_WRITE=1
 CPPFLAGS += -DDEBUG_ROTATION=0
-CPPFLAGS += -DF1_WRITE=1
+CPPFLAGS += -DF1_WRITE=0
+CPPFLAGS += -std=c++11
+CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=0
+CPPFLAGS += -DDO_CPU_APPROACH=1
+CPPFLAGS += -DDEBUG_INTVECARRAY=0
+
+NVCCFLAGS := -dc --expt-relaxed-constexpr
 
 LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
 
@@ -90,10 +95,15 @@ CXXFLAGS += $(INCLUDEFLAGS)
 NVCCFLAGS += $(INCLUDEFLAGS) 
 
 # determine the object files
-SRCTYPES := c cpp 
+SRCTYPES := c cpp cu 
+LINK := $(CPP) $(CXXFLAGS) $(LFLAGS)
+
 ifeq ($(USECUDA),1)
-SRCTYPES += cu
+LINK := $(NVCC) $(LFLAGS) -lcuda
+else
+NVCCFLAGS += --x c++
 endif
+
 OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildcard $(patsubst %, %/*.$(srctype), $(MODULES)))))
 
 # link the program

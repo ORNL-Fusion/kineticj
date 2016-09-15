@@ -2,7 +2,7 @@ PGI_OPENMPFLAGS := -mp
 PGI_DEBUGFLAGS := 
 PGI_OPTFLAGS := -O3
 
-GCC_OPENMPFLAGS := -fopenmp
+GCC_OPENMPFLAGS := #-fopenmp
 GCC_DEBUGFLAGS := -Wfatal-errors 
-GCC_OPTFLAGS := -O3
+GCC_OPTFLAGS := -O3 #-g -pg #-O3
 
