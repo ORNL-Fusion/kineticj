@@ -1,4 +1,6 @@
+PRAGMA
 template <typename T>
+HOST DEVICE
 T rot_CYL_to_XYZ ( const float t, const T vec, const int direction ) {
 
     // t here is the the cylindrical angle position in rtz (radians)        

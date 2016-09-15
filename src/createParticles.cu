@@ -1,6 +1,6 @@
 #include "createParticles.hpp"
 
-float GetGyroPhase(const C3Vec v_abp)
+float GetGyroPhase(const C3<float> v_abp)
 {
 
     // alp is mostly in the x / r direction
@@ -12,31 +12,36 @@ float GetGyroPhase(const C3Vec v_abp)
     return atan2(alp, bet);
 }
 
+PRAGMA
+HOST DEVICE
 float maxwellian(float vx, float vy, float vz, float vTh)
 {
 
-    float weight_x = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vx, 2) / pow(vTh, 2));
-    float weight_y = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vy, 2) / pow(vTh, 2));
-    float weight_z = 1.0 / (vTh * sqrt(_pi)) * exp(-pow(vz, 2) / pow(vTh, 2));
+    float weight_x = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vx, 2) / pow(vTh, 2));
+    float weight_y = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vy, 2) / pow(vTh, 2));
+    float weight_z = 1.0 / (vTh * sqrt(physConstants::pi)) * exp(-pow(vz, 2) / pow(vTh, 2));
 
     return weight_x * weight_y * weight_z;
 }
 
+PRAGMA
+HOST DEVICE
 float get_vTh(const float _amu, const float _Z, const float _T_keV)
 {
 
-    float m = _amu * _mi;
-    float q = _Z * _e;
-    float kT_joule = _T_keV * 1e3 * _e; // This may actually be E_keV so may need a 3/2 somewhere
+    float m = _amu * physConstants::mi;
+    float kT_joule = _T_keV * 1e3 * physConstants::e; // This may actually be E_keV so may need a 3/2 somewhere
     float vTh = sqrt(2.0 * kT_joule / m);
 
     return vTh;
 }
 
-C3Vec maxwellian_df0_dv(const C3Vec _v, const float _T_keV, const float _n_m3, const float _amu, const float _Z)
+PRAGMA
+HOST DEVICE
+C3<float> maxwellian_df0_dv(const C3<float> _v, const float _T_keV, const float _n_m3, const float _amu, const float _Z)
 {
 
-    C3Vec df0_dv;
+    C3<float> df0_dv;
 
     float vTh = get_vTh(_amu, _Z, _T_keV);
 
@@ -75,7 +80,7 @@ C3Vec maxwellian_df0_dv(const C3Vec _v, const float _T_keV, const float _n_m3, c
 }
 
 vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, float n_m3,
-    int nPx, int nPy, int nPz, int nThermal, float& dv, vector<float>& r, vector<C3Vec>& b0_CYL)
+    int nPx, int nPy, int nPz, int nThermal, float& dv, float *r, C3<float> *b0_CYL, int nR)
 {
 
     vector<CParticle> pList;
@@ -83,7 +88,6 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
     int nP = nPx * nPy * nPz;
     pList.resize(nP);
 
-    float m = amu * _mi;
     float vTh = get_vTh(amu, Z, T_keV);
 
 #if DEBUG_MAXWELLIAN >= 1
@@ -130,14 +134,14 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
 
                 // Get vPar, vPer and mu for guiding center integration
 
-                C3Vec thisV_XYZ(thisvx, thisvy, thisvz);
+                C3<float> thisV_XYZ(thisvx, thisvy, thisvz);
                 int iStat = 0;
-                C3Vec this_b0_CYL = kj_interp1D(x, r, b0_CYL, iStat);
-                C3Vec this_b0_XYZ = rot_CYL_to_XYZ(0, this_b0_CYL, 1);
+                C3<float> this_b0_CYL = kj_interp1D(x, r, b0_CYL, nR, iStat);
+                C3<float> this_b0_XYZ = rot_CYL_to_XYZ(0, this_b0_CYL, 1);
                 float bMag = mag(this_b0_XYZ);
                 float vMag = mag(thisV_XYZ);
 
-                C3Vec thisV_abp = rot_XYZ_to_abp(thisV_XYZ, this_b0_XYZ, 0);
+                C3<float> thisV_abp = rot_XYZ_to_abp(thisV_XYZ, this_b0_XYZ, 0);
 
                 pList[cnt].vPar = thisV_abp.c3;
                 pList[cnt].vPer = sqrt(pow(thisV_abp.c1, 2) + pow(thisV_abp.c2, 2));
