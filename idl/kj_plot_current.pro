@@ -1,6 +1,8 @@
-pro kj_plot_current, noIterate=_noIterate, OverPlotAR2 = _OverPlotAR2
+pro kj_plot_current, noIterate=_noIterate, OverPlotAR2 = _OverPlotAR2, OverPlotRSFWC = _OverPlotRSFWC, OverPlotOLD = _OverPlotOLD
 
     if keyword_set(_OverPlotAR2) then OverPlotAR2 = _OverPlotAR2 else OverPlotAR2 = 0
+    if keyword_set(_OverPlotRSFWC) then OverPlotRSFWC = _OverPlotRSFWC else OverPlotRSFWC = 0
+    if keyword_set(_OverPlotOLD) then OverPlotOLD = _OverPlotOLD else OverPlotOLD = 0
     if keyword_set(_noIterate) then noIterate = _noIterate else noIterate = 0
 
 	@constants
@@ -34,57 +36,84 @@ pro kj_plot_current, noIterate=_noIterate, OverPlotAR2 = _OverPlotAR2
 
 	spline_sigma = 0.01
 
-	fileList = file_search ( 'output/jP*' )
+	cdfId = ncdf_open('jP2.nc')
 
-	cdfId = ncdf_open(fileList[0])
-	ncdf_varget, cdfId, 't', t
-	nCdf_close, cdfId
-	
-	nT = n_elements(t)
-	nF = n_elements(fileList)
+		ncdf_varget, cdfId, 'x', x2 
 
-	j1x = fltArr ( nT, nF )
+		ncdf_varget, cdfId, 'j1xc_re', jPr_re2
+		ncdf_varget, cdfId, 'j1xc_im', jPr_im2
+		ncdf_varget, cdfId, 'j1yc_re', jPt_re2
+		ncdf_varget, cdfId, 'j1yc_im', jPt_im2
+		ncdf_varget, cdfId, 'j1zc_re', jPz_re2
+		ncdf_varget, cdfId, 'j1zc_im', jPz_im2
 
-	j1xc = complexArr ( nF )
-	j1yc = complexArr ( nF )
-	j1zc = complexArr ( nF )
+	ncdf_close, cdfId
 
-	j1x = complexArr ( nF )
-	j1y = complexArr ( nF )
-	j1z = complexArr ( nF )
+    jPr2=complex(jPr_re2,jPr_im2)
+    jPt2=complex(jPt_re2,jPt_im2)
+    jPz2=complex(jPz_re2,jPz_im2)
 
-	xF = fltArr ( nF )
+    xF = x2
 
-	for f=0,nF-1 do begin
+    j1x = jPr2
+    j1y = jPt2
+    j1z = jPz2
 
-		cdfId = ncdf_open(fileList[f])
+    if OverPlotOLD then begin
 
-			ncdf_varget, cdfId, 'x', x
-			ncdf_varget, cdfId, 't', t
+	    fileList = file_search ( 'output/jP*' )
 
-			ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
-			ncdf_varget, cdfId, 'j1xc_im', j1xc_im
+	    cdfId = ncdf_open(fileList[0])
+	    ncdf_varget, cdfId, 't', t
+	    nCdf_close, cdfId
+	    
+	    nT = n_elements(t)
+	    nF = n_elements(fileList)
 
-			ncdf_varget, cdfId, 'j1yc_re', j1yc_re 
-			ncdf_varget, cdfId, 'j1yc_im', j1yc_im
+	    j1x = fltArr ( nT, nF )
 
-			ncdf_varget, cdfId, 'j1zc_re', j1zc_re 
-			ncdf_varget, cdfId, 'j1zc_im', j1zc_im
+	    j1xc = complexArr ( nF )
+	    j1yc = complexArr ( nF )
+	    j1zc = complexArr ( nF )
+
+	    j1x = complexArr ( nF )
+	    j1y = complexArr ( nF )
+	    j1z = complexArr ( nF )
+
+	    xF = fltArr ( nF )
+
+	    for f=0,nF-1 do begin
+
+	    	cdfId = ncdf_open(fileList[f])
+
+	    		ncdf_varget, cdfId, 'x', x
+	    		ncdf_varget, cdfId, 't', t
+
+	    		ncdf_varget, cdfId, 'j1xc_re', j1xc_re 
+	    		ncdf_varget, cdfId, 'j1xc_im', j1xc_im
+
+	    		ncdf_varget, cdfId, 'j1yc_re', j1yc_re 
+	    		ncdf_varget, cdfId, 'j1yc_im', j1yc_im
+
+	    		ncdf_varget, cdfId, 'j1zc_re', j1zc_re 
+	    		ncdf_varget, cdfId, 'j1zc_im', j1zc_im
 
 
-		nCdf_close,	cdfId 
+	    	nCdf_close,	cdfId 
 
-		xF[f] = x
+	    	xF[f] = x
 
-		j1xc[f] = complex(j1xc_re,j1xc_im)
-		j1yc[f] = complex(j1yc_re,j1yc_im)
-		j1zc[f] = complex(j1zc_re,j1zc_im)
+	    	j1xc[f] = complex(j1xc_re,j1xc_im)
+	    	j1yc[f] = complex(j1yc_re,j1yc_im)
+	    	j1zc[f] = complex(j1zc_re,j1zc_im)
 
-        j1x[f] = j1xc[f]
-        j1y[f] = j1yc[f]
-        j1z[f] = j1zc[f]
-	
-	endfor
+            j1x[f] = j1xc[f]
+            j1y[f] = j1yc[f]
+            j1z[f] = j1zc[f]
+	    
+	    endfor
+
+    endif
 
 if not keyword_set(noIterate) then begin
 
@@ -135,18 +164,27 @@ if not keyword_set(noIterate) then begin
 endif
 
     if(OverplotAR2)then begin
-        ar2Run = '/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference'
         ar2Run = 'aorsa'
         ar2 = ar2_read_solution(ar2Run,1) 
         ar2SpecNo = fix(cfg['species_number'])
     endif
 
+    if(OverplotRSFWC)then begin
+        rsRun = 'rsfwc'
+        rs = rsfwc_read_solution(rsRun) 
+        rsSpecNo = fix(cfg['species_number'])
+    endif
+ 
     jpRange = max(abs([j1x]))
     p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1_r',thick=2, ytitle='j1 [Amp/m^2]',margin=[0.2,0.1,0.05,0.2])
     p=plot(xf,imaginary(j1x),/over,color='r',thick=2)
     if(OverPlotAR2)then begin
         p=plot(ar2.r,ar2.jp_r[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
         p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+    endif
+    if(OverPlotRSFWC)then begin
+        p=plot(rs.r,rs.jp_r_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_r_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
 	fudgeFac = 1
@@ -157,6 +195,11 @@ endif
         p=plot(ar2.r,ar2.jp_t[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
         p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
+    if(OverPlotRSFWC)then begin
+        p=plot(rs.r,rs.jp_t_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_t_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+    endif
+
 
     jpRange = max(abs([j1z]))
     p=plot(xf,j1z,layout=[1,3,3],/current,yRange=[-jpRange,jpRange],title='j1_z',thick=3, ytitle='j1 [Amp/m^2]', xtitle='r [m]',margin=[0.2,0.1,0.05,0.2])
@@ -165,26 +208,13 @@ endif
         p=plot(ar2.r,ar2.jp_z[*,*,ar2SpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
         p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
+    if(OverPlotRSFWC)then begin
+        p=plot(rs.r,rs.jp_z_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_z_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+    endif
 
 	; Interpolate the E field to the Jp locations to calculated sig33
 	E_at_Jp = complex(interpol(er_re,r,xF ,/spline),interpol(er_im,r,xF ,/spline)) 
-
-	cdfId = ncdf_open('jP2.nc')
-
-		ncdf_varget, cdfId, 'x', x2 
-
-		ncdf_varget, cdfId, 'j1xc_re', jPr_re2
-		ncdf_varget, cdfId, 'j1xc_im', jPr_im2
-		ncdf_varget, cdfId, 'j1yc_re', jPt_re2
-		ncdf_varget, cdfId, 'j1yc_im', jPt_im2
-		ncdf_varget, cdfId, 'j1zc_re', jPz_re2
-		ncdf_varget, cdfId, 'j1zc_im', jPz_im2
-
-	ncdf_close, cdfId
-
-    jPr2=complex(jPr_re2,jPr_im2)
-    jPt2=complex(jPt_re2,jPt_im2)
-    jPz2=complex(jPz_re2,jPz_im2)
 
     p=plot(x2,jPr2,layout=[1,3,1])
     p=plot(x2,imaginary(jPr2),/over,color='r')

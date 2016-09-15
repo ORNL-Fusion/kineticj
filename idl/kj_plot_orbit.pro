@@ -1,159 +1,171 @@
-pro kj_plot_orbit
+pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
+
+    if keyword_set(_overPlotLorentz) then overPlotLorentz=_overPlotLorentz else overPlotLorentz=0
+    lorentzDir = '~/scratch/kineticj/colestock-kashuba-lorentz/'
 
 	runFile = './'
 	cfg = kj_read_cfg (runFile)	
 
-	; Read particle list
+    fileName = 'output/orbit_e1_dot_grad_df0_dv.txt'
+    nHeader = 1
+    N = file_lines(fileName)-nHeader
+    e1_dot_data = replicate({t:0.0,re:0.0,im:0.0},N)
+    openr, lun, fileName, /get_Lun
+        skip_lun, lun, nHeader, /lines
+        readf, lun, e1_dot_data
+    close, lun
 
-	particleList = cfg.particleList_fName
-	cdfId = ncdf_open(particleList)
-		ncdf_varget, cdfId, 'vx', p_vx 
-		ncdf_varget, cdfId, 'weight', p_weight
-		ncdf_varget, cdfId, 'vTh', p_vTh
-	nCdf_close, cdfId
-	df0_dv = deriv(p_vx,p_weight)
+    if overPlotLorentz then begin
 
-	;vMax = 5e7
-	;vMin = -vMax
-	;nBins = 1000000L 
-	;binSize = (vMax-vMin)/nBins
-	;nBins = (vMax-vMin)/binSize
-	;histX = fIndGen(nBins)*binSize+vMin+binSize/2.0
-	;histY = fltArr(nBins)
-	;for n=0,n_elements(p_vx)-1 do begin
-	;	ii = (p_vx[n]-vMin)/(vMax-vMin)*nBins
-	;	histY[ii] += p_weight[n]
-	;endfor
+        fileName = lorentzDir + 'output/orbit_e1_dot_grad_df0_dv.txt'
+        nHeader = 1
+        N = file_lines(fileName)-nHeader
+        e1_dot_data_lorentz = replicate({t:0.0,re:0.0,im:0.0},N)
+        openr, lun, fileName, /get_Lun
+            skip_lun, lun, nHeader, /lines
+            readf, lun, e1_dot_data_lorentz
+        close, lun
 
-	;iiPlot = where(histY gt 0)
+        t = e1_dot_data_lorentz.t
+        wc = 5.19163e11
+        f = wc/(2*!pi)
+        reA = 8.08e-14
+        reP = 0;31.0*!dtor 
+        imA = 5.0e-14
+        imP = 90*!dtor;128.5*!dtor 
+        re = reA*cos(2*!pi*f*t+reP)
+        im = -imA*sin(2*!pi*f*t+imP)
+        h = hanning(n_elements(re))
+        h[0:N/2]=1
+        re = re*h
+        im = im*h
+        e1_dot_data_lorentz.re = re
+        e1_dot_data_lorentz.im = im 
 
-	;histX = histX[iiPlot]
-	;histY = histY[iiPlot]
-	;plotHist=plot(histX[iiPlot],histY[iiPlot],thick=3,transparency=50)
+    endif
 
-	fileList = file_search ( 'output/'+cfg.runIdent+'/jP*' )
+    margin = [0.2,0.2,0.2,0.2]
 
-	spatialPoint = 1 
+    sW = 100
+    order = 100
+    dt = e1_dot_data[1].t-e1_dot_data[0].t
+    if overPlotLorentz then begin
+        dtL = e1_dot_data_lorentz[1].t-e1_dot_data_lorentz[0].t
+    endif
 
-	cdfId = ncdf_open(fileList[spatialPoint])
-		ncdf_varget, cdfId, 'freq', freq 
-		ncdf_varget, cdfId, 't', tJ 
-		ncdf_varget, cdfId, 'x', x
-		ncdf_varget, cdfId, 'j1x', j1x_0 
-	nCdf_close, cdfId
+    print, 'Int [re]: ', total(e1_dot_data.re)
+    print, 'Int [im]: ', total(e1_dot_data.im)
 
-	wrf = freq * 2 * !pi
+    p=plot(e1_dot_data.t,e1_dot_data.re,layout=[1,2,1],margin=margin)
+    if overPlotLorentz then begin
+        print, 'Int Lorentz [re]: ', total(e1_dot_data_lorentz.re)
+        print, 'Int Lorentz [im]: ', total(e1_dot_data_lorentz.im)
+        p=plot(e1_dot_data_lorentz.t,e1_dot_data_lorentz.re,/over)
+    endif
+    p=plot(e1_dot_data.t,e1_dot_data.im,/over,color='r')
+    if overPlotLorentz then begin
+        p=plot(e1_dot_data_lorentz.t,e1_dot_data_lorentz.im,/over,color='r')
+    endif
 
-	fileList = file_search ( 'output/orbits*' )
+    p=plot(e1_dot_data.t,total((e1_dot_data.re),/cum)*dt,thick=2,layout=[1,2,2],/current,margin=margin)
+    if overPlotLorentz then begin
+        p=plot(e1_dot_data_lorentz.t,total((e1_dot_data_lorentz.re),/cum)*dtL,/over)
+    endif
+    p=plot(e1_dot_data.t,total((e1_dot_data.im),/cum)*dt,/over,thick=2,color='r')
+    if overPlotLorentz then begin
+        p=plot(e1_dot_data_lorentz.t,total((e1_dot_data_lorentz.im),/cum)*dtL,/over,color='r')
+    endif
 
-	cdfId = ncdf_open(fileList[0])
-		ncdf_varget, cdfId, 't', t
-	nCdf_close, cdfId
+    fileName = 'output/orbit.txt'
+    nHeader = 2
+    N = file_lines(fileName)-nHeader
+    orbit = replicate({t:0.0, x:0.0,y:0.0,z:0.0,$
+            exr:0.0,exc:0.0,eyr:0.0,eyc:0.0,ezr:0.0,ezc:0.0,$
+            bxr:0.0,bxc:0.0,byr:0.0,byc:0.0,bzr:0.0,bzc:0.0, $
+            vCrossBxr:0.0,vCrossBxi:0.0,vCrossByr:0.0,vCrossByi:0.0,vCrossBzr:0.0,vCrossBzi:0.0,$
+            status:0},N)
+    openr, lun, fileName, /get_Lun
+        skip_lun, lun, nHeader, /lines
+        readf, lun, orbit 
+    close, lun
 
-	nT = n_elements(t)
-	nF = n_elements(fileList)
+    if overPlotLorentz then begin
+        fileName = lorentzDir+'output/orbit.txt'
+        nHeader = 2
+        N = file_lines(fileName)-nHeader
+        orbit_lorentz = replicate({t:0.0, x:0.0,y:0.0,z:0.0,$
+                exr:0.0,exc:0.0,eyr:0.0,eyc:0.0,ezr:0.0,ezc:0.0,$
+                bxr:0.0,bxc:0.0,byr:0.0,byc:0.0,bzr:0.0,bzc:0.0, $
+                vCrossBxr:0.0,vCrossBxi:0.0,vCrossByr:0.0,vCrossByi:0.0,vCrossBzr:0.0,vCrossBzi:0.0,$
+                status:0},N)
+        openr, lun, fileName, /get_Lun
+            skip_lun, lun, nHeader, /lines
+            readf, lun, orbit_lorentz 
+        close, lun
+    endif
 
-	maxE = 0
+    p=plot(orbit[*].t, orbit[*].x,layout=[1,3,1],margin=margin )
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].x,/over )
 
-	for f=spatialPoint,spatialPoint do begin
+    p=plot(orbit[*].t, orbit[*].y,layout=[1,3,2],/current,margin=margin)
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].y,/over )
 
-		cdfId = ncdf_open(fileList[f])
-			print, fileList[f]
+    p=plot(orbit[*].t, orbit[*].z,layout=[1,3,3],/current,margin=margin)
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].z,/over )
 
-			ncdf_varget, cdfId, 'x', x_0
-			ncdf_varget, cdfId, 'y', y_0
-			ncdf_varget, cdfId, 'z', z_0
+   if overPlotLorentz then begin
 
-			ncdf_varget, cdfId, 'vx', vx_0
-			ncdf_varget, cdfId, 'vy', vy_0
-			ncdf_varget, cdfId, 'vz', vz_0
-
-			ncdf_varget, cdfId, 't', t_0
-
-			ncdf_varget, cdfId, 'v1x', v1x_0 
-			ncdf_varget, cdfId, 'v1y', v1y_0 
-			ncdf_varget, cdfId, 'v1z', v1z_0 
-stop
-			ncdf_varget, cdfId, 'v1x_re', v1x_0_re 
-			ncdf_varget, cdfId, 'v1y_re', v1y_0_re 
-			ncdf_varget, cdfId, 'v1z_re', v1z_0_re 
-
-			ncdf_varget, cdfId, 'v1x_im', v1x_0_im 
-			ncdf_varget, cdfId, 'v1y_im', v1y_0_im 
-			ncdf_varget, cdfId, 'v1z_im', v1z_0_im 
-
-			ncdf_varget, cdfId, 'e1_x', e1x_0 
-			ncdf_varget, cdfId, 'e1_y', e1y_0 
-			ncdf_varget, cdfId, 'e1_z', e1z_0 
-
-			ncdf_varget, cdfId, 'e1_x_re', e1x_0_re 
-			ncdf_varget, cdfId, 'e1_y_re', e1y_0_re 
-			ncdf_varget, cdfId, 'e1_z_re', e1z_0_re 
-
-			ncdf_varget, cdfId, 'e1_x_im', e1x_0_im 
-			ncdf_varget, cdfId, 'e1_y_im', e1y_0_im 
-			ncdf_varget, cdfId, 'e1_z_im', e1z_0_im 
-
-			e1x_0 = complex(e1x_0_re,e1x_0_im)
-			e1y_0 = complex(e1y_0_re,e1y_0_im)
-			e1z_0 = complex(e1z_0_re,e1z_0_im)
-
-			v1x_0 = complex(v1x_0_re,v1x_0_im)
-			v1y_0 = complex(v1y_0_re,v1y_0_im)
-			v1z_0 = complex(v1z_0_re,v1z_0_im)
-
-
-		nCdf_close,	cdfId 
-
-		if(max(e1x_0) gt maxE) then maxE = max(e1x_0)
-
-	endfor
-
-	nSteps = n_elements(v1x_0[*,0,0])
-	nJp = n_elements(v1x_0[0,*,0])
-	nP = n_elements(v1x_0[0,0,*])
-
-	pNum = 100 
-
-	phaseNum = 0
-	p=plot(t_0*freq,v1x_0[*,phaseNum,pNum],title='v1x_0')
-	p=plot(t_0*freq,e1x_0[*,pNum],title='e1x_0')
-	kPar= 12;22.11
-	vPhs = wrf/kPar
-
-    p = plot3d(x_0[*,pNum],y_0[*,pNum],z_0[*,pNum])
-
-    SubSampleFac = 5
-    nT = n_elements(t_0)/SubSampleFac
-    nV = n_elements(vx_0[0,*])/SubSampleFac
-    ThisX = congrid(t_0*freq,nT)
-    ThisY = congrid(reform(vx_0[0,*]/vPhs),nV)
-
-    ThisSurf = congrid(e1x_0,nT,nV)
-	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
-
-    ThisSurf = congrid(reform(v1x_0[*,0,*],nSteps,nP),nT,nV)
-	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective)
-
-    ThisSurf = congrid(-reform(v1x_0[*,0,*]*transpose(rebin(df0_dv,nP,nSteps)),nSteps,nP),nT,nV)
-	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='Re[f1]')
-	
-    ThisSurf = imaginary(congrid(-reform(v1x_0[*,0,*]*transpose(rebin(df0_dv,nP,nSteps)),nSteps,nP),nT,nV))
-	s=surface(ThisSurf, ThisX, ThisY,depth_cue = [0,2], /perspective, title='Im[f1]')
+        meanx = mean(orbit_lorentz.x)
+        range = 10e-3
+        p3 = plot3d(orbit[*].x-meanx,orbit[*].y,orbit[*].z,xrange=[-1,+1]*range,yrange=[min(orbit.y),max(orbit.y)],zrange=[-1,1]*range,$
+            xtitle='X',ytitle='Y',ztitle='Z')
+        p3=plot3d(orbit_lorentz[*].x-meanx,orbit_lorentz[*].y,orbit_lorentz[*].z,/over )
+    endif
 
 
-	p=plot( vx_0[0,*]/vPhs, v1x_0[0,0,*],symbol="s")
+    if overPlotLorentz then begin
 
-	print, 'This particle v/vPhs: ', vx_0[0,pNum]/vPhs
+        print, 'freq: ', f
+        period = 1/f
+        print, 'period: ', period
 
-	;p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,0+1],axis_style=0)
-	;p=plot(p_vx+v1x_0[nSteps-2,0*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
-	;for pp=1,8 do begin
-	;	p=plot(p_vx,p_weight,thick=3,transparency=50,layout=[9,2,pp+1],/current,axis_style=0)
-	;	p=plot(p_vx+v1x_0[nSteps-2,pp*nJp/9,*],p_weight,/over,color='blue',thick=2,transparency=30)
-	;endfor
+        angle1 = reP 
+        angle2 = imP 
+        angle1frac = angle1/(2*!pi)
+        angle2frac = angle2/(2*!pi)
 
-	p=plot(tJ,j1x_0,thick=3,color='red',transparency=20,$
-			position=[0.02,0.05,0.98,0.45],font_size=8)
+        nPts1 = (angle1frac*period)/dtL
+        nPts2 = (angle2frac*period)/dtL
+
+        print, 'angle1: ', angle1*!radeg
+        print, 'angle2: ', angle2*!radeg
+
+        print, 'nPts1: ', nPts1
+        print, 'angle1frac: ', angle1frac
+        print, 'angle2frac: ', angle2frac
+        print, 'nPts2: ', nPts2
+
+        print, 'Offest[re] analytic: ', ( sin(90*!dtor)-sin(angle1) ) * reA * dtL * 2 * !pi
+
+        print, 'Offest[im] analytic: ', ( cos(angle2) - cos(90*!dtor) ) * imA * dtL * 2 * !pi
+
+        re = e1_dot_data_lorentz.re
+        im = e1_dot_data_lorentz.im
+
+        print, 'Int all[re]: ', int_tabulated(t,re,/double)
+        print, 'Int all[im]: ', int_tabulated(t,im,/double)
+
+        if nPts1 gt 1 and nPts2 gt 1 then begin
+            print, 'Offset[re]: ', int_tabulated(t[0:nPts1],re[0:nPts1])
+            print, 'Offset[im]: ', int_tabulated(t[0:nPts2],im[0:nPts2])
+
+            print, 'Int of the rest[re]: ', int_tabulated(t[nPts1+1:-1],re[nPts1+1:-1])
+            print, 'Int of the rest[im]: ', int_tabulated(t[nPts2+1:-1],im[nPts2+1:-1])
+
+            p=plot(t[0:nPts1],re[0:nPts1],symbol='D')
+            p=plot(t[0:nPts2],im[0:nPts2],/over,color='r',symbol='D')
+        endif
+
+    endif 
 stop
 end
