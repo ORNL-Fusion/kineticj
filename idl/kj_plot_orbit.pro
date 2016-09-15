@@ -30,17 +30,23 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         wc = 5.19163e11
         f = wc/(2*!pi)
         reA = 8.08e-14
-        reP = 0;31.0*!dtor 
+        reP = 31.0*!dtor ; 0 gives int = 0 
         imA = 5.0e-14
-        imP = 90*!dtor;128.5*!dtor 
+        imP = 128.5*!dtor ; 90 gives int = 0 
         re = reA*cos(2*!pi*f*t+reP)
         im = -imA*sin(2*!pi*f*t+imP)
         h = hanning(n_elements(re))
         h[0:N/2]=1
         re = re*h
         im = im*h
-        e1_dot_data_lorentz.re = re
-        e1_dot_data_lorentz.im = im 
+
+        p=plot(t,re,thick=2)
+        p=plot(t,e1_dot_data_lorentz.re,/over)
+        p=plot(t,im,color='r',thick=2,/over)
+        p=plot(t,e1_dot_data_lorentz.im,color='r',/over)
+
+        ;e1_dot_data_lorentz.re = re
+        ;e1_dot_data_lorentz.im = im 
 
     endif
 
@@ -145,9 +151,18 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         print, 'angle2frac: ', angle2frac
         print, 'nPts2: ', nPts2
 
-        print, 'Offest[re] analytic: ', ( sin(90*!dtor)-sin(angle1) ) * reA * dtL * 2 * !pi
+        if angle1*!radeg ge 0 then angle1end = 180 
+        if angle1*!radeg ge 180 then angle1end = 180+180 
 
-        print, 'Offest[im] analytic: ', ( cos(angle2) - cos(90*!dtor) ) * imA * dtL * 2 * !pi
+        if angle2*!radeg ge 0 then angle2end = 90
+        if angle2*!radeg ge 90 then angle2end = 90+180
+        if angle2*!radeg ge 270 then angle2end = 90+180+180
+
+        print, 'Angle1End: ', angle1end
+        print, 'Angle2End: ', angle2end
+
+        print, 'Offest[re] analytic: ', ( sin(angle1end*!dtor) - sin(angle1) ) * reA * dtL * 2 * !pi
+        print, 'Offest[im] analytic: ', -( cos(angle2) - cos(angle2end*!dtor) ) * imA * dtL * 2 * !pi
 
         re = e1_dot_data_lorentz.re
         im = e1_dot_data_lorentz.im
