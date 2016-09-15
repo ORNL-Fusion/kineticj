@@ -677,8 +677,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             ofstream e1_dot_grad_File;
             ofstream df0dv_File;
 
-            int write_iX = 15;
-            int write_iP = 33;
+            int write_iX = 15;//31;//15;
+            int write_iP = 33;//52;//33;
             if (iX == write_iX && iP == write_iP) {
                 std::cout << "Write Particle Properties:" << std::endl;
                 std::cout << " vTh: " << thisParticle_XYZ.vTh << std::endl;
@@ -744,36 +744,47 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 C3<float> par = thisB0 / mag(thisB0);
                 C3<float> per = cross(par,C3<float>(1,0,0));
                 per = per / mag(per);
-                std::vector< C3<float> > gradv_f0_XYZ_GC;
-                int nTh = 12;
-                float dTh = 360.0 / nTh;
 
-                C3<float> initialV_XYZ(ThisParticleList[iP].v_c1, ThisParticleList[iP].v_c2, ThisParticleList[iP].v_c3);
-                C3<float> initial_gradv_f0_XYZ = maxwellian_df0_dv(initialV_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z);
+                // We can just pick any gyrophase and use that to compute gradv_f0, 
+                // since gradvf0.par is independent of gyrophase (proven in the commented
+                // section below)
 
+                C3<float> this_v = par * thisParticle_XYZ.vPar + per * thisParticle_XYZ.vPer;
+                C3<float> this_gradv_f0_GC = ( maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
+                float this_gradv_f0_GC_dot_par = dot(this_gradv_f0_GC,par);
+ 
+                //// Prove that gradv_f0_par is independent of gyrophase
+                //std::vector< C3<float> > gradv_f0_XYZ_GC;
+                //int nTh = 12;
+                //float dTh = 360.0 / nTh;
                 //for(int iTh=0; iTh<nTh; iTh++){
                 //        float th = iTh*dTh;
                 //        C3<float> thisPer = rot_axis_angle(per,par,th); 
-                //        C3<float> this_v = par * thisParticle_XYZ.vPar + thisPer * thisParticle_XYZ.vPer;
-                //        gradv_f0_XYZ_GC.push_back( maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
+                //        C3<float> this_v_2 = par * thisParticle_XYZ.vPar + thisPer * thisParticle_XYZ.vPer;
+
+                //        gradv_f0_XYZ_GC.push_back( maxwellian_df0_dv(this_v_2, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
                 //        if(thisParticle_XYZ.status>0) gradv_f0_XYZ_GC[iTh] = 0; // To account for the / 0 above.
 
-                //        //std::cout<<"iTh: "<<iTh<<std::endl;
-                //        //std::cout<<"th: "<<th<<std::endl;
-                //        //std::cout<<"thisPer: "<<thisPer<<std::endl;
-                //        //std::cout<<"mag(thisPer): "<<mag(thisPer)<<std::endl;
-                //        //std::cout<<"mag(thisVel): "<<mag(this_v)<<std::endl;
-                //        //std::cout<<"mag(v): "<<std::sqrt(std::pow(thisParticle_XYZ.vPar,2)+std::pow(thisParticle_XYZ.vPer,2))<<std::endl;
-                //        //std::cout<<"this_v: "<<this_v<<std::endl;
-                //        //std::cout<<"grad_f0: "<<gradv_f0_XYZ_GC[iTh]<<std::endl;
-                //        //std::cout<<"grad_f0: "<<maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z)<<std::endl;
+                //        std::cout<<"iTh: "<<iTh<<std::endl;
+                //        std::cout<<"th: "<<th<<std::endl;
+                //        std::cout<<"thisPer: "<<thisPer<<std::endl;
+                //        std::cout<<"mag(thisPer): "<<mag(thisPer)<<std::endl;
+                //        std::cout<<"mag(thisVel): "<<mag(this_v_2)<<std::endl;
+                //        std::cout<<"mag(v): "<<std::sqrt(std::pow(thisParticle_XYZ.vPar,2)+std::pow(thisParticle_XYZ.vPer,2))<<std::endl;
+                //        std::cout<<"this_v_2: "<<this_v_2<<std::endl;
+                //        std::cout<<"grad_f0: "<<gradv_f0_XYZ_GC[iTh]<<std::endl;
+                //        std::cout<<"grad_f0: "<<maxwellian_df0_dv(this_v_2, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z)<<std::endl;
+                //        std::cout<<"grad_f0.par: "<<dot(gradv_f0_XYZ_GC[iTh],par)<<std::endl;
+
+                //        C3<float> this_v_2_above = par * thisParticle_XYZ.vPar + per * thisParticle_XYZ.vPer;
+                //        C3<float> this_gradv_f0_GC_above = ( maxwellian_df0_dv(this_v_2_above, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
+                //        float this_gradv_f0_GC_dot_par = dot(this_gradv_f0_GC_above,par);
+                //        std::cout<<"grad_f0.par (actual): "<<this_gradv_f0_GC_dot_par<<std::endl;
+
                 //}
 
                 //exit(1);
-                //per = per / mag(per);
 
-                //thisVel_XYZ = C3<float>(0,thisParticle_XYZ.vPar,thisParticle_XYZ.vPer);//par * thisParticle_XYZ.vPar + per * thisParticle_XYZ.vPer; // vPar vector in XYZ
-                //if(thisParticle_XYZ.status>0) thisVel_XYZ = 0; // To account for the / 0 in the line above.
 #if DEBUG_MOVE >= 2
                 std::cout << "vPar: " << thisParticle_XYZ.vPar << " vPer: " << thisParticle_XYZ.vPer << std::endl;
                 std::cout << "status: " << thisParticle_XYZ.status << std::endl;
@@ -835,53 +846,9 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 #if GC_ORBITS >= 1
 
                 C3<std::complex<float> > this_force = thisE1c_XYZ[i];
-                complex<float> average_e1_dot_gradvf0(0);
-                C3<float> average_gradvf0(0);
-
-                average_e1_dot_gradvf0 = dot(this_force,par) * dot(initial_gradv_f0_XYZ,par);
-
-                //for(int iTh=0; iTh<nTh; iTh++){
-                //        //average_e1_dot_gradvf0 += dot(this_force, gradv_f0_XYZ_GC[iTh]);
-                //        average_e1_dot_gradvf0 = dot(this_force,par) * dot(gradv_f0_XYZ_GC[iTh],par);// / float(2*physConstants::pi);
-                //        average_gradvf0 += gradv_f0_XYZ_GC[iTh];
-
-                //        //if (iX == write_iX && iP == write_iP) {
-                //        //    std::cout << "this grad_f0: " << gradv_f0_XYZ_GC[iTh] << std::endl;
-                //        //    std::cout << "average_grad: " << average_gradvf0 << std::endl;
-                //        //    std::cout << "this e1_dot_grad: " << dot(this_force, gradv_f0_XYZ_GC[iTh]) << std::endl;
-                //        //    std::cout << "average_e1_dot_grad: " << average_e1_dot_gradvf0 << std::endl;
-                //        //    std::cout << "e1_dot_average_grad: " << dot(this_force,average_gradvf0) << std::endl;
-                //        //    std::cout << "par E * par(average(grad)): " << dot(this_force,par) * dot(average_gradvf0,par) << std::endl;
-                //        //    std::cout << "par(E) * par(grad): " << dot(this_force,par) * dot(gradv_f0_XYZ_GC[iTh],par) << std::endl;
-                //        //}
-                //}
-
-                // Calculate the initial gyrophase offset to be added to
-                // the guiding center calculation ...
-
-                // Angle between perp only components
-                C3<std::complex<float> > perp_force = this_force - par*dot(this_force,par);
-                C3<float> perp_gradf = initial_gradv_f0_XYZ - par*dot(initial_gradv_f0_XYZ,par);
-                complex<float> this_angle_perp = std::acos(dot(perp_force,perp_gradf) / (mag(perp_force)*mag(perp_gradf)));
-                float offsetReal = (( std::cos(this_angle_perp) - 1.0f ) * mag(perp_force)*mag(perp_gradf)).real();
-                float offsetImag = (( std::sin(this_angle_perp) - 1.0f ) * mag(perp_force)*mag(perp_gradf)).imag();
-
-                // Account for this_force==0 due to hanningWeight==0 at last point.
-                if(i==nSteps-1) {
-                    offsetReal = 0;
-                    offsetImag = 0;
-                }
-
-                average_e1_dot_gradvf0 += std::complex<float>(offsetReal,offsetImag);
-                this_e1_dot_gradvf0[i] = average_e1_dot_gradvf0;
+                this_e1_dot_gradvf0[i] = dot(this_force,par) * this_gradv_f0_GC_dot_par;
                 if(thisParticle_XYZ.status>0) this_e1_dot_gradvf0[i] = 0; // To account for the / 0 above.
 
-                //if (iX == write_iX && iP == write_iP) {
-                //    std::cout<<"par: "<<par<<std::endl;
-                //    std::cout<<"thisE1c_XYZ: "<<thisE1c_XYZ[i]<<std::endl;
-                //    std::cout<<"this_force: "<<this_force<<std::endl;
-                //    std::cout<<"this_angle_perp: "<<this_angle_perp<<std::endl;
-                //}
 #else
                 this_vCrossB1[i] = cross(thisVel_XYZ, thisB1c_XYZ[i]);
                 ////C3<std::complex<float> > this_force = this_vCrossB1[i] + thisE1c_XYZ[i];
@@ -942,13 +909,107 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 OrbitFile.close();
             }
 #endif
+
             complex<float> this_f1c = -qOverm * intVecArray(thisT, this_e1_dot_gradvf0);
-            //if (iX == write_iX && iP == write_iP) {
-            //        for(int i=0; i<nSteps;i++){
-            //            std::cout<<"this_e1_dot_gradvf0[i]: "<<this_e1_dot_gradvf0[i]<<std::endl;
-            //        }
-            //        std::cout<<"this_f1c: "<<this_f1c<<std::endl;
-            //}
+
+#if GC_ORBITS >= 1
+
+            // Add the offset to the GC time integration 
+
+            C3<float> thisB0 = kj_interp1D(ThisParticleList[iP].c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
+            C3<float> par = thisB0 / mag(thisB0);
+            C3<float> per = cross(par,C3<float>(1,0,0));
+            per = per / mag(per);
+
+            // Calculate the initial gyrophase offset to be added to
+            // the guiding center calculation ...
+
+            C3<std::complex<float> > initial_force = thisE1c_XYZ[0];
+            C3<float> initialV_XYZ(ThisParticleList[iP].v_c1, ThisParticleList[iP].v_c2, ThisParticleList[iP].v_c3);
+            C3<float> initial_gradv_f0_XYZ = maxwellian_df0_dv(initialV_XYZ, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z);
+
+            // Angle between perp only components
+
+            C3<std::complex<float> > perp_force = initial_force - par*dot(initial_force,par);
+            C3<float> perp_gradf = initial_gradv_f0_XYZ - par*dot(initial_gradv_f0_XYZ,par);
+
+            C3<float> perp_force_re(perp_force.c1.real(),perp_force.c2.real(),perp_force.c3.real());
+            C3<float> perp_force_im(perp_force.c1.imag(),perp_force.c2.imag(),perp_force.c3.imag());
+
+            float this_angle_perp_re = std::acos(dot(perp_force_re,perp_gradf) / (mag(perp_force_re)*mag(perp_gradf)));
+            float this_angle_perp_im = std::acos(dot(perp_force_im,perp_gradf) / (mag(perp_force_im)*mag(perp_gradf)));
+
+            std::complex<float> this_angle_perp = std::complex<float>(this_angle_perp_re,this_angle_perp_im);
+
+            // Normalize angle to the 0<th<360 range
+
+            if(this_angle_perp_re<0) this_angle_perp_re += 2 * physConstants::pi;
+            if(this_angle_perp_im<0) this_angle_perp_im += 2 * physConstants::pi;
+
+            // Double check the angle
+            if( (this_angle_perp_re<0) || (this_angle_perp_re>2*physConstants::pi) ) {
+                    std::cout<<"ERROR: angle out of range"<<std::endl;
+                    exit(1);
+            }
+
+            if( (this_angle_perp_im<0) || (this_angle_perp_im>2*physConstants::pi) ) {
+                    std::cout<<"ERROR: angle out of range"<<std::endl;
+                    exit(1);
+            }
+
+            float angleEnd_re = 0;
+            float angleEnd_im = 0;
+
+            if(this_angle_perp_re>=0) angleEnd_re = physConstants::pi;
+            if(this_angle_perp_re>=physConstants::pi) angleEnd_re = 2*physConstants::pi;
+
+            if(this_angle_perp_im>=0) angleEnd_im = physConstants::pi/2;
+            if(this_angle_perp_im>=physConstants::pi/2) angleEnd_im = physConstants::pi/2+physConstants::pi;
+            if(this_angle_perp_im>=physConstants::pi/2+physConstants::pi) angleEnd_im = physConstants::pi/2+2*physConstants::pi;
+
+            float offsetReal = +(( std::sin(angleEnd_re) - std::sin(this_angle_perp_re) ) * mag(perp_force)*mag(perp_gradf)).real();
+            float offsetImag = -(( std::cos(this_angle_perp_im) - std::cos(angleEnd_im) ) * mag(perp_force)*mag(perp_gradf)).imag();
+
+            // Convert gyro angle integral to time integral
+
+            float offset_wc = std::abs(ThisParticleList[iP].q*mag(thisB0)/ThisParticleList[iP].m);
+            float offset_period = 2.0f*physConstants::pi/offset_wc;
+            std::complex<float> offset_dt = this_angle_perp / float(2.0f*physConstants::pi)*offset_period;
+ 
+            std::complex<float> offset = std::complex<float>(offsetReal,offsetImag) * dtMin * float(2*physConstants::pi);
+
+            // Account for this_force==0 due to hanningWeight==0 at last point, or e1.gradvf0==0.
+            if(isnan(this_angle_perp.real())) {
+                offset = 0;
+            }
+
+            this_f1c += -qOverm * offset;
+
+            if (iX == write_iX && iP == write_iP) {
+                    std::cout<<"Offset: "<<offset<<std::endl;
+            } 
+
+            //average_e1_dot_gradvf0 = dot(this_force,par) * dot(initial_gradv_f0_XYZ,par);
+
+            if (iX == write_iX && iP == write_iP) {
+                std::cout<<"Offset wc: "<<offset_wc<<std::endl;
+                std::cout<<"Offset T: "<<offset_period<<std::endl;
+                std::cout<<"Offset_dt: "<<offset_dt<<std::endl;
+                std::cout<<"dtMin: "<<dtMin<<std::endl;
+                std::cout<<"par: "<<par<<std::endl;
+                std::cout<<"thisE1c_XYZ: "<<thisE1c_XYZ[0]<<std::endl;
+                std::cout<<"this_force: "<<initial_force<<std::endl;
+                std::cout<<"this_angle_perp: "<<this_angle_perp*float(180.0f/physConstants::pi)<<std::endl;
+            }
+#endif
+
+            if (iX == write_iX && iP == write_iP) {
+                    for(int i=0; i<nSteps;i++){
+                        std::cout<<"this_e1_dot_gradvf0[i]: "<<this_e1_dot_gradvf0[i]<<std::endl;
+                    }
+                    std::cout<<"this_f1c: "<<this_f1c<<std::endl;
+            }
+
 #if LOWMEM_ORBIT_WRITE >= 1
             if (iX == write_iX && iP == write_iP) {
 
@@ -967,7 +1028,6 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             float v0z_i = ThisParticleList[iP].v_c3;
 
             float h = dv * Ze;
-
 
 #pragma omp critical // "atomic" does not work for complex numbers
             {
@@ -991,6 +1051,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             }
 
             if (iX == write_iX && iP == write_iP) {
+                std::cout<<"iX: "<<iX<<std::endl;
+                std::cout<<"iP: "<<iP<<std::endl;
                 std::cout<<"h: "<<h<<std::endl;
                 std::cout<<"dv: "<<dv<<std::endl;
                 std::cout<<"f1c[iP]: "<<f1c[iP]<<std::endl;

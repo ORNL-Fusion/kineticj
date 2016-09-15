@@ -259,10 +259,6 @@ template <typename T>
 HOST DEVICE
 T mag(const C3<T>& in)
 {
-    //float c1 = std::abs(in.c1);
-    //float c2 = std::abs(in.c2);
-    //float c3 = std::abs(in.c3);
-    //return sqrt(pow(c1, 2) + pow(c2, 2) + pow(c3, 2));
     T c1s = T(std::pow(in.c1, 2));
     T c2s = T(std::pow(in.c2, 2));
     T c3s = T(std::pow(in.c3, 2));
