@@ -9,7 +9,8 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
     fileName = 'output/orbit_e1_dot_grad_df0_dv.txt'
     nHeader = 1
     N = file_lines(fileName)-nHeader
-    e1_dot_data = replicate({t:0.0,re:0.0,im:0.0},N)
+    e1_dot_data = replicate({t:0.0,re:0.0,im:0.0,rePer:0.0,imPer:0.0,rePar:0.0,imPar:0.0},N)
+
     openr, lun, fileName, /get_Lun
         skip_lun, lun, nHeader, /lines
         readf, lun, e1_dot_data
@@ -20,7 +21,7 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         fileName = lorentzDir + 'output/orbit_e1_dot_grad_df0_dv.txt'
         nHeader = 1
         N = file_lines(fileName)-nHeader
-        e1_dot_data_lorentz = replicate({t:0.0,re:0.0,im:0.0},N)
+        e1_dot_data_lorentz = replicate({t:0.0,re:0.0,im:0.0,rePer:0.0,imPer:0.0,rePar:0.0,imPar:0.0},N)
         openr, lun, fileName, /get_Lun
             skip_lun, lun, nHeader, /lines
             readf, lun, e1_dot_data_lorentz
@@ -37,17 +38,28 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         im = -imA*sin(2*!pi*f*t+imP)
         h = hanning(n_elements(re))
         h[0:N/2]=1
-        re = re*h
-        im = im*h
+        reAnalytic = re*h
+        imAnalytic = im*h
+
+        ;e1_dot_data_lorentz.re = reAnalytic
+        ;e1_dot_data_lorentz.im = imAnalytic
+
+        re = e1_dot_data_lorentz.re
+        im = e1_dot_data_lorentz.im
+
+        rePer = e1_dot_data_lorentz.rePer
+        imPer = e1_dot_data_lorentz.imPer
+
+        rePar = e1_dot_data_lorentz.rePar
+        imPar = e1_dot_data_lorentz.imPar
 
         p=plot(t,re,thick=2)
-        p=plot(t,e1_dot_data_lorentz.re,/over)
+        p=plot(t,reAnalytic,/over)
         p=plot(t,im,color='r',thick=2,/over)
-        p=plot(t,e1_dot_data_lorentz.im,color='r',/over)
-
-        ;e1_dot_data_lorentz.re = re
-        ;e1_dot_data_lorentz.im = im 
-
+        p=plot(t,imAnalytic,color='r',/over)
+        p=plot(t,rePer,/over,color='b')
+        p=plot(t,imPer,color='b',thick=2,/over)
+ 
     endif
 
     margin = [0.2,0.2,0.2,0.2]
@@ -56,30 +68,34 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
     order = 100
     dt = e1_dot_data[1].t-e1_dot_data[0].t
     if overPlotLorentz then begin
-        dtL = e1_dot_data_lorentz[1].t-e1_dot_data_lorentz[0].t
+        dtL = t[1]-t[0]
     endif
 
     print, 'Int [re]: ', total(e1_dot_data.re)
     print, 'Int [im]: ', total(e1_dot_data.im)
 
-    p=plot(e1_dot_data.t,e1_dot_data.re,layout=[1,2,1],margin=margin)
+    p=plot(e1_dot_data.t,e1_dot_data.re,layout=[1,2,1],margin=margin,title='e1 . \/v f0')
     if overPlotLorentz then begin
-        print, 'Int Lorentz [re]: ', total(e1_dot_data_lorentz.re)
-        print, 'Int Lorentz [im]: ', total(e1_dot_data_lorentz.im)
-        p=plot(e1_dot_data_lorentz.t,e1_dot_data_lorentz.re,/over)
+        print, 'Int Lorentz [re]: ', total(re)
+        print, 'Int Lorentz [im]: ', total(im)
+        p=plot(t,re,/over)
+        p=plot(t,rePer,/over,color='b')
+        p=plot(t,rePar,/over,color='g')
     endif
     p=plot(e1_dot_data.t,e1_dot_data.im,/over,color='r')
     if overPlotLorentz then begin
-        p=plot(e1_dot_data_lorentz.t,e1_dot_data_lorentz.im,/over,color='r')
+        p=plot(t,im,/over,color='r')
+        p=plot(t,imPer,/over,color='b',lineStyle='2')
+        p=plot(t,imPar,/over,color='g',lineStyle='2')
     endif
 
-    p=plot(e1_dot_data.t,total((e1_dot_data.re),/cum)*dt,thick=2,layout=[1,2,2],/current,margin=margin)
+    p=plot(e1_dot_data.t,total((e1_dot_data.re),/cum)*dt,thick=2,layout=[1,2,2],/current,margin=margin,title="int(e1 . \/vf0)")
     if overPlotLorentz then begin
-        p=plot(e1_dot_data_lorentz.t,total((e1_dot_data_lorentz.re),/cum)*dtL,/over)
+        p=plot(t,total((re),/cum)*dtL,/over)
     endif
     p=plot(e1_dot_data.t,total((e1_dot_data.im),/cum)*dt,/over,thick=2,color='r')
     if overPlotLorentz then begin
-        p=plot(e1_dot_data_lorentz.t,total((e1_dot_data_lorentz.im),/cum)*dtL,/over,color='r')
+        p=plot(t,total((im),/cum)*dtL,/over,color='r')
     endif
 
     fileName = 'output/orbit.txt'
@@ -110,7 +126,7 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         close, lun
     endif
 
-    p=plot(orbit[*].t, orbit[*].x,layout=[1,3,1],margin=margin )
+    p=plot(orbit[*].t, orbit[*].x,layout=[1,3,1],margin=margin,title='Position (x,y,z)' )
     if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].x,/over )
 
     p=plot(orbit[*].t, orbit[*].y,layout=[1,3,2],/current,margin=margin)
@@ -118,6 +134,21 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
 
     p=plot(orbit[*].t, orbit[*].z,layout=[1,3,3],/current,margin=margin)
     if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].z,/over )
+
+
+
+    p=plot(orbit[*].t, orbit[*].exr,layout=[1,3,1],margin=margin,title='E field' )
+    p=plot(orbit[*].t, orbit[*].exc,/over,color='r' )
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].x,/over )
+
+    p=plot(orbit[*].t, orbit[*].eyr,layout=[1,3,2],/current,margin=margin)
+    p=plot(orbit[*].t, orbit[*].eyc,/over,color='r' )
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].y,/over )
+
+    p=plot(orbit[*].t, orbit[*].ezr,layout=[1,3,3],/current,margin=margin)
+    p=plot(orbit[*].t, orbit[*].ezc,/over,color='r' )
+    if overPlotLorentz then p=plot(orbit_lorentz[*].t, orbit_lorentz[*].z,/over )
+
 
    if overPlotLorentz then begin
 
@@ -163,9 +194,6 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
 
         print, 'Offest[re] analytic: ', ( sin(angle1end*!dtor) - sin(angle1) ) * reA * dtL * 2 * !pi
         print, 'Offest[im] analytic: ', -( cos(angle2) - cos(angle2end*!dtor) ) * imA * dtL * 2 * !pi
-
-        re = e1_dot_data_lorentz.re
-        im = e1_dot_data_lorentz.im
 
         print, 'Int all[re]: ', int_tabulated(t,re,/double)
         print, 'Int all[im]: ', int_tabulated(t,im,/double)

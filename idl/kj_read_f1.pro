@@ -52,6 +52,8 @@ end
 
 pro kj_read_f1
 
+    @constants
+
     fileName = 'output/f1.txt'
     nLines = file_lines(fileName)
     openr, lun, fileName, /get_lun
@@ -65,11 +67,14 @@ pro kj_read_f1
 
     offset = 1
 
-		
-
     vx = fltArr(nX)
     vy = fltArr(nY)
     vz = fltArr(nZ)
+
+    vx3 = fltArr(nX,nY,nZ)
+    vy3 = fltArr(nY,nY,nZ)
+    vz3 = fltArr(nZ,nY,nZ)
+
 
     f1 = complexArr(nX,nY,nZ)
 
@@ -84,13 +89,16 @@ pro kj_read_f1
         			vy[j] = _vy
         			vz[k] = _vz
 
+        			vx3[i,j,k] = _vx
+        			vy3[i,j,k] = _vy
+        			vz3[i,j,k] = _vz
+
         			f1[i,j,k] = complex(_f1re,_f1im)
 			endfor
 		endfor
     	endfor
 
 	free_lun, lun
-
 	;dx = (max(vx)-min(vx))/(nx-1)
 	;vxGrid = min(vx)+fIndGen(nx)*dx
 	;dy = (max(vy)-min(vy))/(ny-1)
@@ -127,12 +135,12 @@ pro kj_read_f1
 		layout=[2,2,3],rgb_table=1,c_value=levels,c_color=colors,/current,title='f1_yz')
 	c=contour(-ryz,vy,vz,/fill,$
 		layout=[2,2,3],rgb_table=7,c_value=levels,c_color=colors,/current)
-
-        zSlice = 7
+stop
+    zSlice = 2
 	rxy = reform(imaginary(f1[*,*,zSlice]))
-        ySlice = ny/2
+    ySlice = 2 
 	rxz = reform(imaginary(f1[*,ySlice,*]))
-        xSlice = nx/2
+    xSlice = 2 
 	ryz = reform(imaginary(f1[xSlice,*,*]))
 
 	c=contour(rxy,vx,vy,/fill,$
@@ -149,8 +157,6 @@ pro kj_read_f1
 		layout=[2,2,3],rgb_table=1,c_value=levels,c_color=colors,/current)
 	c=contour(-rxy,vx,vy,/fill,$
 		layout=[2,2,3],rgb_table=7,c_value=levels,c_color=colors,/current)
-
-
 
 
 	nPer = 50
@@ -212,9 +218,11 @@ pro kj_read_f1
 	c=contour(-this,vx,vz,/fill,$
 		layout=[2,2,1],rgb_table=7,c_value=levels,c_color=colors,/over)
 
-        print, total(this)*(vx[1]-vx[0])*(vz[1]-vz[0])
-        print, int_tabulated_2d(vx,vz,this)  
-	
+        print, 'vx * f1_xz [total]: ', total(this)*(vx[1]-vx[0])*(vz[1]-vz[0])
+        print, 'vx * f1_xz [int tab]: ', int_tabulated_2d(vx,vz,this)  
+
+
+
 	this = rxy*transpose(rebin(vy,ny,nx))
 	c=contour(this,vx,vy,/fill,$
 		layout=[2,2,2],/current,rgb_table=1,c_value=levels,c_color=colors,$
@@ -222,9 +230,10 @@ pro kj_read_f1
 	c=contour(-this,vx,vy,/fill,$
 		layout=[2,2,2],rgb_table=7,c_value=levels,c_color=colors,/over)
 
-        print, total(this)*(vx[1]-vx[0])*(vy[1]-vy[0])
-        print, int_tabulated_2d(vx,vy,this)  
-	
+        print, 'vy * f1_xy [total]: '  ,total(this)*(vx[1]-vx[0])*(vy[1]-vy[0])
+        print, 'vy * f1_xy [int tab]: ',int_tabulated_2d(vx,vy,this)  
+
+
 	this = ryz*rebin(vy,ny,nz)
 	c=contour(this,vy,vz,/fill,$
 		layout=[2,2,3],/current,rgb_table=1,c_value=levels,c_color=colors,$
@@ -232,35 +241,32 @@ pro kj_read_f1
 	c=contour(-this,vy,vz,/fill,$
 		layout=[2,2,3],rgb_table=7,c_value=levels,c_color=colors,/over)
 
-        print, total(this)*(vy[1]-vy[0])*(vz[1]-vz[0])
-        print, int_tabulated_2d(vy,vz,this)  
-	
-        this = ryz*transpose(rebin(vz,nz,ny))
+        print, 'vy * f1_yz [total]: '  ,total(this)*(vy[1]-vy[0])*(vz[1]-vz[0])
+        print, 'vy * f1_yz [int tab]: ',int_tabulated_2d(vy,vz,this)  
+
+
+    this = ryz*transpose(rebin(vz,nz,ny))
 	c=contour(this,vy,vz,/fill,$
 		layout=[2,2,4],/current,rgb_table=1,c_value=levels,c_color=colors,$
                 title='vz * f1_yz',xtitle='vy',ytitle='vz')
 	c=contour(-this,vy,vz,/fill,$
 		layout=[2,2,4],rgb_table=7,c_value=levels,c_color=colors,/over)
 
-        print, total(this)*(vy[1]-vy[0])*(vz[1]-vz[0])
-        print, int_tabulated_2d(vy,vz,this)  
-	
+        print, 'vz * f1_yz [total]: '  , total(this)*(vy[1]-vy[0])*(vz[1]-vz[0])
+        print, 'vz * f1_yz [int tab]: ', int_tabulated_2d(vy,vz,this)  
+
+
+
         dV = (vx[1]-vx[0])*(vy[1]-vy[0])*(vz[1]-vz[0])
-        print, total(real_part(f1))*dV
-        print, int_tabulated_3d( vx, vy, vz, real_part(f1))
 
-        vx3d = rebin(vx,nx,ny,nz)
-        vy3d = transpose(rebin(vy,ny,nx,nz),[2,1,3]-1)
-	vz3d = transpose(rebin(vz,nz,nx,ny),[2,3,1]-1)
+        print, 'jy [total]: ', total((vx3*f1))*dV*_e
+        print, 'jx [int tab]: ', int_tabulated_3d( vx, vy, vz, real_part(vx3*f1))*_e
 
-        print, total(real_part(vx3d*f1))*dV
-        print, int_tabulated_3d( vx, vy, vz, real_part(vx3d*f1))
+        print, 'jy [total]: ', total((vy3*f1))*dV*_e
+        print, 'jy [int tab]: ', int_tabulated_3d( vx, vy, vz, real_part(vy3*f1))*_e
 
-        print, total(real_part(vy3d*f1))*dV
-        print, int_tabulated_3d( vx, vy, vz, real_part(vy3d*f1))
-
-        print, total(real_part(vz3d*f1))*dV
-        print, int_tabulated_3d( vx, vy, vz, real_part(vz3d*f1))
+        print, 'jz [total]: ', total((vz3*f1))*dV*_e
+        print, 'jz [int tab]: ', int_tabulated_3d( vx, vy, vz, real_part(vz3*f1))*_e
 
 
 
