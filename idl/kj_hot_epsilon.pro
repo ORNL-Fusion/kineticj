@@ -40,7 +40,7 @@ function kj_zFun, x
     ;
     ; w(-z) = w(z*)*
 
-    nMax = 10
+    nMax = 40
 
     for i=0,n_elements(x)-1 do begin
 
@@ -120,67 +120,60 @@ function kj_zFunPrime, zeta
 
 end
 
-pro kj_hot_epsilon, f, amu, Z, B, density, harmonicNumber, kPar, kPer, T_eV
-
-;n = 200
-;x = (dIndGen(n)/(n-1)-0.5)*2*15
-;z = kj_zFun(x)
-;zP = kj_zFunPrime(x)
-;p=plot(x,z)
-;p=plot(x,imaginary(z),/over)
-;p=plot(x,zP)
-;p=plot(x,imaginary(zP),/over)
-;
-;stop
+function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV
 
 @constants
 
 w = 2 * !Pi * f
 m = amu * _amu
-q = Z * _e
+q = atomicZ * _e
 nPar = _c * kPar / w
 nPer = _c * kPer / w
 
 nS = n_elements(amu)
 
-Shat = complex(1,0)
-Dhat = complex(0,0)
-Phat = complex(1,0)
+Shat = dcomplex(1,0)
+Dhat = dcomplex(0,0)
+Phat = dcomplex(1,0)
 
-etahat = complex(0,0)
-tauhat = complex(0,0)
-epshat = complex(0,0)
+etahat = dcomplex(0,0)
+tauhat = dcomplex(0,0)
+epshat = dcomplex(0,0)
 
 for alp = 0,nS-1 do begin
-
+   
     wc = q[alp] * B / m[alp]
     wp = sqrt( density[alp] * q[alp]^2 / (m[alp] * _e0) ) 
     vTh = sqrt(2*T_eV[alp]*_e/m[alp])
 
     lambda = kPer^2 * vTh^2 / (2*wc^2)
 
-    Ssum = complex(0,0)
-    Dsum = complex(0,0)
-    Psum = complex(0,0)
+    Ssum = dcomplex(0,0)
+    Dsum = dcomplex(0,0)
+    Psum = dcomplex(0,0)
 
-    eta_sum = complex(0,0)
-    tau_sum = complex(0,0)
-    eps_sum = complex(0,0)
+    eta_sum = dcomplex(0,0)
+    tau_sum = dcomplex(0,0)
+    eps_sum = dcomplex(0,0)
 
     for n = -harmonicNumber,harmonicNumber do begin
 
         x = (w - n*wc) / (kPar * vTh)
-        print, w-n*wc
-        print, x
         x0 = w / (kPar * vTh)
 
-        Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * kj_Zfun(x) )
-        Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n) ) * exp(-lambda) * (-x0 * kj_Zfun(x) )
-        Psum += beselI(lambda,n) * exp(-lambda) * (-x0 * x * kj_zFunPrime(x) )
+        Z = kj_zfunction(x, Zp=Zp)
+        print, x
+        print, Zp
+        ;print, beselI(lambda,n,/double)
+        ;print, exp(-lambda)*(-x0*x*Zp)
 
-        eta_sum += n/lambda * beselI(lambda,n,/double) * exp(-lambda) * (x0^2 * kj_ZfunPrime(x) )
-        tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * kj_Zfun(x) )
-        eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * kj_ZfunPrime(x) )
+        Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
+        Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
+        Psum += beselI(lambda,n,/double) * exp(-lambda) * (-x0 * x * Zp )
+
+        eta_sum += n/lambda * beselI(lambda,n,/double) * exp(-lambda) * (x0^2 * Zp )
+        tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
+        eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * Zp )
 
     endfor 
 
@@ -194,10 +187,13 @@ for alp = 0,nS-1 do begin
 
 endfor
 
+;print, Phat
+;print, ''
+;if real_part(Phat) lt 7000 then stop
+
 etaHat = -etaHat/2.0
 tauHat = -tauHat/2.0
 epsHat = +epsHat/2.0
-
 
 exx = SHat
 exy = -_ii * DHat
@@ -225,6 +221,32 @@ epsilon[2,0] = ezx
 epsilon[2,1] = ezy
 epsilon[2,2] = ezz
 
+return, epsilon
 
-stop
+end
+
+; Test Z function snippet 
+
+pro kj_test_zfunction
+
+    n = 200
+    x = (dIndGen(n)/(n-1)-0.5)*2*120
+    z = kj_zFun(x)
+    zP = kj_zFunPrime(x)
+    z2 = kj_zfunction(x,Zp=zP2)
+    
+    p=plot(x,z)
+    p=plot(x,z2,/over, color='r')
+    
+    p=plot(x,imaginary(z),/over)
+    p=plot(x,imaginary(z2),/over, color='r')
+    
+    p=plot(x,zP)
+    p=plot(x,zP2,/over, color='r')
+    
+    p=plot(x,imaginary(zP),/over)
+    p=plot(x,imaginary(zP2),/over, color='r')
+    
+    stop
+
 end
