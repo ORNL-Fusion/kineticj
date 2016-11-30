@@ -120,7 +120,8 @@ function kj_zFunPrime, zeta
 
 end
 
-function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV
+function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
+    epsilon_cold = epsilon_cold
 
 @constants
 
@@ -162,14 +163,10 @@ for alp = 0,nS-1 do begin
         x0 = w / (kPar * vTh)
 
         Z = kj_zfunction(x, Zp=Zp)
-        print, x
-        print, Zp
-        ;print, beselI(lambda,n,/double)
-        ;print, exp(-lambda)*(-x0*x*Zp)
 
         Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
         Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
-        Psum += beselI(lambda,n,/double) * exp(-lambda) * (-x0 * x * Zp )
+        Psum += beselI(lambda,n,/double) * exp(-lambda) * (x0 * x * Zp )
 
         eta_sum += n/lambda * beselI(lambda,n,/double) * exp(-lambda) * (x0^2 * Zp )
         tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
@@ -186,10 +183,6 @@ for alp = 0,nS-1 do begin
     epsHat += wp^2/(w*wc) * vTh^2/_c^2 * eps_sum
 
 endfor
-
-;print, Phat
-;print, ''
-;if real_part(Phat) lt 7000 then stop
 
 etaHat = -etaHat/2.0
 tauHat = -tauHat/2.0
@@ -220,6 +213,28 @@ epsilon[1,2] = eyz
 epsilon[2,0] = ezx
 epsilon[2,1] = ezy
 epsilon[2,2] = ezz
+
+; Optionally also return the cold plasma epsilon
+
+P = 1-wp^2/( w*w )
+R = 1-wp^2 /( w*(w+wc) )
+L = 1-wp^2 /( w*(w-wc) )
+S = 0.5*(R+L)
+D = 0.5*(R-L)
+
+epsilon_cold = dComplexArr(3,3)
+
+epsilon_cold[0,0] = S
+epsilon_cold[1,0] = _II * D
+epsilon_cold[2,0] = 0
+
+epsilon_cold[0,1] = -_II*D 
+epsilon_cold[1,1] = S
+epsilon_cold[2,1] = 0
+
+epsilon_cold[0,2] = 0 
+epsilon_cold[1,2] = 0
+epsilon_cold[2,2] = P
 
 return, epsilon
 
