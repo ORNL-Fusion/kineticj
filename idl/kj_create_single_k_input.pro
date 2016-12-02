@@ -1,114 +1,46 @@
-pro kj_create_single_k_input
+pro kj_create_single_k_input, b0=_b0, kPar=_kPar, kPer=_kPer, f_Hz=_f_Hz
 
 @constants
 
-f_Hz = 1.15d8
-E_eV = 0.5d3
-n_e = 1.1d14
-b0 = 0.001
-Z = -1.0
+if keyword_set(_b0) then b0 = _b0 else b0 = 1
+if keyword_set(_kPar) then kPar = _kPar else kPar = 1
+if keyword_set(_kPer) then kPer = _kPer else kPer = 1
+if keyword_set(_f_Hz) then f_Hz = _f_Hz else f_Hz = 13.56e6 
 
-n = 0
-w = 2*!pi*f_Hz
-vTh = sqrt(2d0*E_eV*_e/me)
-wpe = sqrt(n_e*_e^2/(me*e0))
-wce = abs(Z)*_e*b0/me
-kPar=22.11;sqrt((w^2-wpe^2)/(2*vTh^2))
-vPhs = w/kPar
 lambdaPar = 2*!Pi/kPar
+lambdaPer = 2*!Pi/kPer
+
+xOffset = 100
+nPts = 31L
+nCycles = 5 
+xRange = lambdaPer*nCycles
+dx = xRange / (nPts-1)
+x = fIndGen(nPts)*dx+xOffSet
 
 print, 'Parallel k: ', kPar
 print, 'Parallel Wavelength: ', lambdaPar
-print, 'Parallel Phase Velocity: ', vPhs
+print, 'nPhi to use: ', 2*!pi*xOffset/lambdaPar
 
-kPer = 0
-lambda=0
-In = 1
-sum = !null
-for l=-n,n do begin
-	zeta_n=(w-l*wce)/(kPar*vTh)
-	print, 'Zeta_n: [',l,']: ', zeta_n
+EmagR = 1
+EmagT = 0.1 
+EmagZ = 2
 
-	if l eq -5 then Zp_n = complex(0.000951014,0.0) ; From mathematica Zp worksheet function
-	if l eq -4 then Zp_n = complex(0.00143215,0.0) ; From mathematica Zp worksheet function
-	if l eq -3 then Zp_n = complex(0.0023985,0.0) ; From mathematica Zp worksheet function
-	if l eq -2 then Zp_n = complex(0.00481843,0.0) ; From mathematica Zp worksheet function
-	if l eq -1 then Zp_n = complex(0.0142719,0.0) ; From mathematica Zp worksheet function
-	if l eq 0  then Zp_n = complex(0.240566,-0.0201775) ; From mathematica Zp worksheet function
-	;if l eq 0  then Zp_n = complex(0.000329543,0) ; From mathematica Zp worksheet function
+Er = EmagR*exp(-_II*kPer*x)
+Et = EmagT*exp(-_II*kPer*x)
+Ez = EmagZ*exp(-_II*kPer*x)
 
-	if l eq +1 then Zp_n = complex(0.0925875,0.0000473754) ; From mathematica Zp worksheet function
-	if l eq +2 then Zp_n = complex(0.0111961,0.0) ; From mathematica Zp worksheet function
-	if l eq +3 then Zp_n = complex(0.00417343,0.0) ; From mathematica Zp worksheet function
-	if l eq +4 then Zp_n = complex(0.00216529,0.0) ; From mathematica Zp worksheet function
-	if l eq +5 then Zp_n = complex(0.00132278,0.0) ; From mathematica Zp worksheet function
+br = fltArr(nPts)
+bt = fltArr(nPts)+b0 
+bz = fltArr(nPts)
 
-	if sum then begin
-		sum = sum + In*zeta_n*Zp_n
-		print, l
-		print, 'this: ' , In*zeta_n*Zp_n
-		print, 'sum: ', sum
-	endif else begin
-		print, 'initiazing: ', l
-		sum = In*zeta_n*Zp_n
-		print, 'this: ', sum
-		print, 'sum: ', sum
-	endelse
-endfor
+Jpr = fltArr(nPts)
+Jpt = fltArr(nPts)
+Jpz = fltArr(nPts)
 
-
-K3 = 1d0 - wpe^2 * exp(-lambda) / (w*kPar*vTh) * sum 
-II = complex(0,1)
-sig33 = -(K3 - 1d0)*II*w*e0
-
-stixP = 1-wpe^2/w^2
-sig33_cold = -(stixP-1d0)*II*w*e0
-
-print, 'K3: ', K3
-
-print, 'Sigma(3,3): ', sig33
-print, 'Sigma(3,3) [COLD]: ', sig33_cold
-print, 'sighot/sigcold: ',imaginary(sig33)/imaginarY(sig33_cold)
-
-
-xOffset = 100
-nPts = 10001L
-nCycles = 5 
-xRange = lambdaPar*nCycles
-dx = xRange / (nPts-1)
-x = fIndGen(nPts)*dx+xOffSet
-E0 = 5000 
-;E = E0*complex(cos(kPar*x),sin(kPar*x))
-E = E0*exp(-II*kPar*x)
-Jp = sig33*E
-sig33_kj = complex(0.000522289,0.00625663)
-Jp_kj = sig33_kj * E
-
-p = plot(x,E,layout=[1,2,1])
-!null = plot(x,imaginary(E),/over,color='b')
-p = plot(x,Jp,layout=[1,2,2],/current)
-!null = plot(x,imaginary(Jp),/over,color='b')
-!null = plot(x,Jp_kj,layout=[1,2,2],/over,color='orange')
-!null = plot(x,imaginary(Jp_kj),/over,color='r')
-
-; Test some e field values with those in kineticJ
-
-xTest = 101.3
-eTest = E0*exp(-II*kPar*xTest)
-print,xTest,sig33*eTest,sig33,eTest
-
-br = fltArr(nPts)+b0
-bt = br*0
-bz = br*0
-
-Er = E
-Et = E*0
-Ez = E*0
-
-Jpr = Jp
-Jpt = Jp*0
-Jpz = Jp*0
-
+p = plot(x,Er)
+!null = plot(x,imaginary(Er),/over,color='r')
+p = plot([x,x+(x[-1]-x[0])],[Er,Er])
+!null = plot([x,x+(x[-1]-x[0])],imaginary([Er,Er]),/over,color='r')
 
 ; Write netCDF file
 
@@ -165,7 +97,6 @@ nc_id = nCdf_create ('kj_single_1d.nc', /clobber )
 	nCdf_varPut, nc_id, jP_z_im_id,imaginary(Jpz) 
 
 nCdf_close, nc_id
-
 
 stop
 

@@ -14,7 +14,7 @@ B = 1d0
 density = 2d19
 harmonicNumber = 1
 kPar = 100  
-kPer = 0.001 
+kPer = 10 
 
 eps = ComplexArr(3,3,n)
 eps_cold = ComplexArr(3,3,n)
@@ -89,5 +89,10 @@ p=plot(T_eV,imaginary(eps[2,2,*]),color='r',/over)
 p=plot(T_eV,eps_cold[2,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(eps_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+; Create kj input to run this case
+
+kj_create_single_k_input, b0=B, kPar=kPar, kPer=kPer, f_Hz=f
+
 stop
+
 end
