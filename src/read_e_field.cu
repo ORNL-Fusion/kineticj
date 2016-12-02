@@ -41,6 +41,10 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
     }
 
     try {
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Message: DEBUG_READ_E_FIELD enabled"<<nR<<std::endl;
+#endif
+ 
         std::cout << "Reading E field data file ... " << eField_fName << std::endl;
         NcFile dataFile(eField_fName.c_str(), NcFile::read);
 
@@ -122,7 +126,12 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         count[0] = 1;
 
         nc_density.getVar(start, count, &n_m3[0]);
-
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"nR: "<<nR<<std::endl;
+        for (int i = 0; i < nR; i++) {
+            std::cout<<"density: "<<nc_density[i]<<std::endl;
+        }
+#endif
         try {
             std::cout << "nR : " << nR << std::endl;
             b0_CYL.resize(nR);

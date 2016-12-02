@@ -91,7 +91,7 @@ p=plot(T_eV,imaginary(eps_cold[2,2,*]),color='r',/over,thick=thick,transparency=
 
 ; Create kj input to run this case
 
-kj_create_single_k_input, b0=B, kPar=kPar, kPer=kPer, f_Hz=f
+kj_create_single_k_input, b0=B, kPar=kPar, kPer=kPer, f_Hz=f, n_m3 = density
 
 stop
 
