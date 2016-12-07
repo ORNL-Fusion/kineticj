@@ -1,4 +1,6 @@
-pro kj_create_single_k_input, b0=_b0, kPar=_kPar, kPer=_kPer, f_Hz=_f_Hz, n_m3=_n_m3
+pro kj_create_single_k_input, $
+        b0=_b0, kPar=_kPar, kPer=_kPer, f_Hz=_f_Hz, n_m3=_n_m3, $
+        Er=Er, Et=Et, Ez=Ez, x=x
 
 @constants
 
@@ -11,7 +13,7 @@ if keyword_set(_n_m3) then n_m3 = _n_m3 else n_m3 = 1e19
 lambdaPar = 2*!Pi/kPar
 lambdaPer = 2*!Pi/kPer
 
-xOffset = 100
+xOffset = 1e5
 nPts = 301L
 nCycles = 5 
 xRange = lambdaPer*nCycles
@@ -19,6 +21,7 @@ dx = xRange / (nPts-1)
 x = fIndGen(nPts)*dx+xOffSet
 
 print, 'Parallel k: ', kPar
+print, 'Perp k: ', kPer
 print, 'Parallel Wavelength: ', lambdaPar
 print, 'nPhi to use: ', 2*!pi*xOffset/lambdaPar
 print, 'xGridMin: ', x[0]
@@ -40,21 +43,21 @@ Jpr = fltArr(nPts)
 Jpt = fltArr(nPts)
 Jpz = fltArr(nPts)
 
-density = fltArr(1,nPts)+n_m3
+density = fltArr(nPts,1)+n_m3
 
-p = plot(x,Er)
-!null = plot(x,imaginary(Er),/over,color='r')
-p = plot([x,x+(x[-1]-x[0])],[Er,Er])
-!null = plot([x,x+(x[-1]-x[0])],imaginary([Er,Er]),/over,color='r')
+;p = plot(x-xOffSet,Er)
+;!null = plot(x-xOffSet,imaginary(Er),/over,color='r')
+;p = plot([x,x+(x[-1]-x[0])]-xOffSet,[Er,Er])
+;!null = plot([x,x+(x[-1]-x[0])]-xOffSet,imaginary([Er,Er]),/over,color='r')
 
 ; Write netCDF file
 
-nc_id = nCdf_create ('kj_single_1d.nc', /clobber )
+nc_id = nCdf_create ('data/kj_single_1d.nc', /clobber )
 
 	nCdf_control, nc_id, /fill
 	
 	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(x) )
-	nS_id = nCdf_dimDef ( nc_id, 'nS', 1 )
+	nS_id = nCdf_dimDef ( nc_id, 'nSpec', 1 )
 	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
 
 	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
@@ -85,7 +88,7 @@ nc_id = nCdf_create ('kj_single_1d.nc', /clobber )
 	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
 	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
 
-	density_id = nCdf_varDef ( nc_id, 'density_m3', [nS_id,nr_id], /float )
+	density_id = nCdf_varDef ( nc_id, 'density_m3', [nr_id,nS_id], /float )
 
 	nCdf_control, nc_id, /enDef
 
@@ -119,9 +122,7 @@ nc_id = nCdf_create ('kj_single_1d.nc', /clobber )
 	nCdf_varPut, nc_id, jP_z_im_id,imaginary(Jpz) 
 
 	nCdf_varPut, nc_id, density_id, density 
-stop
-nCdf_close, nc_id
 
-stop
+nCdf_close, nc_id
 
 end
