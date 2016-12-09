@@ -2,7 +2,7 @@
 #include <cmath>
 
 // Parallel acceleration
-float eval_aPar(CParticle& p, const C3<float> r, const float *r_GC, const float *bDotGradB, int nGC)
+float eval_aPar(CParticle& p, C3<float> r, const float *r_GC, const float *bDotGradB, int nGC)
 {
 
     int status = 0;
@@ -26,7 +26,7 @@ float eval_aPar(CParticle& p, const C3<float> r, const float *r_GC, const float 
 }
 
 // Perpendicular velocity
-float eval_vPer(CParticle& p, const C3<float> r, const float *r_b0, const C3<float> *b0_CYL, int n)
+float eval_vPer(CParticle& p, C3<float> r, const float *r_b0, const C3<float> *b0_CYL, int n)
 {
     int status = 0;
     C3<float> This_b0_CYL = kj_interp1D(r.c1, r_b0, b0_CYL, n, status);
@@ -35,7 +35,7 @@ float eval_vPer(CParticle& p, const C3<float> r, const float *r_b0, const C3<flo
 }
 
 // Guiding center veclocity
-C3<float> eval_vGC(CParticle& p, const C3<float> r, const float vPer, const float vPar,
+C3<float> eval_vGC(CParticle& p, C3<float> r, const float vPer, const float vPar,
     const float *r_b0, const C3<float> *b0_CYL, int n, 
     const float *r_GC, const C3<float> *curv_CYL, const C3<float> *grad_CYL, int nGC)
 {

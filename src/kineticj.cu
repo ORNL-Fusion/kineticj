@@ -126,16 +126,16 @@ int main(int argc, char** argv)
     }
 
     int species_number = cfg.lookup("species_number");
+    float T_keV_cfg = cfg.lookup("T_keV");
 
     // Read E
     string eField_fName = cfg.lookup("eField_fName");
-    vector<C3<float> > e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL;
     vector<C3<std::complex<float> > > e1_CYL, b1_CYL;
     vector<C3<float> > b0_CYL, b0_XYZ;
     vector<float> r, n_m3;
     float freq;
-    int eReadStat = read_e_field(eField_fName, species_number, freq, r, n_m3, e1_CYL, b1_CYL,
-        e1Re_CYL, e1Im_CYL, b1Re_CYL, b1Im_CYL, b0_CYL);
+    int eReadStat = read_e_field(eField_fName, species_number, freq, r, n_m3, 
+                    e1_CYL, b1_CYL, b0_CYL);
 
     // Read GC terms
     string gc_fName = cfg.lookup("gc_fName");
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
             exit(1);
         }
         bMag_kjGrid[iX] = mag(this_b0);
-        T_keV[iX] = 2.0; // kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = T_keV_cfg; // kj_interp1D(xGrid[iX],r,n_m3);
     }
 
     float MaxB0 = *max_element(bMag_kjGrid.begin(), bMag_kjGrid.end());
@@ -199,6 +199,7 @@ int main(int argc, char** argv)
     int nJpCycles = cfg.lookup("nJpCycles");
     int nJpPerCycle = cfg.lookup("nJpPerCycle");
     int nPhi = cfg.lookup("nPhi");
+    int ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
     int nJp = nJpCycles * nJpPerCycle;
     //float dtJp = tRF / nJpPerCycle;
     int istat = 0;
@@ -394,12 +395,12 @@ int main(int argc, char** argv)
 
         // E1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
-                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(E1_device.begin(),E1_device.end(),E1_host.begin());
 
         // B1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
-                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(B1_device.begin(),B1_device.end(),B1_host.begin());
 
         // v x B1 
@@ -469,14 +470,14 @@ int main(int argc, char** argv)
 #endif
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
-                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
         
 #ifdef __CUDACC__
         std::cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<std::endl;
 #endif
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
-                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
 
 #ifdef __CUDACC__
         std::cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<std::endl;
@@ -616,6 +617,9 @@ int main(int argc, char** argv)
 
 std::cout << "Continuing with non functor approach ..." << std::endl;
 
+int write_iX = 1;//31;//15;
+int write_iP = 43;//52;//33;
+
 #pragma omp parallel for private(istat, tid, spoken)
     for (int iX = 0; iX < nXGrid; iX++) {
 
@@ -647,7 +651,7 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 #endif
 
 #if F1_WRITE >= 1
-        int f1_write_iX = 75;
+        int f1_write_iX = write_iX;
         ofstream f1File;
         if (iX == f1_write_iX) {
             f1File.open("output/f1.txt", ios::out | ios::trunc);
@@ -677,8 +681,7 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             ofstream e1_dot_grad_File;
             ofstream df0dv_File;
 
-            int write_iX = 15;//31;//15;
-            int write_iP = 33;//52;//33;
+
             if (iX == write_iX && iP == write_iP) {
                 std::cout << "Write Particle Properties:" << std::endl;
                 std::cout << " vTh: " << thisParticle_XYZ.vTh << std::endl;
@@ -697,8 +700,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                        << std::endl;
                 e1_dot_grad_File.open("output/orbit_e1_dot_grad_df0_dv.txt",
                     ios::out | ios::trunc);
-                e1_dot_grad_File << " t  re(v1xb01)  im(v1xb01)  re(v1xb02)  "
-                                    "im(v1xb02)  re(v1xb03)  im(v1xb03)"
+                e1_dot_grad_File << " t  re(e1.Gradvf0)  im(e1.Gradvf0)  re(e1_per.Gradvf0_per)  "
+                                    "im(e1_per.Gradvf0_per)  re(e1_par.Gradvf0_par)  im(e1_par.Gradvf0_par)"
                                  << std::endl;
                 df0dv_File.open("output/df0dv.txt", ios::out | ios::trunc);
                 df0dv_File << " t  vx  vy  vz  valp  vbet  vpar  vper  gyroAngle  "
@@ -713,6 +716,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
             vector<C3<std::complex<float> > > thisB1c_XYZ(nSteps, C3<std::complex<float> >());
             C3<std::complex<float> > thisV1c_(0, 0, 0), dVc(0, 0, 0), crossTerm(0, 0, 0);
             vector<complex<float> > this_e1_dot_gradvf0(nSteps);
+            vector<complex<float> > this_e1_dot_gradvf0_parOnly(nSteps);
+            vector<complex<float> > this_e1_dot_gradvf0_perOnly(nSteps);
             vector<C3<std::complex<float> > > this_vCrossB1(nSteps);
 
             for (int i = 0; i < nSteps; i++) {
@@ -737,8 +742,9 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                     std::cout << "MoveStatus: " << MoveStatus << std::endl;
                 }
 #endif
-                C3<float> thisPos(thisParticle_XYZ.c1, thisParticle_XYZ.c2, thisParticle_XYZ.c3);
-                C3<float> thisB0 = kj_interp1D(thisOrbit_XYZ[i].c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
+                C3<float> thisPos_XYZ(thisParticle_XYZ.c1, thisParticle_XYZ.c2, thisParticle_XYZ.c3);
+                C3<float> thisPos_CYL = XYZ_to_CYL(thisPos_XYZ);
+                C3<float> thisB0 = kj_interp1D(thisPos_CYL.c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
 
 #if GC_ORBITS >= 1
                 C3<float> par = thisB0 / mag(thisB0);
@@ -806,11 +812,19 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 // why is this exp(-iwt) here? surely it's not required for the freq domain calc?
 
                 C3<std::complex<float> > E1_XYZ;
-                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
+#if CYLINDRICAL_INPUT_FIELDS >=1 
+                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromCYL(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
+#else
+                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), ky);
+#endif
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
                 C3<std::complex<float> > B1_XYZ;
-                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
+#if CYLINDRICAL_INPUT_FIELDS >=1 
+                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromCYL(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
+#else
+                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), ky);
+#endif
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
                 //if (iX == write_iX && iP == write_iP) {
@@ -856,6 +870,21 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 this_e1_dot_gradvf0[i] = dot(this_force, gradv_f0_XYZ);
                 if(thisParticle_XYZ.status>0) this_e1_dot_gradvf0[i] = 0; // To account for the / 0 above.
 
+                // Get the per and par contributions to the total e1DotGradvF0 for debugging 
+
+                C3<float> par = thisB0 / mag(thisB0);
+                C3<float> per = cross(par,C3<float>(1,0,0));
+                per = per / mag(per);
+
+                C3<std::complex<float> > par_force = par*dot(this_force,par);
+                C3<float> par_gradf = par*dot(gradv_f0_XYZ,par);
+
+                C3<std::complex<float> > per_force = this_force - par_force;
+                C3<float> per_gradf = gradv_f0_XYZ - par_gradf;
+
+                this_e1_dot_gradvf0_perOnly[i] = dot(per_force, per_gradf);
+                this_e1_dot_gradvf0_parOnly[i] = dot(par_force, par_gradf);
+
 #endif
 
 #if LOWMEM_ORBIT_WRITE >= 1
@@ -874,9 +903,9 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 if (iX == write_iX && iP == write_iP) {
                     OrbitFile << scientific;
                     OrbitFile << thisT[i] << "    " 
-                              << thisPos.c1 << "    " 
-                              << thisPos.c2 << "    " 
-                              << thisPos.c3 << "    " 
+                              << thisPos_XYZ.c1 << "    " 
+                              << thisPos_XYZ.c2 << "    " 
+                              << thisPos_XYZ.c3 << "    " 
                               << real(thisE1c_XYZ[i].c1) << "    " 
                               << imag(thisE1c_XYZ[i].c1) << "    "
                               << real(thisE1c_XYZ[i].c2) << "    "
@@ -899,8 +928,14 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 }
                 if (iX == write_iX && iP == write_iP) {
                     e1_dot_grad_File << scientific;
-                    e1_dot_grad_File << thisT[i] << "    " << real(this_e1_dot_gradvf0[i])
-                                     << "    " << imag(this_e1_dot_gradvf0[i]) << std::endl;
+                    e1_dot_grad_File << thisT[i] 
+                                    << "    " << real(this_e1_dot_gradvf0[i])
+                                    << "    " << imag(this_e1_dot_gradvf0[i]) 
+                                    << "    " << real(this_e1_dot_gradvf0_perOnly[i])
+                                    << "    " << imag(this_e1_dot_gradvf0_perOnly[i])
+                                    << "    " << real(this_e1_dot_gradvf0_parOnly[i])
+                                    << "    " << imag(this_e1_dot_gradvf0_parOnly[i])
+                                    << std::endl;
                 }
 #endif
             }
@@ -916,7 +951,10 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 
             // Add the offset to the GC time integration 
 
-            C3<float> thisB0 = kj_interp1D(ThisParticleList[iP].c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
+            C3<float> StartingPos_XYZ(ThisParticleList[iP].c1, ThisParticleList[iP].c2, ThisParticleList[iP].c3);
+            C3<float> StartingPos_CYL = XYZ_to_CYL(StartingPos_XYZ)
+ 
+            C3<float> thisB0 = kj_interp1D(StartingPos_CYL.c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
             C3<float> par = thisB0 / mag(thisB0);
             C3<float> per = cross(par,C3<float>(1,0,0));
             per = per / mag(per);
@@ -938,6 +976,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
 
             float this_angle_perp_re = std::acos(dot(perp_force_re,perp_gradf) / (mag(perp_force_re)*mag(perp_gradf)));
             float this_angle_perp_im = std::acos(dot(perp_force_im,perp_gradf) / (mag(perp_force_im)*mag(perp_gradf)));
+
+            // what is the total angle, not just the perp one?
 
             std::complex<float> this_angle_perp = std::complex<float>(this_angle_perp_re,this_angle_perp_im);
 
@@ -1000,13 +1040,16 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 std::cout<<"thisE1c_XYZ: "<<thisE1c_XYZ[0]<<std::endl;
                 std::cout<<"this_force: "<<initial_force<<std::endl;
                 std::cout<<"this_angle_perp: "<<this_angle_perp*float(180.0f/physConstants::pi)<<std::endl;
+                std::cout<<"perp_force: "<<perp_force<<std::endl;
+                std::cout<<"perp_gradv: "<<perp_gradf<<std::endl;
+                std::cout<<"initial_gradv_f0_XYZ:"<<initial_gradv_f0_XYZ<<std::endl;
             }
 #endif
 
             if (iX == write_iX && iP == write_iP) {
-                    for(int i=0; i<nSteps;i++){
-                        std::cout<<"this_e1_dot_gradvf0[i]: "<<this_e1_dot_gradvf0[i]<<std::endl;
-                    }
+                    //for(int i=0; i<nSteps;i++){
+                    //    std::cout<<"this_e1_dot_gradvf0[i]: "<<this_e1_dot_gradvf0[i]<<std::endl;
+                    //}
                     std::cout<<"this_f1c: "<<this_f1c<<std::endl;
             }
 
@@ -1057,6 +1100,8 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
                 std::cout<<"dv: "<<dv<<std::endl;
                 std::cout<<"f1c[iP]: "<<f1c[iP]<<std::endl;
                 std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
+                std::cout<<"j1yc[iX]: "<<j1yc[iX]<<std::endl;
+                std::cout<<"j1zc[iX]: "<<j1zc[iX]<<std::endl;
             }
 
 #if F1_WRITE >= 1
@@ -1384,7 +1429,14 @@ std::cout << "Continuing with non functor approach ..." << std::endl;
         nc_j1zc_re.putVar(&tmpJzRe);
         nc_j1zc_im.putVar(&tmpJzIm);
 
+        if (iX == write_iX) {
+            std::cout<<"write_iX"<<std::endl;
+        }
+
         std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
+        std::cout<<"j1yc[iX]: "<<j1yc[iX]<<std::endl;
+        std::cout<<"j1zc[iX]: "<<j1zc[iX]<<std::endl;
+
     }
 
     // ProfilerStop();

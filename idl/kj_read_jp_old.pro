@@ -37,7 +37,6 @@ pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z
 			ncdf_varget, cdfId, 'j1zc_re', j1zc_re 
 			ncdf_varget, cdfId, 'j1zc_im', j1zc_im
 
-
 		nCdf_close,	cdfId 
 
 		xF[f] = x

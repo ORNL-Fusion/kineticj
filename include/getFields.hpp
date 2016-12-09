@@ -28,11 +28,20 @@ using namespace std;
 
 #ifdef __CUDACC__
 HOST DEVICE
-C3<thrust::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi);
+C3<thrust::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi);
 #endif
 
 HOST
-C3<std::complex<float> > getE1orB1_XYZ(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, int nPhi);
+C3<std::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, int nPhi);
+
+#ifdef __CUDACC__
+HOST DEVICE
+C3<thrust::complex<float> > getE1orB1_XYZ_fromXYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, float ky);
+#endif
+
+HOST
+C3<std::complex<float> > getE1orB1_XYZ_fromXYZ(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, float ky);
+
 
 #include "getFields.tpp"
 
@@ -46,17 +55,22 @@ struct getPerturbedField_device
     C3<thrust::complex<float> > *field_CYL;
     int nR;
     int nPhi;
+    float ky;
     float weight;
     float wrf;
     float t;
 
-    getPerturbedField_device( float *_r, C3<thrust::complex<float> > *_field_CYL, int _nR, int _nPhi, float _weight, float _wrf, float _t) : 
-            r(_r), field_CYL(_field_CYL), nR(_nR), nPhi(_nPhi), weight(_weight), wrf(_wrf), t(_t) {}
+    getPerturbedField_device( float *_r, C3<thrust::complex<float> > *_field_CYL, int _nR, int _nPhi, float _ky, float _weight, float _wrf, float _t) : 
+            r(_r), field_CYL(_field_CYL), nR(_nR), nPhi(_nPhi), ky(_ky), weight(_weight), wrf(_wrf), t(_t) {}
 
     HOST DEVICE
     C3<thrust::complex<float> > operator() (CParticle &p) {
         thrust::complex<float> _i(0, 1);
-        C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ(p, r, field_CYL, nR, nPhi);
+#if CYLINDRICAL_INPUT_FIELDS >=1
+        C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, nPhi);
+#else
+        C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, ky);
+#endif
         C3<thrust::complex<float> > field_XYZ = E1_XYZ * (1 - p.status);
         return field_XYZ;
     }
@@ -70,17 +84,22 @@ struct getPerturbedField
     C3<std::complex<float> > *field_CYL;
     int nR;
     int nPhi;
+    float ky;
     float weight;
     float wrf;
     float t;
 
-    getPerturbedField( float *_r, C3<std::complex<float> > *_field_CYL, int _nR, int _nPhi, float _weight, float _wrf, float _t) : 
-            r(_r), field_CYL(_field_CYL), nR(_nR), nPhi(_nPhi), weight(_weight), wrf(_wrf), t(_t) {}
+    getPerturbedField( float *_r, C3<std::complex<float> > *_field_CYL, int _nR, int _nPhi, float _ky, float _weight, float _wrf, float _t) : 
+            r(_r), field_CYL(_field_CYL), nR(_nR), nPhi(_nPhi), ky(_ky), weight(_weight), wrf(_wrf), t(_t) {}
 
     HOST 
     C3<std::complex<float> > operator() (CParticle &p) {
         std::complex<float> _i(0, 1);
-        C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ(p, r, field_CYL, nR, nPhi);
+#if CYLINDRICAL_INPUT_FIELDS >=1
+        C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, nPhi);
+#else
+        C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, ky);
+#endif
         C3<std::complex<float> > field_XYZ = E1_XYZ * (1 - p.status);
         return field_XYZ;
     }

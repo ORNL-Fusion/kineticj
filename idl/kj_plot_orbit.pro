@@ -1,12 +1,13 @@
-pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
+pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz, runDir=_runDir
 
     if keyword_set(_overPlotLorentz) then overPlotLorentz=_overPlotLorentz else overPlotLorentz=0
+    if keyword_set(_runDir) then runDir=_runDir else runDir='./'
+
     lorentzDir = '~/scratch/kineticj/colestock-kashuba-lorentz/'
 
-	runFile = './'
-	cfg = kj_read_cfg (runFile)	
+	cfg = kj_read_cfg (runDir)	
 
-    fileName = 'output/orbit_e1_dot_grad_df0_dv.txt'
+    fileName = runDir+'/output/orbit_e1_dot_grad_df0_dv.txt'
     nHeader = 1
     N = file_lines(fileName)-nHeader
     e1_dot_data = replicate({t:0.0,re:0.0,im:0.0,rePer:0.0,imPer:0.0,rePar:0.0,imPar:0.0},N)
@@ -98,7 +99,7 @@ pro kj_plot_orbit, overPlotLorentz=_overPlotLorentz
         p=plot(t,total((im),/cum)*dtL,/over,color='r')
     endif
 
-    fileName = 'output/orbit.txt'
+    fileName = runDir+'/output/orbit.txt'
     nHeader = 2
     N = file_lines(fileName)-nHeader
     orbit = replicate({t:0.0, x:0.0,y:0.0,z:0.0,$

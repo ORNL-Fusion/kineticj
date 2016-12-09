@@ -4,7 +4,7 @@
 PRAGMA
 template <typename T>
 HOST DEVICE
-T kj_interp1D ( const float &x, const float *xVec, const T *yVec, int n, int &status ) {
+T kj_interp1D ( float &x, const float *xVec, const T *yVec, int n, int &status ) {
 
     int x0, x1;
 	float _x;

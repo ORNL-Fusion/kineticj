@@ -50,30 +50,30 @@ int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
 // Particle absorbing walls
 #elif _PARTICLE_BOUNDARY == 2
     // Periodic
-    if (p.c1 < r.front()) {
+    if (p.c1 < r[0]) {
 #if DEBUGLEVEL >= 1
         cout << "Particle went left" << endl;
 #endif
-        p.c1 = r.back() - (r.front() - p.c1);
+        p.c1 = r[nR-1] - (r[0] - p.c1);
     }
-    if (p.c1 > r.back()) {
+    if (p.c1 > r[nR-1]) {
 #if DEBUGLEVEL >= 1
         cout << "Particle went right" << endl;
 #endif
-        p.c1 = r.front() + (p.c1 - r.back());
+        p.c1 = r[0] + (p.c1 - r[nR-1]);
     }
 #elif _PARTICLE_BOUNDARY == 3
     // Particle reflecting walls
-    if (p.c1 < r.front()) {
+    if (p.c1 < r[0]) {
         cout << "Particle hit the left wall" << endl;
-        cout << "r.front(): " << r.front() << endl;
-        p.c1 = r.front() + (r.front() - p.c1);
+        cout << "r.front(): " << r[0] << endl;
+        p.c1 = r[0] + (r[0] - p.c1);
         p.v_c1 = -p.v_c1;
     }
-    if (p.c1 > r.back()) {
+    if (p.c1 > r[nR-1]) {
         cout << "Particle hit the right wall" << endl;
-        cout << "r.back(): " << r.back() << endl;
-        p.c1 = r.back() - (p.c1 - r.back());
+        cout << "r[nR-1]: " << r[nR-1] << endl;
+        p.c1 = r[nR-1] - (p.c1 - r[nR-1]);
         p.v_c1 = -p.v_c1;
     }
 #endif

@@ -13,9 +13,8 @@ using namespace exceptions;
 
 int read_e_field(std::string eField_fName, int& species_number, float& freq,
     std::vector<float>& r, std::vector<float>& n_m3,
-    std::vector<C3<std::complex<float> > >& e1_CYL, std::vector<C3<std::complex<float> > >& b1_CYL,
-    std::vector<C3<float> >& e1Re_CYL, std::vector<C3<float> >& e1Im_CYL,
-    std::vector<C3<float> >& b1Re_CYL, std::vector<C3<float> >& b1Im_CYL,
+    std::vector<C3<std::complex<float> > >& e1_CYL, 
+    std::vector<C3<std::complex<float> > >& b1_CYL,
     std::vector<C3<float> >& b0_CYL)
 {
 
@@ -42,16 +41,22 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
 
     try {
 #if DEBUG_READ_E_FIELD >= 1
-        std::cout<<"Message: DEBUG_READ_E_FIELD enabled"<<nR<<std::endl;
+        std::cout<<"Message: DEBUG_READ_E_FIELD enabled"<<std::endl;
 #endif
- 
         std::cout << "Reading E field data file ... " << eField_fName << std::endl;
         NcFile dataFile(eField_fName.c_str(), NcFile::read);
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Pre getDim"<<std::endl;
+#endif
         NcDim nc_nR(dataFile.getDim("nR"));
         NcDim nc_nSpec(dataFile.getDim("nSpec"));
         NcDim nc_scalar(dataFile.getDim("scalar"));
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Post getDim "<<std::endl;
+#endif
+ 
         int nR = nc_nR.getSize();
         int nSpec = nc_nSpec.getSize();
 
@@ -59,9 +64,14 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
             std::cout << "ERROR: Asking for species that does not exist in density data" << std::endl;
             exit(1);
         }
-
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Post spec num check "<<std::endl;
+#endif
         std::cout << "\tnR: " << nR << std::endl;
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Pre getVar "<<std::endl;
+#endif
         NcVar nc_r(dataFile.getVar("r"));
         NcVar nc_freq(dataFile.getVar("freq"));
 
@@ -83,8 +93,14 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         NcVar nc_b_p_im(dataFile.getVar("b_p_im"));
         NcVar nc_b_z_im(dataFile.getVar("b_z_im"));
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Pre getVar density"<<std::endl;
+#endif
         NcVar nc_density(dataFile.getVar("density_m3"));
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Post getVar density"<<std::endl;
+#endif
         r.resize(nR);
 
         b0_r.resize(nR);
@@ -120,16 +136,23 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         std::vector<size_t> start, count;
         start.resize(2);
         count.resize(2);
-        start[1] = 0;
         start[0] = species_number;
-        count[1] = nR;
+        start[1] = 0;
         count[0] = 1;
+        count[1] = nR;
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Pre nc_density.getVar()"<<std::endl;
+#endif
         nc_density.getVar(start, count, &n_m3[0]);
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Post nc_density.getVar()"<<std::endl;
+#endif
+ 
 #if DEBUG_READ_E_FIELD >= 1
         std::cout<<"nR: "<<nR<<std::endl;
         for (int i = 0; i < nR; i++) {
-            std::cout<<"density: "<<nc_density[i]<<std::endl;
+            std::cout<<"density: "<<n_m3[i]<<std::endl;
         }
 #endif
         try {
@@ -144,6 +167,9 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
             b0_CYL[i] = C3<float>(b0_r[i], b0_p[i], b0_z[i]);
         }
 
+#if DEBUG_READ_E_FIELD >= 1
+        std::cout<<"Pre nc_e_r_re.getVar()"<<std::endl;
+#endif
         nc_e_r_re.getVar(&e_r_re[0]);
         nc_e_p_re.getVar(&e_p_re[0]);
         nc_e_z_re.getVar(&e_z_re[0]);
@@ -187,33 +213,14 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         exit(1);
     }
 
-    e1Re_CYL.resize(e_r.size());
-    e1Im_CYL.resize(e_r.size());
-    b1Re_CYL.resize(e_r.size());
-    b1Im_CYL.resize(e_r.size());
-
     e1_CYL.resize(e_r.size());
     b1_CYL.resize(b_r.size());
 
     for (int i = 0; i < e_r.size(); i++) {
 
-        e1Re_CYL[i].c1 = real(e_r[i]);
-        e1Re_CYL[i].c2 = real(e_p[i]);
-        e1Re_CYL[i].c3 = real(e_z[i]);
-        e1Im_CYL[i].c1 = imag(e_r[i]);
-        e1Im_CYL[i].c2 = imag(e_p[i]);
-        e1Im_CYL[i].c3 = imag(e_z[i]);
-
-        b1Re_CYL[i].c1 = real(b_r[i]);
-        b1Re_CYL[i].c2 = real(b_p[i]);
-        b1Re_CYL[i].c3 = real(b_z[i]);
-        b1Im_CYL[i].c1 = imag(b_r[i]);
-        b1Im_CYL[i].c2 = imag(b_p[i]);
-        b1Im_CYL[i].c3 = imag(b_z[i]);
-
         e1_CYL[i].c1 = e_r[i];
-        e1_CYL[i].c2 = e_p[i];
-        e1_CYL[i].c3 = e_z[i];
+        e1_CYL[i].c2 = e_p[i]*std::complex<float>(0);
+        e1_CYL[i].c3 = e_z[i]*std::complex<float>(0);
 
         b1_CYL[i].c1 = b_r[i];
         b1_CYL[i].c2 = b_p[i];
