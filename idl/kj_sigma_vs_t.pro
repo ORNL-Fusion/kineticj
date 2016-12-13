@@ -2,6 +2,10 @@ pro kj_sigma_vs_t, runKJ=runKJ
 
 @constants
 
+E1 = 0
+E2 = 0
+E3 = 1
+
 n = 100
 tMin = 0.1
 tMax = 10e3
@@ -15,8 +19,8 @@ density = 2d19
 harmonicNumber = 1
 kPar = 100  
 kPer = 10 
-kj_nStepsPerCycle = 30.0
-kj_nRFCycles = 10.0 
+kj_nStepsPerCycle = 100.0
+kj_nRFCycles = 20.0 
  
 eps = ComplexArr(3,3,n)
 eps_cold = ComplexArr(3,3,n)
@@ -42,8 +46,8 @@ endfor
 
 ; Stage and run kj over this range of temperatures 
 
-n_kj = 100
-tMin = 0.1 
+n_kj = 10
+tMin = 100 
 tMax = 10e3
 T_eV_kj = 10d0^(findGen(n_kj)/(n_kj-1)*(alog10(tMax)-alog10(tMin))+alog10(tMin)) 
 ;T_eV_kj = [0.1,1.0,10.0,100.0,1000.0, 10000.0]
@@ -73,7 +77,8 @@ for t=0,nT-1 do begin
     cd, ThisRunDir
 
     kj_create_single_k_input, b0=B, kPar=kPar, kPer=kPer, f_Hz=f, n_m3=density, $
-            Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=runKJ
+            Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=runKJ, $
+            E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3
 
     if keyword_set(runKJ) then begin
 
@@ -88,9 +93,9 @@ for t=0,nT-1 do begin
         kj['ky'] = kPar
         kj['nStepsPerCycle'] = kj_nStepsPerCycle 
         kj['nRFCycles'] = kj_nRFCycles
-        kj['nPx'] = 10
-        kj['nPy'] = 65
-        kj['nPz'] = 10
+        kj['nPx'] = 20
+        kj['nPy'] = 100
+        kj['nPz'] = 20
 
         kj_write_kj_cfg, kj, './'
 
@@ -105,15 +110,30 @@ for t=0,nT-1 do begin
 
     ; Read in kj results
 
+    ;kj_read_jp_old, x=kj_x, j1x=kj_j1x, j1y=kj_j1y, j1z=kj_j1z, /oldFormat
     kj_read_jp_old, x=kj_x, j1x=kj_j1x, j1y=kj_j1y, j1z=kj_j1z
-    
+   
     kj_Er = interpol(Er,x,kj_x)
     kj_Et = interpol(Et,x,kj_x)
     kj_Ez = interpol(Ez,x,kj_x)
-    
-    sig1[t] = (kj_j1x/kj_Er)[0]
-    sig2[t] = (kj_j1y/kj_Et)[0]
-    sig3[t] = (kj_j1z/kj_Ez)[0]
+   
+    if E1 then begin 
+        sig1[t] = (kj_j1x/kj_Er)[0]
+        sig2[t] = (kj_j1y/kj_Er)[0]
+        sig3[t] = (kj_j1z/kj_Er)[0]
+    endif
+
+    if E2 then begin 
+        sig1[t] = (kj_j1x/kj_Et)[0]
+        sig2[t] = (kj_j1y/kj_Et)[0]
+        sig3[t] = (kj_j1z/kj_Et)[0]
+    endif
+
+    if E3 then begin 
+        sig1[t] = (kj_j1x/kj_Ez)[0]
+        sig2[t] = (kj_j1y/kj_Ez)[0]
+        sig3[t] = (kj_j1z/kj_Ez)[0]
+    endif
 
     cd, RootDir
 
@@ -128,13 +148,15 @@ transparency = 50
 plotThis = sig
 plotThis_cold = sig_cold
 
-p=plot(T_eV,plotThis[0,0,*],layout=[[layout],pos],title='plotThis[0,0]',/xlog,yRange=[-1,1]*max(abs(plotThis[0,0,*])))
+p=plot(T_eV,plotThis[0,0,*],layout=[[layout],pos],title='plotThis[0,0]',/xlog,yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,font_size=8)
 p=plot(T_eV,imaginary(plotThis[0,0,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E1 then begin
 p=plot(T_eV_kj, sig1, /over, thick=2)
 p=plot(T_eV_kj, imaginary(sig1), color='r', /over, thick=2)
+endif
 
 ++pos 
 p=plot(T_eV,plotThis[0,1,*],layout=[[layout],pos],title='plotThis[0,1]',/current,/xlog)
@@ -142,8 +164,10 @@ p=plot(T_eV,imaginary(plotThis[0,1,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[0,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[0,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E1 then begin
 p=plot(T_eV_kj, sig3, /over, thick=2)
 p=plot(T_eV_kj, imaginary(sig3), color='r', /over, thick=2)
+endif
 
 ++pos 
 p=plot(T_eV,plotThis[0,2,*],layout=[[layout],pos],title='plotThis[0,2]',/current,/xlog)
@@ -151,8 +175,10 @@ p=plot(T_eV,imaginary(plotThis[0,2,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[0,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[0,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E1 then begin
 p=plot(T_eV_kj, sig2, /over, thick=2)
 p=plot(T_eV_kj, imaginary(sig2), color='r', /over, thick=2)
+endif
 
 ++pos
 p=plot(T_eV,plotThis[1,0,*],layout=[[layout],pos],title='plotThis[1,0]',/current,/xlog)
@@ -160,11 +186,21 @@ p=plot(T_eV,imaginary(plotThis[1,0,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[1,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[1,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E2 then begin
+p=plot(T_eV_kj, sig1, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig1), color='r', /over, thick=2)
+endif
+
 ++pos 
 p=plot(T_eV,plotThis[1,1,*],layout=[[layout],pos],title='plotThis[1,1]',/current,/xlog)
 p=plot(T_eV,imaginary(plotThis[1,1,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[1,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[1,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+
+if E2 then begin
+p=plot(T_eV_kj, sig3, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig3), color='r', /over, thick=2)
+endif
 
 ++pos 
 p=plot(T_eV,plotThis[1,2,*],layout=[[layout],pos],title='plotThis[1,2]',/current,/xlog)
@@ -172,11 +208,21 @@ p=plot(T_eV,imaginary(plotThis[1,2,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[1,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[1,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E2 then begin
+p=plot(T_eV_kj, sig2, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig2), color='r', /over, thick=2)
+endif
+
 ++pos
 p=plot(T_eV,plotThis[2,0,*],layout=[[layout],pos],title='plotThis[2,0]',/current,/xlog)
 p=plot(T_eV,imaginary(plotThis[2,0,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[2,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[2,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+
+if E3 then begin
+p=plot(T_eV_kj, sig1, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig1), color='r', /over, thick=2)
+endif
 
 ++pos 
 p=plot(T_eV,plotThis[2,1,*],layout=[[layout],pos],title='plotThis[2,1]',/current,/xlog)
@@ -184,13 +230,23 @@ p=plot(T_eV,imaginary(plotThis[2,1,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[2,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[2,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E3 then begin
+p=plot(T_eV_kj, sig3, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig3), color='r', /over, thick=2)
+endif
+
 ++pos 
 p=plot(T_eV,plotThis[2,2,*],layout=[[layout],pos],title='plotThis[2,2]',/current,/xlog)
 p=plot(T_eV,imaginary(plotThis[2,2,*]),color='r',/over)
 p=plot(T_eV,plotThis_cold[2,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(T_eV,imaginary(plotThis_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
+if E3 then begin
+p=plot(T_eV_kj, sig2, /over, thick=2)
+p=plot(T_eV_kj, imaginary(sig2), color='r', /over, thick=2)
+endif
 
+p.save, 'kj_sigma_vs_t.png', resolution=300, /transparent
 stop
 
 end

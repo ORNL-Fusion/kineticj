@@ -1,6 +1,9 @@
 pro kj_create_single_k_input, $
         b0=_b0, kPar=_kPar, kPer=_kPer, f_Hz=_f_Hz, n_m3=_n_m3, $
-        Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=writeOutput
+        Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=writeOutput, $
+        E1Multiplier=_E1Multiplier, $
+        E2Multiplier=_E2Multiplier, $
+        E3Multiplier=_E3Multiplier
 
 @constants
 
@@ -9,6 +12,9 @@ if keyword_set(_kPar) then kPar = _kPar else kPar = 1
 if keyword_set(_kPer) then kPer = _kPer else kPer = 1
 if keyword_set(_f_Hz) then f_Hz = _f_Hz else f_Hz = 13.56e6 
 if keyword_set(_n_m3) then n_m3 = _n_m3 else n_m3 = 1e19 
+if keyword_set(_E1Multiplier) then E1Multiplier = _E1Multiplier else E1Multiplier = 0 
+if keyword_set(_E2Multiplier) then E2Multiplier = _E2Multiplier else E2Multiplier = 0 
+if keyword_set(_E3Multiplier) then E3Multiplier = _E3Multiplier else E3Multiplier = 0 
 
 lambdaPar = 2*!Pi/kPar
 lambdaPer = 2*!Pi/kPer
@@ -34,6 +40,10 @@ EmagZ = 2
 Er = EmagR*exp(-_II*kPer*x)
 Et = EmagT*exp(-_II*kPer*x)
 Ez = EmagZ*exp(-_II*kPer*x)
+
+Er = Er * E1Multiplier
+Et = Et * E2Multiplier
+Ez = Ez * E3Multiplier
 
 br = fltArr(nPts)
 bt = fltArr(nPts)+b0 

@@ -1,5 +1,7 @@
-pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z
-	
+pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z, oldFormat=_oldFormat
+
+if keyword_set(_oldFormat) then begin
+
 	fileList = file_search ( 'output/jP*' )
 
 	cdfId = ncdf_open(fileList[0])
@@ -50,5 +52,28 @@ pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z
         j1z[f] = j1zc[f]
 	
 	endfor
+
+endif else begin
+
+	cdfId = ncdf_open('jP2.nc')
+
+		ncdf_varget, cdfId, 'x', x2 
+
+		ncdf_varget, cdfId, 'j1xc_re', jPr_re2
+		ncdf_varget, cdfId, 'j1xc_im', jPr_im2
+		ncdf_varget, cdfId, 'j1yc_re', jPt_re2
+		ncdf_varget, cdfId, 'j1yc_im', jPt_im2
+		ncdf_varget, cdfId, 'j1zc_re', jPz_re2
+		ncdf_varget, cdfId, 'j1zc_im', jPz_im2
+
+	ncdf_close, cdfId
+
+    xF = x2
+
+    j1x=complex(jPr_re2,jPr_im2)
+    j1y=complex(jPt_re2,jPt_im2)
+    j1z=complex(jPz_re2,jPz_im2)
+
+endelse
 
 end

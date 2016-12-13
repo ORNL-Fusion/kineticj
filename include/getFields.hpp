@@ -69,7 +69,7 @@ struct getPerturbedField_device
 #if CYLINDRICAL_INPUT_FIELDS >=1
         C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, nPhi);
 #else
-        C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, ky);
+        C3<thrust::complex<float> > E1_XYZ = weight * thrust::exp(-_i * wrf * t) * getE1orB1_XYZ_fromXYZ(p, r, field_CYL, nR, ky);
 #endif
         C3<thrust::complex<float> > field_XYZ = E1_XYZ * (1 - p.status);
         return field_XYZ;
@@ -98,7 +98,7 @@ struct getPerturbedField
 #if CYLINDRICAL_INPUT_FIELDS >=1
         C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, nPhi);
 #else
-        C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ_fromCYL(p, r, field_CYL, nR, ky);
+        C3<std::complex<float> > E1_XYZ = weight * std::exp(-_i * wrf * t) * getE1orB1_XYZ_fromXYZ(p, r, field_CYL, nR, ky);
 #endif
         C3<std::complex<float> > field_XYZ = E1_XYZ * (1 - p.status);
         return field_XYZ;

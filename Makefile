@@ -1,7 +1,7 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA:=0
+USECUDA:=1
 
 NAME := bin/kineticj
 
@@ -64,17 +64,15 @@ CPPFLAGS += -DDEBUG_FORCE_TERM=0
 CPPFLAGS += -DDEBUG_MOVE=0
 CPPFLAGS += -DLOWMEM_ORBIT_WRITE=1
 CPPFLAGS += -DDEBUG_ROTATION=0
-CPPFLAGS += -DF1_WRITE=1
+CPPFLAGS += -DF1_WRITE=0
 CPPFLAGS += -std=c++11
 CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=0
-CPPFLAGS += -DDO_CPU_APPROACH=1
+CPPFLAGS += -DDO_CPU_APPROACH=0
 CPPFLAGS += -DDEBUG_INTVECARRAY=0
 CPPFLAGS += -DDEBUG_READ_E_FIELD=0
 CPPFLAGS += -DCYLINDRICAL_INPUT_FIELDS=0
 
-NVCCFLAGS := -dc --expt-relaxed-constexpr
-
-LINK := $(CPP) ${CXXFLAGS} ${LFLAGS}
+NVCCFLAGS := -dc --expt-relaxed-constexpr -Xcompiler -fopenmp
 
 # You shouldn't have to go below here
 #
@@ -98,10 +96,10 @@ NVCCFLAGS += $(INCLUDEFLAGS)
 
 # determine the object files
 SRCTYPES := c cpp cu 
-LINK := $(CPP) $(CXXFLAGS) $(LFLAGS)
+LINK := $(CPP) $(CXXFLAGS) $(LFLAGS) 
 
 ifeq ($(USECUDA),1)
-LINK := $(NVCC) $(LFLAGS) -lcuda
+LINK := $(NVCC) $(LFLAGS) -lcuda -Xcompiler -fopenmp 
 else
 NVCCFLAGS += --x c++
 endif

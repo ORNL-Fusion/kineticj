@@ -60,6 +60,34 @@ using namespace exceptions;
 int main(int argc, char** argv)
 {
 
+#ifdef __CUDACC__
+
+    int num_gpus = 0;   // number of CUDA GPUs
+
+    printf("%s Starting...\n\n", argv[0]);
+
+    // determine the number of CUDA capable GPUs
+    cudaGetDeviceCount(&num_gpus);
+
+    if (num_gpus < 1)
+    {
+        printf("no CUDA capable devices were detected\n");
+        return 1;
+    }
+
+    // display CPU and GPU configuration
+    printf("number of host CPUs:\t%d\n", omp_get_num_procs());
+    printf("number of CUDA devices:\t%d\n", num_gpus);
+
+    for (int i = 0; i < num_gpus; i++)
+    {
+        cudaDeviceProp dprop;
+        cudaGetDeviceProperties(&dprop, i);
+        printf("   %d: %s\n", i, dprop.name);
+    }
+
+#endif
+
     // Make sure the "output/" directory exists
 
     stringstream outputDirName;
@@ -680,7 +708,6 @@ int write_iP = 43;//52;//33;
             ofstream v1File;
             ofstream e1_dot_grad_File;
             ofstream df0dv_File;
-
 
             if (iX == write_iX && iP == write_iP) {
                 std::cout << "Write Particle Properties:" << std::endl;
