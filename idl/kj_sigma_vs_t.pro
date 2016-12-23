@@ -24,10 +24,6 @@ kz = kPar
 kj_nStepsPerCycle = 100.0
 kj_nRFCycles = 10.0 
 
-CorrectionMatrix = [    [   +1,   -1, -_ii], $
-                        [   -1,   +1, +_ii], $
-                        [ +_ii, -_ii,   +1] ] 
-
 eps = ComplexArr(3,3,n)
 eps_swan = ComplexArr(3,3,n)
 eps_cold = ComplexArr(3,3,n)
@@ -202,7 +198,6 @@ for t=0,nT_kj-1 do begin
 
     cd, RootDir
 
-    ;sig_kj[*,*,t] = sig_kj[*,*,t] * CorrectionMatrix
     sig_kj[*,*,t] = transpose(sig_kj[*,*,t])
 
 endfor
@@ -213,120 +208,157 @@ pos = 1
 thick = 2 
 style = '--'
 transparency = 50
+xFS = 6
+yFS = 6
+margin = [0.15,0.15,0.1,0.15]
 
 plotThis = sig
 plotThis_cold = sig_cold
 
-p=plot(T_eV,plotThis[0,0,*],layout=[[layout],pos],$
-        title='plotThis[0,0]',/xlog,yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
-        font_size=7, xTickFormat='(e8.1)', xText_Orientation=90)
-p=plot(T_eV,imaginary(plotThis[0,0,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[0,0,*],layout=[[layout],pos],$
+        title='$\sigma_{xx}$',yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin )
+p=plot(alog10(T_eV),imaginary(plotThis[0,0,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[0,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV_kj, sig_kj[0,0,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[0,0,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV_kj), sig_kj[0,0,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[0,0,*]), color='r', /over, thick=2)
 
-p=plot(T_eV, sig_swan[0,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[0,0,*]), color='m', /over, thick=1, lineStyle='--')
-
-++pos 
-p=plot(T_eV,plotThis[0,1,*],layout=[[layout],pos],title='plotThis[0,1]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[0,1,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[0,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[0,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
-
-p=plot(T_eV_kj, sig_kj[0,1,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[0,1,*]), color='r', /over, thick=2)
-
-p=plot(T_eV, sig_swan[0,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[0,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV), sig_swan[0,0,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[0,0,*]), color='m', /over, thick=1, lineStyle='--')
 
 ++pos 
-p=plot(T_eV,plotThis[0,2,*],layout=[[layout],pos],title='plotThis[0,2]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[0,2,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[0,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[0,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[0,1,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{xy}$',yRange=[-1,1]*max(abs(plotThis[0,1,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{xy} [S/m]$', margin=margin )
+p=plot(alog10(T_eV),imaginary(plotThis[0,1,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[0,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[0,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV_kj, sig_kj[0,2,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[0,2,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV_kj), sig_kj[0,1,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[0,1,*]), color='r', /over, thick=2)
 
-p=plot(T_eV, sig_swan[0,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[0,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV), sig_swan[0,1,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[0,1,*]), color='m', /over, thick=1, lineStyle='--')
+
+++pos 
+p=plot(alog10(T_eV),plotThis[0,2,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{xz}$',yRange=[-1,1]*max(abs(plotThis[0,2,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{xz} [S/m]$', margin=margin )
+
+p=plot(alog10(T_eV),imaginary(plotThis[0,2,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[0,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[0,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+
+p=plot(alog10(T_eV_kj), sig_kj[0,2,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[0,2,*]), color='r', /over, thick=2)
+
+p=plot(alog10(T_eV), sig_swan[0,2,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[0,2,*]), color='m', /over, thick=1, lineStyle='--')
 
 ++pos
-p=plot(T_eV,plotThis[1,0,*],layout=[[layout],pos],title='plotThis[1,0]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[1,0,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[1,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[1,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[1,0,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{yx}$',yRange=[-1,1]*max(abs(plotThis[1,0,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{yx} [S/m]$', margin=margin )
 
-p=plot(T_eV_kj, sig_kj[1,0,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[1,0,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV),imaginary(plotThis[1,0,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[1,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[1,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV, sig_swan[1,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[1,0,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV_kj), sig_kj[1,0,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[1,0,*]), color='r', /over, thick=2)
 
-++pos 
-p=plot(T_eV,plotThis[1,1,*],layout=[[layout],pos],title='plotThis[1,1]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[1,1,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[1,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[1,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
-
-p=plot(T_eV_kj, sig_kj[1,1,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[1,1,*]), color='r', /over, thick=2)
-
-p=plot(T_eV, sig_swan[1,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[1,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV), sig_swan[1,0,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[1,0,*]), color='m', /over, thick=1, lineStyle='--')
 
 ++pos 
-p=plot(T_eV,plotThis[1,2,*],layout=[[layout],pos],title='plotThis[1,2]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[1,2,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[1,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[1,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[1,1,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{yy}$',yRange=[-1,1]*max(abs(plotThis[1,1,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{yy} [S/m]$', margin=margin )
 
-p=plot(T_eV_kj, sig_kj[1,2,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[1,2,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV),imaginary(plotThis[1,1,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[1,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[1,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV, sig_swan[1,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[1,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV_kj), sig_kj[1,1,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[1,1,*]), color='r', /over, thick=2)
+
+p=plot(alog10(T_eV), sig_swan[1,1,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[1,1,*]), color='m', /over, thick=1, lineStyle='--')
+
+++pos 
+p=plot(alog10(T_eV),plotThis[1,2,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{yz}$',yRange=[-1,1]*max(abs(plotThis[1,2,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{yz} [S/m]$', margin=margin )
+
+p=plot(alog10(T_eV),imaginary(plotThis[1,2,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[1,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[1,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+
+p=plot(alog10(T_eV_kj), sig_kj[1,2,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[1,2,*]), color='r', /over, thick=2)
+
+p=plot(alog10(T_eV), sig_swan[1,2,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[1,2,*]), color='m', /over, thick=1, lineStyle='--')
 
 ++pos
-p=plot(T_eV,plotThis[2,0,*],layout=[[layout],pos],title='plotThis[2,0]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[2,0,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[2,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[2,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[2,0,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{zx}$',yRange=[-1,1]*max(abs(plotThis[2,0,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{zx} [S/m]$', margin=margin )
 
-p=plot(T_eV_kj, sig_kj[2,0,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[2,0,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV),imaginary(plotThis[2,0,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[2,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[2,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV, sig_swan[2,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[2,0,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV_kj), sig_kj[2,0,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[2,0,*]), color='r', /over, thick=2)
 
-++pos 
-p=plot(T_eV,plotThis[2,1,*],layout=[[layout],pos],title='plotThis[2,1]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[2,1,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[2,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[2,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
-
-p=plot(T_eV_kj, sig_kj[2,1,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[2,1,*]), color='r', /over, thick=2)
-
-p=plot(T_eV, sig_swan[2,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[2,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV), sig_swan[2,0,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[2,0,*]), color='m', /over, thick=1, lineStyle='--')
 
 ++pos 
-p=plot(T_eV,plotThis[2,2,*],layout=[[layout],pos],title='plotThis[2,2]',/current,/xlog)
-p=plot(T_eV,imaginary(plotThis[2,2,*]),color='r',/over)
-p=plot(T_eV,plotThis_cold[2,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
-p=plot(T_eV,imaginary(plotThis_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),plotThis[2,1,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{zy}$',yRange=[-1,1]*max(abs(plotThis[2,1,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{zy} [S/m]$', margin=margin )
 
-p=plot(T_eV_kj, sig_kj[2,2,*], /over, thick=2)
-p=plot(T_eV_kj, imaginary(sig_kj[2,2,*]), color='r', /over, thick=2)
+p=plot(alog10(T_eV),imaginary(plotThis[2,1,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[2,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[2,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(T_eV, sig_swan[2,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(T_eV, imaginary(sig_swan[2,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(alog10(T_eV_kj), sig_kj[2,1,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[2,1,*]), color='r', /over, thick=2)
+
+p=plot(alog10(T_eV), sig_swan[2,1,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[2,1,*]), color='m', /over, thick=1, lineStyle='--')
+
+++pos 
+p=plot(alog10(T_eV),plotThis[2,2,*],layout=[[layout],pos],/current, $
+        title='$\sigma_{zz}$',yRange=[-1,1]*max(abs(plotThis[2,2,*])),/buffer,$
+        font_size=12, xTitle='log10( T [eV] )', xTickFont_size=xFS, yTickFont_size=yFS, $
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{zz} [S/m]$', margin=margin )
+
+p=plot(alog10(T_eV),imaginary(plotThis[2,2,*]),color='r',/over)
+p=plot(alog10(T_eV),plotThis_cold[2,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
+p=plot(alog10(T_eV),imaginary(plotThis_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
+
+p=plot(alog10(T_eV_kj), sig_kj[2,2,*], /over, thick=2)
+p=plot(alog10(T_eV_kj), imaginary(sig_kj[2,2,*]), color='r', /over, thick=2)
+
+p=plot(alog10(T_eV), sig_swan[2,2,*], /over, thick=1, color='m', lineStyle='--')
+p=plot(alog10(T_eV), imaginary(sig_swan[2,2,*]), color='m', /over, thick=1, lineStyle='--')
 
 p.save, 'kj_sigma_vs_t.png', resolution=300, /transparent
+p.save, 'kj_sigma_vs_t.pdf'
+
 stop
 
 end
