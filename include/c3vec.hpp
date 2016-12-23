@@ -183,7 +183,7 @@ struct multiplyByCharge
     PRAGMA
     HOST DEVICE
     T operator() (T &x, CParticle &p) {
-        T result = -(float)(p.q) * x;
+        T result = -(float)(p.q) * x; // Why is this minus sign here?
         return result;
     }
 };

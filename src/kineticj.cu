@@ -227,7 +227,8 @@ int main(int argc, char** argv)
     int nJpCycles = cfg.lookup("nJpCycles");
     int nJpPerCycle = cfg.lookup("nJpPerCycle");
     int nPhi = cfg.lookup("nPhi");
-    int ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
+    float ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
+    float kz = cfg.lookup("kz"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
     int nJp = nJpCycles * nJpPerCycle;
     //float dtJp = tRF / nJpPerCycle;
     int istat = 0;
@@ -241,6 +242,16 @@ int main(int argc, char** argv)
     float wc = Z * physConstants::e * MaxB0 / (amu * physConstants::mi);
     float cyclotronPeriod = 2 * physConstants::pi / wc;
     float dtMin = -cyclotronPeriod / nStepsPerCycle;
+
+    int SanityCheck = 0;
+
+    if (std::isinf(cyclotronPeriod)) ++SanityCheck;
+
+    if (SanityCheck > 0) {
+        std::cout<<"SanityCheck Failure"<<std::endl;
+        exit(SanityCheck);
+    }
+
     int nSteps = nRFCycles * tRF / std::abs(dtMin) + 1;
 
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -423,12 +434,12 @@ int main(int argc, char** argv)
 
         // E1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
-                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(E1_device.begin(),E1_device.end(),E1_host.begin());
 
         // B1(x) 
         thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
-                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
         thrust::copy(B1_device.begin(),B1_device.end(),B1_host.begin());
 
         // v x B1 
@@ -498,14 +509,14 @@ int main(int argc, char** argv)
 #endif
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
-                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
         
 #ifdef __CUDACC__
         std::cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<std::endl;
 #endif
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
-                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,ky,hanningWeight[i],wrf,thisT[i]) ); 
+                        getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
 
 #ifdef __CUDACC__
         std::cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<std::endl;
@@ -842,7 +853,7 @@ int write_iP = 43;//52;//33;
 #if CYLINDRICAL_INPUT_FIELDS >=1 
                 E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromCYL(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), nPhi);
 #else
-                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), ky);
+                E1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &e1_CYL[0], r.size(), ky, kz);
 #endif
                 thisE1c_XYZ[i] = E1_XYZ * (1 - thisParticle_XYZ.status);
 
@@ -850,7 +861,7 @@ int write_iP = 43;//52;//33;
 #if CYLINDRICAL_INPUT_FIELDS >=1 
                 B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromCYL(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), nPhi);
 #else
-                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), ky);
+                B1_XYZ = hanningWeight[i] * exp(-_i * wrf * thisT[i]) * getE1orB1_XYZ_fromXYZ(thisParticle_XYZ, &r[0], &b1_CYL[0], r.size(), ky, kz);
 #endif
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 

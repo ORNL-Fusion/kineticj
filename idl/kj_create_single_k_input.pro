@@ -1,53 +1,53 @@
 pro kj_create_single_k_input, $
-        b0=_b0, kPar=_kPar, kPer=_kPer, f_Hz=_f_Hz, n_m3=_n_m3, $
+        b0=_b0, bUnit=_bUnit, kx=_kx, f_Hz=_f_Hz, n_m3=_n_m3, $
         Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=writeOutput, $
         E1Multiplier=_E1Multiplier, $
         E2Multiplier=_E2Multiplier, $
-        E3Multiplier=_E3Multiplier
+        E3Multiplier=_E3Multiplier, $
+        fileName=_fileName
 
 @constants
 
 if keyword_set(_b0) then b0 = _b0 else b0 = 1
-if keyword_set(_kPar) then kPar = _kPar else kPar = 1
-if keyword_set(_kPer) then kPer = _kPer else kPer = 1
+if keyword_set(_bUnit) then bUnit = _bUnit else bUnit = [0,0,1]
+if keyword_set(_kx) then kx = _kx else kx = 1
 if keyword_set(_f_Hz) then f_Hz = _f_Hz else f_Hz = 13.56e6 
 if keyword_set(_n_m3) then n_m3 = _n_m3 else n_m3 = 1e19 
 if keyword_set(_E1Multiplier) then E1Multiplier = _E1Multiplier else E1Multiplier = 0 
 if keyword_set(_E2Multiplier) then E2Multiplier = _E2Multiplier else E2Multiplier = 0 
 if keyword_set(_E3Multiplier) then E3Multiplier = _E3Multiplier else E3Multiplier = 0 
+if keyword_set(_fileName) then fileName = _fileName else fileName = 'data/kj_single_1d.nc' 
 
-lambdaPar = 2*!Pi/kPar
-lambdaPer = 2*!Pi/kPer
+lambda = 2*!Pi/kx
 
-xOffset = 1e5
+xOffset = 0 
 nPts = 301L
 nCycles = 5 
-xRange = lambdaPer*nCycles
+xRange = lambda*nCycles
 dx = xRange / (nPts-1)
 x = fIndGen(nPts)*dx+xOffSet
 
-print, 'Parallel k: ', kPar
-print, 'Perp k: ', kPer
-print, 'Parallel Wavelength: ', lambdaPar
-print, 'nPhi to use: ', 2*!pi*xOffset/lambdaPar
+print, 'Parallel k: ', kx
+print, 'Parallel Wavelength: ', lambda
+print, 'nPhi to use: ', 2*!pi*xOffset/lambda
 print, 'xGridMin: ', x[0]
 print, 'xGridMax: ', x[-1]
 
-EmagR = 1
-EmagT = 0.1 
-EmagZ = 2
+EmagR = 1.0
+EmagT = 1.0 
+EmagZ = 1.0 
 
-Er = EmagR*exp(-_II*kPer*x)
-Et = EmagT*exp(-_II*kPer*x)
-Ez = EmagZ*exp(-_II*kPer*x)
+Er = EmagR*exp(_II*kx*x)
+Et = EmagT*exp(_II*kx*x)
+Ez = EmagZ*exp(_II*kx*x)
 
 Er = Er * E1Multiplier
 Et = Et * E2Multiplier
 Ez = Ez * E3Multiplier
 
-br = fltArr(nPts)
-bt = fltArr(nPts)+b0 
-bz = fltArr(nPts)
+br = fltArr(nPts)+b0*bUnit[0]
+bt = fltArr(nPts)+b0*bUnit[1]
+bz = fltArr(nPts)+b0*bUnit[2]
 
 Jpr = fltArr(nPts)
 Jpt = fltArr(nPts)
@@ -64,7 +64,7 @@ density = fltArr(nPts,1)+n_m3
 
 if keyword_set(writeOutput) then begin
 
-    nc_id = nCdf_create ('data/kj_single_1d.nc', /clobber )
+    nc_id = nCdf_create (fileName, /clobber )
     
     	nCdf_control, nc_id, /fill
     	

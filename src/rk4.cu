@@ -1,4 +1,6 @@
 #include "rk4.hpp"
+#include <iomanip>
+
 
 // Zero-order orbits
 HOST DEVICE
@@ -9,7 +11,12 @@ C3<float> rk4_evalf(CParticle& p, const float& t,
     C3<float> b0_XYZ;
     b0_XYZ = getB_XYZ(p, rVec, b0Vec_CYL, nR);
 
+    //std::cout<<"b1: "<<b0_XYZ.c1<<" b2: "<<b0_XYZ.c2<<" b3: "<<b0_XYZ.c3<<std::endl;
+    //std::cout<<"v1: "<<v_XYZ.c1<<" v2: "<<v_XYZ.c2<<" v3: "<<v_XYZ.c3<<std::endl;
+
     C3<float> v_x_b0 = cross(v_XYZ, b0_XYZ);
+
+    //std::cout<<"v_x_b0: "<<v_x_b0.c1<<" v_x_b0: "<<v_x_b0.c2<<" v_x_b0: "<<v_x_b0.c3<<std::endl;
 
     return v_x_b0 * (p.q / p.m);
 }
@@ -18,6 +25,9 @@ C3<float> rk4_evalf(CParticle& p, const float& t,
 HOST DEVICE
 int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
 {
+
+    //std::cout<<std::setprecision(21)<<"x: "<<p.c1<<" y: "<<p.c2<<" z: "<<p.c3
+    //        <<" vx: "<<p.v_c1<<" vy: "<<p.v_c2<<" vz: "<<p.v_c3<<std::endl;
 
     float t0 = 0;            
 
@@ -45,6 +55,12 @@ int rk4_move(CParticle& p, const float& dt, float *r, C3<float> *b0, int nR)
     p.v_c1 = yn1.c1;
     p.v_c2 = yn1.c2;
     p.v_c3 = yn1.c3;
+
+    //std::cout<<"xn1: "<<xn1.c1<<" xn1: "<<xn1.c2<<" xn1: "<<xn1.c3<<std::endl;
+
+    //std::cout<<std::setprecision(21)<<"_x: "<<p.c1<<" y: "<<p.c2<<" z: "<<p.c3
+    //        <<" vx: "<<p.v_c1<<" vy: "<<p.v_c2<<" vz: "<<p.v_c3<<std::endl;
+
 
 #if _PARTICLE_BOUNDARY == 1
 // Particle absorbing walls

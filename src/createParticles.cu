@@ -150,12 +150,7 @@ vector<CParticle> create_particles(float x, float amu, float Z, float T_keV, flo
                 C3<float> thisV_abp = rot_XYZ_to_abp(thisV_XYZ, this_b0_XYZ, 0);
 
                 pList[cnt].vPar = thisV_abp.c3;
-                //std::cout << "vPar 1: " << pList[cnt].vPar << std::endl;
-                //std::cout << "vPar 2: " << dot(thisV_XYZ,this_b0_XYZ/mag(this_b0_XYZ)) << std::endl;
                 pList[cnt].vPer = std::sqrt(std::pow(thisV_abp.c1, 2) + std::pow(thisV_abp.c2, 2));
-                //std::cout << "vPer 1: " << pList[cnt].vPer << std::endl;
-                //std::cout << "vPer 2: " << std::sqrt(std::pow(mag(thisV_XYZ),2)-std::pow(pList[cnt].vPar,2)) << std::endl;
- 
                 pList[cnt].gyroPhase = GetGyroPhase(thisV_abp);
                 pList[cnt].u = pList[cnt].m * std::pow(pList[cnt].vPer, 2) / (2.0 * bMag);
 

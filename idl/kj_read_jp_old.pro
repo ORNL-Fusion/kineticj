@@ -1,4 +1,4 @@
-pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z, oldFormat=_oldFormat
+pro kj_read_jp_old, x=xF, j1x=j1x, j1y=j1y, j1z=j1z, oldFormat=_oldFormat, fileName=_fileName
 
 if keyword_set(_oldFormat) then begin
 
@@ -55,7 +55,9 @@ if keyword_set(_oldFormat) then begin
 
 endif else begin
 
-	cdfId = ncdf_open('jP2.nc')
+    if keyword_set(_fileName) then fileName = _fileName else fileName = 'jP2.nc' 
+
+	cdfId = ncdf_open(fileName)
 
 		ncdf_varget, cdfId, 'x', x2 
 

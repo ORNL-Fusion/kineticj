@@ -121,7 +121,7 @@ function kj_zFunPrime, zeta
 end
 
 function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
-    epsilon_cold = epsilon_cold
+    epsilon_cold = epsilon_cold, epsilon_swan = epsilon_swan, kx = kx
 
 @constants
 
@@ -141,6 +141,20 @@ etahat = dcomplex(0,0)
 tauhat = dcomplex(0,0)
 epshat = dcomplex(0,0)
 
+K0 = dComplex(0,0)
+K1 = dComplex(1,0)
+K2 = dComplex(0,0)
+K3 = dComplex(1,0)
+K4 = dComplex(0,0)
+K5 = dComplex(0,0)
+
+K0_ND = dComplex(0,0)
+K1_ND = dComplex(1,0)
+K2_ND = dComplex(0,0)
+K3_ND = dComplex(1,0)
+K4_ND = dComplex(0,0)
+K5_ND = dComplex(0,0)
+
 for alp = 0,nS-1 do begin
    
     wc = q[alp] * B / m[alp]
@@ -157,7 +171,23 @@ for alp = 0,nS-1 do begin
     tau_sum = dcomplex(0,0)
     eps_sum = dcomplex(0,0)
 
+    K0_HarmSum = dComplex(0,0)
+    K1_HarmSum = dComplex(0,0)
+    K2_HarmSum = dComplex(0,0)
+    K3_HarmSum = dComplex(0,0)
+    K4_HarmSum = dComplex(0,0)
+    K5_HarmSum = dComplex(0,0)
+
+    K0_HarmSum_ND = dComplex(0,0)
+    K1_HarmSum_ND = dComplex(0,0)
+    K2_HarmSum_ND = dComplex(0,0)
+    K3_HarmSum_ND = dComplex(0,0)
+    K4_HarmSum_ND = dComplex(0,0)
+    K5_HarmSum_ND = dComplex(0,0)
+
     for n = -harmonicNumber,harmonicNumber do begin
+
+        ; Brambilla expressions 
 
         x = (w - n*wc) / (kPar * vTh)
         x0 = w / (kPar * vTh)
@@ -172,7 +202,51 @@ for alp = 0,nS-1 do begin
         tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
         eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * Zp )
 
+        ; Swanson, pg 175
+    
+        wc_swan = abs(wc)
+        x = (w + n*wc) / (kPar * vTh) ; Note the difference in sign here to Brambilla
+
+        Z = kj_zfunction(x, Zp=Zp)
+
+        v0 = 0
+        T_eV_Per = T_eV
+        T_eV_Par = T_eV
+        kz = kPar
+        In = beselI(lambda, n, /double)
+        Inp = kj_IPrime(lambda, n)
+
+        _f1 = ( 1.0 - kz * v0 / w )
+        _f2 = kz * vTh / w * ( 1 - T_eV_Per / T_eV_Par )
+        _f3 = _f1 * Z  + _f2 * Zp / 2.0
+
+        _f4 = ( w + n * wc_swan ) / ( kz * vTh ) 
+        _f5 = 1d0 + n * wc_swan / w * ( 1 - T_eV_Par / T_eV_Per ) 
+        _f6 = 2 * n * wc_swan * T_eV_Par * v0 / ( w * T_eV_Per * vTh )
+        _f7 = kz * vTh / ( w + n * wc_swan )
+
+        _f9 = n * wc_swan * v0 / ( w * vTh )
+        _f10 = T_eV_Per / T_eV_Par - n * wc_swan / w * ( 1.0 - T_eV_Per / T_eV_Par )
+
+        K0_HarmSum += lambda * ( In - Inp ) * _f3
+        K1_HarmSum += n^2 * In / lambda * _f3
+        K2_HarmSum += n * ( In - Inp ) * _f3
+        K3_HarmSum += In * _f4 * ( _f5 * Zp + _f6 * ( Z + _f7 ) ) 
+        K4_HarmSum += n * In / lambda * ( _f9 * Z + _f10 * Zp / 2.0 ) 
+        K5_HarmSum += ( In - Inp ) * ( _f9 * Z + _f10 * Zp / 2.0 )
+
+        ; Swanson No Drift (ND) Case, pg 176
+
+        K0_HarmSum_ND += lambda * ( In - Inp ) * Z
+        K1_HarmSum_ND += n^2 * In / lambda * Z
+        K2_HarmSum_ND += n * ( In - Inp ) * Z
+        K3_HarmSum_ND += In * x * Zp 
+        K4_HarmSum_ND += n * In / lambda * Zp  
+        K5_HarmSum_ND += ( In - Inp ) * Zp 
+
     endfor 
+
+    ; Brambilla
 
     Shat -= wp^2/w^2 * Ssum
     Dhat += wp^2/w^2 * Dsum
@@ -182,7 +256,29 @@ for alp = 0,nS-1 do begin
     tauHat += wp^2/wc^2 * vth^2/_c^2 * tau_sum
     epsHat += wp^2/(w*wc) * vTh^2/_c^2 * eps_sum
 
+    ; Swanson
+
+    _eps = atomicZ / abs(atomicZ) 
+    _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
+    _g2 = kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
+
+    K0 += 2 * _g1 * K0_HarmSum 
+    K1 += _g1 * K1_HarmSum
+    K2 += _ii * _eps * _g1 * K2_HarmSum
+    K3 -= _g1 * K3_HarmSum
+    K4 += _g2 * K4_HarmSum
+    K5 += _ii * _eps * _g2 * K5_HarmSum
+
+    K0_ND += 2 * _g1 * K0_HarmSum 
+    K1_ND += _g1 * K1_HarmSum
+    K2_ND += _ii * _eps * _g1 * K2_HarmSum
+    K3_ND -= _g1 * K3_HarmSum
+    K4_ND += _g2 * K4_HarmSum
+    K5_ND += _ii * _eps * _g2 * K5_HarmSum
+
 endfor
+
+; Brambilla
 
 etaHat = -etaHat/2.0
 tauHat = -tauHat/2.0
@@ -213,6 +309,64 @@ epsilon[1,2] = eyz
 epsilon[2,0] = ezx
 epsilon[2,1] = ezy
 epsilon[2,2] = ezz
+
+; Swamson
+
+epsilon_swan = dComplexArr(3,3)
+
+;psi = acos ( kx / kPer )
+;
+;swan_exx = K1 + sin(psi)^2 * K0
+;swan_exy = K2 - cos(psi) * sin(psi) * K0
+;swan_exz = cos(psi) * K4 + sin(psi) * K5
+;
+;swan_eyx = -K2 - cos(psi) * sin(psi) * K0
+;swan_eyy = K1 + cos(psi)^2 * K0
+;swan_eyz = sin(psi) * K4 - cos(psi) * K5
+;
+;swan_ezx = cos(psi) * K4 - sin(psi) * K5
+;swan_ezy = sin(psi) * K4 + cos(psi) * K5
+;swan_ezz = K3
+;
+;epsilon_swan[0,0] = swan_exx
+;epsilon_swan[0,1] = swan_exy
+;epsilon_swan[0,2] = swan_exz
+;
+;epsilon_swan[1,0] = swan_eyx
+;epsilon_swan[1,1] = swan_eyy
+;epsilon_swan[1,2] = swan_eyz
+;
+;epsilon_swan[2,0] = swan_ezx
+;epsilon_swan[2,1] = swan_ezy
+;epsilon_swan[2,2] = swan_ezz
+
+; Swamson No Drifts ( kx = kPer, ky = 0 )
+
+swan_ND_exx = K1 
+swan_ND_exy = K2 
+swan_ND_exz = K4 
+
+swan_ND_eyx = -K2
+swan_ND_eyy = K1 + K0
+swan_ND_eyz = -K5
+
+swan_ND_ezx = K4
+swan_ND_ezy = K5
+swan_ND_ezz = K3
+
+; Overwrite with the No Drift version to check
+
+epsilon_swan[0,0] = swan_ND_exx
+epsilon_swan[0,1] = swan_ND_exy
+epsilon_swan[0,2] = swan_ND_exz
+
+epsilon_swan[1,0] = swan_ND_eyx
+epsilon_swan[1,1] = swan_ND_eyy
+epsilon_swan[1,2] = swan_ND_eyz
+
+epsilon_swan[2,0] = swan_ND_ezx
+epsilon_swan[2,1] = swan_ND_ezy
+epsilon_swan[2,2] = swan_ND_ezz
 
 ; Optionally also return the cold plasma epsilon
 
