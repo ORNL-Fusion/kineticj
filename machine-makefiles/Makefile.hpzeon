@@ -1,0 +1,11 @@
+ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
+INCLUDEFLAGS += -I${LIBCONFIG_DIR}/lib
+LIBS += 
+LFLAGS +=
+
+NETCDF_DIR := /usr/include
+INCLUDEFLAGS += -I$(NETCDFINCDIR)
+LIBS += -lnetcdf_c++4 -lconfig++
+LFLAGS +=
+
+

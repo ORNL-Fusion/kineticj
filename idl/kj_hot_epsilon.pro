@@ -121,7 +121,8 @@ function kj_zFunPrime, zeta
 end
 
 function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
-    epsilon_cold = epsilon_cold, epsilon_swan = epsilon_swan, kx = kx
+    epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
+    kx = kx
 
 @constants
 
@@ -313,32 +314,33 @@ epsilon[2,2] = ezz
 ; Swamson
 
 epsilon_swan = dComplexArr(3,3)
+epsilon_swan_ND = dComplexArr(3,3)
 
-;psi = acos ( kx / kPer )
-;
-;swan_exx = K1 + sin(psi)^2 * K0
-;swan_exy = K2 - cos(psi) * sin(psi) * K0
-;swan_exz = cos(psi) * K4 + sin(psi) * K5
-;
-;swan_eyx = -K2 - cos(psi) * sin(psi) * K0
-;swan_eyy = K1 + cos(psi)^2 * K0
-;swan_eyz = sin(psi) * K4 - cos(psi) * K5
-;
-;swan_ezx = cos(psi) * K4 - sin(psi) * K5
-;swan_ezy = sin(psi) * K4 + cos(psi) * K5
-;swan_ezz = K3
-;
-;epsilon_swan[0,0] = swan_exx
-;epsilon_swan[0,1] = swan_exy
-;epsilon_swan[0,2] = swan_exz
-;
-;epsilon_swan[1,0] = swan_eyx
-;epsilon_swan[1,1] = swan_eyy
-;epsilon_swan[1,2] = swan_eyz
-;
-;epsilon_swan[2,0] = swan_ezx
-;epsilon_swan[2,1] = swan_ezy
-;epsilon_swan[2,2] = swan_ezz
+psi = acos ( kx / kPer )
+
+swan_exx = K1 + sin(psi)^2 * K0
+swan_exy = K2 - cos(psi) * sin(psi) * K0
+swan_exz = cos(psi) * K4 + sin(psi) * K5
+
+swan_eyx = -K2 - cos(psi) * sin(psi) * K0
+swan_eyy = K1 + cos(psi)^2 * K0
+swan_eyz = sin(psi) * K4 - cos(psi) * K5
+
+swan_ezx = cos(psi) * K4 - sin(psi) * K5
+swan_ezy = sin(psi) * K4 + cos(psi) * K5
+swan_ezz = K3
+
+epsilon_swan[0,0] = swan_exx
+epsilon_swan[0,1] = swan_exy
+epsilon_swan[0,2] = swan_exz
+
+epsilon_swan[1,0] = swan_eyx
+epsilon_swan[1,1] = swan_eyy
+epsilon_swan[1,2] = swan_eyz
+
+epsilon_swan[2,0] = swan_ezx
+epsilon_swan[2,1] = swan_ezy
+epsilon_swan[2,2] = swan_ezz
 
 ; Swamson No Drifts ( kx = kPer, ky = 0 )
 
@@ -354,19 +356,17 @@ swan_ND_ezx = K4
 swan_ND_ezy = K5
 swan_ND_ezz = K3
 
-; Overwrite with the No Drift version to check
+epsilon_swan_ND[0,0] = swan_ND_exx
+epsilon_swan_ND[0,1] = swan_ND_exy
+epsilon_swan_ND[0,2] = swan_ND_exz
 
-epsilon_swan[0,0] = swan_ND_exx
-epsilon_swan[0,1] = swan_ND_exy
-epsilon_swan[0,2] = swan_ND_exz
+epsilon_swan_ND[1,0] = swan_ND_eyx
+epsilon_swan_ND[1,1] = swan_ND_eyy
+epsilon_swan_ND[1,2] = swan_ND_eyz
 
-epsilon_swan[1,0] = swan_ND_eyx
-epsilon_swan[1,1] = swan_ND_eyy
-epsilon_swan[1,2] = swan_ND_eyz
-
-epsilon_swan[2,0] = swan_ND_ezx
-epsilon_swan[2,1] = swan_ND_ezy
-epsilon_swan[2,2] = swan_ND_ezz
+epsilon_swan_ND[2,0] = swan_ND_ezx
+epsilon_swan_ND[2,1] = swan_ND_ezy
+epsilon_swan_ND[2,2] = swan_ND_ezz
 
 ; Optionally also return the cold plasma epsilon
 

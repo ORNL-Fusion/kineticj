@@ -1,0 +1,18 @@
+#ALGLIB_DIR := ${HOME}/code/alglib/cpp/src
+
+INCLUDEFLAGS += -I${LIBCONFIGINCLUDE}
+LFLAGS += -L${LIBCONFIGDIR}
+LIBS += -lconfig++
+
+INCLUDEFLAGS += -I${NETCDFCXX4INCLUDE} -I${NETCDFINCLUDE}
+LFLAGS += -L${NETCDFCXX4DIR} -L${NETCDFDIR}
+LIBS += -lnetcdf_c++4 -lnetcdf
+
+#GPERFTOOLS_DIR := ${HOME}/code/gperftools/gnu_4.8
+#LFLAGS += -L${GPERFTOOLS_DIR}/lib
+#LIBS += -lprofiler
+
+#PAPI_DIR := ${HOME}/code/papi/gnu_4.8
+#LFLAGS += -L${PAPI_DIR}/lib
+#INCLUDEFLAGS += -I${PAPI_DIR}/include
+#LIBS += ${PAPI_DIR}/lib/libpapi.a # couldn't get the dylib version to work

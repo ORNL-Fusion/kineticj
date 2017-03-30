@@ -31,7 +31,7 @@ ifneq (,$(findstring titan,$(ThisMachine)))
 ThisMachine := titan
 endif
 
-include Makefile.$(ThisMachine)
+include machine-makefiles/Makefile.$(ThisMachine)
 include Makefile.flags
 
 MODULES := src include

@@ -1,0 +1,17 @@
+CC := cc
+CPP := CC
+NVCC := $(CUDADIR)/bin/nvcc
+
+GCCDIR :=  
+ALGLIBDIR := 
+NETCDFDIR := # must be an --enable-cxx-4 dist
+CUDADIR := 
+CUDALIBDIR = 
+CUDA_ARCH :=
+CUDA_SDK_DIR := 
+LIBCONFIGDIR := /global/homes/g/greendl1/libconfig
+GOOGLE_PERF_DIR :=
+PAPI_DIR :=
+CUDA_SDK_INC := 
+
+

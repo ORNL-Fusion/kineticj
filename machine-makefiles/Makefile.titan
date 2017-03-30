@@ -1,0 +1,13 @@
+CC := cc
+CPP := CC
+F90 =: ftn
+
+ALGLIB_DIR := 
+INCLUDEFLAGS += -I $(HOME)/libconfig/libconfig_pgi/include
+LIBS += -L $(HOME)/libconfig/libconfig_pgi/lib -lconfig++
+
+NETCDF_DIR := 
+INCLUDEFLAGS += 
+LIBS += 
+
+
