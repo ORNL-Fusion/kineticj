@@ -12,7 +12,7 @@ if benchmark eq 1 then begin
 
     ; Benchmark 1
     ; -----------
-    ; Te Scan, D, ky = 0
+    ; T Scan, D, ky = 0
 
     f = 13d6
     Z = 1d0
@@ -186,9 +186,9 @@ endfor
 
 sig_kj = ComplexArr(3,3,n_kj)
 
-TemplateRunDir = 'benchmark-perp'
-RootDir = expand_path('./')
-cd, RootDir
+TemplateRunDir = 'template'
+cd, current = RootDir
+print, 'RootDir: ', RootDir
 
 cnt = 0
 for t=0,nT_kj-1 do begin
@@ -209,7 +209,7 @@ for b=0,nB_kj-1 do begin
     for row=0,2 do begin
 
         RowString = string(row,format='(i1.1)')
-        This_E_FileName = 'input/kj_single_k_' + RowString
+        This_E_FileName = 'input/input-data_' + RowString
         This_jP2_FileName = 'jP2_' + RowString + '.nc'
 
         if row eq 0 then begin
@@ -251,9 +251,10 @@ for b=0,nB_kj-1 do begin
             kj['kz'] = float(kz) 
             kj['nStepsPerCycle'] = float(kj_nStepsPerCycle) 
             kj['nRFCycles'] = float(kj_nRFCycles)
-            kj['nPx'] = fix(kj_nPx) 
-            kj['nPy'] = fix(kj_nPy) 
-            kj['nPz'] = fix(kj_nPz) 
+            kj['nP_Vx'] = fix(kj_nPx) 
+            kj['nP_Vy'] = fix(kj_nPy) 
+            kj['nP_Vz'] = fix(kj_nPz) 
+            kj['nXGrid'] = 1 
 
             ; Set dt (kj_nStepsPerCycle) such that we sample the shortest wavelength
             ; at the highest velocity with adequote sampling
