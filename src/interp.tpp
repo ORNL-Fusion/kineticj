@@ -90,22 +90,23 @@ T kj_interp1D ( float &x, const float *xVec, const T *yVec, int n, int &status )
         T result = y0+(_x-x0)*(y1-y0)/(x1-x0);
 
 #ifndef __CUDACC__
-#if DEBUG_INTERP >=1
-        if(isnan(result)) {
-#if DEBUG_INTERP >= 2
-                std::cout<<"ERROR: interpolation produced a NaN"<<std::endl;
-#endif
-                status=1;
-                return T(0);
-        } 
-        if(isinf(result)) {
-#if DEBUG_INTERP >= 2
-                std::cout<<"ERROR: interpolation produced a INF"<<std::endl;
-#endif
-                status = 1;
-                return T(0);
-        }
-#endif
+// Since generalizing this routine to handle interpolation of the C3 class, these don't work.
+//#if DEBUG_INTERP >=1
+//        if(std::isnan(result)) {
+//#if DEBUG_INTERP >= 2
+//                std::cout<<"ERROR: interpolation produced a NaN"<<std::endl;
+//#endif
+//                status=1;
+//                return T(0);
+//        } 
+//        if(std::isinf(result)) {
+//#if DEBUG_INTERP >= 2
+//                std::cout<<"ERROR: interpolation produced a INF"<<std::endl;
+//#endif
+//                status = 1;
+//                return T(0);
+//        }
+//#endif
 #endif
 		return result;
 	}

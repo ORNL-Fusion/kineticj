@@ -187,7 +187,7 @@ endfor
 sig_kj = ComplexArr(3,3,n_kj)
 
 TemplateRunDir = 'benchmark-perp'
-RootDir = '/home/dg6/scratch/kineticJ/temp_scan'
+RootDir = expand_path('./')
 cd, RootDir
 
 cnt = 0
@@ -209,7 +209,7 @@ for b=0,nB_kj-1 do begin
     for row=0,2 do begin
 
         RowString = string(row,format='(i1.1)')
-        This_E_FileName = 'data/kj_single_k_' + RowString
+        This_E_FileName = 'input/kj_single_k_' + RowString
         This_jP2_FileName = 'jP2_' + RowString + '.nc'
 
         if row eq 0 then begin

@@ -16,7 +16,7 @@ if keyword_set(_n_m3) then n_m3 = _n_m3 else n_m3 = 1e19
 if keyword_set(_E1Multiplier) then E1Multiplier = _E1Multiplier else E1Multiplier = 0 
 if keyword_set(_E2Multiplier) then E2Multiplier = _E2Multiplier else E2Multiplier = 0 
 if keyword_set(_E3Multiplier) then E3Multiplier = _E3Multiplier else E3Multiplier = 0 
-if keyword_set(_fileName) then fileName = _fileName else fileName = 'data/kj_single_1d.nc' 
+if keyword_set(_fileName) then fileName = _fileName else fileName = 'input/input-datanc' 
 
 lambda = 2*!Pi/kx
 

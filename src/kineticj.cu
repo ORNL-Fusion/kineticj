@@ -164,12 +164,21 @@ int main(int argc, char** argv)
     float freq;
     int eReadStat = read_e_field(eField_fName, species_number, freq, r, n_m3, 
                     e1_CYL, b1_CYL, b0_CYL);
+#if GC_ORBITS >= 1
 
     // Read GC terms
-    string gc_fName = cfg.lookup("gc_fName");
+    std::string gc_fName;
+    if(cfg.lookupValue("gc_fName",gc_fName)) {
+    } else {
+        gc_fName = "gc_terms.nc";
+    }
+    //string gc_fName = cfg.lookup("gc_fName");
+
     vector<C3<float> > curv_CYL, grad_CYL;
     std::vector<float> r_gc, bDotGradB;
     int gcReadStat = read_gc_file(gc_fName, r_gc, curv_CYL, grad_CYL, bDotGradB);
+
+#endif
 
     float wrf = freq * 2 * physConstants::pi;
     float xGridMin = cfg.lookup("xGridMin");
@@ -224,17 +233,13 @@ int main(int argc, char** argv)
     float nRFCycles = cfg.lookup("nRFCycles");
     float nStepsPerCycle = cfg.lookup("nStepsPerCycle");
     float tRF = (2 * physConstants::pi) / wrf;
-    int nJpCycles = cfg.lookup("nJpCycles");
-    int nJpPerCycle = cfg.lookup("nJpPerCycle");
     int nPhi = cfg.lookup("nPhi");
     float ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
     float kz = cfg.lookup("kz"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
-    int nJp = nJpCycles * nJpPerCycle;
-    //float dtJp = tRF / nJpPerCycle;
     int istat = 0;
-    int nPx = cfg.lookup("nPx");
-    int nPy = cfg.lookup("nPy");
-    int nPz = cfg.lookup("nPz");
+    int nPx = cfg.lookup("nP_Vx");
+    int nPy = cfg.lookup("nP_Vy");
+    int nPz = cfg.lookup("nP_Vz");
     float amu = cfg.lookup("species_amu");
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
@@ -1176,11 +1181,11 @@ int write_iP = 43;//52;//33;
         printf("\nGet e(t) and integrate performance ...\n");
         printf(
             "Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
-            eT_realTime, eT_cpuTime, eT_flpIns, eT_mFlops / (nJp - 1));
+            eT_realTime, eT_cpuTime, eT_flpIns, eT_mFlops );
         printf("\nGet v(t) and integrate performance ...\n");
         printf(
             "Real_time:\t%f\nProc_time:\t%f\nTotal flpins:\t%lld\nMFLOPS:\t\t%f\n",
-            vT_realTime, vT_cpuTime, vT_flpIns, vT_mFlops / (nJp - 1));
+            vT_realTime, vT_cpuTime, vT_flpIns, vT_mFlops );
 
         cpuTime0 = cpuTime;
         realTime0 = realTime;
@@ -1192,213 +1197,6 @@ int write_iP = 43;//52;//33;
             realTime - realTime0, cpuTime - cpuTime0, flpIns - flpIns0, mFlops);
 #endif
 
-#if __SAVE_ORBITS__ >= 1
-        // Write orbits to file
-
-        std::cout << "Writing orbits to file ... " << std::endl;
-
-        stringstream ncOrbitsFileName;
-        ncOrbitsFileName << "output/orbits_";
-        ncOrbitsFileName << setw(3) << setfill('0') << iX;
-        ncOrbitsFileName << ".nc";
-
-        try {
-            // Really need to fix this but I don't know how to
-            // write a vector of structures using netCDF yet.
-
-            NcFile ncOrbitsFile(ncOrbitsFileName.str().c_str(), NcFile::replace);
-
-            NcDim nc_nP = ncOrbitsFile.addDim("nP", this_particles_XYZ.size());
-            NcDim nc_nSteps = ncOrbitsFile.addDim("nSteps", nSteps);
-            NcDim nc_nJp = ncOrbitsFile.addDim("nJp", nJp);
-
-            vector<NcDim> nc_nPxnSteps(2);
-            nc_nPxnSteps[0] = nc_nP;
-            nc_nPxnSteps[1] = nc_nSteps;
-
-            vector<NcDim> nc_nPxnJpxnSteps(3);
-            nc_nPxnJpxnSteps[0] = nc_nP;
-            nc_nPxnJpxnSteps[1] = nc_nJp;
-            nc_nPxnJpxnSteps[2] = nc_nSteps;
-
-            NcVar nc_t = ncOrbitsFile.addVar("t", ncFloat, nc_nSteps);
-
-            NcVar nc_x = ncOrbitsFile.addVar("x", ncFloat, nc_nPxnSteps);
-            NcVar nc_y = ncOrbitsFile.addVar("y", ncFloat, nc_nPxnSteps);
-            NcVar nc_z = ncOrbitsFile.addVar("z", ncFloat, nc_nPxnSteps);
-
-            NcVar nc_vx = ncOrbitsFile.addVar("vx", ncFloat, nc_nPxnSteps);
-            NcVar nc_vy = ncOrbitsFile.addVar("vy", ncFloat, nc_nPxnSteps);
-            NcVar nc_vz = ncOrbitsFile.addVar("vz", ncFloat, nc_nPxnSteps);
-
-            NcVar nc_e1_x = ncOrbitsFile.addVar("e1_x", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_y = ncOrbitsFile.addVar("e1_y", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_z = ncOrbitsFile.addVar("e1_z", ncFloat, nc_nPxnSteps);
-
-            NcVar nc_e1_x_re = ncOrbitsFile.addVar("e1_x_re", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_y_re = ncOrbitsFile.addVar("e1_y_re", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_z_re = ncOrbitsFile.addVar("e1_z_re", ncFloat, nc_nPxnSteps);
-
-            NcVar nc_e1_x_im = ncOrbitsFile.addVar("e1_x_im", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_y_im = ncOrbitsFile.addVar("e1_y_im", ncFloat, nc_nPxnSteps);
-            NcVar nc_e1_z_im = ncOrbitsFile.addVar("e1_z_im", ncFloat, nc_nPxnSteps);
-
-            NcVar nc_v1_x = ncOrbitsFile.addVar("v1x", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_y = ncOrbitsFile.addVar("v1y", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_z = ncOrbitsFile.addVar("v1z", ncFloat, nc_nPxnJpxnSteps);
-
-            NcVar nc_v1_x_re = ncOrbitsFile.addVar("v1x_re", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_y_re = ncOrbitsFile.addVar("v1y_re", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_z_re = ncOrbitsFile.addVar("v1z_re", ncFloat, nc_nPxnJpxnSteps);
-
-            NcVar nc_v1_x_im = ncOrbitsFile.addVar("v1x_im", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_y_im = ncOrbitsFile.addVar("v1y_im", ncFloat, nc_nPxnJpxnSteps);
-            NcVar nc_v1_z_im = ncOrbitsFile.addVar("v1z_im", ncFloat, nc_nPxnJpxnSteps);
-
-            vector<size_t> startpA(2);
-            vector<size_t> countpA(2);
-            for (int iP = 0; iP < this_particles_XYZ.size(); iP++) {
-
-                startpA[0] = iP;
-                startpA[1] = 0;
-                countpA[0] = 1;
-                countpA[1] = nSteps;
-
-                vector<float> tmpData(nSteps, 0);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_XYZ[iP][iS].c1;
-                }
-                nc_x.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_XYZ[iP][iS].c2;
-                }
-                nc_y.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_XYZ[iP][iS].c3;
-                }
-                nc_z.putVar(startpA, countpA, &tmpData[0]);
-
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_v_XYZ[iP][iS].c1;
-                }
-                nc_vx.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_v_XYZ[iP][iS].c2;
-                }
-                nc_vy.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = orbits_v_XYZ[iP][iS].c3;
-                }
-                nc_vz.putVar(startpA, countpA, &tmpData[0]);
-
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = e1[iP][iS].c1;
-                }
-                nc_e1_x.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = e1[iP][iS].c2;
-                }
-                nc_e1_y.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = e1[iP][iS].c3;
-                }
-                nc_e1_z.putVar(startpA, countpA, &tmpData[0]);
-
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = real(e1c[iP][iS].c1);
-                }
-                nc_e1_x_re.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = real(e1c[iP][iS].c2);
-                }
-                nc_e1_y_re.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = real(e1c[iP][iS].c3);
-                }
-                nc_e1_z_re.putVar(startpA, countpA, &tmpData[0]);
-
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = imag(e1c[iP][iS].c1);
-                }
-                nc_e1_x_im.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = imag(e1c[iP][iS].c2);
-                }
-                nc_e1_y_im.putVar(startpA, countpA, &tmpData[0]);
-                for (int iS = 0; iS < nSteps; iS++) {
-                    tmpData[iS] = imag(e1c[iP][iS].c3);
-                }
-                nc_e1_z_im.putVar(startpA, countpA, &tmpData[0]);
-            }
-
-            vector<size_t> startpB(3);
-            vector<size_t> countpB(3);
-            for (int iP = 0; iP < this_particles_XYZ.size(); iP++) {
-                for (int iJ = 0; iJ < nJp; iJ++) {
-
-                    startpB[0] = iP;
-                    startpB[1] = iJ;
-                    startpB[2] = 0;
-                    countpB[0] = 1;
-                    countpB[1] = 1;
-                    countpB[2] = nSteps;
-
-                    vector<float> tmpData(nSteps, 0);
-
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = v1[iP][iJ][iS].c1;
-                    }
-                    nc_v1_x.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = v1[iP][iJ][iS].c2;
-                    }
-                    nc_v1_y.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = v1[iP][iJ][iS].c3;
-                    }
-                    nc_v1_z.putVar(startpB, countpB, &tmpData[0]);
-
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = real(v1c[iP][iJ][iS].c1);
-                    }
-                    nc_v1_x_re.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = real(v1c[iP][iJ][iS].c2);
-                    }
-                    nc_v1_y_re.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = real(v1c[iP][iJ][iS].c3);
-                    }
-                    nc_v1_z_re.putVar(startpB, countpB, &tmpData[0]);
-
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = imag(v1c[iP][iJ][iS].c1);
-                    }
-                    nc_v1_x_im.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = imag(v1c[iP][iJ][iS].c2);
-                    }
-                    nc_v1_y_im.putVar(startpB, countpB, &tmpData[0]);
-                    for (int iS = 0; iS < nSteps; iS++) {
-                        tmpData[iS] = imag(v1c[iP][iJ][iS].c3);
-                    }
-                    nc_v1_z_im.putVar(startpB, countpB, &tmpData[0]);
-                }
-            }
-
-            vector<size_t> startp(1, 0);
-            vector<size_t> countp(1, nSteps);
-
-            nc_t.putVar(startp, countp, &thisT[0]);
-
-        } catch (exceptions::NcException& e) {
-            std::cout << "NetCDF: unknown error" << std::endl;
-            e.what();
-            exit(1);
-        }
-
-// std::cout << "DONE" << std::endl;
-#endif
 
     } // End of xGrid loop
 
@@ -1425,17 +1223,10 @@ int write_iP = 43;//52;//33;
 
         NcFile ncjPFile(ncjPFileName.str().c_str(), NcFile::replace);
 
-        NcDim nc_nJp = ncjPFile.addDim("nJp", nJp);
         NcDim nc_scalar = ncjPFile.addDim("scalar", 1);
-
-        NcVar nc_t = ncjPFile.addVar("t", ncFloat, nc_nJp);
 
         NcVar nc_x = ncjPFile.addVar("x", ncFloat, nc_scalar);
         NcVar nc_freq = ncjPFile.addVar("freq", ncFloat, nc_scalar);
-
-        NcVar nc_j1x = ncjPFile.addVar("j1x", ncFloat, nc_nJp);
-        NcVar nc_j1y = ncjPFile.addVar("j1y", ncFloat, nc_nJp);
-        NcVar nc_j1z = ncjPFile.addVar("j1z", ncFloat, nc_nJp);
 
         NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re", ncFloat, nc_scalar);
         NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im", ncFloat, nc_scalar);
@@ -1450,7 +1241,6 @@ int write_iP = 43;//52;//33;
         nc_freq.putVar(&freq);
 
         vector<size_t> startp(1, 0);
-        vector<size_t> countp(1, nJp);
 
         float tmpJxRe = real(j1xc[iX]);
         float tmpJxIm = imag(j1xc[iX]);
