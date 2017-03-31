@@ -157,12 +157,12 @@ int main(int argc, char** argv)
     float T_keV_cfg = cfg.lookup("T_keV");
 
     // Read E
-    string eField_fName = cfg.lookup("eField_fName");
+    string input_fName = cfg.lookup("input_fName");
     vector<C3<std::complex<float> > > e1_CYL, b1_CYL;
     vector<C3<float> > b0_CYL, b0_XYZ;
     vector<float> r, n_m3;
     float freq;
-    int eReadStat = read_e_field(eField_fName, species_number, freq, r, n_m3, 
+    int eReadStat = read_e_field(input_fName, species_number, freq, r, n_m3, 
                     e1_CYL, b1_CYL, b0_CYL);
 #if GC_ORBITS >= 1
 
@@ -231,7 +231,7 @@ int main(int argc, char** argv)
 #endif
 
     float nRFCycles = cfg.lookup("nRFCycles");
-    float nStepsPerCycle = cfg.lookup("nStepsPerCycle");
+    float nStepsPerCyclotronPeriod = cfg.lookup("nStepsPerCyclotronPeriod");
     float tRF = (2 * physConstants::pi) / wrf;
     int nPhi = cfg.lookup("nPhi");
     float ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     long int nP = nPx * nPy * nPz;
     float wc = Z * physConstants::e * MaxB0 / (amu * physConstants::mi);
     float cyclotronPeriod = 2 * physConstants::pi / wc;
-    float dtMin = -cyclotronPeriod / nStepsPerCycle;
+    float dtMin = -cyclotronPeriod / nStepsPerCyclotronPeriod;
 
     int SanityCheck = 0;
 
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
     std::cout << "Cyclotron Period: " << cyclotronPeriod << std::endl;
     std::cout << "RF Period: " << tRF << std::endl;
     std::cout << "nSteps: " << nSteps << std::endl;
-    std::cout << "nStepsPerCycle: " << nStepsPerCycle << std::endl;
+    std::cout << "nStepsPerCyclotronPeriod: " << nStepsPerCyclotronPeriod << std::endl;
     std::cout << "freq: " << freq << std::endl;
     std::cout << "Max B0: " << MaxB0 << std::endl;
 #endif
@@ -606,7 +606,7 @@ int main(int argc, char** argv)
     }
 #endif
 
-    stringstream ncjPFileName2("jP2.nc");
+    stringstream ncjPFileName2("output/jP2.nc");
 
     NcFile ncjPFile(ncjPFileName2.str().c_str(), NcFile::replace);
 

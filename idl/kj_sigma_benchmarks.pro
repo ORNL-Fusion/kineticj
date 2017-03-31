@@ -45,7 +45,7 @@ if benchmark eq 1 then begin
     kj_nPx = 21
     kj_nPy = 21
     kj_nPz = 65
-    kj_nStepsPerCycle = 100.0
+    kj_nStepsPerCyclotronPeriod = 100.0
     kj_nRFCycles = 10.0 
 
 endif else if benchmark eq 2 then begin
@@ -85,7 +85,7 @@ endif else if benchmark eq 2 then begin
     kj_nPx = 21
     kj_nPy = 21
     kj_nPz = 65
-    kj_nStepsPerCycle = 100.0
+    kj_nStepsPerCyclotronPeriod = 100.0
     kj_nRFCycles = 10.0 
 
 endif else if benchmark eq 3 then begin
@@ -94,7 +94,7 @@ endif else if benchmark eq 3 then begin
     ; -----------
     ; B Scan over a few ion-cyclotron resonances
     
-    f = 28d9
+    f = 32d9
     Z = 1d0
     amu =  _me_amu
     B = 1d0
@@ -114,7 +114,7 @@ endif else if benchmark eq 3 then begin
     ; KJ calculation range
 
     bMin_kj = 1.5
-    bMax_kj = 3.0
+    bMax_kj = 15.0
     B_T_kj = fIndGen(n_kj)/(n_kj-1)*(bMax_kj-bMin_kj)+bMin_kj 
 
     kx = 10.0
@@ -123,11 +123,11 @@ endif else if benchmark eq 3 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 61
-    kj_nPy = 61
-    kj_nPz = 65
-    kj_nStepsPerCycle = 100.0
-    kj_nRFCycles = 10.0 
+    kj_nPx = 21
+    kj_nPy = 21
+    kj_nPz = 25
+    kj_nStepsPerCyclotronPeriod = 100.0
+    kj_nRFCycles = 1.0 
 
     ; Diagnose the scenario
 
@@ -135,8 +135,8 @@ endif else if benchmark eq 3 then begin
     vTh = sqrt( 2.0 * T_eV * _e / ( amu * _amu ) )
     wc = ( Z * _e ) * B_T / ( amu * _amu )
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
- 
-stop
+    w_wc = 2*!pi*f / wc
+stop 
 endif
 
 nT = n_elements(T_eV)
@@ -210,7 +210,7 @@ for b=0,nB_kj-1 do begin
 
         RowString = string(row,format='(i1.1)')
         This_E_FileName = 'input/input-data_' + RowString
-        This_jP2_FileName = 'jP2_' + RowString + '.nc'
+        This_jP2_FileName = 'output/jP2_' + RowString + '.nc'
 
         if row eq 0 then begin
             E1=1
@@ -241,7 +241,7 @@ for b=0,nB_kj-1 do begin
             ; Adjust the kj.cfg config file parameters
 
             kj = kj_read_cfg('./')
-            kj['eField_fName'] = this_E_FileName
+            kj['input_fName'] = this_E_FileName
             kj['xGridMin'] = x[0]+(x[-1]-x[0])/2 - (x[1]-x[0])
             kj['xGridMax'] = x[0]+(x[-1]-x[0])/2 + (x[1]-x[0])
             kj['T_keV'] = T_eV_kj[t]*1e-3 
@@ -249,21 +249,21 @@ for b=0,nB_kj-1 do begin
             kj['species_Z'] = float(Z)
             kj['ky'] = float(ky)
             kj['kz'] = float(kz) 
-            kj['nStepsPerCycle'] = float(kj_nStepsPerCycle) 
+            kj['nStepsPerCyclotronPeriod'] = float(kj_nStepsPerCyclotronPeriod) 
             kj['nRFCycles'] = float(kj_nRFCycles)
             kj['nP_Vx'] = fix(kj_nPx) 
             kj['nP_Vy'] = fix(kj_nPy) 
             kj['nP_Vz'] = fix(kj_nPz) 
             kj['nXGrid'] = 1 
 
-            ; Set dt (kj_nStepsPerCycle) such that we sample the shortest wavelength
+            ; Set dt (kj_nStepsPerCyclotronPeriod) such that we sample the shortest wavelength
             ; at the highest velocity with adequote sampling
 
             nvTh = 3
             vThMax = nvTh * sqrt( 2.0 * T_eV_kj[t] * _e / ( amu * _amu ) )
-            parSamples = ( 2 * !pi / kPar ) / ( 1 / f / kj_nStepsPerCycle * vThMax )
+            parSamples = ( 2 * !pi / kPar ) / ( 1 / f / kj_nStepsPerCyclotronPeriod * vThMax )
             print, 'T_eV: ', T_eV_kj[t], '  parSamples: ', parSamples
-            perSamples = ( 2 * !pi / kPer ) / ( 1 / f / kj_nStepsPerCycle * vThMax )
+            perSamples = ( 2 * !pi / kPer ) / ( 1 / f / kj_nStepsPerCyclotronPeriod * vThMax )
             print, 'T_eV: ', T_eV_kj[t], '  perSamples: ', perSamples
 
             nMinSamples = 5
@@ -272,11 +272,11 @@ for b=0,nB_kj-1 do begin
             wc = ( Z * _e ) * B_T_kj[b] / ( amu * _amu )
             per_dt = 1 / ( wc / 2 * !pi ) / ( nHarmonic * 2 )
 
-            par_nStepsPerCycle = 1 / ( wc / 2 * !pi ) / par_dt 
-            per_nStepsPerCycle = 1 / ( wc / 2 * !pi ) / per_dt 
+            par_nStepsPerCyclotronPeriod = 1 / ( wc / 2 * !pi ) / par_dt 
+            per_nStepsPerCyclotronPeriod = 1 / ( wc / 2 * !pi ) / per_dt 
 
-            print, 'par_nStepsPerCycle: ', par_nStepsPerCycle
-            print, 'per_nStepsPerCycle: ', per_nStepsPerCycle
+            print, 'par_nStepsPerCyclotronPeriod: ', par_nStepsPerCyclotronPeriod
+            print, 'per_nStepsPerCyclotronPeriod: ', per_nStepsPerCyclotronPeriod
 
             vPhsPer = w / kPer
             vPhsPar = w / kPar
@@ -290,7 +290,7 @@ for b=0,nB_kj-1 do begin
             print, StdOut
             print, StdErr
 
-            file_move, 'jP2.nc', This_jP2_FileName 
+            file_move, 'output/jP2.nc', This_jP2_FileName 
 
         endif
 
@@ -370,11 +370,11 @@ p=plot(x,imaginary(plotThis[0,0,*]),color='r',/over)
 p=plot(x,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[0,0,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[0,0,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[0,0,*], /over, thick=3, transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[0,0,*]), color='r', /over, thick=3, transparency=transparency)
 
-p=plot(x, sig_swan[0,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,0,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[0,0,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[0,0,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[0,1,*],layout=[[layout],pos],/current, $
@@ -385,11 +385,11 @@ p=plot(x,imaginary(plotThis[0,1,*]),color='r',/over)
 p=plot(x,plotThis_cold[0,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[0,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[0,1,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[0,1,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[0,1,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[0,1,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[0,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[0,1,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[0,1,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[0,2,*],layout=[[layout],pos],/current, $
@@ -401,11 +401,11 @@ p=plot(x,imaginary(plotThis[0,2,*]),color='r',/over)
 p=plot(x,plotThis_cold[0,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[0,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[0,2,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[0,2,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[0,2,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[0,2,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[0,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[0,2,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[0,2,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos
 p=plot(x,plotThis[1,0,*],layout=[[layout],pos],/current, $
@@ -417,11 +417,11 @@ p=plot(x,imaginary(plotThis[1,0,*]),color='r',/over)
 p=plot(x,plotThis_cold[1,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[1,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[1,0,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[1,0,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[1,0,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[1,0,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[1,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,0,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[1,0,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[1,0,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[1,1,*],layout=[[layout],pos],/current, $
@@ -433,11 +433,11 @@ p=plot(x,imaginary(plotThis[1,1,*]),color='r',/over)
 p=plot(x,plotThis_cold[1,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[1,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[1,1,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[1,1,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[1,1,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[1,1,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[1,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[1,1,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[1,1,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[1,2,*],layout=[[layout],pos],/current, $
@@ -449,11 +449,11 @@ p=plot(x,imaginary(plotThis[1,2,*]),color='r',/over)
 p=plot(x,plotThis_cold[1,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[1,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[1,2,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[1,2,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[1,2,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[1,2,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[1,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[1,2,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[1,2,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos
 p=plot(x,plotThis[2,0,*],layout=[[layout],pos],/current, $
@@ -465,11 +465,11 @@ p=plot(x,imaginary(plotThis[2,0,*]),color='r',/over)
 p=plot(x,plotThis_cold[2,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[2,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[2,0,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[2,0,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[2,0,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[2,0,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[2,0,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,0,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[2,0,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[2,0,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[2,1,*],layout=[[layout],pos],/current, $
@@ -481,11 +481,11 @@ p=plot(x,imaginary(plotThis[2,1,*]),color='r',/over)
 p=plot(x,plotThis_cold[2,1,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[2,1,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[2,1,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[2,1,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[2,1,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[2,1,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[2,1,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,1,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[2,1,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[2,1,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 p=plot(x,plotThis[2,2,*],layout=[[layout],pos],/current, $
@@ -497,11 +497,11 @@ p=plot(x,imaginary(plotThis[2,2,*]),color='r',/over)
 p=plot(x,plotThis_cold[2,2,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)
 
-p=plot(x_kj, sig_kj[2,2,*], /over, thick=2)
-p=plot(x_kj, imaginary(sig_kj[2,2,*]), color='r', /over, thick=2)
+p=plot(x_kj, sig_kj[2,2,*], /over, thick=3,transparency=transparency)
+p=plot(x_kj, imaginary(sig_kj[2,2,*]), color='r', /over, thick=3,transparency=transparency)
 
-p=plot(x, sig_swan[2,2,*], /over, thick=1, color='m', lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,2,*]), color='m', /over, thick=1, lineStyle='--')
+p=plot(x, sig_swan[2,2,*], /over, thick=1, lineStyle='--')
+p=plot(x, imaginary(sig_swan[2,2,*]), color='r', /over, thick=1, lineStyle='--')
 
 p.save, 'kj_sigma_vs_t.png', resolution=300, /transparent
 p.save, 'kj_sigma_vs_t.pdf'
