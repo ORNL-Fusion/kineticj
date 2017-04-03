@@ -4,10 +4,12 @@ pro kj_create_single_k_input, $
         E1Multiplier=_E1Multiplier, $
         E2Multiplier=_E2Multiplier, $
         E3Multiplier=_E3Multiplier, $
-        fileName=_fileName
+        fileName=_fileName, $
+        nPts = _nPts
 
 @constants
 
+if keyword_set(_nPts) then nPts = _nPts else nPts = 301
 if keyword_set(_b0) then b0 = _b0 else b0 = 1
 if keyword_set(_bUnit) then bUnit = _bUnit else bUnit = [0,0,1]
 if keyword_set(_kx) then kx = _kx else kx = 1
@@ -21,7 +23,6 @@ if keyword_set(_fileName) then fileName = _fileName else fileName = 'input/input
 lambda = 2*!Pi/kx
 
 xOffset = 0 
-nPts = 301L
 nCycles = 5 
 xRange = lambda*nCycles
 dx = xRange / (nPts-1)
@@ -45,9 +46,19 @@ Er = Er * E1Multiplier
 Et = Et * E2Multiplier
 Ez = Ez * E3Multiplier
 
-br = fltArr(nPts)+b0*bUnit[0]
-bt = fltArr(nPts)+b0*bUnit[1]
-bz = fltArr(nPts)+b0*bUnit[2]
+if n_elements(b0) gt 1 then begin
+
+    br = b0*bUnit[0]
+    bt = b0*bUnit[1]
+    bz = b0*bUnit[2]
+
+endif else begin
+
+    br = fltArr(nPts)+b0*bUnit[0]
+    bt = fltArr(nPts)+b0*bUnit[1]
+    bz = fltArr(nPts)+b0*bUnit[2]
+
+endelse
 
 Jpr = fltArr(nPts)
 Jpt = fltArr(nPts)

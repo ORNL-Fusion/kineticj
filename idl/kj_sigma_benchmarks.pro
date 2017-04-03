@@ -6,7 +6,10 @@ if keyword_set(_benchmark) then benchmark = _benchmark else benchmark = 1
 @constants
 
 n = 100
-n_kj = 10
+n_kj = 10 
+
+kj_nPts_grid = 301
+kj_nPts_eval = 1
 
 if benchmark eq 1 then begin
 
@@ -107,27 +110,27 @@ endif else if benchmark eq 3 then begin
 
     ; Analytic calculation range
 
-    bMin = 0.8
+    bMin = 0.9
     bMax = 1.5
     B_T = fIndGen(n)/(n-1)*(bMax-bMin)+bMin 
 
     ; KJ calculation range
 
-    bMin_kj = 1.5
-    bMax_kj = 15.0
+    bMin_kj = 0.9
+    bMax_kj = 1.5
     B_T_kj = fIndGen(n_kj)/(n_kj-1)*(bMax_kj-bMin_kj)+bMin_kj 
 
     kx = 10.0
-    ky = 20.0 
+    ky = 0.0 
     kz = 100.0
 
     ; KJ config parameters
 
-    kj_nPx = 21
-    kj_nPy = 21
-    kj_nPz = 25
+    kj_nPx = 51
+    kj_nPy = 51
+    kj_nPz = 15
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 1.0 
+    kj_nRFCycles = 10.0 
 
     ; Diagnose the scenario
 
@@ -136,14 +139,71 @@ endif else if benchmark eq 3 then begin
     wc = ( Z * _e ) * B_T / ( amu * _amu )
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
     w_wc = 2*!pi*f / wc
-stop 
+
+endif else if benchmark eq 4 then begin
+
+    ; Benchmark 4
+    ; -----------
+    ; B Scan over a few ion-cyclotron resonances
+    ; Within a single spatial domain.
+    
+    f = 32d9
+    Z = 1d0
+    amu =  _me_amu
+    B = 1d0
+    BUnit = [0,0,1]
+    density = 5d19
+    harmonicNumber = 6
+    
+    T_eV = [1e3] 
+    T_eV_kj = T_eV
+
+    kj_nPts_eval = 10
+
+    ; Analytic calculation range
+
+    bMin = 0.9
+    bMax = 1.5
+    B_T = fIndGen(n)/(n-1)*(bMax-bMin)+bMin 
+
+    ; KJ calculation range
+
+    bMin_kj = 0.9
+    bMax_kj = 1.5
+    B_T_kj = fIndGen(kj_nPts_grid)/(kj_nPts_grid-1)*(bMax_kj-bMin_kj)+bMin_kj 
+
+    kx = 10.0
+    ky = 0.0 
+    kz = 100.0
+
+    ; KJ config parameters
+
+    kj_nPx = 51
+    kj_nPy = 51
+    kj_nPz = 15
+    kj_nStepsPerCyclotronPeriod = 100.0
+    kj_nRFCycles = 10.0 
+
+    ; Diagnose the scenario
+
+    beta_ = density * _kB * T_eV / ( B_T^2 / ( 2 *_u0 ) )
+    vTh = sqrt( 2.0 * T_eV * _e / ( amu * _amu ) )
+    wc = ( Z * _e ) * B_T / ( amu * _amu )
+    wc_kj = ( Z * _e ) * B_T_kj / ( amu * _amu )
+    wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
+    w_wc = 2*!pi*f / wc
+    w_wc_kj = 2*!pi*f / wc_kj
+stop
 endif
 
 nT = n_elements(T_eV)
 nB = n_elements(B_T)
 
+
 nT_kj = n_elements(T_eV_kj)
 nB_kj = n_elements(B_T_kj)
+
+if benchmark eq 4 then nB_kj = 1
 
 kPar = kz  
 kPer = sqrt( kx^2 + ky^2 ) 
@@ -184,7 +244,11 @@ endfor
 ; Stage and run kj over this range of temperatures 
 
 
-sig_kj = ComplexArr(3,3,n_kj)
+if benchmark eq 4 then begin
+    sig_kj = ComplexArr(3,3,kj_nPts_eval)
+endif else begin
+    sig_kj = ComplexArr(3,3,n_kj)
+endelse
 
 TemplateRunDir = 'template'
 cd, current = RootDir
@@ -230,9 +294,17 @@ for b=0,nB_kj-1 do begin
             E3=1
         endif
 
-        kj_create_single_k_input, b0=B_T_kj[b], bUnit=bUnit, kx=kx, f_Hz=f, n_m3=density, $
+
+        if benchmark eq 4 then begin
+            this_b0 = B_T_kj[b]
+        endif else begin
+            this_b0 = B_T_kj
+        endelse
+
+        kj_create_single_k_input, b0=this_b0, bUnit=bUnit, kx=kx, f_Hz=f, n_m3=density, $
                 Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=runKJ, $
-                E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=This_E_FileName
+                E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=This_E_FileName, $
+                nPts = kj_nPts_grid
 
         if keyword_set(runKJ) then begin
 
@@ -242,8 +314,13 @@ for b=0,nB_kj-1 do begin
 
             kj = kj_read_cfg('./')
             kj['input_fName'] = this_E_FileName
-            kj['xGridMin'] = x[0]+(x[-1]-x[0])/2 - (x[1]-x[0])
-            kj['xGridMax'] = x[0]+(x[-1]-x[0])/2 + (x[1]-x[0])
+            if benchmark eq 4 then begin
+                kj['xGridMin'] = 0.8 
+                kj['xGridMax'] = 2.0
+            endif else begin
+                kj['xGridMin'] = x[0]+(x[-1]-x[0])/2 - (x[1]-x[0])
+                kj['xGridMax'] = x[0]+(x[-1]-x[0])/2 + (x[1]-x[0])
+            endelse
             kj['T_keV'] = T_eV_kj[t]*1e-3 
             kj['species_amu'] = float(amu)
             kj['species_Z'] = float(Z)
@@ -254,7 +331,7 @@ for b=0,nB_kj-1 do begin
             kj['nP_Vx'] = fix(kj_nPx) 
             kj['nP_Vy'] = fix(kj_nPy) 
             kj['nP_Vz'] = fix(kj_nPz) 
-            kj['nXGrid'] = 1 
+            kj['nXGrid'] = fix(kj_nPts_eval) 
 
             ; Set dt (kj_nStepsPerCyclotronPeriod) such that we sample the shortest wavelength
             ; at the highest velocity with adequote sampling
@@ -302,34 +379,62 @@ for b=0,nB_kj-1 do begin
         kj_Er = interpol(Er,x,kj_x)
         kj_Et = interpol(Et,x,kj_x)
         kj_Ez = interpol(Ez,x,kj_x)
-   
-        if row eq 0 then begin 
-            sig_kj[row,0,cnt] = (kj_j1x/kj_Er)[0]
-            sig_kj[row,1,cnt] = (kj_j1y/kj_Er)[0]
-            sig_kj[row,2,cnt] = (kj_j1z/kj_Er)[0]
-        endif
 
-        if row eq 1 then begin 
-            sig_kj[row,0,cnt] = (kj_j1x/kj_Et)[0]
-            sig_kj[row,1,cnt] = (kj_j1y/kj_Et)[0]
-            sig_kj[row,2,cnt] = (kj_j1z/kj_Et)[0]
-        endif
+        if benchmark eq 4 then begin
 
-        if row eq 2 then begin 
-            sig_kj[row,0,cnt] = (kj_j1x/kj_Ez)[0]
-            sig_kj[row,1,cnt] = (kj_j1y/kj_Ez)[0]
-            sig_kj[row,2,cnt] = (kj_j1z/kj_Ez)[0]
-        endif
+            if row eq 0 then begin 
+                sig_kj[row,0,*] = (kj_j1x/kj_Er)
+                sig_kj[row,1,*] = (kj_j1y/kj_Er)
+                sig_kj[row,2,*] = (kj_j1z/kj_Er)
+            endif
+
+            if row eq 1 then begin 
+                sig_kj[row,0,*] = (kj_j1x/kj_Et)
+                sig_kj[row,1,*] = (kj_j1y/kj_Et)
+                sig_kj[row,2,*] = (kj_j1z/kj_Et)
+            endif
+
+            if row eq 2 then begin 
+                sig_kj[row,0,*] = (kj_j1x/kj_Ez)
+                sig_kj[row,1,*] = (kj_j1y/kj_Ez)
+                sig_kj[row,2,*] = (kj_j1z/kj_Ez)
+            endif
+
+        endif else begin   
+
+            if row eq 0 then begin 
+                sig_kj[row,0,cnt] = (kj_j1x/kj_Er)[0]
+                sig_kj[row,1,cnt] = (kj_j1y/kj_Er)[0]
+                sig_kj[row,2,cnt] = (kj_j1z/kj_Er)[0]
+            endif
+
+            if row eq 1 then begin 
+                sig_kj[row,0,cnt] = (kj_j1x/kj_Et)[0]
+                sig_kj[row,1,cnt] = (kj_j1y/kj_Et)[0]
+                sig_kj[row,2,cnt] = (kj_j1z/kj_Et)[0]
+            endif
+
+            if row eq 2 then begin 
+                sig_kj[row,0,cnt] = (kj_j1x/kj_Ez)[0]
+                sig_kj[row,1,cnt] = (kj_j1y/kj_Ez)[0]
+                sig_kj[row,2,cnt] = (kj_j1z/kj_Ez)[0]
+            endif
+
+        endelse
 
     endfor
 
     cd, RootDir
 
-    sig_kj[*,*,cnt] = transpose(sig_kj[*,*,cnt])
-
     ++cnt
 
 endfor
+endfor
+
+for i=0,cnt-2 do begin
+
+    sig_kj[*,*,i] = transpose(sig_kj[*,*,i])
+    
 endfor
 
 ; Plot results
@@ -353,6 +458,16 @@ if benchmark eq 1 or benchmark eq 2 then begin
 endif
 
 if benchmark eq 3 then begin
+    xTitle ='$\omega/\omega_{c}$'
+
+    wc = ( Z * _e ) * B_T / ( amu * _amu )
+    wc_kj = ( Z * _e ) * B_T_kj / ( amu * _amu )
+
+    x = w / wc
+    x_kj = w / wc_kj
+endif
+
+if benchmark eq 4 then begin
     xTitle ='$\omega/\omega_{c}$'
 
     wc = ( Z * _e ) * B_T / ( amu * _amu )
