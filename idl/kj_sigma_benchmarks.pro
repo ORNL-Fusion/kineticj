@@ -155,7 +155,7 @@ endif else if benchmark eq 4 then begin
     density = 5d19
     harmonicNumber = 6
     
-    T_eV = [0.1e3] 
+    T_eV = [0.5e3] 
     T_eV_kj = T_eV
 
     kj_nPts_eval = n_kj 
@@ -178,7 +178,7 @@ endif else if benchmark eq 4 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 61
+    kj_nPx = 21
     kj_nPy = 21
     kj_nPz = 25
     kj_nStepsPerCyclotronPeriod = 100.0
@@ -320,8 +320,8 @@ for b=0,nB_kj-1 do begin
                 kj['x_kjGridGridMax_kjGrid'] = x_kjGrid[0]+(x_kjGrid[-1]-x_kjGrid[0])/2 + (x_kjGrid[1]-x_kjGrid[0])
             endelse
             kj['T_keV'] = T_eV_kj[t]*1e-3 
-            kj['species_amu'] = float(amu)
-            kj['species_Z'] = float(Z)
+            kj['species_amu'] = double(amu)
+            kj['species_Z'] = double(Z)
             kj['ky'] = float(ky)
             kj['kz'] = float(kz) 
             kj['nStepsPerCyclotronPeriod'] = float(kj_nStepsPerCyclotronPeriod) 
@@ -479,10 +479,12 @@ if benchmark eq 4 then begin
 
 endif
 
+yRange = [-1,1]*max(abs(sig_swam[0,0,*]))*1.1
+
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
         title='$\sigma_{xx}$',yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
         font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin )
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, yRange=yRange )
 p=plot(x,imaginary(plotThis[0,0,*]),color='r',/over)
 p=plot(x,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparency,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparency,LineStyle=style)

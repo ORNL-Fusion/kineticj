@@ -11,7 +11,9 @@ pro kj_write_kj_cfg, cfg, RunDir
                 if size(value,/type) eq 7 then begin ; just wrap " " around string types
                     printf, lun, key, ' = ', '"',value,'";'
                 endif else if size(value,/type) eq 4 then begin ; floats 
-                    printf, lun, key, ' = ', string(value,format='(f12.4)'),';'
+                    printf, lun, key, ' = ', string(value,format='(f24.12)'),';'
+                endif else if size(value,/type) eq 5 then begin ; doubles
+                    printf, lun, key, ' = ', string(value,format='(f24.12)'),';'
                 endif else begin
                     printf, lun, key, ' = ', value,';'
                 endelse

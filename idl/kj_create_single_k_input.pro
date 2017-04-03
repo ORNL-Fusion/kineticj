@@ -59,7 +59,7 @@ endif else begin
     bz = fltArr(nPts)+b0*bUnit[2]
 
 endelse
-stop
+
 Jpr = fltArr(nPts)
 Jpt = fltArr(nPts)
 Jpz = fltArr(nPts)

@@ -260,8 +260,10 @@ int main(int argc, char** argv)
     int nSteps = nRFCycles * tRF / std::abs(dtMin) + 1;
 
     for (int iX = 0; iX < nXGrid; iX++) {
-        float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::mi);
+        float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::amu);
         wrf_wc[iX] = wrf / this_wc;
+        std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
+        std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
     }
 
 #if PRINT_INFO >= 1
@@ -419,7 +421,7 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < nSteps; i++) {
 
-        std::cout<<"Step "<<i<<" of "<<nSteps<<std::endl;
+        //std::cout<<"Step "<<i<<" of "<<nSteps<<std::endl;
 
         float dtIntFac = 1;
         if (i > 0) dtIntFac = 2;
