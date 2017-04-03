@@ -6,7 +6,7 @@ if keyword_set(_benchmark) then benchmark = _benchmark else benchmark = 1
 @constants
 
 n = 100
-n_kj = 20 
+n_kj = 40 
 
 kj_nPts_grid = 301
 kj_nPts_eval = 1
@@ -155,7 +155,7 @@ endif else if benchmark eq 4 then begin
     density = 5d19
     harmonicNumber = 6
     
-    T_eV = [0.5e3] 
+    T_eV = [1.0e3] 
     T_eV_kj = T_eV
 
     kj_nPts_eval = n_kj 
@@ -178,11 +178,11 @@ endif else if benchmark eq 4 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 21
-    kj_nPy = 21
-    kj_nPz = 25
+    kj_nPx = 11
+    kj_nPy = 11
+    kj_nPz = 15
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 20.0 
+    kj_nRFCycles = 50.0 
 
     ; Diagnose the scenario
 
@@ -313,8 +313,8 @@ for b=0,nB_kj-1 do begin
             kj = kj_read_cfg('./')
             kj['input_fName'] = this_inputFileName
             if benchmark eq 4 then begin
-                kj['xGridMin'] = 0.1 
-                kj['xGridMax'] = 3.0
+                kj['xGridMin'] = 0.5 
+                kj['xGridMax'] = 2.5
             endif else begin
                 kj['x_kjGridGridMin'] = x_kjGrid[0]+(x_kjGrid[-1]-x_kjGrid[0])/2 - (x_kjGrid[1]-x_kjGrid[0])
                 kj['x_kjGridGridMax_kjGrid'] = x_kjGrid[0]+(x_kjGrid[-1]-x_kjGrid[0])/2 + (x_kjGrid[1]-x_kjGrid[0])
@@ -479,7 +479,7 @@ if benchmark eq 4 then begin
 
 endif
 
-yRange = [-1,1]*max(abs(sig_swan[0,0,*]))*1.1
+yRange = [-1,1]*max(abs(sig[0,0,*]))*1.1
 
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
         title='$\sigma_{xx}$',/buffer,$

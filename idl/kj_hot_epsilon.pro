@@ -188,7 +188,7 @@ for alp = 0,nS-1 do begin
 
     for n = -harmonicNumber,harmonicNumber do begin
 
-        ; Brambilla expressions 
+        ; Brambilla expressions, pg 
 
         x = (w - n*wc) / (kPar * vTh)
         x0 = w / (kPar * vTh)
@@ -206,7 +206,7 @@ for alp = 0,nS-1 do begin
         ; Swanson, pg 175
     
         wc_swan = abs(wc)
-        x = (w + n*wc) / (kPar * vTh) ; Note the difference in sign here to Brambilla
+        x = (w + n*wc_swan) / (kPar * vTh) ; Note the difference in sign here to Brambilla
 
         Z = kj_zfunction(x, Zp=Zp)
 
