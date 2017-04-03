@@ -6,7 +6,7 @@ if keyword_set(_benchmark) then benchmark = _benchmark else benchmark = 1
 @constants
 
 n = 100
-n_kj = 10 
+n_kj = 20 
 
 kj_nPts_grid = 301
 kj_nPts_eval = 1
@@ -148,17 +148,17 @@ endif else if benchmark eq 4 then begin
     ; Within a single spatial domain.
     
     f = 32d9
-    Z = 1d0
+    Z = -1d0
     amu =  _me_amu
     B = 1d0
     BUnit = [0,0,1]
     density = 5d19
     harmonicNumber = 6
     
-    T_eV = [1e3] 
+    T_eV = [0.1e3] 
     T_eV_kj = T_eV
 
-    kj_nPts_eval = 10
+    kj_nPts_eval = n_kj 
 
     ; Analytic calculation range
 
@@ -178,11 +178,11 @@ endif else if benchmark eq 4 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 51
-    kj_nPy = 51
-    kj_nPz = 15
+    kj_nPx = 61
+    kj_nPy = 21
+    kj_nPz = 25
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 10.0 
+    kj_nRFCycles = 20.0 
 
     ; Diagnose the scenario
 
@@ -193,7 +193,7 @@ endif else if benchmark eq 4 then begin
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
     w_wc = 2*!pi*f / wc
     w_wc_kj = 2*!pi*f / wc_kj
-stop
+
 endif
 
 nT = n_elements(T_eV)
@@ -293,15 +293,14 @@ for b=0,nB_kj-1 do begin
             E3=1
         endif
 
-
         if benchmark eq 4 then begin
-            this_b0 = B_T_kj[b]
-        endif else begin
             this_b0 = B_T_kj
+        endif else begin
+            this_b0 = B_T_kj[b]
         endelse
 
         kj_create_single_k_input, b0=this_b0, bUnit=bUnit, kx=kx, f_Hz=f, n_m3=density, $
-                Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=runKJ, $
+                Er=Er, Et=Et, Ez=Ez, x=x_kjGrid, writeOutput=runKJ, $
                 E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=This_E_FileName, $
                 nPts = kj_nPts_grid
 
@@ -314,11 +313,11 @@ for b=0,nB_kj-1 do begin
             kj = kj_read_cfg('./')
             kj['input_fName'] = this_E_FileName
             if benchmark eq 4 then begin
-                kj['xGridMin'] = 0.8 
-                kj['xGridMax'] = 2.0
+                kj['xGridMin'] = 0.1 
+                kj['xGridMax'] = 3.0
             endif else begin
-                kj['xGridMin'] = x[0]+(x[-1]-x[0])/2 - (x[1]-x[0])
-                kj['xGridMax'] = x[0]+(x[-1]-x[0])/2 + (x[1]-x[0])
+                kj['x_kjGridGridMin'] = x_kjGrid[0]+(x_kjGrid[-1]-x_kjGrid[0])/2 - (x_kjGrid[1]-x_kjGrid[0])
+                kj['x_kjGridGridMax_kjGrid'] = x_kjGrid[0]+(x_kjGrid[-1]-x_kjGrid[0])/2 + (x_kjGrid[1]-x_kjGrid[0])
             endelse
             kj['T_keV'] = T_eV_kj[t]*1e-3 
             kj['species_amu'] = float(amu)
@@ -375,9 +374,9 @@ for b=0,nB_kj-1 do begin
         ;kj_read_jp_old, x=kj_x, j1x=kj_j1x, j1y=kj_j1y, j1z=kj_j1z, /oldFormat
         kj_read_jp_old, x=kj_x, j1x=kj_j1x, j1y=kj_j1y, j1z=kj_j1z, fileName=This_jP2_FileName
    
-        kj_Er = interpol(Er,x,kj_x)
-        kj_Et = interpol(Et,x,kj_x)
-        kj_Ez = interpol(Ez,x,kj_x)
+        kj_Er = interpol(Er,x_kjGrid,kj_x)
+        kj_Et = interpol(Et,x_kjGrid,kj_x)
+        kj_Ez = interpol(Ez,x_kjGrid,kj_x)
 
         if benchmark eq 4 then begin
 
@@ -471,7 +470,7 @@ if benchmark eq 4 then begin
 
     wc = ( Z * _e ) * B_T / ( amu * _amu )
 
-    kj_B = interpol(B_T_kj,x,kj_x)
+    kj_B = interpol(B_T_kj,x_kjGrid,kj_x)
 
     wc_kj = ( Z * _e ) * kj_B / ( amu * _amu )
 
