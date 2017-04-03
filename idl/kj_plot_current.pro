@@ -17,7 +17,7 @@ pro kj_plot_current, $
 
 	cfg = kj_read_cfg (currentDir)	
 
-	cdfId = ncdf_open(cfg['eField_fName'])
+	cdfId = ncdf_open(cfg['input_fName'])
 
 		ncdf_varget, cdfId, 'freq', freq 
 		ncdf_varget, cdfId, 'r', r 
