@@ -468,21 +468,21 @@ endif
 if benchmark eq 4 then begin
     xTitle ='$\omega/\omega_{c}$'
 
-    wc = ( Z * _e ) * B_T / ( amu * _amu )
+    wc = abs(( Z * _e ) * B_T / ( amu * _amu ))
 
     kj_B = interpol(B_T_kj,x_kjGrid,kj_x)
 
-    wc_kj = ( Z * _e ) * kj_B / ( amu * _amu )
+    wc_kj = abs(( Z * _e ) * kj_B / ( amu * _amu ))
 
     x = w / wc
     x_kj = w / wc_kj
 
 endif
 
-yRange = [-1,1]*max(abs(sig_swam[0,0,*]))*1.1
+yRange = [-1,1]*max(abs(sig_swan[0,0,*]))*1.1
 
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
-        title='$\sigma_{xx}$',yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
+        title='$\sigma_{xx}$',/buffer,$
         font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
         xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, yRange=yRange )
 p=plot(x,imaginary(plotThis[0,0,*]),color='r',/over)
