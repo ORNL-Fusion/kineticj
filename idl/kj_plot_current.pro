@@ -42,7 +42,7 @@ pro kj_plot_current, $
 
 	spline_sigma = 0.01
 
-	cdfId = ncdf_open('jP2.nc')
+	cdfId = ncdf_open('output/jP2_1.nc')
 
 		ncdf_varget, cdfId, 'x', x2 
 

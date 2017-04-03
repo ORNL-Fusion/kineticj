@@ -199,7 +199,6 @@ endif
 nT = n_elements(T_eV)
 nB = n_elements(B_T)
 
-
 nT_kj = n_elements(T_eV_kj)
 nB_kj = n_elements(B_T_kj)
 
@@ -471,10 +470,14 @@ if benchmark eq 4 then begin
     xTitle ='$\omega/\omega_{c}$'
 
     wc = ( Z * _e ) * B_T / ( amu * _amu )
-    wc_kj = ( Z * _e ) * B_T_kj / ( amu * _amu )
+
+    kj_B = interpol(B_T_kj,x,kj_x)
+
+    wc_kj = ( Z * _e ) * kj_B / ( amu * _amu )
 
     x = w / wc
     x_kj = w / wc_kj
+
 endif
 
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$

@@ -1,7 +1,7 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA:=1
+USECUDA:=0
 
 NAME := bin/kineticj
 
@@ -19,7 +19,6 @@ CC := gcc
 CPP := g++
 #NVCC := nvcc -g -G
 NVCC := nvcc -O3 
-
 
 #VENDOR := PGI_
 #CC := pgcc

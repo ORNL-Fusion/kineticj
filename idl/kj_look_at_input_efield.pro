@@ -10,7 +10,7 @@ pro kj_look_at_input_efield
         nCdf_varGet, cdfId, 'er_im', er_im
         nCdf_varGet, cdfId, 'et_re', et_re
         nCdf_varGet, cdfId, 'et_im', et_im
-	    nCdf_varGet, cdfId, 'ez_re', ez_re
+        nCdf_varGet, cdfId, 'ez_re', ez_re
         nCdf_varGet, cdfId, 'ez_im', ez_im
 	ncdf_close, cdfId
 
