@@ -661,8 +661,8 @@ int main(int argc, char** argv)
 
 std::cout << "Continuing with non functor approach ..." << std::endl;
 
-int write_iX = 1;//31;//15;
-int write_iP = 43;//52;//33;
+int write_iX = 0;//31;//15;
+int write_iP = 180;//52;//33;
 
 #pragma omp parallel for private(istat, tid, spoken)
     for (int iX = 0; iX < nXGrid; iX++) {

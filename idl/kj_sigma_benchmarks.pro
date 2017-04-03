@@ -272,7 +272,7 @@ for b=0,nB_kj-1 do begin
     for row=0,2 do begin
 
         RowString = string(row,format='(i1.1)')
-        This_E_FileName = 'input/input-data_' + RowString
+        this_inputFileName = 'input/input-data_' + RowString + '.nc'
         This_jP2_FileName = 'output/jP2_' + RowString + '.nc'
 
         if row eq 0 then begin
@@ -301,7 +301,7 @@ for b=0,nB_kj-1 do begin
 
         kj_create_single_k_input, b0=this_b0, bUnit=bUnit, kx=kx, f_Hz=f, n_m3=density, $
                 Er=Er, Et=Et, Ez=Ez, x=x_kjGrid, writeOutput=runKJ, $
-                E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=This_E_FileName, $
+                E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=this_inputFileName, $
                 nPts = kj_nPts_grid
 
         if keyword_set(runKJ) then begin
@@ -311,7 +311,7 @@ for b=0,nB_kj-1 do begin
             ; Adjust the kj.cfg config file parameters
 
             kj = kj_read_cfg('./')
-            kj['input_fName'] = this_E_FileName
+            kj['input_fName'] = this_inputFileName
             if benchmark eq 4 then begin
                 kj['xGridMin'] = 0.1 
                 kj['xGridMax'] = 3.0

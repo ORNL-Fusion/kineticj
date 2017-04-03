@@ -36,6 +36,10 @@ pro kj_plot_current, $
 		ncdf_varget, cdfId, 'jP_z_re', jPz_re
 		ncdf_varget, cdfId, 'jP_z_im', jPz_im
 
+		ncdf_varget, cdfId, 'B0_r', B0_r 
+		ncdf_varget, cdfId, 'B0_p', B0_p 
+		ncdf_varget, cdfId, 'B0_z', B0_z 
+
 	ncdf_close, cdfId
 
 	wrf = freq * 2 * !pi
