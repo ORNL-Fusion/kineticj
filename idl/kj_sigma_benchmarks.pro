@@ -429,10 +429,11 @@ for b=0,nB_kj-1 do begin
 endfor
 endfor
 
-for i=0,cnt-2 do begin
+for i=0,n_elements(sig_kj[0,0,*])-1 do begin
 
     sig_kj[*,*,i] = transpose(sig_kj[*,*,i])
-    
+    ;sig_kj[*,*,i] = -(sig_kj[*,*,i])
+  
 endfor
 
 ; Plot results

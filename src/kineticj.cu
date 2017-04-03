@@ -244,7 +244,7 @@ int main(int argc, char** argv)
     float Z = cfg.lookup("species_Z");
     int nThermal = cfg.lookup("nThermal");
     long int nP = nPx * nPy * nPz;
-    float wc = Z * physConstants::e * MaxB0 / (amu * physConstants::mi);
+    float wc = std::abs ( Z * physConstants::e * MaxB0 / (amu * physConstants::mi) );
     float cyclotronPeriod = 2 * physConstants::pi / wc;
     float dtMin = -cyclotronPeriod / nStepsPerCyclotronPeriod;
 
