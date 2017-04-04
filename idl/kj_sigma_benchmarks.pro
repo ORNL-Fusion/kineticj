@@ -6,7 +6,7 @@ if keyword_set(_benchmark) then benchmark = _benchmark else benchmark = 1
 @constants
 
 n = 300
-n_kj = 40 
+n_kj = 10 
 
 kj_nPts_grid = 301
 kj_nPts_eval = 1
@@ -193,6 +193,56 @@ endif else if benchmark eq 4 then begin
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
     w_wc = 2*!pi*f / wc
     w_wc_kj = 2*!pi*f / wc_kj
+
+endif else if benchmark eq 5 then begin
+
+    ; Benchmark 3
+    ; -----------
+    ; B Scan over a few electron-cyclotron resonances
+    
+    f = 32d9
+    Z = -1d0
+    amu =  _me_amu
+    B = 1d0
+    BUnit = [0,0,1]
+    density = 5d19
+    harmonicNumber = 6
+    
+    T_eV = [1e3] 
+    T_eV_kj = T_eV
+
+    ; Analytic calculation range
+
+    bMin = 0.3
+    bMax = 1.2
+    B_T = fIndGen(n)/(n-1)*(bMax-bMin)+bMin 
+
+    ; KJ calculation range
+
+    bMin_kj = 0.3
+    bMax_kj = 1.2
+    B_T_kj = fIndGen(n_kj)/(n_kj-1)*(bMax_kj-bMin_kj)+bMin_kj 
+
+    kx = 10.0
+    ky = 0.0 
+    kz = 100.0
+
+    ; KJ config parameters
+
+    kj_nPx = 11
+    kj_nPy = 11
+    kj_nPz = 15
+    kj_nStepsPerCyclotronPeriod = 100.0
+    kj_nRFCycles = 1.0 
+
+    ; Diagnose the scenario
+
+    beta_ = density * _kB * T_eV / ( B_T^2 / ( 2 *_u0 ) )
+    vTh = sqrt( 2.0 * T_eV * _e / ( amu * _amu ) )
+    wc = ( Z * _e ) * B_T / ( amu * _amu )
+    wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
+    w_wc = 2*!pi*f / wc
+
 
 endif
 
@@ -442,14 +492,14 @@ layout=[3,3]
 pos = 1
 thick = 1 
 style = '--'
-transparency = 60
+transparency = 30
 transparencyC = 0
 xFS = 6
 yFS = 6
 margin = [0.18,0.15,0.1,0.15]
 xRange = 0
 kj_color1 = 'teal'
-kj_color2 = 'crimson'
+kj_color2 = 'tomato'
 
 plotThis = sig
 plotThis_cold = sig_cold
@@ -484,6 +534,19 @@ if benchmark eq 4 then begin
 
     x = w / wc
     x_kj = w / wc_kj
+
+endif
+
+if benchmark eq 5 then begin
+    xTitle ='$\omega/\omega_{c}$'
+
+    wc = abs(( Z * _e ) * B_T / ( amu * _amu ))
+    wc_kj = abs(( Z * _e ) * B_T_kj / ( amu * _amu ))
+
+    x = w / wc
+    x_kj = w / wc_kj
+
+    xRange = 0 
 
 endif
 
