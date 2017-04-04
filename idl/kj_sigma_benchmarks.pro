@@ -49,7 +49,7 @@ if benchmark eq 1 then begin
     kj_nPy = 21
     kj_nPz = 65
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 10.0 
+    kj_nRFCycles = 200.0 
 
 endif else if benchmark eq 2 then begin
 
@@ -200,9 +200,9 @@ endif else if benchmark eq 5 then begin
     ; -----------
     ; B Scan over a few electron-cyclotron resonances
     
-    f = 32d9
-    Z = -1d0
-    amu =  _me_amu
+    f = 13d6
+    Z = 1d0
+    amu =  1.007
     B = 1d0
     BUnit = [0,0,1]
     density = 5d19
@@ -219,8 +219,8 @@ endif else if benchmark eq 5 then begin
 
     ; KJ calculation range
 
-    bMin_kj = 0.3
-    bMax_kj = 1.2
+    bMin_kj = 0.5
+    bMax_kj = 0.6
     B_T_kj = fIndGen(n_kj)/(n_kj-1)*(bMax_kj-bMin_kj)+bMin_kj 
 
     kx = 10.0
@@ -229,11 +229,11 @@ endif else if benchmark eq 5 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 11
-    kj_nPy = 11
-    kj_nPz = 15
+    kj_nPx = 21
+    kj_nPy = 21
+    kj_nPz = 65
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 1.0 
+    kj_nRFCycles = 200.0 
 
     ; Diagnose the scenario
 
@@ -243,7 +243,7 @@ endif else if benchmark eq 5 then begin
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
     w_wc = 2*!pi*f / wc
 
-
+stop
 endif
 
 nT = n_elements(T_eV)
@@ -500,6 +500,7 @@ margin = [0.18,0.15,0.1,0.15]
 xRange = 0
 kj_color1 = 'teal'
 kj_color2 = 'tomato'
+yLog = 0
 
 plotThis = sig
 plotThis_cold = sig_cold
@@ -538,6 +539,7 @@ if benchmark eq 4 then begin
 endif
 
 if benchmark eq 5 then begin
+
     xTitle ='$\omega/\omega_{c}$'
 
     wc = abs(( Z * _e ) * B_T / ( amu * _amu ))
@@ -548,14 +550,20 @@ if benchmark eq 5 then begin
 
     xRange = 0 
 
-endif
+    C = 1e-10
 
-yRange = [-1,1]*max(abs(sig[0,0,*]))*1.1
+    plotThis = complex( alog10( C + abs( real_part(sig) )), alog10( C + abs( imaginary(sig) )) )
+    plotThis_cold = complex( alog10( C + abs( real_part(sig_cold)) ), alog10( C + abs( imaginary(sig_cold) )) )
+    sig_kj = complex( alog10( C + abs( real_part(sig_kj)) ), alog10( C + abs( imaginary(sig_kj) )) )
+    sig_swan = complex( alog10( C + abs( real_part(sig_swan)) ), alog10( C + abs( imaginary(sig_swan) )) )
+
+endif
 
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
         title='$\sigma_{xx}$',/buffer,$
         font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, yRange=yRange, xRange=xRange )
+        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, $
+        xRange=xRange )
 p=plot(x,imaginary(plotThis[0,0,*]),color='r',/over)
 p=plot(x,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
 p=plot(x,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
@@ -679,10 +687,8 @@ p=plot(x, imaginary(sig_swan[2,1,*]), color='r', /over, thick=1, lineStyle='--')
 
 ++pos 
 
-yRange = [-1,1]*max(abs(sig[2,2,*]))*1.1
-
 p=plot(x,plotThis[2,2,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{zz}$',yRange=yRange,/buffer,$
+        title='$\sigma_{zz}$',/buffer,$
         font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
         xMinor = 0, axis_style=1, yTitle='$\sigma_{zz} [S/m]$', margin=margin, xRange=xRange )
 
