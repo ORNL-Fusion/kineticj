@@ -13,7 +13,7 @@ function kj_read_cfg, RunDir
 	free_lun, lun
     runFileArray = runFileArray[1:-1]
 
-    h = hash()
+    h = orderedHash()
     StrData = StrSplit(RunFileArray,'=,;',/extract)
     for f=0,n_elements(StrData)-1 do begin
         ThisStr = StrData[f]
@@ -24,13 +24,13 @@ function kj_read_cfg, RunDir
         d = StRegEx(ThisValue,'^[-+]?[0-9]+\.?[0-9]+$',/bool) ; decimal
 
         if i eq 1 then begin
-                h = h + hash(ThisKey,fix(ThisValue))
+                h = h + orderedHash(ThisKey,fix(ThisValue))
         endif else if d eq 1 then begin
-                h = h + hash(ThisKey,float(ThisValue))
+                h = h + orderedHash(ThisKey,float(ThisValue))
         endif else begin
                 len = StrLen(ThisValue)
                 str = StrMid(ThisValue,1,len-2)
-                h = h + hash(ThisKey,str)
+                h = h + orderedHash(ThisKey,str)
         endelse
 
     endfor
