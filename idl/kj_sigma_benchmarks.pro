@@ -3,10 +3,19 @@ pro kj_sigma_benchmarks, runKJ=runKJ, $
 
 if keyword_set(_benchmark) then benchmark = _benchmark else benchmark = 1
 
+cd, current = pwd
+
+benchmarkDirString = 'benchmark'+StrTrim(string(benchmark),2)
+
+if not file_test(benchmarkDirString,/directory) then $
+    file_mkdir, benchmarkDirString 
+
+cd, benchmarkDirString
+
 @constants
 
 n = 300
-n_kj = 10 
+n_kj = 20 
 
 kj_nPts_grid = 301
 kj_nPts_eval = 1
@@ -39,17 +48,25 @@ if benchmark eq 1 then begin
     tMax_kj = 10e3
     T_eV_kj = 10d0^(findGen(n_kj)/(n_kj-1)*(alog10(tMax_kj)-alog10(tMin_kj))+alog10(tMin_kj)) 
    
-    kx = 10.0
+    kx = 0.0
     ky = 0.0 
-    kz = 100.0
+    kz = 200.0
 
     ; KJ config parameters
 
-    kj_nPx = 21
-    kj_nPy = 21
-    kj_nPz = 65
+    kj_nPx = 11
+    kj_nPy = 11
+    kj_nPz = 85
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 200.0 
+    kj_nRFCycles = 10.0 
+
+    ; Diagnose the scenario
+
+    beta_ = density * _kB * T_eV / ( B_T^2 / ( 2 *_u0 ) )
+    vTh = sqrt( 2.0 * T_eV * _e / ( amu * _amu ) )
+    wc = ( Z * _e ) * B_T / ( amu * _amu )
+    wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
+    w_wc = 2*!pi*f / wc
 
 endif else if benchmark eq 2 then begin
 
@@ -85,10 +102,10 @@ endif else if benchmark eq 2 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 21
-    kj_nPy = 21
-    kj_nPz = 65
-    kj_nStepsPerCyclotronPeriod = 100.0
+    kj_nPx = 11
+    kj_nPy = 11
+    kj_nPz = 85
+    kj_nStepsPerCyclotronPeriod = 500.0
     kj_nRFCycles = 10.0 
 
 endif else if benchmark eq 3 then begin
@@ -96,7 +113,9 @@ endif else if benchmark eq 3 then begin
     ; Benchmark 3
     ; -----------
     ; B Scan over a few electron-cyclotron resonances
-    
+
+    n_kj = 50 
+
     f = 32d9
     Z = -1d0
     amu =  _me_amu
@@ -144,8 +163,10 @@ endif else if benchmark eq 4 then begin
 
     ; Benchmark 4
     ; -----------
-    ; B Scan over a few ion-cyclotron resonances
-    ; Within a single spatial domain.
+    ; Same as benchmark 3 but
+    ; within a single spatial domain, 
+    ; although there is a bug in the z 
+    ; off-diagnoal elements not present in b3.
     
     f = 32d9
     Z = -1d0
@@ -196,19 +217,24 @@ endif else if benchmark eq 4 then begin
 
 endif else if benchmark eq 5 then begin
 
-    ; Benchmark 3
+    ; Benchmark 5
     ; -----------
     ; B Scan over a few electron-cyclotron resonances
+    ; but the 2nd and 3rd harmonic responses are at least 
+    ; 5 orders of magnitude lower, so resolving it is 
+    ; not practical, nor likely ever required. This is
+    ; a touch confusing though ... i.e., when is this ever
+    ; going to be important?
     
-    f = 13d6
-    Z = 1d0
-    amu =  1.007
+    f = 32d9
+    Z = -1d0
+    amu = _me_amu 
     B = 1d0
     BUnit = [0,0,1]
     density = 5d19
     harmonicNumber = 6
     
-    T_eV = [1e3] 
+    T_eV = [20e3] 
     T_eV_kj = T_eV
 
     ; Analytic calculation range
@@ -229,11 +255,11 @@ endif else if benchmark eq 5 then begin
 
     ; KJ config parameters
 
-    kj_nPx = 21
-    kj_nPy = 21
-    kj_nPz = 65
+    kj_nPx = 11
+    kj_nPy = 11
+    kj_nPz = 15
     kj_nStepsPerCyclotronPeriod = 100.0
-    kj_nRFCycles = 200.0 
+    kj_nRFCycles = 100.0 
 
     ; Diagnose the scenario
 
@@ -243,7 +269,6 @@ endif else if benchmark eq 5 then begin
     wp = sqrt ( density * _e^2 / ( amu * _amu * _e0 ) )
     w_wc = 2*!pi*f / wc
 
-stop
 endif
 
 nT = n_elements(T_eV)
@@ -560,7 +585,7 @@ if benchmark eq 5 then begin
 endif
 
 p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
-        title='$\sigma_{xx}$',/buffer,$
+        title='$\sigma_{xx}$',yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
         font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
         xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, $
         xRange=xRange )
@@ -702,8 +727,10 @@ p=plot(x_kj, imaginary(sig_kj[2,2,*]), color=kj_color2, /over, thick=3,transpare
 p=plot(x, sig_swan[2,2,*], /over, thick=1, lineStyle='--')
 p=plot(x, imaginary(sig_swan[2,2,*]), color='r', /over, thick=1, lineStyle='--')
 
-p.save, 'kj_sigma_vs_t.png', resolution=300, /transparent
-p.save, 'kj_sigma_vs_t.pdf'
+p.save, benchmarkDirString+'.png', resolution=300, /transparent
+p.save, benchmarkDirString+'.pdf'
+
+cd, pwd
 
 stop
 

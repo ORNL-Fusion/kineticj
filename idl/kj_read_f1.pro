@@ -60,9 +60,9 @@ pro kj_read_f1
 
 	cfg = kj_read_cfg('./')
 
-	nx = cfg['nPx'] 
-	ny = cfg['nPy']
-	nz = cfg['nPz']
+	nx = cfg['nP_Vx'] 
+	ny = cfg['nP_Vy']
+	nz = cfg['nP_Vz']
 
 
     offset = 1
