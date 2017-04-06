@@ -126,11 +126,13 @@ function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer
 
 @constants
 
+_kPer = kPer>1e-5
+
 w = 2 * !Pi * f
 m = amu * _amu
 q = atomicZ * _e
 nPar = _c * kPar / w
-nPer = _c * kPer / w
+nPer = _c * _kPer / w
 
 nS = n_elements(amu)
 
@@ -162,7 +164,7 @@ for alp = 0,nS-1 do begin
     wp = sqrt( density[alp] * q[alp]^2 / (m[alp] * _e0) ) 
     vTh = sqrt(2*T_eV[alp]*_e/m[alp])
 
-    lambda = kPer^2 * vTh^2 / (2*wc^2)
+    lambda = _kPer^2 * vTh^2 / (2*wc^2)
 
     Ssum = dcomplex(0,0)
     Dsum = dcomplex(0,0)
@@ -261,7 +263,7 @@ for alp = 0,nS-1 do begin
 
     _eps = atomicZ / abs(atomicZ) 
     _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
-    _g2 = kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
+    _g2 = _kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
 
     K0 += 2 * _g1 * K0_HarmSum 
     K1 += _g1 * K1_HarmSum
@@ -316,7 +318,7 @@ epsilon[2,2] = ezz
 epsilon_swan = dComplexArr(3,3)
 epsilon_swan_ND = dComplexArr(3,3)
 
-psi = acos ( kx / kPer )
+psi = acos ( kx / _kPer )
 
 swan_exx = K1 + sin(psi)^2 * K0
 swan_exy = K2 - cos(psi) * sin(psi) * K0
@@ -342,7 +344,7 @@ epsilon_swan[2,0] = swan_ezx
 epsilon_swan[2,1] = swan_ezy
 epsilon_swan[2,2] = swan_ezz
 
-; Swamson No Drifts ( kx = kPer, ky = 0 )
+; Swamson No Drifts ( kx = _kPer, ky = 0 )
 
 swan_ND_exx = K1 
 swan_ND_exy = K2 
@@ -389,6 +391,8 @@ epsilon_cold[2,1] = 0
 epsilon_cold[0,2] = 0 
 epsilon_cold[1,2] = 0
 epsilon_cold[2,2] = P
+
+if total(epsilon) ne total(epsilon) then stop
 
 return, epsilon
 
