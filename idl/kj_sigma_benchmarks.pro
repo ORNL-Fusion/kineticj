@@ -48,7 +48,7 @@ if benchmark eq 1 then begin
     tMax_kj = 10e3
     T_eV_kj = 10d0^(findGen(n_kj)/(n_kj-1)*(alog10(tMax_kj)-alog10(tMin_kj))+alog10(tMin_kj)) 
    
-    kx = 0.0
+    kx = 10.0
     ky = 0.0 
     kz = 200.0
 
@@ -56,7 +56,7 @@ if benchmark eq 1 then begin
 
     kj_nPx = 11
     kj_nPy = 11
-    kj_nPz = 85
+    kj_nPz = 155 
     kj_nStepsPerCyclotronPeriod = 100.0
     kj_nRFCycles = 10.0 
 
@@ -329,6 +329,7 @@ TemplateRunDir = 'template'
 cd, current = RootDir
 print, 'RootDir: ', RootDir
 
+tic
 cnt = 0
 for t=0,nT_kj-1 do begin
 for b=0,nB_kj-1 do begin
@@ -504,6 +505,8 @@ for b=0,nB_kj-1 do begin
 
 endfor
 endfor
+
+toc
 
 for i=0,n_elements(sig_kj[0,0,*])-1 do begin
 

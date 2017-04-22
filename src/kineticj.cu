@@ -30,6 +30,11 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/complex.h>
+#include <thrust/execution_policy.h>
+#endif
+
+#if defined(_OPENMP)
+#include <omp.h>
 #endif
 
 #if CLOCK >= 1
@@ -103,7 +108,11 @@ int main(int argc, char** argv)
     }
 
 #if CLOCK >= 1
+#if defined(_OPENMP)
+    double start_time = omp_get_wtime();
+#endif
     clock_t ProgramTime = clock();
+#else
 #endif
 
 #if (USEPAPI >= 1 || LOWMEM_USEPAPI >= 1)
@@ -250,7 +259,7 @@ int main(int argc, char** argv)
 
     int SanityCheck = 0;
 
-    if (std::isinf(cyclotronPeriod)) ++SanityCheck;
+    //if (std::isinf(cyclotronPeriod)) ++SanityCheck;
 
     if (SanityCheck > 0) {
         std::cout<<"SanityCheck Failure"<<std::endl;
@@ -333,6 +342,9 @@ int main(int argc, char** argv)
     }
 
 #ifdef __CUDACC__
+#if CLOCK >= 1
+        clock_t timeCUDACopy0 = clock();
+#endif
     std::cout<<"Copying particle worklist to device ..."<<std::endl;
     thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
 
@@ -340,11 +352,15 @@ int main(int argc, char** argv)
     thrust::device_vector<float> vy_device(nWork,0);
     thrust::device_vector<float> vz_device(nWork,0);
 
-    thrust::transform( vx_device.begin(), vx_device.end(), particleWorkList_device.begin(), vx_device.begin(), set_vx() );
-    thrust::transform( vy_device.begin(), vy_device.end(), particleWorkList_device.begin(), vy_device.begin(), set_vy() );
-    thrust::transform( vz_device.begin(), vz_device.end(), particleWorkList_device.begin(), vz_device.begin(), set_vz() );
+    thrust::transform( thrust::device, vx_device.begin(), vx_device.end(), particleWorkList_device.begin(), vx_device.begin(), set_vx() );
+    thrust::transform( thrust::device, vy_device.begin(), vy_device.end(), particleWorkList_device.begin(), vy_device.begin(), set_vy() );
+    thrust::transform( thrust::device, vz_device.begin(), vz_device.end(), particleWorkList_device.begin(), vz_device.begin(), set_vz() );
 
     std::cout<<"DONE"<<std::endl;
+#if CLOCK >= 1
+        double timeCUDACopy = ( clock() - timeCUDACopy0 ) / (double)CLOCKS_PER_SEC;
+        std::cout << "THRUST: Time for Copy 1: " << timeCUDACopy << std::endl;
+#endif
 #endif
 
     vector<float> vx(nWork,0);
@@ -370,7 +386,9 @@ int main(int argc, char** argv)
     vector<complex<float> > vzf1(nWork,0);
 
 #ifdef __CUDACC__
-
+#if CLOCK >= 1
+        clock_t timeCUDACopy2_0 = clock();
+#endif
     thrust::device_vector<C3<float> > df0_dv_XYZ_device(nWork,0);
     thrust::device_vector<C3<thrust::complex<float> > > E1_device(nWork,0);
     thrust::device_vector<C3<thrust::complex<float> > > B1_device(nWork,0);
@@ -413,11 +431,18 @@ int main(int argc, char** argv)
     C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
     C3<thrust::complex<float> > *e1_dPtr_raw = thrust::raw_pointer_cast(e1_CYL_device.data());
     C3<thrust::complex<float> > *b1_dPtr_raw = thrust::raw_pointer_cast(b1_CYL_device.data());
-
+#if CLOCK >= 1
+        double timeCUDACopy2 = ( clock() - timeCUDACopy2_0 ) / (double)CLOCKS_PER_SEC;
+        std::cout << "THRUST: Time for Copy 2: " << timeCUDACopy2 << std::endl;
+#endif
 #endif
 
     // Move particles
     std::cout << "Moving particles with for_each ..." << std::endl;
+
+#if CLOCK >= 1
+        clock_t timeMove0 = clock();
+#endif
 
     for (int i = 0; i < nSteps; i++) {
 
@@ -430,66 +455,65 @@ int main(int argc, char** argv)
 
 #ifdef __CUDACC__
         // Move particle
-        thrust::for_each( particleWorkList_device.begin(), particleWorkList_device.end(), 
+        thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
                         moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
-        thrust::copy(particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
+        //thrust::copy( thrust::device, particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
 
         // df0(v)/dv 
-        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
                         get_df0_dv() ); 
-        thrust::copy(df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
+        //thrust::copy( thrust::device, df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
 
         // E1(x) 
-        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
                         getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
-        thrust::copy(E1_device.begin(),E1_device.end(),E1_host.begin());
+        //thrust::copy( thrust::device, E1_device.begin(),E1_device.end(),E1_host.begin());
 
         // B1(x) 
-        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
                         getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
-        thrust::copy(B1_device.begin(),B1_device.end(),B1_host.begin());
+        //thrust::copy( thrust::device, B1_device.begin(),B1_device.end(),B1_host.begin());
 
         // v x B1 
-        thrust::transform( particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
                         vCross<thrust::complex<float> >() );
-        thrust::copy(vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
+        //thrust::copy( thrust::device, vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
 
         // E1 + v x B1
-        thrust::transform( E1_device.begin(), E1_device.end(), vCrossB_device.begin(), vCrossB_E1_device.begin(), 
+        thrust::transform( thrust::device, E1_device.begin(), E1_device.end(), vCrossB_device.begin(), vCrossB_E1_device.begin(), 
                         thrust::plus<C3<thrust::complex<float> > >() );
-        thrust::copy(vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
+        //thrust::copy( thrust::device, vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
 
         //  (E1 + v x B1) . grad_v(f0(v))
-        thrust::transform( vCrossB_E1_device.begin(), vCrossB_E1_device.end(), df0_dv_XYZ_device.begin(), forceDotGradf0_device.begin(), 
+        thrust::transform( thrust::device, vCrossB_E1_device.begin(), vCrossB_E1_device.end(), df0_dv_XYZ_device.begin(), forceDotGradf0_device.begin(), 
                         doDotProduct_device() );
-        thrust::copy(forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
+        //thrust::copy( thrust::device, forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
 
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
-        thrust::transform( dtIntegral_device.begin(), dtIntegral_device.end(), forceDotGradf0_device.begin(), dtIntegral_device.begin(), 
+        thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), forceDotGradf0_device.begin(), dtIntegral_device.begin(), 
                         runningIntegral<thrust::complex<float> >(dtIntFac) );
-        thrust::copy(dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
+        //thrust::copy( thrust::device, dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
 
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
-        thrust::transform( dtIntegral_device.begin(), dtIntegral_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
+        thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
                         multiplyByChargeOverMass<thrust::complex<float> >() ); 
-        thrust::copy(f1_device.begin(),f1_device.end(),f1_host.begin());
+        //thrust::copy( thrust::device, f1_device.begin(),f1_device.end(),f1_host.begin());
 
         // q . f1(v) // first step in velocity momemnt for current calculation 
-        thrust::transform( f1_device.begin(), f1_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
                         multiplyByCharge<thrust::complex<float> >() ); 
         // q . vx . f1(v) 
-        thrust::transform( f1_device.begin(), f1_device.end(), vx_device.begin(), vxf1_device.begin(), 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vx_device.begin(), vxf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
 
-        thrust::copy(vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
+        //thrust::copy( thrust::device, vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
 
         // q . vy . f1(v) 
-        thrust::transform( f1_device.begin(), f1_device.end(), vy_device.begin(), vyf1_device.begin(), 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vy_device.begin(), vyf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
         // q . vz . f1(v) 
-        thrust::transform( f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
-
 
 #endif 
 
@@ -581,6 +605,16 @@ int main(int argc, char** argv)
 
     }
 
+#if CLOCK >= 1
+#if defined(_OPENMP)
+        double time = omp_get_wtime() - start_time;
+        std::cout << "THRUST: Time for work: " << time << std::endl;
+#else
+        double timeInSecondsFunctor = (timeMove0 - clock() ) / (double)CLOCKS_PER_SEC;
+        std::cout << "THRUST: Time for work: " << timeInSecondsFunctor << std::endl;
+#endif
+#endif
+
     // Reduce velocity space to current via the first velocity moment
 
 #if DO_CPU_ITERATOR_APPROACH > 0
@@ -593,12 +627,19 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef __CUDACC__
-
+#if CLOCK >= 1
+        clock_t timeCUDACopy3_0 = clock();
+#endif
     // Copy data back from GPU
 
     thrust::copy(vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
     thrust::copy(vyf1_device.begin(),vyf1_device.end(),vyf1_host.begin());
     thrust::copy(vzf1_device.begin(),vzf1_device.end(),vzf1_host.begin());
+
+#if CLOCK >= 1
+        double timeCUDACopy3 = ( clock() - timeCUDACopy3_0 ) / (double)CLOCKS_PER_SEC;
+        std::cout << "THRUST: Time for Copy 3: " << timeCUDACopy3 << std::endl;
+#endif
 
     for (int i=0;i<nXGrid;i++) {
         j1xc[i] = dv * accumulate( vxf1_host.begin()+nP*i, vxf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
@@ -649,6 +690,7 @@ int main(int argc, char** argv)
     nc_j1zc_im.putVar(&JzIm[0]);
 
     std::cout << "DONE" << std::endl;
+
 
 #if DO_CPU_APPROACH > 0
 
