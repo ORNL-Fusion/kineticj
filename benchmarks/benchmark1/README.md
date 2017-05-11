@@ -1,4 +1,13 @@
-This benchmark is a scan of Te for a D plasma, with ky = 0. Run on gpufusion with ...
+This benchmark is a scan of Te for a D plasma, with ky = 0. 
+
+Build with the following flags ...
+```
+CPPFLAGS += -D_PARTICLE_BOUNDARY=2
+CPPFLAGS += -DCYLINDRICAL_INPUT_FIELDS=0
+```
+These are for periodic boundaries for the particles, and input E1 fields in Cartesian.
+
+Run on gpufusion with ...
 ```
 qsub -I
 source ~/code/kineticj/env-gpufusion.sh
