@@ -3,13 +3,15 @@ pro kj_plot_current, $
         OverPlotAR2 = _OverPlotAR2, $
         OverPlotRSFWC = _OverPlotRSFWC, $
         OverPlotOLD = _OverPlotOLD, $
-        SplitParallel = _SplitParallel
+        SplitParallel = _SplitParallel, $
+        cartesian_offset = _cartesian_offset
 
     if keyword_set(_OverPlotAR2) then OverPlotAR2 = _OverPlotAR2 else OverPlotAR2 = 0
     if keyword_set(_OverPlotRSFWC) then OverPlotRSFWC = _OverPlotRSFWC else OverPlotRSFWC = 0
     if keyword_set(_OverPlotOLD) then OverPlotOLD = _OverPlotOLD else OverPlotOLD = 0
     if keyword_set(_noIterate) then noIterate = _noIterate else noIterate = 0
     if keyword_set(_SplitParallel) then SplitParallel = _SplitParallel else SplitParallel = 0
+    if keyword_set(_cartesian_offset) then cartesian_offset = _cartesian_offset else cartesian_offset = 0
 
 	@constants
 
@@ -46,7 +48,7 @@ pro kj_plot_current, $
 
 	spline_sigma = 0.01
 
-	cdfId = ncdf_open('output/jP2_1.nc')
+	cdfId = ncdf_open('output/jP2.nc')
 
 		ncdf_varget, cdfId, 'x', x2 
 
@@ -200,6 +202,8 @@ endif
     endif
 
     margin = [0.2,0.2,0.1,0.2]
+
+    xf = xf + cartesian_offset
 
     jpRange = max(abs([j1x]))
     p=plot(xf,j1x,layout=[1,3,1],yRange=[-jpRange,jpRange],title='j1_r',thick=2, ytitle='j1_r [Amp/m^2]',margin=margin)

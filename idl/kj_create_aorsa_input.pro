@@ -57,27 +57,6 @@ pro kj_create_aorsa_input, rsfwcPath=rsfwcPath
 
 	ncdf_close, cdfId
 
-	;; Optionally remove the cold antenna piece of the e field.
-	;remove_cold = 1
-	;	if remove_cold then begin
-	;	print, 'REMOVING COLD PIECE'
-	;	cdfId = ncdf_open ( '../langmuir_cold/solution001.nc', /noWrite ) 
-	;		nCdf_varGet, cdfId, 'er_re', er_re_c 
-	;		nCdf_varGet, cdfId, 'et_re', et_re_c 
-	;		nCdf_varGet, cdfId, 'ez_re', ez_re_c 
-	;		nCdf_varGet, cdfId, 'er_im', er_im_c 
-	;		nCdf_varGet, cdfId, 'et_im', et_im_c 
-	;		nCdf_varGet, cdfId, 'ez_im', ez_im_c 
-	;	ncdf_close, cdfId
-	;	er_re =  er_re - er_re_c 
-	;	et_re =  et_re - et_re_c 
-	;	ez_re =  ez_re - ez_re_c 
-	;	er_im =  er_im - er_im_c 
-	;	et_im =  et_im - et_im_c 
-	;	ez_im =  ez_im - ez_im_c 
-	;	stop
-	;endif
-
 	a_jP_r_re = (total(a_jP_r_re,3))[*,0]
 	a_jP_r_im = (total(a_jP_r_im,3))[*,0]
 	a_jP_t_re = (total(a_jP_t_re,3))[*,0]
