@@ -218,7 +218,7 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
 
     for (int i = 0; i < e_r.size(); i++) {
 
-        e1_CYL[i].c1 = e_r[i];
+        e1_CYL[i].c1 = e_r[i];//*std::complex<float>(0);
         e1_CYL[i].c2 = e_p[i];//*std::complex<float>(0);
         e1_CYL[i].c3 = e_z[i];//*std::complex<float>(0);
 

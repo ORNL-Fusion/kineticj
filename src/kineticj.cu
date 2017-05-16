@@ -1,6 +1,7 @@
 #include "c3vec.hpp"
 #include "constants.hpp"
 #include "cparticle.hpp"
+#include "cparticles.hpp"
 #include "createParticles.hpp"
 #include "cspecies.hpp"
 #include "interp.hpp"
@@ -149,7 +150,7 @@ int main(int argc, char** argv)
     // Read config file
 
     libconfig::Config cfg;
-    string cfgName = "kj.cfg";
+    std::string cfgName = "kj.cfg";
 
     try {
         cfg.readFile(cfgName.c_str());
@@ -162,11 +163,30 @@ int main(int argc, char** argv)
         return (EXIT_FAILURE);
     }
 
-    int species_number = cfg.lookup("species_number");
-    float T_keV_cfg = cfg.lookup("T_keV");
+    int species_number;
+    try {
+        species_number = cfg.lookup("species_number");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+
+    float T_keV_cfg;
+    try {
+        T_keV_cfg = cfg.lookup("T_keV");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
 
     // Read E
-    string input_fName = cfg.lookup("input_fName");
+    std::string input_fName;
+    try {
+        input_fName = cfg.lookup("input_fName").c_str();
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
     vector<C3<std::complex<float> > > e1_CYL, b1_CYL;
     vector<C3<float> > b0_CYL, b0_XYZ;
     vector<float> r, n_m3;
@@ -190,9 +210,30 @@ int main(int argc, char** argv)
 #endif
 
     float wrf = freq * 2 * physConstants::pi;
-    float xGridMin = cfg.lookup("xGridMin");
-    float xGridMax = cfg.lookup("xGridMax");
-    int nXGrid = cfg.lookup("nXGrid");
+    float xGridMin;
+    try {
+        xGridMin = cfg.lookup("xGridMin");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float xGridMax;
+    try {
+        xGridMax = cfg.lookup("xGridMax");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    int nXGrid;
+    try {
+        nXGrid = cfg.lookup("nXGrid");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
     std::cout << "nXGrid: " << nXGrid << std::endl;
 
     vector<float> xGrid(nXGrid);
@@ -239,19 +280,95 @@ int main(int argc, char** argv)
         realTime - realTime0, cpuTime - cpuTime0, flpIns - flpIns0, mFlops);
 #endif
 
-    float nRFCycles = cfg.lookup("nRFCycles");
-    float nStepsPerCyclotronPeriod = cfg.lookup("nStepsPerCyclotronPeriod");
+    float nRFCycles;
+    try {
+        nRFCycles = cfg.lookup("nRFCycles");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float nStepsPerCyclotronPeriod;
+    try {
+        nStepsPerCyclotronPeriod = cfg.lookup("nStepsPerCyclotronPeriod");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
     float tRF = (2 * physConstants::pi) / wrf;
-    int nPhi = cfg.lookup("nPhi");
-    float ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
-    float kz = cfg.lookup("kz"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
-    int istat = 0;
-    int nPx = cfg.lookup("nP_Vx");
-    int nPy = cfg.lookup("nP_Vy");
-    int nPz = cfg.lookup("nP_Vz");
-    float amu = cfg.lookup("species_amu");
-    float Z = cfg.lookup("species_Z");
-    int nThermal = cfg.lookup("nThermal");
+    int nPhi;
+    try {
+        nPhi = cfg.lookup("nPhi");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float ky;
+    try {
+        ky = cfg.lookup("ky"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float kz;
+    try {
+        kz = cfg.lookup("kz"); // Only used for -DCYLINDRICAL_INPUT_FIELDS=0
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    int nPx;
+    try {
+        nPx = cfg.lookup("nP_Vx");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    int nPy;
+    try {
+        nPy = cfg.lookup("nP_Vy");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    int nPz;
+    try {
+        nPz = cfg.lookup("nP_Vz");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float amu;
+    try {
+        amu = cfg.lookup("species_amu");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    float Z;
+    try {
+        Z = cfg.lookup("species_Z");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
+    int nThermal;
+    try {
+        nThermal = cfg.lookup("nThermal");
+    } catch ( const libconfig::SettingNotFoundException &nfex ) {
+        std::cerr << "No " << nfex.getPath() << " setting in configuration file." << std::endl;
+        return (EXIT_FAILURE);
+    }
+ 
     long int nP = nPx * nPy * nPz;
     float wc = std::abs ( Z * physConstants::e * MaxB0 / (amu * physConstants::mi) );
     float cyclotronPeriod = 2 * physConstants::pi / wc;
@@ -271,8 +388,8 @@ int main(int argc, char** argv)
     for (int iX = 0; iX < nXGrid; iX++) {
         float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::amu);
         wrf_wc[iX] = wrf / this_wc;
-        std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
-        std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
+        //std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
+        //std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
     }
 
 #if PRINT_INFO >= 1
@@ -294,24 +411,19 @@ int main(int argc, char** argv)
     }
 
     for (int i = 0; i < nSteps; i++) {
-        thisT[i] = i * dtMin; //+1.5*dtMin;
+        thisT[i] = i * dtMin; 
     }
 
     vector<float> hanningWeight(nSteps);
     vector<float> expWeight(nSteps);
     vector<float> linearWeight(nSteps);
     for (int i = 0; i < nSteps; i++) {
-        // linearWeight[i]=thisT[i]*1.0/(tRF*nRFCycles)+1.0;
         hanningWeight[i] = 0.5 * (1 - cos(2 * physConstants::pi * i / (nSteps - 1))); // Regular
-        // hanningWeight[i]=0.5*(1-cos(2*physConstants::pi*i/(nSteps*0.25-1))); //Sharper
-        // hanningWeight[i] = linearWeight[i];
         if (i < nSteps / 2)
             hanningWeight[i] = 1; // Regular
-        // if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
         // complex<float> _i (0.0,1.0);
         // complex<float> wrf_c (wrf,wrf*0.0025);
         // expWeight[i] = 1.0;//std::abs(exp(-_i*wrf_c*thisT[i]));
-        // hanningWeight[i] = hanningWeight[i] * expWeight[i];
     }
 
     vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
@@ -339,6 +451,44 @@ int main(int argc, char** argv)
                 nPz, nThermal, dv, &r[0], &b0_CYL[0], r.size() ));
 
         particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
+    }
+
+    // Convert to an object array (from an array of objects).
+
+    auto particleArray = new CParticles(nWork);
+    for (int iW = 0; iW < nWork; iW++) {
+
+		float _c1 = particleWorkList[iW].c1; 
+        float _c2 = particleWorkList[iW].c2; 
+        float _c3 = particleWorkList[iW].c3; 
+        float _v_c1 = particleWorkList[iW].v_c1; 
+        float _v_c2 = particleWorkList[iW].v_c2; 
+        float _v_c3 = particleWorkList[iW].v_c3;
+        int _number = particleWorkList[iW].number;
+        float _weight = particleWorkList[iW].weight;
+        int _status = particleWorkList[iW].status;
+        float _dvx = particleWorkList[iW].dvx;
+        float _dvy = particleWorkList[iW].dvy; 
+        float _dvz = particleWorkList[iW].dvz; 
+        float _d3v = particleWorkList[iW].d3v;
+        float _vPar = particleWorkList[iW].vPar; 
+        float _vPer = particleWorkList[iW].vPer; 
+        float _gyroPhase = particleWorkList[iW].gyroPhase; 
+        float _u = particleWorkList[iW].u; 
+        float _vTh = particleWorkList[iW].vTh;
+        float _vAlp = particleWorkList[iW].vAlp; 
+        float _vBet = particleWorkList[iW].vBet; 
+        float _phs = particleWorkList[iW].phs;
+        float _T = particleWorkList[iW].T; 
+        float _n = particleWorkList[iW].n; 
+
+        particleArray->setParticle(iW, _c1, _c2, _c3,
+                        _v_c1, _v_c2, _v_c3,
+                        _number, _weight, _status,
+                        _dvx, _dvy, _dvz, _d3v,
+                        _vPar, _vPer, _gyroPhase,
+                        _u, _vTh, _vAlp, _vBet,
+                        _phs, _T, _n);
     }
 
 #ifdef __CUDACC__
@@ -431,10 +581,46 @@ int main(int argc, char** argv)
     C3<float> *b0_dPtr_raw = thrust::raw_pointer_cast(b0_CYL_device.data());
     C3<thrust::complex<float> > *e1_dPtr_raw = thrust::raw_pointer_cast(e1_CYL_device.data());
     C3<thrust::complex<float> > *b1_dPtr_raw = thrust::raw_pointer_cast(b1_CYL_device.data());
+
+#if OBJECT_OF_ARRAYS >= 1
+    // Create mananged memory arrays      
+    sim::Array<float> r_(r.size());
+    sim::Array<C3<float> > b0_CYL_(r.size());
+    for(int i=0;i<r.size();i++){
+        r_[i] = r[i];
+        b0_CYL_[i] = b0_CYL[i];
+    }
+
+#endif
+
+#if GC_ORBITS >= 1
+
+    // ***
+    // Untested code block ... looks like the GC STL iterator variant isn't working 
+    // yet, so I'll get that to agree with the non iterator code first.
+
+    thrust::device_vector<float> r_gc_device = r_gc;
+    thrust::device_vector<float> b0DotGradB_device = bDotGradB;
+    thrust::device_vector<C3<float> > curv_CYL_device = curv_CYL;
+    thrust::device_vector<C3<float> > grad_CYL_device = grad_CYL;
+
+    float *r_gc_dPtr_raw = thrust::raw_pointer_cast(r_gc_device.data());
+    float *bDotGradB_dPtr_raw = thrust::raw_pointer_cast(bDotGradB_device.data());
+    C3<float> *curv_CYL_dPtr_raw = thrust::raw_pointer_cast(curv_CYL_device.data());
+    C3<float> *grad_CYL_dPtr_raw = thrust::raw_pointer_cast(grad_CYL_device.data());
+
+#endif
+
 #if CLOCK >= 1
         double timeCUDACopy2 = ( clock() - timeCUDACopy2_0 ) / (double)CLOCKS_PER_SEC;
         std::cout << "THRUST: Time for Copy 2: " << timeCUDACopy2 << std::endl;
 #endif
+
+    thrust::counting_iterator<std::size_t> particleBegin(0);  
+    thrust::counting_iterator<std::size_t> particleEnd(nWork);
+
+    cudaDeviceSynchronize();
+
 #endif
 
     // Move particles
@@ -454,10 +640,12 @@ int main(int argc, char** argv)
         dtIntFac = dtMin / 2.0 * dtIntFac;
 
 #ifdef __CUDACC__
+
+#if OBJECT_OF_ARRAYS >= 1 
+
         // Move particle
         thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
-                        moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
-        //thrust::copy( thrust::device, particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
+                        moveParticle(dtMin, r_.data(), b0_CYL_.data(), r.size()) ); 
 
         // df0(v)/dv 
         thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
@@ -514,6 +702,77 @@ int main(int argc, char** argv)
         // q . vz . f1(v) 
         thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
+
+
+#else
+
+        // Move particle
+
+#if GC_ORBITS >= 1
+        thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
+                        moveParticle_gc(dtMin, thisT[i], r_dPtr_raw, b0_dPtr_raw, r.size(), r_gc_dPtr_raw, curv_CYL_dPtr_raw, grad_CYL_dPtr_raw, bDotGradB_dPtr_raw, r_gc.size() ) ); 
+        //thrust::copy( thrust::device, particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
+#else
+        thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
+                        moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
+#endif
+        // df0(v)/dv 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
+                        get_df0_dv() ); 
+        //thrust::copy( thrust::device, df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
+
+        // E1(x) 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
+                        getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
+        //thrust::copy( thrust::device, E1_device.begin(),E1_device.end(),E1_host.begin());
+
+        // B1(x) 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
+                        getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
+        //thrust::copy( thrust::device, B1_device.begin(),B1_device.end(),B1_host.begin());
+
+        // v x B1 
+        thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
+                        vCross<thrust::complex<float> >() );
+        //thrust::copy( thrust::device, vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
+
+        // E1 + v x B1
+        thrust::transform( thrust::device, E1_device.begin(), E1_device.end(), vCrossB_device.begin(), vCrossB_E1_device.begin(), 
+                        thrust::plus<C3<thrust::complex<float> > >() );
+        //thrust::copy( thrust::device, vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
+
+        //  (E1 + v x B1) . grad_v(f0(v))
+        thrust::transform( thrust::device, vCrossB_E1_device.begin(), vCrossB_E1_device.end(), df0_dv_XYZ_device.begin(), forceDotGradf0_device.begin(), 
+                        doDotProduct_device() );
+        //thrust::copy( thrust::device, forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
+
+        // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
+        thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), forceDotGradf0_device.begin(), dtIntegral_device.begin(), 
+                        runningIntegral<thrust::complex<float> >(dtIntFac) );
+        //thrust::copy( thrust::device, dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
+
+        // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
+        thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
+                        multiplyByChargeOverMass<thrust::complex<float> >() ); 
+        //thrust::copy( thrust::device, f1_device.begin(),f1_device.end(),f1_host.begin());
+
+        // q . f1(v) // first step in velocity momemnt for current calculation 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
+                        multiplyByCharge<thrust::complex<float> >() ); 
+        // q . vx . f1(v) 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vx_device.begin(), vxf1_device.begin(), 
+                        thrust::multiplies<thrust::complex<float> >() ); 
+
+        //thrust::copy( thrust::device, vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
+
+        // q . vy . f1(v) 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vy_device.begin(), vyf1_device.begin(), 
+                        thrust::multiplies<thrust::complex<float> >() ); 
+        // q . vz . f1(v) 
+        thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
+                        thrust::multiplies<thrust::complex<float> >() ); 
+
+#endif
 
 #endif 
 
@@ -610,6 +869,8 @@ int main(int argc, char** argv)
         double time = omp_get_wtime() - start_time;
         std::cout << "THRUST: Time for work: " << time << std::endl;
 #else
+        std::cout << "T1: " << clock() << std::endl;
+        std::cout << "T0: " << timeMove0 << std::endl;
         double timeInSecondsFunctor = (timeMove0 - clock() ) / (double)CLOCKS_PER_SEC;
         std::cout << "THRUST: Time for work: " << timeInSecondsFunctor << std::endl;
 #endif
@@ -697,9 +958,9 @@ int main(int argc, char** argv)
 #if CLOCK >= 1
 #if not defined(_OPENMP)
         clock_t endTimeFunctor = clock();
-        double timeInSecondsFunctor = (endTimeFunctor - startTimeFunctor) / (double)CLOCKS_PER_SEC;
-        std::cout << "Time for this spatial point: " << timeInSecondsFunctor << std::endl;
-        std::cout << "Time per particle: " << timeInSecondsFunctor / nWork << std::endl;
+        double timeInSecondsFunctor2 = (endTimeFunctor - startTimeFunctor) / (double)CLOCKS_PER_SEC;
+        std::cout << "Time for this spatial point: " << timeInSecondsFunctor2 << std::endl;
+        std::cout << "Time per particle: " << timeInSecondsFunctor2 / nWork << std::endl;
 #endif
 #endif
 
@@ -1039,7 +1300,7 @@ int write_iP = 180;//52;//33;
             // Add the offset to the GC time integration 
 
             C3<float> StartingPos_XYZ(ThisParticleList[iP].c1, ThisParticleList[iP].c2, ThisParticleList[iP].c3);
-            C3<float> StartingPos_CYL = XYZ_to_CYL(StartingPos_XYZ)
+            C3<float> StartingPos_CYL = XYZ_to_CYL(StartingPos_XYZ);
  
             C3<float> thisB0 = kj_interp1D(StartingPos_CYL.c1, &r[0], &b0_CYL[0], r.size(), thisParticle_XYZ.status);
             C3<float> par = thisB0 / mag(thisB0);
@@ -1110,7 +1371,7 @@ int write_iP = 180;//52;//33;
                 offset = 0;
             }
 
-            this_f1c += -qOverm * offset;
+            //this_f1c += -qOverm * offset;
 
             if (iX == write_iX && iP == write_iP) {
                     std::cout<<"Offset: "<<offset<<std::endl;

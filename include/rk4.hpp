@@ -30,22 +30,39 @@ int rk4_move_gc ( CParticle &p, const float dt, const float t0, const float *r_b
 
 // Functor to wrap particle move 
 
-struct moveParticle
-{
-
-    float dt;
-    float *r;
-    C3<float> *b;
-    int n;
-
-    moveParticle( float &_dt, float *_r, C3<float> *_b, int _n) : dt(_dt), r(_r), b(_b), n(_n) {}
-
-    HOST DEVICE 
-    void operator() (CParticle &p) {
-        rk4_move(p,dt,r,b,n);
-    }
-
-};
+#if OBJECT_OF_ARRAYS >= 1
+    struct moveParticle
+    {
+        float dt;
+        float *r;
+        C3<float> *b;
+        int n;
+    
+        moveParticle( CParticles *_p, float &_dt, float *_r, C3<float> *_b, int _n) : p(_p), dt(_dt), r(_r), b(_b), n(_n) {}
+    
+        HOST DEVICE 
+        void operator() (std::size_t indx) {
+            rk4_move(p,dt,r,b,n);
+        }
+    
+    };
+#else
+    struct moveParticle
+    {
+        float dt;
+        float *r;
+        C3<float> *b;
+        int n;
+    
+        moveParticle( float &_dt, float *_r, C3<float> *_b, int _n) : dt(_dt), r(_r), b(_b), n(_n) {}
+    
+        HOST DEVICE 
+        void operator() (CParticle &p) {
+            rk4_move(p,dt,r,b,n);
+        }
+    
+    };
+#endif
 
 struct moveParticle_gc
 {
