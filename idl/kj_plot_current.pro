@@ -4,7 +4,7 @@ pro kj_plot_current, $
         OverPlotRSFWC = _OverPlotRSFWC, $
         OverPlotOLD = _OverPlotOLD, $
         SplitParallel = _SplitParallel, $
-        doPlots = _doPlots
+        doPlots = _doPlots, $
         cartesian_offset = _cartesian_offset
 
     if keyword_set(_OverPlotAR2) then OverPlotAR2 = _OverPlotAR2 else OverPlotAR2 = 0
@@ -165,12 +165,12 @@ if not keyword_set(noIterate) then begin
 	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
 	z_id = nCdf_varDef ( nc_id, 'z', ny_id, /float )
 
-	jP_r_re_id = nCdf_varDef ( nc_id, 'jP_r_re', [nx_id,ny_id,ns_id], /float )
-	jP_r_im_id = nCdf_varDef ( nc_id, 'jP_r_im', [nx_id,ny_id,ns_id], /float )
-	jP_p_re_id = nCdf_varDef ( nc_id, 'jP_t_re', [nx_id,ny_id,ns_id], /float )
-	jP_p_im_id = nCdf_varDef ( nc_id, 'jP_t_im', [nx_id,ny_id,ns_id], /float )
-	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', [nx_id,ny_id,ns_id], /float )
-	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', [nx_id,ny_id,ns_id], /float )
+	jP_r_re_id = nCdf_varDef ( nc_id, 'jP_r_re', [nx_id], /float )
+	jP_r_im_id = nCdf_varDef ( nc_id, 'jP_r_im', [nx_id], /float )
+	jP_p_re_id = nCdf_varDef ( nc_id, 'jP_t_re', [nx_id], /float )
+	jP_p_im_id = nCdf_varDef ( nc_id, 'jP_t_im', [nx_id], /float )
+	jP_z_re_id = nCdf_varDef ( nc_id, 'jP_z_re', [nx_id], /float )
+	jP_z_im_id = nCdf_varDef ( nc_id, 'jP_z_im', [nx_id], /float )
 
 	nCdf_control, nc_id, /enDef
 
@@ -188,7 +188,7 @@ if not keyword_set(noIterate) then begin
 	nCdf_varPut, nc_id, jP_z_im_id, imaginary(jZOut) 
 
 	nCdf_close, nc_id
-
+stop
 endif
 
     if(OverplotAR2)then begin
@@ -260,5 +260,5 @@ if doPlots then begin
     p=plot(x2,imaginary(jPz2),/over,color='r')
 
 endif
-
+stop
 end
