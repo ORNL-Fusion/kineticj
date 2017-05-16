@@ -6,8 +6,10 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
 
+    cartesian_offset = 100.0
+
     KJ_BINARY = '~/code/kineticj/bin/kineticj'
-    KJ_BINARY_GC = '~/code/kineticj/bin/kineticj-gc'
+    KJ_BINARY_GC = '~/code/kineticj/bin/kineticj'
  
 	cd, current=RootRunDir
     RootRunDir = RootRunDir+'/'
@@ -17,7 +19,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
         ar2Dir = 'ar2/'
         ar2RunDir0 = RootRunDir+RunDir0+ar2Dir
         ar2nml = ar2_read_namelist(ar2RunDir0)
-        ar2_read_ar2input(ar2RunDir0+'input/ar2Input.nc',ar2=ar2input)
+        ar2_read_ar2input, ar2RunDir0+'input/ar2Input.nc', ar2=ar2input
         ar2_FileName = 'ar2_kj.nc'
     endif else begin
         RsDir = 'rsfwc/'
@@ -26,7 +28,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
         rs_FileName = 'rsfwc_1d.nc'
     endelse
 
-    kj_jP_FileName = 'kj_jp.nc'
+    kj_jP_FileName = 'kj-jp-on-rs-grid.nc'
 
     kjSpecies = ['spec_D','spec_H','spec_e'] ; The order here MUST match the RSFWC spec order (i.e., electrons last)
     ElectronSpecStr = kjSpecies[2]
@@ -79,7 +81,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 				    RsCfg['kj_jP_fileName'] = ''
                 endelse
 			endif else if(k eq 0 and keyword_set(jPFile) ) then begin
-				print, 'Continuing withh file ... ', jPFile
+				print, 'Continuing with file ... ', jPFile
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=1 
@@ -89,7 +91,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=1
-				    RsCfg['kj_jP_fileName'] = 'kj_jP.nc'
+				    RsCfg['kj_jP_fileName'] = kj_jP_fileName
                 endelse
 			endelse
 
@@ -107,7 +109,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
                 kjCfg = kjConfigs[s]        
                 ThisKJRunFolder = ThisRunFolder+kjSpecies[s]+'/'
 
-			    kjCfg['eField_fName'] = 'data/'+rs_FileName
+			    kjCfg['input_fName'] = 'data/'+rs_FileName
 
 			    kj_write_kj_cfg, kjCfg, ThisKJRunFolder 
 
@@ -118,7 +120,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 			        spawn, KJ_BINARY_GC
                 endif else begin
 			        spawn, KJ_BINARY
-               endelse
+                endelse
 			    spawn, 'idl -quiet run_kj_plot_current'
             endfor
 
@@ -126,7 +128,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 
             ; Sum over the kJ species and then create the list below
 
-            kj_sum_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName
+            kj_sum_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName, cartesian_offset = cartesian_offset
 
 			jGuessFileList[k] = RootRunDir+ThisMPEDir+ThisPicardDir+kj_jP_FileName 
 stop
@@ -180,7 +182,6 @@ stop
 		s_ = complex(spline(r,s_re,r_,spline_sigma),spline(r,s_im,r_,spline_sigma))
 		s_re_ = real_part(s_)
 		s_im_ = imaginary(s_)
-
 
 		print, 'Writing vector extrapolated jP to file ... ', jGuessFileList[0]
 		cdfId = ncdf_open(jGuessFileList[0],/write)

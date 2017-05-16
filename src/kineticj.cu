@@ -271,8 +271,8 @@ int main(int argc, char** argv)
     for (int iX = 0; iX < nXGrid; iX++) {
         float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::amu);
         wrf_wc[iX] = wrf / this_wc;
-        std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
-        std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
+        //std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
+        //std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
     }
 
 #if PRINT_INFO >= 1
@@ -622,7 +622,7 @@ int main(int argc, char** argv)
         j1xc[i] = dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
         j1yc[i] = dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
         j1zc[i] = dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
-        std::cout << j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
+        //std::cout << j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
     }
 #endif
 
