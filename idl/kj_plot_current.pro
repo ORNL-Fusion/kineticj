@@ -176,7 +176,7 @@ if not keyword_set(noIterate) then begin
 
 	nCdf_varPut, nc_id, freq_id, freq
 
-	nCdf_varPut, nc_id, r_id, r
+	nCdf_varPut, nc_id, r_id, r + cartesian_offset
     z = [0]
 	nCdf_varPut, nc_id, z_id, z
 
@@ -188,7 +188,7 @@ if not keyword_set(noIterate) then begin
 	nCdf_varPut, nc_id, jP_z_im_id, imaginary(jZOut) 
 
 	nCdf_close, nc_id
-stop
+
 endif
 
     if(OverplotAR2)then begin
