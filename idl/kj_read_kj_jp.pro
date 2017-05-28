@@ -22,13 +22,25 @@ function kj_read_kj_jp, FileName
 
     kj_r_ = kj_r[0:-2] + (kj_r[1]-kj_r[0])/2
 
+    nR = n_elements(kj_r_)
+    nS = n_elements(kj_jPr_re[0,0,*])
+    nZ = n_elements(kj_jPr_re[0,*,0])
+
+    jPr_ = complexArr(nR,nZ,nS)
+    jPt_ = complexArr(nR,nZ,nS)
+    jPz_ = complexArr(nR,nZ,nS)
+
     spline_sigma = 0.01
 
     ; Interpolate to the half grid
 
-    jpR_ = complex(spline(kj_r,kj_jpR_re,kj_r_,spline_sigma),spline(kj_r,kj_jpR_im,kj_r_,spline_sigma))
-    jpT_ = complex(spline(kj_r,kj_jpT_re,kj_r_,spline_sigma),spline(kj_r,kj_jpT_im,kj_r_,spline_sigma))
-    jpZ_ = complex(spline(kj_r,kj_jpZ_re,kj_r_,spline_sigma),spline(kj_r,kj_jpZ_im,kj_r_,spline_sigma))
+    for s=0,nS-1 do begin
+
+        jPr_[*,0,s] = complex(spline(kj_r,kj_jpR_re[*,0,s],kj_r_,spline_sigma),spline(kj_r,kj_jpR_im[*,0,s],kj_r_,spline_sigma))
+        jPt_[*,0,s] = complex(spline(kj_r,kj_jpT_re[*,0,s],kj_r_,spline_sigma),spline(kj_r,kj_jpT_im[*,0,s],kj_r_,spline_sigma))
+        jPz_[*,0,s] = complex(spline(kj_r,kj_jpZ_re[*,0,s],kj_r_,spline_sigma),spline(kj_r,kj_jpZ_im[*,0,s],kj_r_,spline_sigma))
+
+    endfor
 
     kjIn = { $
         freq : freq, $

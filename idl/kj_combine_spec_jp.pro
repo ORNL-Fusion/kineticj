@@ -74,36 +74,43 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
     jPSpec_z[0] = 0
     jPSpec_z[-1] = 0
 
+    ;; Try smoothing the kj current
+
+    ;sWidth = 60
+    ;for s=0,nS-1 do begin
+    ;    jPSpec_r[*,0,s] = smooth(jPSpec_r[*,0,s],sWidth,/edge_truncate)   
+    ;    jPSpec_t[*,0,s] = smooth(jPSpec_t[*,0,s],sWidth,/edge_truncate)   
+    ;    jPSpec_z[*,0,s] = smooth(jPSpec_z[*,0,s],sWidth,/edge_truncate)   
+    ;endfor
+
     ; Try mixing with the real AORSA jP to test sensitivity to the iteration being not quite correct.
 
-    ar2 = ar2_read_solution('/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference-cartesian',1)
+    ar2 = ar2_read_solution('/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference',1)
 
-    ar2Frac = 1.
+    kjFrac = 0.0
+    ar2Frac = 1 - kjFrac
+
+    ;; Test if it's the boundary by weighting those preferentially 
+
+    ;h0 = hanning(n_elements(jPSpec_r[*,0,0]))
+    ;h = jPSpec_r*0
+    ;for s=0,nS-1 do h[*,0,s] = complex(h0,h0)
+    ;ar2Frac = (1-h*kjFrac)
 
     jPSpec_r = jPSpec_r*(1-ar2Frac) + ar2.jP_r*ar2Frac
     jPSpec_t = jPSpec_t*(1-ar2Frac) + ar2.jP_t*ar2Frac
     jPSpec_z = jPSpec_z*(1-ar2Frac) + ar2.jP_z*ar2Frac
 
-    p=plot(jPSpec_r[*,0,0], layout=[2,3,1])
-    p=plot(ar2.jP_r[*,0,0],/over,color='red')
-    p=plot(imaginary(jPSpec_r[*,0,0]), layout=[2,3,2],/current)
-    p=plot(imaginary(ar2.jP_r[*,0,0]),/over,color='red')
+    w = kj.freq * 2 * !pi
 
-    p=plot(jPSpec_t[*,0,0], layout=[2,3,3],/current)
-    p=plot(ar2.jP_t[*,0,0],/over,color='red')
-    p=plot(imaginary(jPSpec_t[*,0,0]), layout=[2,3,4],/current)
-    p=plot(imaginary(ar2.jP_t[*,0,0]),/over,color='red')
+    @constants
 
-    p=plot(jPSpec_z[*,0,0], layout=[2,3,5],/current)
-    p=plot(ar2.jP_z[*,0,0],/over,color='red')
-    p=plot(imaginary(jPSpec_z[*,0,0]), layout=[2,3,6],/current)
-    p=plot(imaginary(ar2.jP_z[*,0,0]),/over,color='red')
-
-
-    print, norm(jPSpec_r[*]), norm(ar2.jP_r[*])
-    print, norm(jPSpec_t[*]), norm(ar2.jP_t[*])
-    print, norm(jPSpec_z[*]), norm(ar2.jP_z[*])
-
+    for s=0,nS-1 do begin
+    jPSpec_r[*,0,s] = w^2/_c^2 * ( ar2.E_r + _ii / (w*_e0) * jPSpec_r[*,0,s] ) / (_ii*w*_u0)
+    jPSpec_t[*,0,s] = w^2/_c^2 * ( ar2.E_t + _ii / (w*_e0) * jPSpec_t[*,0,s] ) / (_ii*w*_u0)
+    jPSpec_z[*,0,s] = w^2/_c^2 * ( ar2.E_z + _ii / (w*_e0) * jPSpec_z[*,0,s] ) / (_ii*w*_u0)
+    endfor
+    
 	; Write kj_jP in file for next iterate
 
 	nc_id = nCdf_create (OutFileName, /clobber )
@@ -149,5 +156,25 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 	nCdf_varPut, nc_id, jP_z_im_id, imaginary(jPSpec_z) 
 
 	nCdf_close, nc_id
+
 stop
+    p=plot(total(jPSpec_r,3), layout=[2,3,1])
+    p=plot(total(ar2.jP_r,3),/over,color='red')
+    p=plot(imaginary(total(jPSpec_r,3)), layout=[2,3,2],/current)
+    p=plot(imaginary(total(ar2.jP_r,3)),/over,color='red')
+
+    p=plot(total(jPSpec_t,3), layout=[2,3,3],/current)
+    p=plot(total(ar2.jP_t,3),/over,color='red')
+    p=plot(imaginary(total(jPSpec_t,3)), layout=[2,3,4],/current)
+    p=plot(imaginary(total(ar2.jP_t,3)),/over,color='red')
+
+    p=plot(total(jPSpec_z,3), layout=[2,3,5],/current)
+    p=plot(total(ar2.jP_z,3),/over,color='red')
+    p=plot(imaginary(total(jPSpec_z,3)), layout=[2,3,6],/current)
+    p=plot(imaginary(total(ar2.jP_z,3)),/over,color='red')
+
+    print, norm(jPSpec_r[*]), norm(ar2.jP_r[*])
+    print, norm(jPSpec_t[*]), norm(ar2.jP_t[*])
+    print, norm(jPSpec_z[*]), norm(ar2.jP_z[*])
+
 end
