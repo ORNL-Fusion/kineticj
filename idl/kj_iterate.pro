@@ -6,7 +6,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
 
-    cartesian_offset = 100.0
+    cartesian_offset = 0.0
 
     KJ_BINARY = '~/code/kineticj/bin/kineticj'
     KJ_BINARY_GC = '~/code/kineticj/bin/kineticj'

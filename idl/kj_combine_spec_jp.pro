@@ -38,7 +38,7 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
         print, n_elements(kj.jpr)
 
-        doPlots = 1
+        doPlots = 0
         if doPlots then begin
 
             p=plot(kj.r, kj.jPr, yRange=yRange, layout=[nS+1,3,s+1], /current, title=FilesToSum[s])
@@ -87,7 +87,7 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
     ar2 = ar2_read_solution('/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference',1)
 
-    kjFrac = 0.0
+    kjFrac = 1.0
     ar2Frac = 1 - kjFrac
 
     ;; Test if it's the boundary by weighting those preferentially 
@@ -101,15 +101,21 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
     jPSpec_t = jPSpec_t*(1-ar2Frac) + ar2.jP_t*ar2Frac
     jPSpec_z = jPSpec_z*(1-ar2Frac) + ar2.jP_z*ar2Frac
 
+    ; Try using only the delta on the RHS
+
+    jPSpec_r = jPSpec_r - ar2.jP_r 
+    jPSpec_t = jPSpec_t - ar2.jP_t 
+    jPSpec_z = jPSpec_z - ar2.jP_z 
+
     w = kj.freq * 2 * !pi
 
     @constants
 
-    for s=0,nS-1 do begin
-    jPSpec_r[*,0,s] = w^2/_c^2 * ( ar2.E_r + _ii / (w*_e0) * jPSpec_r[*,0,s] ) / (_ii*w*_u0)
-    jPSpec_t[*,0,s] = w^2/_c^2 * ( ar2.E_t + _ii / (w*_e0) * jPSpec_t[*,0,s] ) / (_ii*w*_u0)
-    jPSpec_z[*,0,s] = w^2/_c^2 * ( ar2.E_z + _ii / (w*_e0) * jPSpec_z[*,0,s] ) / (_ii*w*_u0)
-    endfor
+    ;for s=0,nS-1 do begin
+    ;jPSpec_r[*,0,s] = w^2/_c^2 * ( ar2.E_r + _ii / (w*_e0) * jPSpec_r[*,0,s] ) / (_ii*w*_u0)
+    ;jPSpec_t[*,0,s] = w^2/_c^2 * ( ar2.E_t + _ii / (w*_e0) * jPSpec_t[*,0,s] ) / (_ii*w*_u0)
+    ;jPSpec_z[*,0,s] = w^2/_c^2 * ( ar2.E_z + _ii / (w*_e0) * jPSpec_z[*,0,s] ) / (_ii*w*_u0)
+    ;endfor
     
 	; Write kj_jP in file for next iterate
 
