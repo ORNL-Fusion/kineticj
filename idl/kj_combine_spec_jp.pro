@@ -85,38 +85,43 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
     ; Try mixing with the real AORSA jP to test sensitivity to the iteration being not quite correct.
 
-    ar2 = ar2_read_solution('/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference',1)
+    ;ar2 = ar2_read_solution('/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference',1)
+    rs = rsfwc_read_solution('rsfwc')
+
+    ; Use RS
+    jP_r_prev = rs.jP_r_spec
+    jP_t_prev = rs.jP_t_spec
+    jP_z_prev = rs.jP_z_spec
+
+    ;; Use AR2
+    ;jP_r_prev = ar2.jP_r
+    ;jP_t_prev = ar2.jP_t
+    ;jP_z_prev = ar2.jP_z
 
     kjFrac = 1.0
-    ar2Frac = 1 - kjFrac
+    prevFrac = 1 - kjFrac
 
     ;; Test if it's the boundary by weighting those preferentially 
 
     ;h0 = hanning(n_elements(jPSpec_r[*,0,0]))
     ;h = jPSpec_r*0
     ;for s=0,nS-1 do h[*,0,s] = complex(h0,h0)
-    ;ar2Frac = (1-h*kjFrac)
+    ;prevFrac = (1-h*kjFrac)
 
-    jPSpec_r = jPSpec_r*(1-ar2Frac) + ar2.jP_r*ar2Frac
-    jPSpec_t = jPSpec_t*(1-ar2Frac) + ar2.jP_t*ar2Frac
-    jPSpec_z = jPSpec_z*(1-ar2Frac) + ar2.jP_z*ar2Frac
+    jPSpec_r = jPSpec_r*(1-prevFrac) + jP_r_prev*prevFrac
+    jPSpec_t = jPSpec_t*(1-prevFrac) + jP_t_prev*prevFrac
+    jPSpec_z = jPSpec_z*(1-prevFrac) + jP_z_prev*prevFrac
 
     ; Try using only the delta on the RHS
 
-    jPSpec_r = jPSpec_r - ar2.jP_r 
-    jPSpec_t = jPSpec_t - ar2.jP_t 
-    jPSpec_z = jPSpec_z - ar2.jP_z 
+    jPSpec_r = jPSpec_r - jP_r_prev 
+    jPSpec_t = jPSpec_t - jP_t_prev 
+    jPSpec_z = jPSpec_z - jP_z_prev 
 
     w = kj.freq * 2 * !pi
 
     @constants
 
-    ;for s=0,nS-1 do begin
-    ;jPSpec_r[*,0,s] = w^2/_c^2 * ( ar2.E_r + _ii / (w*_e0) * jPSpec_r[*,0,s] ) / (_ii*w*_u0)
-    ;jPSpec_t[*,0,s] = w^2/_c^2 * ( ar2.E_t + _ii / (w*_e0) * jPSpec_t[*,0,s] ) / (_ii*w*_u0)
-    ;jPSpec_z[*,0,s] = w^2/_c^2 * ( ar2.E_z + _ii / (w*_e0) * jPSpec_z[*,0,s] ) / (_ii*w*_u0)
-    ;endfor
-    
 	; Write kj_jP in file for next iterate
 
 	nc_id = nCdf_create (OutFileName, /clobber )
@@ -163,24 +168,23 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
 	nCdf_close, nc_id
 
-stop
     p=plot(total(jPSpec_r,3), layout=[2,3,1])
-    p=plot(total(ar2.jP_r,3),/over,color='red')
+    p=plot(total(jP_r_prev,3),/over,color='red')
     p=plot(imaginary(total(jPSpec_r,3)), layout=[2,3,2],/current)
-    p=plot(imaginary(total(ar2.jP_r,3)),/over,color='red')
+    p=plot(imaginary(total(jP_r_prev,3)),/over,color='red')
 
     p=plot(total(jPSpec_t,3), layout=[2,3,3],/current)
-    p=plot(total(ar2.jP_t,3),/over,color='red')
+    p=plot(total(jP_t_prev,3),/over,color='red')
     p=plot(imaginary(total(jPSpec_t,3)), layout=[2,3,4],/current)
-    p=plot(imaginary(total(ar2.jP_t,3)),/over,color='red')
+    p=plot(imaginary(total(jP_t_prev,3)),/over,color='red')
 
     p=plot(total(jPSpec_z,3), layout=[2,3,5],/current)
-    p=plot(total(ar2.jP_z,3),/over,color='red')
+    p=plot(total(jP_z_prev,3),/over,color='red')
     p=plot(imaginary(total(jPSpec_z,3)), layout=[2,3,6],/current)
-    p=plot(imaginary(total(ar2.jP_z,3)),/over,color='red')
+    p=plot(imaginary(total(jP_z_prev,3)),/over,color='red')
 
-    print, norm(jPSpec_r[*]), norm(ar2.jP_r[*])
-    print, norm(jPSpec_t[*]), norm(ar2.jP_t[*])
-    print, norm(jPSpec_z[*]), norm(ar2.jP_z[*])
+    print, norm(jPSpec_r[*]), norm(jP_r_prev[*])
+    print, norm(jPSpec_t[*]), norm(jP_t_prev[*])
+    print, norm(jPSpec_z[*]), norm(jP_z_prev[*])
 
 end
