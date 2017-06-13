@@ -260,5 +260,5 @@ if doPlots then begin
     p=plot(x2,imaginary(jPz2),/over,color='r')
 
 endif
-stop
+
 end
