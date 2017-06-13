@@ -1,7 +1,9 @@
 pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
-        cartesian_offset = _cartesian_offset
+        cartesian_offset = _cartesian_offset, $
+        doPlots = _doPlots
   
     if keyword_set(_cartesian_offset) then cartesian_offset = _cartesian_offset else cartesian_offset = 0
+    if keyword_set(_doPlots) then doPlots = _doPlots else doPlots = 0
 
     if keyword_set(SumFileName) then begin
             OutFileName = SumFileName
@@ -38,7 +40,6 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
         print, n_elements(kj.jpr)
 
-        doPlots = 0
         if doPlots then begin
 
             p=plot(kj.r, kj.jPr, yRange=yRange, layout=[nS+1,3,s+1], /current, title=FilesToSum[s])
@@ -98,7 +99,7 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
     ;jP_t_prev = ar2.jP_t
     ;jP_z_prev = ar2.jP_z
 
-    kjFrac = 1.0
+    kjFrac = 0.1
     prevFrac = 1 - kjFrac
 
     ;; Test if it's the boundary by weighting those preferentially 
@@ -168,20 +169,24 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
 	nCdf_close, nc_id
 
-    p=plot(total(jPSpec_r,3), layout=[2,3,1])
-    p=plot(total(jP_r_prev,3),/over,color='red')
-    p=plot(imaginary(total(jPSpec_r,3)), layout=[2,3,2],/current)
-    p=plot(imaginary(total(jP_r_prev,3)),/over,color='red')
+    if doPlots then begin
 
-    p=plot(total(jPSpec_t,3), layout=[2,3,3],/current)
-    p=plot(total(jP_t_prev,3),/over,color='red')
-    p=plot(imaginary(total(jPSpec_t,3)), layout=[2,3,4],/current)
-    p=plot(imaginary(total(jP_t_prev,3)),/over,color='red')
+        p=plot(total(jPSpec_r,3), layout=[2,3,1])
+        p=plot(total(jP_r_prev,3),/over,color='red')
+        p=plot(imaginary(total(jPSpec_r,3)), layout=[2,3,2],/current)
+        p=plot(imaginary(total(jP_r_prev,3)),/over,color='red')
 
-    p=plot(total(jPSpec_z,3), layout=[2,3,5],/current)
-    p=plot(total(jP_z_prev,3),/over,color='red')
-    p=plot(imaginary(total(jPSpec_z,3)), layout=[2,3,6],/current)
-    p=plot(imaginary(total(jP_z_prev,3)),/over,color='red')
+        p=plot(total(jPSpec_t,3), layout=[2,3,3],/current)
+        p=plot(total(jP_t_prev,3),/over,color='red')
+        p=plot(imaginary(total(jPSpec_t,3)), layout=[2,3,4],/current)
+        p=plot(imaginary(total(jP_t_prev,3)),/over,color='red')
+
+        p=plot(total(jPSpec_z,3), layout=[2,3,5],/current)
+        p=plot(total(jP_z_prev,3),/over,color='red')
+        p=plot(imaginary(total(jPSpec_z,3)), layout=[2,3,6],/current)
+        p=plot(imaginary(total(jP_z_prev,3)),/over,color='red')
+
+    endif
 
     print, norm(jPSpec_r[*]), norm(jP_r_prev[*])
     print, norm(jPSpec_t[*]), norm(jP_t_prev[*])

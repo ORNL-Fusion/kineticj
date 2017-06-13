@@ -72,7 +72,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
                 file_copy, jGuessFileList[k-1], ThisRsRunFolder
             endif
 
-            if not useAORSA then RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
+            ;if not useAORSA then RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
 
 			if(k eq 0 and not keyword_set(jPFile) ) then begin
                 if useAORSA then begin
@@ -128,7 +128,8 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 
             ; Sum over the kJ species and then create the list below
 
-            kj_sum_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName, cartesian_offset = cartesian_offset
+            print, kjSpecies+'/output/'+kj_jP_FileName
+            kj_combine_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName, cartesian_offset = cartesian_offset
 
 			jGuessFileList[k] = RootRunDir+ThisMPEDir+ThisPicardDir+kj_jP_FileName 
 stop
