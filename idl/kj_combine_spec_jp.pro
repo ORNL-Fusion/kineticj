@@ -99,7 +99,7 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
     ;jP_t_prev = ar2.jP_t
     ;jP_z_prev = ar2.jP_z
 
-    kjFrac = 0.1
+    kjFrac = 1.0
     prevFrac = 1 - kjFrac
 
     ;; Test if it's the boundary by weighting those preferentially 

@@ -198,7 +198,7 @@ endif
     endif
 
     if(OverplotRSFWC)then begin
-        rsRun = 'rsfwc'
+        rsRun = '../rsfwc'
         rs = rsfwc_read_solution(rsRun) 
         rsSpecNo = fix(cfg['species_number'])
     endif
@@ -217,8 +217,8 @@ if doPlots then begin
         p=plot(ar2.r,imaginary(ar2.jp_r[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
     if(OverPlotRSFWC)then begin
-        p=plot(rs.r,rs.jp_r_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
-        p=plot(rs.r,imaginary(rs.jp_r_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,rs.jp_r_spec[*,0,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_r_spec[*,0,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
 	fudgeFac = 1
@@ -231,8 +231,8 @@ if doPlots then begin
         p=plot(ar2.r,imaginary(ar2.jp_t[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
     if(OverPlotRSFWC)then begin
-        p=plot(rs.r,rs.jp_t_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
-        p=plot(rs.r,imaginary(rs.jp_t_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,rs.jp_t_spec[*,0,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_t_spec[*,0,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
     jpRange = max(abs([j1z]))
@@ -243,8 +243,8 @@ if doPlots then begin
         p=plot(ar2.r,imaginary(ar2.jp_z[*,*,ar2SpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
     if(OverPlotRSFWC)then begin
-        p=plot(rs.r,rs.jp_z_spec[*,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
-        p=plot(rs.r,imaginary(rs.jp_z_spec[*,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,rs.jp_z_spec[*,0,rsSpecNo],/over,color='black',lineStyle=0,thick=5,transparency=70)
+        p=plot(rs.r,imaginary(rs.jp_z_spec[*,0,rsSpecNo]),/over,color='r',lineStyle=0,thick=5,transparency=70)
     endif
 
     p.save, 'kj-jp.png', resolution=300

@@ -17,21 +17,23 @@ function kj_read_cfg, RunDir
     StrData = StrSplit(RunFileArray,'=,;',/extract)
     for f=0,n_elements(StrData)-1 do begin
         ThisStr = StrData[f]
-        ThisKey = StrTrim(ThisStr[0],2)
-        ThisValue = StrTrim(ThisStr[1],2)
-        ; Determine type of value
-        i = StRegEx(ThisValue,'^[-+]?[0-9]+$',/bool) ; integer
-        d = StRegEx(ThisValue,'^[-+]?[0-9]+\.?[0-9]+$',/bool) ; decimal
+        if not (strMatch(thisStr,'//*'))[0] then begin
+            ThisKey = StrTrim(ThisStr[0],2)
+            ThisValue = StrTrim(ThisStr[1],2)
+            ; Determine type of value
+            i = StRegEx(ThisValue,'^[-+]?[0-9]+$',/bool) ; integer
+            d = StRegEx(ThisValue,'^[-+]?[0-9]+\.?[0-9]+$',/bool) ; decimal
 
-        if i eq 1 then begin
-                h = h + orderedHash(ThisKey,fix(ThisValue))
-        endif else if d eq 1 then begin
-                h = h + orderedHash(ThisKey,float(ThisValue))
-        endif else begin
-                len = StrLen(ThisValue)
-                str = StrMid(ThisValue,1,len-2)
-                h = h + orderedHash(ThisKey,str)
-        endelse
+            if i eq 1 then begin
+                    h = h + orderedHash(ThisKey,fix(ThisValue))
+            endif else if d eq 1 then begin
+                    h = h + orderedHash(ThisKey,float(ThisValue))
+            endif else begin
+                    len = StrLen(ThisValue)
+                    str = StrMid(ThisValue,1,len-2)
+                    h = h + orderedHash(ThisKey,str)
+            endelse
+        endif
 
     endfor
 
