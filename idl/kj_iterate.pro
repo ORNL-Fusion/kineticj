@@ -30,7 +30,9 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 
     kj_jP_FileName = 'kj-jp-on-rs-grid.nc'
 
-    kjSpecies = ['spec_D','spec_H','spec_e'] ; The order here MUST match the RSFWC spec order (i.e., electrons last)
+    kjSpecies = ['spec_D','spec_H','spec_e'] 
+    ; The order here MUST match the RSFWC spec order (i.e., electrons last)
+
     ElectronSpecStr = kjSpecies[2]
 
     kjConfigs = []
