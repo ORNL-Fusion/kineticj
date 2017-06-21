@@ -93,6 +93,8 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
         ; Calculate k-space plasma current
         ; This would have to be generalize for non magnetically aligned coordinates.
 
+        ; Try flipping the indexing order also.
+
         jkr[k] = sigma[0,0] * Ekr[k] + sigma[0,1] * Ekz[k] + sigma[0,2] * Ekt[k]
         jkz[k] = sigma[1,0] * Ekr[k] + sigma[1,1] * Ekz[k] + sigma[1,2] * Ekt[k]
         jkt[k] = sigma[2,0] * Ekr[k] + sigma[2,1] * Ekz[k] + sigma[2,2] * Ekt[k]
