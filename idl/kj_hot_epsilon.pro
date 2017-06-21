@@ -124,7 +124,11 @@ function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer
     epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
     kx = kx
 
+; Now vectorized over kPer
+
 @constants
+
+NK = n_elements(kPer)
 
 _kPer = kPer>1e-5
 
@@ -136,27 +140,31 @@ nPer = _c * _kPer / w
 
 nS = n_elements(amu)
 
-Shat = dcomplex(1,0)
-Dhat = dcomplex(0,0)
-Phat = dcomplex(1,0)
+Shat = dComplexArr(NK) + dcomplex(1,0)
+Dhat = dComplexArr(NK) + dcomplex(0,0)
+Phat = dComplexArr(NK) + dcomplex(1,0)
 
-etahat = dcomplex(0,0)
-tauhat = dcomplex(0,0)
-epshat = dcomplex(0,0)
+etahat = dComplexArr(NK) + dcomplex(0,0)
+tauhat = dComplexArr(NK) + dcomplex(0,0)
+epshat = dComplexArr(NK) + dcomplex(0,0)
 
-K0 = dComplex(0,0)
-K1 = dComplex(1,0)
-K2 = dComplex(0,0)
-K3 = dComplex(1,0)
-K4 = dComplex(0,0)
-K5 = dComplex(0,0)
+if keyword_set(epsilon_swan) then begin
+    K0 = dComplex(0,0)
+    K1 = dComplex(1,0)
+    K2 = dComplex(0,0)
+    K3 = dComplex(1,0)
+    K4 = dComplex(0,0)
+    K5 = dComplex(0,0)
+endif
 
-K0_ND = dComplex(0,0)
-K1_ND = dComplex(1,0)
-K2_ND = dComplex(0,0)
-K3_ND = dComplex(1,0)
-K4_ND = dComplex(0,0)
-K5_ND = dComplex(0,0)
+if keyword_set(epsilon_swan_ND) then begin
+    K0_ND = dComplex(0,0)
+    K1_ND = dComplex(1,0)
+    K2_ND = dComplex(0,0)
+    K3_ND = dComplex(1,0)
+    K4_ND = dComplex(0,0)
+    K5_ND = dComplex(0,0)
+endif
 
 for alp = 0,nS-1 do begin
    
@@ -166,27 +174,31 @@ for alp = 0,nS-1 do begin
 
     lambda = _kPer^2 * vTh^2 / (2*wc^2)
 
-    Ssum = dcomplex(0,0)
-    Dsum = dcomplex(0,0)
-    Psum = dcomplex(0,0)
+    Ssum = dcomplexArr(NK)
+    Dsum = dcomplexArr(NK)
+    Psum = dcomplexArr(NK)
 
-    eta_sum = dcomplex(0,0)
-    tau_sum = dcomplex(0,0)
-    eps_sum = dcomplex(0,0)
+    eta_sum = dcomplexArr(NK)
+    tau_sum = dcomplexArr(NK)
+    eps_sum = dcomplexArr(NK)
 
-    K0_HarmSum = dComplex(0,0)
-    K1_HarmSum = dComplex(0,0)
-    K2_HarmSum = dComplex(0,0)
-    K3_HarmSum = dComplex(0,0)
-    K4_HarmSum = dComplex(0,0)
-    K5_HarmSum = dComplex(0,0)
+    if keyword_set(epsilon_swan) then begin
+        K0_HarmSum = dComplex(0,0)
+        K1_HarmSum = dComplex(0,0)
+        K2_HarmSum = dComplex(0,0)
+        K3_HarmSum = dComplex(0,0)
+        K4_HarmSum = dComplex(0,0)
+        K5_HarmSum = dComplex(0,0)
+    endif
 
-    K0_HarmSum_ND = dComplex(0,0)
-    K1_HarmSum_ND = dComplex(0,0)
-    K2_HarmSum_ND = dComplex(0,0)
-    K3_HarmSum_ND = dComplex(0,0)
-    K4_HarmSum_ND = dComplex(0,0)
-    K5_HarmSum_ND = dComplex(0,0)
+    if keyword_set(epsilon_swan_ND) then begin
+        K0_HarmSum_ND = dComplex(0,0)
+        K1_HarmSum_ND = dComplex(0,0)
+        K2_HarmSum_ND = dComplex(0,0)
+        K3_HarmSum_ND = dComplex(0,0)
+        K4_HarmSum_ND = dComplex(0,0)
+        K5_HarmSum_ND = dComplex(0,0)
+    endif
 
     for n = -harmonicNumber,harmonicNumber do begin
 
@@ -195,7 +207,7 @@ for alp = 0,nS-1 do begin
         x = (w - n*wc) / (kPar * vTh)
         x0 = w / (kPar * vTh)
 
-        Z = kj_zfunction(x, Zp=Zp)
+        Z = (kj_zfunction(x, Zp=Zp))[0]
 
         Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
         Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
@@ -206,47 +218,52 @@ for alp = 0,nS-1 do begin
         eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * Zp )
 
         ; Swanson, pg 175
-    
-        wc_swan = abs(wc)
-        x = (w + n*wc_swan) / (kPar * vTh) ; Note the difference in sign here to Brambilla
+        if keyword_set(epsilon_swan) or keyword_set(epsilon_swan_ND) then begin
 
-        Z = kj_zfunction(x, Zp=Zp)
+            wc_swan = abs(wc)
+            x = (w + n*wc_swan) / (kPar * vTh) ; Note the difference in sign here to Brambilla
 
-        v0 = 0
-        T_eV_Per = T_eV
-        T_eV_Par = T_eV
-        kz = kPar
-        In = beselI(lambda, n, /double)
-        Inp = kj_IPrime(lambda, n)
+            Z = (kj_zfunction(x, Zp=Zp))[0]
 
-        _f1 = ( 1.0 - kz * v0 / w )
-        _f2 = kz * vTh / w * ( 1 - T_eV_Per / T_eV_Par )
-        _f3 = _f1 * Z  + _f2 * Zp / 2.0
+            v0 = 0
+            T_eV_Per = T_eV
+            T_eV_Par = T_eV
+            kz = kPar
+            In = beselI(lambda, n, /double)
+            Inp = kj_IPrime(lambda, n)
 
-        _f4 = ( w + n * wc_swan ) / ( kz * vTh ) 
-        _f5 = 1d0 + n * wc_swan / w * ( 1 - T_eV_Par / T_eV_Per ) 
-        _f6 = 2 * n * wc_swan * T_eV_Par * v0 / ( w * T_eV_Per * vTh )
-        _f7 = kz * vTh / ( w + n * wc_swan )
+            _f1 = ( 1.0 - kz * v0 / w )
+            _f2 = kz * vTh / w * ( 1 - T_eV_Per / T_eV_Par )
+            _f3 = _f1 * Z  + _f2 * Zp / 2.0
 
-        _f9 = n * wc_swan * v0 / ( w * vTh )
-        _f10 = T_eV_Per / T_eV_Par - n * wc_swan / w * ( 1.0 - T_eV_Per / T_eV_Par )
+            _f4 = ( w + n * wc_swan ) / ( kz * vTh ) 
+            _f5 = 1d0 + n * wc_swan / w * ( 1 - T_eV_Par / T_eV_Per ) 
+            _f6 = 2 * n * wc_swan * T_eV_Par * v0 / ( w * T_eV_Per * vTh )
+            _f7 = kz * vTh / ( w + n * wc_swan )
 
-        K0_HarmSum += lambda * ( In - Inp ) * _f3
-        K1_HarmSum += n^2 * In / lambda * _f3
-        K2_HarmSum += n * ( In - Inp ) * _f3
-        K3_HarmSum += In * _f4 * ( _f5 * Zp + _f6 * ( Z + _f7 ) ) 
-        K4_HarmSum += n * In / lambda * ( _f9 * Z + _f10 * Zp / 2.0 ) 
-        K5_HarmSum += ( In - Inp ) * ( _f9 * Z + _f10 * Zp / 2.0 )
+            _f9 = n * wc_swan * v0 / ( w * vTh )
+            _f10 = T_eV_Per / T_eV_Par - n * wc_swan / w * ( 1.0 - T_eV_Per / T_eV_Par )
+
+        endif
+
+        if keyword_set(epsilon_swan) then begin
+            K0_HarmSum += lambda * ( In - Inp ) * _f3
+            K1_HarmSum += n^2 * In / lambda * _f3
+            K2_HarmSum += n * ( In - Inp ) * _f3
+            K3_HarmSum += In * _f4 * ( _f5 * Zp + _f6 * ( Z + _f7 ) ) 
+            K4_HarmSum += n * In / lambda * ( _f9 * Z + _f10 * Zp / 2.0 ) 
+            K5_HarmSum += ( In - Inp ) * ( _f9 * Z + _f10 * Zp / 2.0 )
+        endif
 
         ; Swanson No Drift (ND) Case, pg 176
-
-        K0_HarmSum_ND += lambda * ( In - Inp ) * Z
-        K1_HarmSum_ND += n^2 * In / lambda * Z
-        K2_HarmSum_ND += n * ( In - Inp ) * Z
-        K3_HarmSum_ND += In * x * Zp 
-        K4_HarmSum_ND += n * In / lambda * Zp  
-        K5_HarmSum_ND += ( In - Inp ) * Zp 
-
+        if keyword_set(epsilon_swan_ND) then begin
+            K0_HarmSum_ND += lambda * ( In - Inp ) * Z
+            K1_HarmSum_ND += n^2 * In / lambda * Z
+            K2_HarmSum_ND += n * ( In - Inp ) * Z
+            K3_HarmSum_ND += In * x * Zp 
+            K4_HarmSum_ND += n * In / lambda * Zp  
+            K5_HarmSum_ND += ( In - Inp ) * Zp 
+        endif
     endfor 
 
     ; Brambilla
@@ -260,24 +277,29 @@ for alp = 0,nS-1 do begin
     epsHat += wp^2/(w*wc) * vTh^2/_c^2 * eps_sum
 
     ; Swanson
+    if keyword_set(epsilon_swan) or keyword_set(epsilon_swan_ND) then begin
+        _eps = atomicZ / abs(atomicZ) 
+        _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
+        _g2 = _kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
+    endif
 
-    _eps = atomicZ / abs(atomicZ) 
-    _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
-    _g2 = _kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
+    if keyword_set(epsilon_swan) then begin
+        K0 += 2 * _g1 * K0_HarmSum 
+        K1 += _g1 * K1_HarmSum
+        K2 += _ii * _eps * _g1 * K2_HarmSum
+        K3 -= _g1 * K3_HarmSum
+        K4 += _g2 * K4_HarmSum
+        K5 += _ii * _eps * _g2 * K5_HarmSum
+    endif
 
-    K0 += 2 * _g1 * K0_HarmSum 
-    K1 += _g1 * K1_HarmSum
-    K2 += _ii * _eps * _g1 * K2_HarmSum
-    K3 -= _g1 * K3_HarmSum
-    K4 += _g2 * K4_HarmSum
-    K5 += _ii * _eps * _g2 * K5_HarmSum
-
-    K0_ND += 2 * _g1 * K0_HarmSum 
-    K1_ND += _g1 * K1_HarmSum
-    K2_ND += _ii * _eps * _g1 * K2_HarmSum
-    K3_ND -= _g1 * K3_HarmSum
-    K4_ND += _g2 * K4_HarmSum
-    K5_ND += _ii * _eps * _g2 * K5_HarmSum
+    if keyword_set(epsilon_swan_ND) then begin
+        K0_ND += 2 * _g1 * K0_HarmSum 
+        K1_ND += _g1 * K1_HarmSum
+        K2_ND += _ii * _eps * _g1 * K2_HarmSum
+        K3_ND -= _g1 * K3_HarmSum
+        K4_ND += _g2 * K4_HarmSum
+        K5_ND += _ii * _eps * _g2 * K5_HarmSum
+    endif
 
 endfor
 
@@ -299,98 +321,111 @@ ezx = nPar * nPer * etaHat
 ezy = -_ii * nPar * nPer * epsHat
 ezz = PHat
 
-epsilon = dComplexArr(3,3)
+epsilon = dComplexArr(3,3,NK)
 
-epsilon[0,0] = exx
-epsilon[0,1] = exy
-epsilon[0,2] = exz
+epsilon[0,0,*] = exx
+epsilon[0,1,*] = exy
+epsilon[0,2,*] = exz
 
-epsilon[1,0] = eyx
-epsilon[1,1] = eyy
-epsilon[1,2] = eyz
+epsilon[1,0,*] = eyx
+epsilon[1,1,*] = eyy
+epsilon[1,2,*] = eyz
 
-epsilon[2,0] = ezx
-epsilon[2,1] = ezy
-epsilon[2,2] = ezz
+epsilon[2,0,*] = ezx
+epsilon[2,1,*] = ezy
+epsilon[2,2,*] = ezz
 
 ; Swamson
 
-epsilon_swan = dComplexArr(3,3)
-epsilon_swan_ND = dComplexArr(3,3)
+if keyword_set(epsilon_swan) then begin
 
-psi = acos ( kx / _kPer )
+    epsilon_swan = dComplexArr(3,3)
+    
+    psi = acos ( kx / _kPer )
+    
+    swan_exx = K1 + sin(psi)^2 * K0
+    swan_exy = K2 - cos(psi) * sin(psi) * K0
+    swan_exz = cos(psi) * K4 + sin(psi) * K5
+    
+    swan_eyx = -K2 - cos(psi) * sin(psi) * K0
+    swan_eyy = K1 + cos(psi)^2 * K0
+    swan_eyz = sin(psi) * K4 - cos(psi) * K5
+    
+    swan_ezx = cos(psi) * K4 - sin(psi) * K5
+    swan_ezy = sin(psi) * K4 + cos(psi) * K5
+    swan_ezz = K3
+    
+    epsilon_swan[0,0] = swan_exx
+    epsilon_swan[0,1] = swan_exy
+    epsilon_swan[0,2] = swan_exz
+    
+    epsilon_swan[1,0] = swan_eyx
+    epsilon_swan[1,1] = swan_eyy
+    epsilon_swan[1,2] = swan_eyz
+    
+    epsilon_swan[2,0] = swan_ezx
+    epsilon_swan[2,1] = swan_ezy
+    epsilon_swan[2,2] = swan_ezz
 
-swan_exx = K1 + sin(psi)^2 * K0
-swan_exy = K2 - cos(psi) * sin(psi) * K0
-swan_exz = cos(psi) * K4 + sin(psi) * K5
-
-swan_eyx = -K2 - cos(psi) * sin(psi) * K0
-swan_eyy = K1 + cos(psi)^2 * K0
-swan_eyz = sin(psi) * K4 - cos(psi) * K5
-
-swan_ezx = cos(psi) * K4 - sin(psi) * K5
-swan_ezy = sin(psi) * K4 + cos(psi) * K5
-swan_ezz = K3
-
-epsilon_swan[0,0] = swan_exx
-epsilon_swan[0,1] = swan_exy
-epsilon_swan[0,2] = swan_exz
-
-epsilon_swan[1,0] = swan_eyx
-epsilon_swan[1,1] = swan_eyy
-epsilon_swan[1,2] = swan_eyz
-
-epsilon_swan[2,0] = swan_ezx
-epsilon_swan[2,1] = swan_ezy
-epsilon_swan[2,2] = swan_ezz
+endif
 
 ; Swamson No Drifts ( kx = _kPer, ky = 0 )
 
-swan_ND_exx = K1 
-swan_ND_exy = K2 
-swan_ND_exz = K4 
+if keyword_set(epsilon_swan_ND) then begin
 
-swan_ND_eyx = -K2
-swan_ND_eyy = K1 + K0
-swan_ND_eyz = -K5
+    epsilon_swan_ND = dComplexArr(3,3)
+    
+    swan_ND_exx = K1 
+    swan_ND_exy = K2 
+    swan_ND_exz = K4 
+    
+    swan_ND_eyx = -K2
+    swan_ND_eyy = K1 + K0
+    swan_ND_eyz = -K5
+    
+    swan_ND_ezx = K4
+    swan_ND_ezy = K5
+    swan_ND_ezz = K3
+    
+    epsilon_swan_ND[0,0] = swan_ND_exx
+    epsilon_swan_ND[0,1] = swan_ND_exy
+    epsilon_swan_ND[0,2] = swan_ND_exz
+    
+    epsilon_swan_ND[1,0] = swan_ND_eyx
+    epsilon_swan_ND[1,1] = swan_ND_eyy
+    epsilon_swan_ND[1,2] = swan_ND_eyz
+    
+    epsilon_swan_ND[2,0] = swan_ND_ezx
+    epsilon_swan_ND[2,1] = swan_ND_ezy
+    epsilon_swan_ND[2,2] = swan_ND_ezz
 
-swan_ND_ezx = K4
-swan_ND_ezy = K5
-swan_ND_ezz = K3
-
-epsilon_swan_ND[0,0] = swan_ND_exx
-epsilon_swan_ND[0,1] = swan_ND_exy
-epsilon_swan_ND[0,2] = swan_ND_exz
-
-epsilon_swan_ND[1,0] = swan_ND_eyx
-epsilon_swan_ND[1,1] = swan_ND_eyy
-epsilon_swan_ND[1,2] = swan_ND_eyz
-
-epsilon_swan_ND[2,0] = swan_ND_ezx
-epsilon_swan_ND[2,1] = swan_ND_ezy
-epsilon_swan_ND[2,2] = swan_ND_ezz
+endif
 
 ; Optionally also return the cold plasma epsilon
 
-P = 1-wp^2/( w*w )
-R = 1-wp^2 /( w*(w+wc) )
-L = 1-wp^2 /( w*(w-wc) )
-S = 0.5*(R+L)
-D = 0.5*(R-L)
+if keyword_set(epsilon_cold) then begin
 
-epsilon_cold = dComplexArr(3,3)
+    P = 1-wp^2/( w*w )
+    R = 1-wp^2 /( w*(w+wc) )
+    L = 1-wp^2 /( w*(w-wc) )
+    S = 0.5*(R+L)
+    D = 0.5*(R-L)
+    
+    epsilon_cold = dComplexArr(3,3)
+    
+    epsilon_cold[0,0] = S
+    epsilon_cold[1,0] = _II * D
+    epsilon_cold[2,0] = 0
+    
+    epsilon_cold[0,1] = -_II*D 
+    epsilon_cold[1,1] = S
+    epsilon_cold[2,1] = 0
+    
+    epsilon_cold[0,2] = 0 
+    epsilon_cold[1,2] = 0
+    epsilon_cold[2,2] = P
 
-epsilon_cold[0,0] = S
-epsilon_cold[1,0] = _II * D
-epsilon_cold[2,0] = 0
-
-epsilon_cold[0,1] = -_II*D 
-epsilon_cold[1,1] = S
-epsilon_cold[2,1] = 0
-
-epsilon_cold[0,2] = 0 
-epsilon_cold[1,2] = 0
-epsilon_cold[2,2] = P
+endif
 
 if total(epsilon) ne total(epsilon) then stop
 
