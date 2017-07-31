@@ -39,15 +39,9 @@ make clean
 make
 ```
 ### Build Options
-Note: The code is designed to be built using CUDA, even if you do not have a GPU, i.e., the THRUST API within the CUDA SDK provides for single thread CPU (CPU), multi thread OpenMP (OPENMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy.
+Note: The code is designed to be built using CUDA, even if you do not have a GPU, i.e., the THRUST API within the CUDA SDK provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy.
 
-Within the top level `Makefile` the use of CUDA, as well as many compile time code features can be selected.
-
-To use (or not) CUDA, set the variable 
-
-`USECUDA := 1`
-
-and the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
+Within the top level `Makefile` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
 
 ```
 THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
