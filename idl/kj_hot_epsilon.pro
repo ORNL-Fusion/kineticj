@@ -122,7 +122,9 @@ end
 
 function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
     epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
-    kx = kx
+    kx = kx, nuOmg = _nu_omg
+
+if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
 
 ; Now vectorized over kPer
 
@@ -204,8 +206,10 @@ for alp = 0,nS-1 do begin
 
         ; Brambilla expressions, pg 
 
-        x = (w - n*wc) / (kPar * vTh)
-        x0 = w / (kPar * vTh)
+        _w = complex(w,nu_omg * w)
+
+        x = (_w - n*wc) / (kPar * vTh)
+        x0 = _w / (kPar * vTh)
 
         Z = (kj_zfunction(x, Zp=Zp))[0]
 
@@ -268,13 +272,13 @@ for alp = 0,nS-1 do begin
 
     ; Brambilla
 
-    Shat -= wp^2/w^2 * Ssum
-    Dhat += wp^2/w^2 * Dsum
-    Phat -= wp^2/w^2 * Psum
+    Shat -= wp^2/_w^2 * Ssum
+    Dhat += wp^2/_w^2 * Dsum
+    Phat -= wp^2/_w^2 * Psum
 
-    etaHat += wp^2/(w*wc) * vth^2/_c^2 * eta_sum
+    etaHat += wp^2/(_w*wc) * vth^2/_c^2 * eta_sum
     tauHat += wp^2/wc^2 * vth^2/_c^2 * tau_sum
-    epsHat += wp^2/(w*wc) * vTh^2/_c^2 * eps_sum
+    epsHat += wp^2/(_w*wc) * vTh^2/_c^2 * eps_sum
 
     ; Swanson
     if keyword_set(epsilon_swan) or keyword_set(epsilon_swan_ND) then begin
@@ -403,7 +407,7 @@ endif
 
 ; Optionally also return the cold plasma epsilon
 
-if keyword_set(epsilon_cold) then begin
+if arg_present(epsilon_cold) then begin
 
     P = 1-wp^2/( w*w )
     R = 1-wp^2 /( w*(w+wc) )
