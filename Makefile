@@ -1,7 +1,7 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA:=1
+USECUDA:=0
 
 THRUST_POLICY:=
 ifeq ($(USECUDA),1)
