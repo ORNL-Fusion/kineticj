@@ -4,6 +4,7 @@
 The Kinetic-j program takes a time harmonic electric wave field, and calculates the kinetic plasma current. This calculation is done in configuration-space, as opposed to the more traditional Fourier-space evaluation forms provided in the standard plasma wave physics texts. 
 
 ## Program Files
+'''
 .
 ├── bin
 ├── idl
@@ -11,6 +12,7 @@ The Kinetic-j program takes a time harmonic electric wave field, and calculates 
 ├── machine-makefiles
 ├── obj
 └── src
+'''
 
 ## Dependencies 
 
