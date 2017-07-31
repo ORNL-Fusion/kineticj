@@ -1,11 +1,30 @@
 # kineticj
-Given a time harmonic electric wave field calculate the kinetic plasma current
-## Build on gpufusion.ornl.gov
+
+## Description
+The Kinetic-j program takes a time harmonic electric wave field, and calculates the kinetic plasma current. This calculation is done in configuration-space, as opposed to the more traditional Fourier-space evaluation forms provided in the standard plasma wave physics texts. 
+
+## Program Files
+
+## Dependencies 
+
+### Libconfig (https://github.com/hyperrealm/libconfig)
+The human readable input files are of the format defined by the libconfig API. Libconfig can be found at the above location on github.
+
+### NetCDF-CXX4 (https://github.com/Unidata/netcdf-cxx4)
+We utilize the netcdf file format for both inputs and outputs. We further utilize the more recent CXX4 components of the NetCDF API, which meand a netcdf installation built with the --enable-cxx4 flag. The above official netcdf-cxx4 github provides further information.  
+
+## Installation
+
+
+
+### Build on gpufusion.ornl.gov
 ```
 source env-gpufusion.sh
 make clean
 make
 ```
+
+## Other Information
 
 ### Calculate the Guiding Center terms file
 
