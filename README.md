@@ -25,7 +25,7 @@ The human readable input files are of the format defined by the libconfig API. L
 We utilize the netcdf file format for both inputs and outputs. We further utilize the more recent CXX4 components of the NetCDF API, which meand a netcdf installation built with the --enable-cxx4 flag. The above official netcdf-cxx4 github provides further information.  
 
 ### CUDA (https://developer.nvidia.com/cuda-downloads)
-To enable the GPU capability the CUDA API is required. This will likely be already available on appropriate machines, if not, see the link above. 
+To enable the GPU capability the CUDA API is required. This will likely be already available on appropriate machines, if not, see the link above. Note that the code is designed to be compiled using the THRUST API wihtin the CUDA SDK, so even if you do not have a GPU, you will still need the CUDA API, just using the CPU or OPENMP THRUST targets. 
 
 ## Installation
 We utilize a simple machine specific makefile to specify the locations of the above dependencies. To build Kinetic-j on a new machine you will need to create a copy of an existing file (e.g., `machine-makefiles/Makefile.dlg-macpro`) with the name of your machine as the extension. This can be done via 
@@ -38,6 +38,22 @@ and then editing the resulting file appropriately. Then just
 make clean
 make
 ```
+### Build Options
+Note: The code is designed to be built using CUDA, even if you do not have a GPU, i.e., the THRUST API within the CUDA SDK provides for single thread CPU (CPU), multi thread OpenMP (OPENMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy.
+
+Within the top level `Makefile` the use of CUDA, as well as many compile time code features can be selected.
+
+To use (or not) CUDA, set the variable 
+
+`USECUDA := 1`
+
+and the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
+
+```
+THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
+#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CPP
+#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
+ ```
 
 ## Specific Machine Build Notes
 
