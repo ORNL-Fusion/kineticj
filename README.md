@@ -39,7 +39,10 @@ make clean
 make
 ```
 
-### Build on gpufusion.ornl.gov
+### Specific Machine Build Notes
+
+## gpufusion.ornl.gov
+
 ```
 source env-gpufusion.sh
 make clean
@@ -48,9 +51,9 @@ make
 
 ## Other Information
 
-### Calculate the Guiding Center terms file
+### Generate the Guiding Center terms file
+To speed up the guiding center orbit calculation (if selected), some of the terms in the ODE are precalculated and tabulated in a file. This is done using code from the https://github.com/dlg0/orbit_tracer repo. After cloning that repo, run the `gc_terms.pro` routine on an `ar2Input.nc` file, e.g., 
 
-From the https://github.com/dlg0/orbit_tracer repo, run the `gc_terms.pro` routine on an `ar2Input.nc` file ...
 ```
 cd ~/scratch/aorsa2d/colestock-kashuba-reference
 idl
