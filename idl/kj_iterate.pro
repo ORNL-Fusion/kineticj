@@ -45,7 +45,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 	jAmpMax = 1.0
 	jAmpStep = 1.0 
 
-	nk = 10 
+	nk = 4 
 	jGuessFileList = strArr(nk)
 
     if nk gt 10 then stop ; Filenames cannot handle this
@@ -71,7 +71,7 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
                 stop 
                 file_delete, ThisRunFolder, /recursive, /allow_nonexistent
                 file_copy, LastRunFolder, ThisRunFolder, /recursive 
-                file_copy, jGuessFileList[k-1], ThisRsRunFolder
+                file_copy, jGuessFileList[k-1], ThisRsRunFolder, /overWrite
             endif
 
             ;if not useAORSA then RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
