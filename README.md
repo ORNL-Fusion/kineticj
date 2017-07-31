@@ -39,9 +39,9 @@ make clean
 make
 ```
 
-### Specific Machine Build Notes
+## Specific Machine Build Notes
 
-## gpufusion.ornl.gov
+### gpufusion.ornl.gov
 
 ```
 source env-gpufusion.sh
