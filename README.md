@@ -96,6 +96,26 @@ make clean
 make
 ```
 
+## Running Kinetic-J
+The appropriate method for running the code will depend on the system, and if you are using a GPU or not. An example for the gpufusion.ornl.gov machine, to run the benchmark cases is as follows. 
+
+```
+qsub -I
+idl
+IDL>kj_sigma_benchmarks, runKJ=1
+```
+This will (provided the `idl` subdirectory is in the IDL path) generate a series of Kinetic-J runs in different directories. Each of those directories serves as a template, where the non-scripted, standalone version of the code could be run as an example. i.e., after executing the above, the below can be run.
+
+```
+cd benchmark1/00000
+/path/to/cloned/source/bin/kineticj
+```
+This will produce files in `output/` which can be viewed by running the various IDL scripts, i.e.,g 
+
+```
+IDL>kj_plot_current
+```
+
 ## Other Information
 
 ### Generate the Guiding Center terms file
