@@ -48,6 +48,43 @@ THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
 #THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CPP
 #THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
  ```
+Also, various code features and debugging levels can be enabled at build time by enabling any of the following within the top level `Makefile`. 
+
+```
+# Features
+CPPFLAGS += -DCYLINDRICAL_INPUT_FIELDS=1 # Are the input (NetCDF) fields in Cylindrical or not. 
+CPPFLAGS += -D_PARTICLE_BOUNDARY=1 # 1 = particle absorbing walls, 2 = periodic, 3 = reflective
+CPPFLAGS += -DGC_ORBITS=0 # Use Guiding Center evalulation (Not yet functional)
+CPPFLAGS += -DCOMPLEX_WRF=0 # Use the complex omega as the time integral decay time, as opposed to the Hanning window.  
+
+# Non THRUST Implementations
+CPPFLAGS += -DDO_CPU_ITERATOR_APPROACH=0
+CPPFLAGS += -DDO_CPU_APPROACH=0
+
+# Timing Info
+CPPFLAGS += -DUSEPAPI=0
+CPPFLAGS += -DLOWMEM_USEPAPI=0
+CPPFLAGS += -DCLOCK=1
+CPPFLAGS += -DPRINT_INFO=1
+
+# Debug Info Level
+CPPFLAGS += -DDEBUG_GC=0
+CPPFLAGS += -DDEBUG_EVAL_VGC=0
+CPPFLAGS += -DDEBUG_EVAL_APAR=0
+CPPFLAGS += -DDEBUGLEVEL=0
+CPPFLAGS += -DDEBUG_LINES=0
+CPPFLAGS += -DDEBUG_INTERP=0
+CPPFLAGS += -DDEBUG_MAXWELLIAN=0
+CPPFLAGS += -DDEBUG_FORCE_TERM=0
+CPPFLAGS += -DDEBUG_MOVE=0
+CPPFLAGS += -DDEBUG_ROTATION=0
+CPPFLAGS += -DDEBUG_INTVECARRAY=0
+CPPFLAGS += -DDEBUG_READ_E_FIELD=0
+
+# File Write Options
+CPPFLAGS += -DLOWMEM_ORBIT_WRITE=0
+CPPFLAGS += -DF1_WRITE=0
+```
 
 ## Specific Machine Build Notes
 
