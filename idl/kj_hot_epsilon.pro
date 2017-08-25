@@ -135,7 +135,7 @@ NK = n_elements(kPer)
 _kPer = kPer>1e-5
 
 w = 2 * !Pi * f
-m = amu * _amu
+m = amu * _amu * complex( 1, nu_omg) 
 q = atomicZ * _e
 nPar = _c * kPar / w
 nPer = _c * _kPer / w
@@ -206,7 +206,8 @@ for alp = 0,nS-1 do begin
 
         ; Brambilla expressions, pg 
 
-        _w = complex(w,nu_omg * w)
+        ;_w = complex(w,nu_omg * w)
+        _w = w
 
         x = (_w - n*wc) / (kPar * vTh)
         x0 = _w / (kPar * vTh)
@@ -414,7 +415,7 @@ if arg_present(epsilon_cold) then begin
     L = 1-wp^2 /( w*(w-wc) )
     S = 0.5*(R+L)
     D = 0.5*(R-L)
-    
+
     epsilon_cold = dComplexArr(3,3)
     
     epsilon_cold[0,0] = S

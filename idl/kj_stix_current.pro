@@ -1,6 +1,11 @@
-pro kj_stix_current, overPlotAR2 = _overPlotAR2
+pro kj_stix_current, overPlotAR2 = _overPlotAR2, useRS=_useRS, hot=_hot
 
 if keyword_set(_overPlotAR2) then overPlotAR2 = 1 else overPlotAR2 = 0
+if keyword_set(_useRS) then useRS = _useRS else useRS = 0
+if keyword_set(_hot) then hot = _hot else hot = 0
+
+useAR = 1
+if useRS then useAR = 0 
 
 @constants
 
@@ -15,6 +20,7 @@ r = arP.r
 nPhi = arP.nPhi
 nX = n_elements(arP.br)
 density = arP.densitySpec
+temp = arP.tempSpec
 nuOmg = arP.nuOmg
 
 ar2 = ar2_read_ar2input('./')
@@ -26,15 +32,28 @@ nS = n_elements(amu)
 
 ; Get the E field
 
-arS = ar2_read_solution('./',1)
-rsS = rsfwc_read_solution('./')
+if useAR then begin
+    print, 'Reading AR Solution'
+    arS = ar2_read_solution('./',1)
+    solution = arS
+endif
 
-solution = rsS
+if useRS then begin
+    print, 'Reading RS Solution'
+    rsS = rsfwc_read_solution('./')
+    solution = rsS
+endif
+
+if hot then begin
+    print, 'Using HOT dielectric'
+endif else begin
+    print, 'Using COLD dielectric'
+endelse
 
 ; For each species
 
 kx = 0
-T_eV = 2e3
+;T_eV = 2e3
 kPar = nPhi / r 
 harmonicNumber = 3
 
@@ -51,8 +70,8 @@ if run then begin
 for s=0,nS-1 do begin
 for i=windowWidth/2,nX-windowWidth/2-1 do begin
 
-    print, 'Spec: ', s
-    print, 'iX: ', i
+    ;print, 'Spec: ', s
+    ;print, 'iX: ', i
 
     iL = i-windowWidth/2
     iR = i+windowWidth/2 
@@ -90,8 +109,9 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
 
     ;for k=0,N-1 do begin
 
+        print, 'TEMP: ',temp[i,0,s]
         epsilon = kj_hot_epsilon( f, amu[s], atomicZ[s], B[i], $
-                density[i,0,s], harmonicNumber, kPar[i], kxAxis, T_eV, $
+                density[i,0,s], harmonicNumber, kPar[i], kxAxis, temp[i,0,s], $
                 kx = kx, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold );
 
         epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
@@ -99,7 +119,12 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
         sigma =  ( epsilon - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
         sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
 
+        ; Choose hot or cold sigma 
+
         _sigma = sigma_cold
+        if hot then begin
+            _sigma = sigma
+        endif
 
         ; Calculate k-space plasma current
         ; This would have to be generalize for non magnetically aligned coordinates.
@@ -170,7 +195,6 @@ for s=0,nS-1 do begin
         p=plot(solution.r,solution.JP_z[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution.r,imaginary(solution.JP_z[*,0,s]),color='r',thick=4,transparency=80,/over)            
     endif
-
 
 endfor
 
