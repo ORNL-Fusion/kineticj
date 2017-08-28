@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     98470,       1764]
-NotebookOptionsPosition[     97963,       1743]
-NotebookOutlinePosition[     98320,       1759]
-CellTagsIndexPosition[     98277,       1756]
+NotebookDataLength[     99348,       1786]
+NotebookOptionsPosition[     98841,       1765]
+NotebookOutlinePosition[     99198,       1781]
+CellTagsIndexPosition[     99155,       1778]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -98,23 +98,44 @@ Cell[BoxData[{
             RowBox[{"re", ",", "im", ",", "sgnKprl"}], "]"}]}], ")"}]}]}], 
        ")"}]}]}], "]"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"zReMin", "=", 
-   RowBox[{"-", "100000"}]}], ";", 
-  RowBox[{"zReMax", "=", "100000"}], ";", 
-  RowBox[{"nPtsRe", "=", "2000"}], ";"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"zReMin", "=", 
+    RowBox[{"-", "100000"}]}], ";", 
+   RowBox[{"zReMax", "=", "100000"}], ";", 
+   RowBox[{"nPtsRe", "=", "2000"}], ";"}], "\[IndentingNewLine]", 
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+    "The", " ", "above", " ", "are", " ", "only", " ", "for", " ", "the", " ",
+      "plotting", " ", "range", " ", 
+     RowBox[{"now", ".", " ", "Use"}], " ", "the", " ", "lines", " ", "below",
+      " ", "to", " ", "specify", " ", "the", " ", "non"}], "-", 
+    RowBox[{"uniform", " ", "file", " ", 
+     RowBox[{"range", "."}]}]}], " ", "*)"}]}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"zRe", "=", 
-   RowBox[{"N", "[", 
-    RowBox[{"Table", "[", 
-     RowBox[{"re", ",", 
-      RowBox[{"{", 
-       RowBox[{"re", ",", "zReMin", ",", "zReMax", ",", 
-        RowBox[{
-         RowBox[{"(", 
-          RowBox[{"zReMax", "-", "zReMin"}], ")"}], "/", 
-         RowBox[{"(", 
-          RowBox[{"nPtsRe", "-", "1"}], ")"}]}]}], "}"}]}], "]"}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"zRe", "=", 
+    RowBox[{"N", "[", 
+     RowBox[{"Table", "[", 
+      RowBox[{"re", ",", 
+       RowBox[{"{", 
+        RowBox[{"re", ",", "zReMin", ",", "zReMax", ",", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{"zReMax", "-", "zReMin"}], ")"}], "/", 
+          RowBox[{"(", 
+           RowBox[{"nPtsRe", "-", "1"}], ")"}]}]}], "}"}]}], "]"}], "]"}]}], 
+   ";"}], "\[IndentingNewLine]", 
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{
+      "This", " ", "is", " ", "the", " ", "range", " ", "and", " ", 
+       "resolution", " ", "of", " ", "the", " ", "file"}], " ", "..."}], " ", 
+     "recall", " ", 
+     RowBox[{"it", "'"}], "s", " ", "non"}], "-", 
+    RowBox[{"uniform", " ", "resolution"}]}], "*)"}]}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{"argMin", "=", "0.001"}], ";", 
   RowBox[{"argMax", "=", "100000"}], ";", 
@@ -311,7 +332,8 @@ Cell[BoxData[{
    3.712915461825461*^9}, {3.712915520371579*^9, 3.712915556641912*^9}, 
    3.712915621523251*^9, 3.7129156537233143`*^9, 3.712915720690896*^9, {
    3.712915825851256*^9, 3.712915828977551*^9}, {3.7129159167295103`*^9, 
-   3.712915918807736*^9}, {3.7129159502106047`*^9, 3.712915969673369*^9}}],
+   3.712915918807736*^9}, {3.7129159502106047`*^9, 3.712915969673369*^9}, {
+   3.712916184722074*^9, 3.7129162670575647`*^9}}],
 
 Cell[BoxData[
  RowBox[{"0.00030792922027167435`", "\[VeryThinSpace]", "-", 
@@ -1759,13 +1781,13 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[579, 22, 11534, 291, 579, "Input"],
-Cell[12116, 315, 2015, 30, 32, "Output"],
-Cell[14134, 347, 41808, 695, 224, "Output"],
-Cell[55945, 1044, 39962, 664, 224, "Output"],
-Cell[95910, 1710, 1892, 26, 32, "Output"]
+Cell[579, 22, 12412, 313, 621, "Input"],
+Cell[12994, 337, 2015, 30, 32, "Output"],
+Cell[15012, 369, 41808, 695, 224, "Output"],
+Cell[56823, 1066, 39962, 664, 224, "Output"],
+Cell[96788, 1732, 1892, 26, 32, "Output"]
 }, Open  ]],
-Cell[97817, 1739, 142, 2, 32, "Input"]
+Cell[98695, 1761, 142, 2, 32, "Input"]
 }
 ]
 *)
