@@ -25,7 +25,7 @@ function kj_zfunction, arg, Zp=Zp
 
     @constants
 
-    zfunFileName = expand_path('~/code/kineticj/idl/zFunction.nc')
+    zfunFileName = expand_path('~/code/kineticj/mathematica/zFunction.nc')
 	cdfId = ncdf_open(zFunFileName)
 
 		ncdf_varget, cdfId, 'arg_re', arg_re
