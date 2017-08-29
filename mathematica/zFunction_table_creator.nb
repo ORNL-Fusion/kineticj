@@ -10,24 +10,28 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     99348,       1786]
-NotebookOptionsPosition[     98841,       1765]
-NotebookOutlinePosition[     99198,       1781]
-CellTagsIndexPosition[     99155,       1778]
+NotebookDataLength[     95776,       1672]
+NotebookOptionsPosition[     95273,       1651]
+NotebookOutlinePosition[     95629,       1667]
+CellTagsIndexPosition[     95586,       1664]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
 
 Cell[CellGroupData[{
-Cell[BoxData[{
+Cell[BoxData[
  RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "This", " ", "form", " ", "is", " ", "from", " ", "pg", " ", "406", " ", 
+    "is", " ", 
+    RowBox[{"Swanson", "."}]}], "*)"}], "\[IndentingNewLine]", 
   RowBox[{
-   RowBox[{"Z", "[", 
-    RowBox[{"re_", ",", "im_", ",", "sgnKprl_"}], "]"}], ":=", " ", 
-   RowBox[{"If", "[", 
+   RowBox[{
     RowBox[{
-     RowBox[{"sgnKprl", "\[GreaterEqual]", "0"}], ",", 
+     RowBox[{"Z", "[", 
+      RowBox[{"re_", ",", "im_"}], "]"}], ":=", " ", 
      RowBox[{"I", " ", 
       RowBox[{"Sqrt", "[", "Pi", "]"}], " ", 
       RowBox[{"Exp", "[", 
@@ -41,37 +45,12 @@ Cell[BoxData[{
         RowBox[{"-", "I"}], " ", 
         RowBox[{"(", 
          RowBox[{"re", "+", 
-          RowBox[{"I", " ", "im"}]}], ")"}]}], "]"}]}], ",", 
-     RowBox[{
-      RowBox[{"-", "I"}], " ", 
-      RowBox[{"Sqrt", "[", "Pi", "]"}], " ", 
-      RowBox[{"Exp", "[", 
-       RowBox[{"-", 
-        RowBox[{
-         RowBox[{"(", 
-          RowBox[{
-           RowBox[{"-", "1"}], 
-           RowBox[{"(", 
-            RowBox[{"re", "+", " ", 
-             RowBox[{"I", " ", "im"}]}], ")"}]}], ")"}], "^", "2"}]}], "]"}], 
-      " ", 
-      RowBox[{"Erfc", "[", 
-       RowBox[{
-        RowBox[{"-", "I"}], " ", 
-        RowBox[{"(", 
-         RowBox[{
-          RowBox[{"-", "1"}], 
-          RowBox[{"(", 
-           RowBox[{"re", "+", 
-            RowBox[{"I", " ", "im"}]}], ")"}]}], ")"}]}], "]"}]}]}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{
-   RowBox[{"Zp", "[", 
-    RowBox[{"re_", ",", "im_", ",", "sgnKprl_"}], "]"}], ":=", 
-   RowBox[{"If", "[", 
+          RowBox[{"I", " ", "im"}]}], ")"}]}], "]"}]}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
     RowBox[{
-     RowBox[{"sgnKprl", "\[GreaterEqual]", "0"}], ",", 
+     RowBox[{"Zp", "[", 
+      RowBox[{"re_", ",", "im_"}], "]"}], ":=", 
      RowBox[{
       RowBox[{"-", "2"}], " ", 
       RowBox[{"(", 
@@ -81,217 +60,119 @@ Cell[BoxData[{
           RowBox[{"re", "+", 
            RowBox[{"I", " ", "im"}]}], ")"}], " ", 
          RowBox[{"Z", "[", 
-          RowBox[{"re", ",", "im", ",", "sgnKprl"}], "]"}]}]}], ")"}]}], ",", 
-     
-     RowBox[{
-      RowBox[{"-", "2"}], " ", 
-      RowBox[{"(", 
-       RowBox[{"1", "-", 
-        RowBox[{
-         RowBox[{"(", 
-          RowBox[{"re", "+", 
-           RowBox[{"I", " ", "im"}]}], ")"}], " ", 
-         RowBox[{"(", 
-          RowBox[{
-           RowBox[{"-", "1"}], 
-           RowBox[{"Z", "[", 
-            RowBox[{"re", ",", "im", ",", "sgnKprl"}], "]"}]}], ")"}]}]}], 
-       ")"}]}]}], "]"}]}], ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{
-   RowBox[{"zReMin", "=", 
-    RowBox[{"-", "100000"}]}], ";", 
-   RowBox[{"zReMax", "=", "100000"}], ";", 
-   RowBox[{"nPtsRe", "=", "2000"}], ";"}], "\[IndentingNewLine]", 
-  RowBox[{"(*", 
-   RowBox[{
-    RowBox[{
-    "The", " ", "above", " ", "are", " ", "only", " ", "for", " ", "the", " ",
-      "plotting", " ", "range", " ", 
-     RowBox[{"now", ".", " ", "Use"}], " ", "the", " ", "lines", " ", "below",
-      " ", "to", " ", "specify", " ", "the", " ", "non"}], "-", 
-    RowBox[{"uniform", " ", "file", " ", 
-     RowBox[{"range", "."}]}]}], " ", "*)"}]}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{
-   RowBox[{"zRe", "=", 
-    RowBox[{"N", "[", 
-     RowBox[{"Table", "[", 
-      RowBox[{"re", ",", 
-       RowBox[{"{", 
-        RowBox[{"re", ",", "zReMin", ",", "zReMax", ",", 
-         RowBox[{
-          RowBox[{"(", 
-           RowBox[{"zReMax", "-", "zReMin"}], ")"}], "/", 
-          RowBox[{"(", 
-           RowBox[{"nPtsRe", "-", "1"}], ")"}]}]}], "}"}]}], "]"}], "]"}]}], 
-   ";"}], "\[IndentingNewLine]", 
-  RowBox[{"(*", 
-   RowBox[{
+          RowBox[{"re", ",", "im"}], "]"}]}]}], ")"}]}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"(*", 
     RowBox[{
      RowBox[{
       RowBox[{
-      "This", " ", "is", " ", "the", " ", "range", " ", "and", " ", 
-       "resolution", " ", "of", " ", "the", " ", "file"}], " ", "..."}], " ", 
-     "recall", " ", 
-     RowBox[{"it", "'"}], "s", " ", "non"}], "-", 
-    RowBox[{"uniform", " ", "resolution"}]}], "*)"}]}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"argMin", "=", "0.001"}], ";", 
-  RowBox[{"argMax", "=", "100000"}], ";", 
-  RowBox[{"argN", "=", "1000"}], ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"zReNonUniform", "=", 
-   RowBox[{"N", "[", 
-    RowBox[{"Table", "[", 
-     RowBox[{
-      RowBox[{"10", "^", 
-       RowBox[{"(", 
-        RowBox[{
-         RowBox[{
-          RowBox[{"i", "/", 
-           RowBox[{"(", 
-            RowBox[{"argN", "-", "1"}], ")"}]}], "*", 
-          RowBox[{"(", 
+       RowBox[{
+       "This", " ", "is", " ", "the", " ", "range", " ", "and", " ", 
+        "resolution", " ", "of", " ", "the", " ", "file"}], " ", "..."}], " ",
+       "recall", " ", 
+      RowBox[{"it", "'"}], "s", " ", "non"}], "-", 
+     RowBox[{"uniform", " ", "resolution"}]}], "*)"}], "\[IndentingNewLine]", 
+   
+   RowBox[{
+    RowBox[{"argMin", "=", "0.001"}], ";", 
+    RowBox[{"argMax", "=", "100000"}], ";", 
+    RowBox[{"argN", "=", "1000"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"zReNonUniform", "=", 
+     RowBox[{"N", "[", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"10", "^", 
+         RowBox[{"(", 
+          RowBox[{
            RowBox[{
-            RowBox[{"Log10", "[", "argMax", "]"}], "-", 
-            RowBox[{"Log10", "[", "argMin", "]"}]}], ")"}]}], "+", 
-         RowBox[{"Log10", "[", "argMin", "]"}]}], ")"}]}], ",", 
-      RowBox[{"{", 
-       RowBox[{"i", ",", "0", ",", 
-        RowBox[{"argN", "-", "1"}]}], "}"}]}], "]"}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"zReNonUniform1", "=", 
-   RowBox[{"Prepend", "[", 
-    RowBox[{"zReNonUniform", ",", "0"}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"zReNonUniform2", "=", 
-   RowBox[{"Join", "[", 
-    RowBox[{
-     RowBox[{"-", 
-      RowBox[{"Reverse", "[", "zReNonUniform", "]"}]}], ",", 
-     "zReNonUniform1"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"ZData", "=", 
-   RowBox[{"Z", "[", 
-    RowBox[{"zReNonUniform2", ",", "0", ",", "1"}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"ZPData", "=", 
-   RowBox[{"Zp", "[", 
-    RowBox[{"zReNonUniform2", ",", "0", ",", "1"}], "]"}]}], 
-  ";"}], "\[IndentingNewLine]", 
- RowBox[{"Zp", "[", 
-  RowBox[{"57.0", ",", "0", ",", "1"}], "]"}], "\[IndentingNewLine]", 
- RowBox[{"ListPlot", "[", 
-  RowBox[{
-   RowBox[{"{", 
-    RowBox[{
-     RowBox[{"Re", "[", "ZData", "]"}], ",", 
-     RowBox[{"Im", "[", "ZData", "]"}]}], "}"}], ",", 
-   RowBox[{"DataRange", "\[Rule]", 
-    RowBox[{"{", 
-     RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], 
-  "]"}], "\[IndentingNewLine]", 
- RowBox[{"ListPlot", "[", 
-  RowBox[{
-   RowBox[{"{", 
-    RowBox[{
-     RowBox[{"Re", "[", "ZPData", "]"}], ",", 
-     RowBox[{"Im", "[", "ZPData", "]"}]}], "}"}], ",", 
-   RowBox[{"DataRange", "\[Rule]", 
-    RowBox[{"{", 
-     RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], 
-  "]"}], "\[IndentingNewLine]", 
- RowBox[{"SetDirectory", "[", "\"\<~/code/kineticj/mathematica\>\"", 
-  "]"}], "\[IndentingNewLine]", 
- RowBox[{
-  RowBox[{"Export", "[", 
-   RowBox[{"\"\<zFunction.nc\>\"", ",", 
-    RowBox[{"{", 
-     RowBox[{
-      RowBox[{"\"\<arg_re\>\"", "->", "zReNonUniform2"}], ",", " ", 
-      RowBox[{"\"\<Z_re\>\"", "\[Rule]", 
-       RowBox[{"Re", "[", "ZData", "]"}]}], ",", " ", 
-      RowBox[{"\"\<Z_im\>\"", "\[Rule]", 
-       RowBox[{"Im", "[", "ZData", "]"}]}], ",", " ", 
-      RowBox[{"\"\<Zp_re\>\"", "\[Rule]", 
-       RowBox[{"Re", "[", "ZPData", "]"}]}], ",", 
-      RowBox[{"\"\<Zp_im\>\"", "\[Rule]", 
-       RowBox[{"Im", "[", "ZPData", "]"}]}]}], "}"}]}], "]"}], ";", 
-  RowBox[{"(*", 
-   RowBox[{
-    RowBox[{
-     RowBox[{
-      RowBox[{",", 
-       RowBox[{"\"\<Zp_re\>\"", "->", 
-        RowBox[{"Re", "[", "ZPData", "]"}]}], ",", 
-       RowBox[{"\"\<Zp_im\>\"", "->", 
-        RowBox[{"Im", "[", "ZPData", "]"}]}]}], "}"}], "]"}], ";"}], "*)"}], 
-  "\[IndentingNewLine]", 
-  RowBox[{"(*", 
-   RowBox[{
-    RowBox[{"Export", "[", 
-     RowBox[{"\"\<zFunction_kPrl_p.nc\>\"", ",", 
-      RowBox[{"{", 
-       RowBox[{"zRe", ",", 
-        RowBox[{"Re", "[", "ZData", "]"}], ",", 
-        RowBox[{"Im", "[", "ZData", "]"}], ",", 
-        RowBox[{"Re", "[", "ZPData", "]"}], ",", 
-        RowBox[{"Im", "[", "ZPData", "]"}]}], "}"}], ",", 
-      RowBox[{"{", 
-       RowBox[{"\"\<Datasets\>\"", ",", 
+            RowBox[{"i", "/", 
+             RowBox[{"(", 
+              RowBox[{"argN", "-", "1"}], ")"}]}], "*", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"Log10", "[", "argMax", "]"}], "-", 
+              RowBox[{"Log10", "[", "argMin", "]"}]}], ")"}]}], "+", 
+           RowBox[{"Log10", "[", "argMin", "]"}]}], ")"}]}], ",", 
         RowBox[{"{", 
-         RowBox[{
-         "\"\<arg_re\>\"", ",", "\"\<Z_re\>\"", ",", "\"\<Z_im\>\"", ",", 
-          "\"\<Zp_re\>\"", ",", "\"\<Zp_im\>\""}], "}"}]}], "}"}]}], "]"}], 
-    ";", "\[IndentingNewLine]", 
+         RowBox[{"i", ",", "0", ",", 
+          RowBox[{"argN", "-", "1"}]}], "}"}]}], "]"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"zReNonUniform1", "=", 
+     RowBox[{"Prepend", "[", 
+      RowBox[{"zReNonUniform", ",", "0"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"zReNonUniform2", "=", 
+     RowBox[{"Join", "[", 
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"Reverse", "[", "zReNonUniform", "]"}]}], ",", 
+       "zReNonUniform1"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
     RowBox[{"ZData", "=", 
      RowBox[{"Z", "[", 
-      RowBox[{"zRe", ",", "0", ",", 
-       RowBox[{"-", "1"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"zReNonUniform2", ",", "0"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
     RowBox[{"ZPData", "=", 
      RowBox[{"Zp", "[", 
-      RowBox[{"zRe", ",", "0", ",", 
-       RowBox[{"-", "1"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"zReNonUniform2", ",", "0"}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"Z", "[", 
+    RowBox[{"26.7411", ",", "0"}], "]"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"zReMin", "=", 
+     RowBox[{"-", "100000"}]}], ";", 
+    RowBox[{"zReMax", "=", "100000"}], ";", 
+    RowBox[{"nPtsRe", "=", "2000"}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{"(*", 
     RowBox[{
-     RowBox[{"ListPlot", "[", 
+     RowBox[{
+     "The", " ", "above", " ", "are", " ", "only", " ", "for", " ", "the", 
+      " ", "plotting", " ", "range", " ", 
+      RowBox[{"now", ".", " ", "Use"}], " ", "the", " ", "lines", " ", 
+      "below", " ", "to", " ", "specify", " ", "the", " ", "non"}], "-", 
+     RowBox[{"uniform", " ", "file", " ", 
+      RowBox[{"range", "."}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+   RowBox[{"ListPlot", "[", 
+    RowBox[{
+     RowBox[{"{", 
       RowBox[{
-       RowBox[{"{", 
-        RowBox[{
-         RowBox[{"Re", "[", "ZData", "]"}], ",", 
-         RowBox[{"Im", "[", "ZData", "]"}]}], "}"}], ",", 
-       RowBox[{"DataRange", "\[Rule]", 
-        RowBox[{"{", 
-         RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], "]"}], 
-     "\[IndentingNewLine]", 
-     RowBox[{"ListPlot", "[", 
+       RowBox[{"Re", "[", "ZData", "]"}], ",", 
+       RowBox[{"Im", "[", "ZData", "]"}]}], "}"}], ",", 
+     RowBox[{"DataRange", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], "]"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"ListPlot", "[", 
+    RowBox[{
+     RowBox[{"{", 
       RowBox[{
-       RowBox[{"{", 
-        RowBox[{
-         RowBox[{"Re", "[", "ZPData", "]"}], ",", 
-         RowBox[{"Im", "[", "ZPData", "]"}]}], "}"}], ",", 
-       RowBox[{"DataRange", "\[Rule]", 
-        RowBox[{"{", 
-         RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], "]"}], 
-     "\[IndentingNewLine]", 
-     RowBox[{"Export", "[", 
-      RowBox[{"\"\<zFunction_kPrl_n.nc\>\"", ",", 
-       RowBox[{"{", 
-        RowBox[{"zRe", ",", 
-         RowBox[{"Re", "[", "ZData", "]"}], ",", 
-         RowBox[{"Im", "[", "ZData", "]"}], ",", 
-         RowBox[{"Re", "[", "ZPData", "]"}], ",", 
-         RowBox[{"Im", "[", "ZPData", "]"}]}], "}"}], ",", 
-       RowBox[{"{", 
-        RowBox[{"\"\<Datasets\>\"", ",", 
-         RowBox[{"{", 
-          RowBox[{
-          "\"\<arg_re\>\"", ",", "\"\<Z_re\>\"", ",", "\"\<Z_im\>\"", ",", 
-           "\"\<Zp_re\>\"", ",", "\"\<Zp_im\>\""}], "}"}]}], "}"}]}], "]"}]}],
-     ";"}], "*)"}], "\[IndentingNewLine]"}]}], "Input",
+       RowBox[{"Re", "[", "ZPData", "]"}], ",", 
+       RowBox[{"Im", "[", "ZPData", "]"}]}], "}"}], ",", 
+     RowBox[{"DataRange", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"zReMin", ",", "zReMax"}], "}"}]}]}], "]"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"SetDirectory", "[", "\"\<~/code/kineticj/mathematica\>\"", "]"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"Export", "[", 
+     RowBox[{"\"\<zFunction.nc\>\"", ",", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"\"\<arg_re\>\"", "->", "zReNonUniform2"}], ",", " ", 
+        RowBox[{"\"\<Z_re\>\"", "\[Rule]", 
+         RowBox[{"Re", "[", "ZData", "]"}]}], ",", " ", 
+        RowBox[{"\"\<Z_im\>\"", "\[Rule]", 
+         RowBox[{"Im", "[", "ZData", "]"}]}], ",", " ", 
+        RowBox[{"\"\<Zp_re\>\"", "\[Rule]", 
+         RowBox[{"Re", "[", "ZPData", "]"}]}], ",", 
+        RowBox[{"\"\<Zp_im\>\"", "\[Rule]", 
+         RowBox[{"Im", "[", "ZPData", "]"}]}]}], "}"}]}], "]"}], ";"}], 
+   "\[IndentingNewLine]"}]}]], "Input",
  CellChangeTimes->{{3.583239486789893*^9, 3.58323950187507*^9}, {
    3.583239655323444*^9, 3.583239690449977*^9}, {3.583239758017844*^9, 
    3.583239758481131*^9}, {3.583248175311973*^9, 3.5832483093087597`*^9}, {
@@ -333,13 +214,14 @@ Cell[BoxData[{
    3.712915621523251*^9, 3.7129156537233143`*^9, 3.712915720690896*^9, {
    3.712915825851256*^9, 3.712915828977551*^9}, {3.7129159167295103`*^9, 
    3.712915918807736*^9}, {3.7129159502106047`*^9, 3.712915969673369*^9}, {
-   3.712916184722074*^9, 3.7129162670575647`*^9}}],
+   3.712916184722074*^9, 3.7129162670575647`*^9}, {3.712933087636742*^9, 
+   3.7129331120425463`*^9}, {3.7129332530927773`*^9, 3.712933353178475*^9}, {
+   3.712934510755797*^9, 3.7129345411382513`*^9}, 3.712934659395458*^9}],
 
 Cell[BoxData[
- RowBox[{"0.00030792922027167435`", "\[VeryThinSpace]", "-", 
-  RowBox[{
-  "1.91737951895799372161351915803529867`15.954589770191005*^-1409", " ", 
-   "\[ImaginaryI]"}]}]], "Output",
+ RowBox[{
+  RowBox[{"-", "0.0374218221404829`"}], "-", 
+  RowBox[{"2.291425735130197`*^-18", " ", "\[ImaginaryI]"}]}]], "Output",
  CellChangeTimes->{
   3.583251359459334*^9, 3.583687540057254*^9, 3.583687692057437*^9, {
    3.583687805840008*^9, 3.583687844279254*^9}, {3.583687895220826*^9, 
@@ -365,7 +247,8 @@ Cell[BoxData[
    3.712915385414751*^9, 3.7129154691481123`*^9}, {3.712915525210067*^9, 
    3.712915560235915*^9}, 3.7129156240394287`*^9, 3.712915659245008*^9, 
    3.712915747661344*^9, 3.7129158297718353`*^9, 3.712915920921955*^9, {
-   3.712915952728039*^9, 3.712915971434802*^9}}],
+   3.712915952728039*^9, 3.712915971434802*^9}, 3.7129334009987183`*^9, {
+   3.7129345129452753`*^9, 3.712934541939272*^9}}],
 
 Cell[BoxData[
  GraphicsBox[{{}, {{}, 
@@ -1062,7 +945,8 @@ Fd1Yb8v6PqwfwHpH1g9nvTPrXVk/gfWTWT+D9V6s9/3A/wchEAku
    3.712915385414751*^9, 3.7129154691481123`*^9}, {3.712915525210067*^9, 
    3.712915560235915*^9}, 3.7129156240394287`*^9, 3.712915659245008*^9, 
    3.712915747661344*^9, 3.7129158297718353`*^9, 3.712915920921955*^9, {
-   3.712915952728039*^9, 3.7129159715243263`*^9}}],
+   3.712915952728039*^9, 3.712915971434802*^9}, 3.7129334009987183`*^9, {
+   3.7129345129452753`*^9, 3.7129345420267487`*^9}}],
 
 Cell[BoxData[
  GraphicsBox[{{}, {{}, 
@@ -1728,7 +1612,8 @@ Ef1E0U8T/RzRLxT9sv/n/wOL3Yeq
    3.712915385414751*^9, 3.7129154691481123`*^9}, {3.712915525210067*^9, 
    3.712915560235915*^9}, 3.7129156240394287`*^9, 3.712915659245008*^9, 
    3.712915747661344*^9, 3.7129158297718353`*^9, 3.712915920921955*^9, {
-   3.712915952728039*^9, 3.7129159716144247`*^9}}],
+   3.712915952728039*^9, 3.712915971434802*^9}, 3.7129334009987183`*^9, {
+   3.7129345129452753`*^9, 3.7129345421162653`*^9}}],
 
 Cell[BoxData["\<\"/Users/dg6/code/kineticj/mathematica\"\>"], "Output",
  CellChangeTimes->{
@@ -1756,7 +1641,8 @@ Cell[BoxData["\<\"/Users/dg6/code/kineticj/mathematica\"\>"], "Output",
    3.712915385414751*^9, 3.7129154691481123`*^9}, {3.712915525210067*^9, 
    3.712915560235915*^9}, 3.7129156240394287`*^9, 3.712915659245008*^9, 
    3.712915747661344*^9, 3.7129158297718353`*^9, 3.712915920921955*^9, {
-   3.712915952728039*^9, 3.7129159716209593`*^9}}]
+   3.712915952728039*^9, 3.712915971434802*^9}, 3.7129334009987183`*^9, {
+   3.7129345129452753`*^9, 3.712934542122884*^9}}]
 }, Open  ]],
 
 Cell[BoxData[
@@ -1764,7 +1650,7 @@ Cell[BoxData[
  CellChangeTimes->{{3.689334825108095*^9, 3.689334826893733*^9}}]
 },
 WindowSize->{1149, 1177},
-WindowMargins->{{Automatic, 180}, {78, Automatic}},
+WindowMargins->{{Automatic, 46}, {Automatic, 19}},
 FrontEndVersion->"11.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (July 28, \
 2016)",
 StyleDefinitions->"Default.nb"
@@ -1781,13 +1667,13 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[579, 22, 12412, 313, 621, "Input"],
-Cell[12994, 337, 2015, 30, 32, "Output"],
-Cell[15012, 369, 41808, 695, 224, "Output"],
-Cell[56823, 1066, 39962, 664, 224, "Output"],
-Cell[96788, 1732, 1892, 26, 32, "Output"]
+Cell[579, 22, 8595, 196, 411, "Input"],
+Cell[9177, 220, 2038, 30, 32, "Output"],
+Cell[11218, 252, 41884, 696, 224, "Output"],
+Cell[53105, 950, 40038, 665, 224, "Output"],
+Cell[93146, 1617, 1966, 27, 32, "Output"]
 }, Open  ]],
-Cell[98695, 1761, 142, 2, 32, "Input"]
+Cell[95127, 1647, 142, 2, 32, "Input"]
 }
 ]
 *)

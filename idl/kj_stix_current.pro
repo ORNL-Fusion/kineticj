@@ -53,9 +53,8 @@ endelse
 ; For each species
 
 kx = 0
-;T_eV = 2e3
-kPar = nPhi / r 
-harmonicNumber = 3
+kPar = nPhi / r
+harmonicNumber = 10 
 
 windowWidth = 100
 
@@ -109,21 +108,23 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
 
     ;for k=0,N-1 do begin
 
-        print, 'TEMP: ',temp[i,0,s]
-        epsilon = kj_hot_epsilon( f, amu[s], atomicZ[s], B[i], $
+        epsilon_bram = kj_hot_epsilon( f, amu[s], atomicZ[s], B[i], $
                 density[i,0,s], harmonicNumber, kPar[i], kxAxis, temp[i,0,s], $
-                kx = kx, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold );
+                kx = kx, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
+                epsilon_swan_ND = epsilon_swan_ND );
 
         epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
 
-        sigma =  ( epsilon - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        sigma_swan_ND =  ( epsilon_swan_ND - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
         sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
 
         ; Choose hot or cold sigma 
 
         _sigma = sigma_cold
         if hot then begin
-            _sigma = sigma
+            _sigma = sigma_swan_ND
+            ;_sigma = sigma_bram
         endif
 
         ; Calculate k-space plasma current

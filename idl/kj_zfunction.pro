@@ -18,10 +18,13 @@ end
 
 function kj_zfunction, arg, Zp=Zp
 
-    ; Plasma dispersion function, either table lookup using 
-    ; mathematica created table (see zFunction_table_creator.nb in kinetic-j repo)
-    ; or using the asymptotic series for large argument where it's
-    ; off the end of the table
+    ; Plasma dispersion function using  
+    ; mathematica created table 
+    ; (see zFunction_table_creator.nb in kinetic-j repo)
+    ; Don't use the asymptoptic expansion anymore, since 
+    ; we have the table out to +/- 1e5 in the Re(arg) and
+    ; could even go larger with the non-uniform (log10)
+    ; spacing of table. 
 
     @constants
 
@@ -45,38 +48,6 @@ function kj_zfunction, arg, Zp=Zp
 
 	Z = complex(this_Z_re,this_Z_im)
 	Zp = complex(this_Zp_re,this_Zp_im)
-
-    ; Then overwrite elements off table with asymptotic series for arg >> 1
-
-    iiLarge = where(abs(arg) gt max(arg_re), iiLargeCnt)
-
-    ; For large argument (off the end of the table)
-
-	if iiLargeCnt gt 0 then begin
-    
-        nMax = 40
-
-        for i=0,iiLargeCnt-1 do begin
-
-            ; Asymptotic series for x >> 1
-
-            print, arg[iiLarge[i]]
-            stop
-
-            sum = 0
-            for n=0,nMax do begin
-                sum += kj_dn(n) / (arg[iiLarge[i]]^(2*n))
-            endfor
-            sig = 1
-            if imaginary(arg[iiLarge[i]]) gt 0 then sig = 0
-            if imaginary(arg[iiLarge[i]]) lt 0 then sig = 2
-
-            Z[iiLarge[i]] = _ii * sig * sqrt(!dpi) * exp(-arg[iiLarge[i]]^2) - sum / arg[iiLarge[i]]
-            Zp[iiLarge[i]] = -2d0 * ( 1d0 + arg[iiLarge[i]] * Z[iiLarge[i]] )
-
-        endfor
-
-	endif 
 
 	return, Z
 

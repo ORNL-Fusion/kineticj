@@ -18,6 +18,10 @@ end
 
 function kj_IPrime, zeta, n
 
+    ; This should work fine for n=0, since the IDL routines
+    ; handle the n=-n symmetry for integer argument (unlike 
+    ; the fortran routines).
+
     return, beselI(zeta,n-1) - n/zeta * beselI(zeta,n)
 
 end
@@ -159,7 +163,7 @@ if keyword_set(epsilon_swan) then begin
     K5 = dComplex(0,0)
 endif
 
-if keyword_set(epsilon_swan_ND) then begin
+if arg_present(epsilon_swan_ND) then begin
     K0_ND = dComplex(0,0)
     K1_ND = dComplex(1,0)
     K2_ND = dComplex(0,0)
@@ -193,7 +197,7 @@ for alp = 0,nS-1 do begin
         K5_HarmSum = dComplex(0,0)
     endif
 
-    if keyword_set(epsilon_swan_ND) then begin
+    if arg_present(epsilon_swan_ND) then begin
         K0_HarmSum_ND = dComplex(0,0)
         K1_HarmSum_ND = dComplex(0,0)
         K2_HarmSum_ND = dComplex(0,0)
@@ -204,7 +208,7 @@ for alp = 0,nS-1 do begin
 
     for n = -harmonicNumber,harmonicNumber do begin
 
-        ; Brambilla expressions, pg 
+        ; Brambilla expressions, pg 254-255
 
         ;_w = complex(w,nu_omg * w)
         _w = w
@@ -213,6 +217,8 @@ for alp = 0,nS-1 do begin
         x0 = _w / (kPar * vTh)
 
         Z = (kj_zfunction(x, Zp=Zp))[0]
+        
+        print, z, zp
 
         Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
         Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
@@ -222,13 +228,16 @@ for alp = 0,nS-1 do begin
         tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
         eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * Zp )
 
-        ; Swanson, pg 175
-        if keyword_set(epsilon_swan) or keyword_set(epsilon_swan_ND) then begin
+        ; Swanson expressions, pg 175-176
+
+        if keyword_set(epsilon_swan) or arg_present(epsilon_swan_ND) then begin
 
             wc_swan = abs(wc)
             x = (w + n*wc_swan) / (kPar * vTh) ; Note the difference in sign here to Brambilla
 
             Z = (kj_zfunction(x, Zp=Zp))[0]
+
+            print, z, zp
 
             v0 = 0
             T_eV_Per = T_eV
@@ -261,7 +270,7 @@ for alp = 0,nS-1 do begin
         endif
 
         ; Swanson No Drift (ND) Case, pg 176
-        if keyword_set(epsilon_swan_ND) then begin
+        if arg_present(epsilon_swan_ND) then begin
             K0_HarmSum_ND += lambda * ( In - Inp ) * Z
             K1_HarmSum_ND += n^2 * In / lambda * Z
             K2_HarmSum_ND += n * ( In - Inp ) * Z
@@ -282,10 +291,10 @@ for alp = 0,nS-1 do begin
     epsHat += wp^2/(_w*wc) * vTh^2/_c^2 * eps_sum
 
     ; Swanson
-    if keyword_set(epsilon_swan) or keyword_set(epsilon_swan_ND) then begin
+    if keyword_set(epsilon_swan) or arg_present(epsilon_swan_ND) then begin
         _eps = atomicZ / abs(atomicZ) 
         _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
-        _g2 = _kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan )
+        _g2 = _kPer * wp^2 * exp(-lambda) / ( 2 * kz * w * wc_swan )
     endif
 
     if keyword_set(epsilon_swan) then begin
@@ -297,13 +306,13 @@ for alp = 0,nS-1 do begin
         K5 += _ii * _eps * _g2 * K5_HarmSum
     endif
 
-    if keyword_set(epsilon_swan_ND) then begin
-        K0_ND += 2 * _g1 * K0_HarmSum 
-        K1_ND += _g1 * K1_HarmSum
-        K2_ND += _ii * _eps * _g1 * K2_HarmSum
-        K3_ND -= _g1 * K3_HarmSum
-        K4_ND += _g2 * K4_HarmSum
-        K5_ND += _ii * _eps * _g2 * K5_HarmSum
+    if arg_present(epsilon_swan_ND) then begin
+        K0_ND += 2 * _g1 * K0_HarmSum_ND
+        K1_ND += _g1 * K1_HarmSum_ND
+        K2_ND += _ii * _eps * _g1 * K2_HarmSum_ND
+        K3_ND -= _g1 * K3_HarmSum_ND
+        K4_ND += _g2 * K4_HarmSum_ND
+        K5_ND += _ii * _eps * _g2 * K5_HarmSum_ND
     endif
 
 endfor
@@ -344,7 +353,7 @@ epsilon[2,2,*] = ezz
 
 if keyword_set(epsilon_swan) then begin
 
-    epsilon_swan = dComplexArr(3,3)
+    epsilon_swan = dComplexArr(3,3,NK)
     
     psi = acos ( kx / _kPer )
     
@@ -360,49 +369,49 @@ if keyword_set(epsilon_swan) then begin
     swan_ezy = sin(psi) * K4 + cos(psi) * K5
     swan_ezz = K3
     
-    epsilon_swan[0,0] = swan_exx
-    epsilon_swan[0,1] = swan_exy
-    epsilon_swan[0,2] = swan_exz
+    epsilon_swan[0,0,*] = swan_exx
+    epsilon_swan[0,1,*] = swan_exy
+    epsilon_swan[0,2,*] = swan_exz
     
-    epsilon_swan[1,0] = swan_eyx
-    epsilon_swan[1,1] = swan_eyy
-    epsilon_swan[1,2] = swan_eyz
+    epsilon_swan[1,0,*] = swan_eyx
+    epsilon_swan[1,1,*] = swan_eyy
+    epsilon_swan[1,2,*] = swan_eyz
     
-    epsilon_swan[2,0] = swan_ezx
-    epsilon_swan[2,1] = swan_ezy
-    epsilon_swan[2,2] = swan_ezz
+    epsilon_swan[2,0,*] = swan_ezx
+    epsilon_swan[2,1,*] = swan_ezy
+    epsilon_swan[2,2,*] = swan_ezz
 
 endif
 
 ; Swamson No Drifts ( kx = _kPer, ky = 0 )
 
-if keyword_set(epsilon_swan_ND) then begin
+if arg_present(epsilon_swan_ND) then begin
 
-    epsilon_swan_ND = dComplexArr(3,3)
+    epsilon_swan_ND = dComplexArr(3,3,NK)
     
-    swan_ND_exx = K1 
-    swan_ND_exy = K2 
-    swan_ND_exz = K4 
+    swan_ND_exx = K1_ND 
+    swan_ND_exy = K2_ND 
+    swan_ND_exz = K4_ND 
     
-    swan_ND_eyx = -K2
-    swan_ND_eyy = K1 + K0
-    swan_ND_eyz = -K5
+    swan_ND_eyx = -K2_ND
+    swan_ND_eyy = K1_ND + K0_ND
+    swan_ND_eyz = -K5_ND
     
-    swan_ND_ezx = K4
-    swan_ND_ezy = K5
-    swan_ND_ezz = K3
+    swan_ND_ezx = K4_ND
+    swan_ND_ezy = K5_ND
+    swan_ND_ezz = K3_ND
     
-    epsilon_swan_ND[0,0] = swan_ND_exx
-    epsilon_swan_ND[0,1] = swan_ND_exy
-    epsilon_swan_ND[0,2] = swan_ND_exz
+    epsilon_swan_ND[0,0,*] = swan_ND_exx
+    epsilon_swan_ND[0,1,*] = swan_ND_exy
+    epsilon_swan_ND[0,2,*] = swan_ND_exz
     
-    epsilon_swan_ND[1,0] = swan_ND_eyx
-    epsilon_swan_ND[1,1] = swan_ND_eyy
-    epsilon_swan_ND[1,2] = swan_ND_eyz
+    epsilon_swan_ND[1,0,*] = swan_ND_eyx
+    epsilon_swan_ND[1,1,*] = swan_ND_eyy
+    epsilon_swan_ND[1,2,*] = swan_ND_eyz
     
-    epsilon_swan_ND[2,0] = swan_ND_ezx
-    epsilon_swan_ND[2,1] = swan_ND_ezy
-    epsilon_swan_ND[2,2] = swan_ND_ezz
+    epsilon_swan_ND[2,0,*] = swan_ND_ezx
+    epsilon_swan_ND[2,1,*] = swan_ND_ezy
+    epsilon_swan_ND[2,2,*] = swan_ND_ezz
 
 endif
 
