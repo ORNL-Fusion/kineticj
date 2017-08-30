@@ -123,8 +123,8 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
 
         _sigma = sigma_cold
         if hot then begin
-            _sigma = sigma_swan_ND
-            ;_sigma = sigma_bram
+            ;_sigma = sigma_swan_ND
+            _sigma = sigma_bram
         endif
 
         ; Calculate k-space plasma current

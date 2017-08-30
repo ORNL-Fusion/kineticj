@@ -210,16 +210,15 @@ for alp = 0,nS-1 do begin
 
         ; Brambilla expressions, pg 254-255
 
-        ;_w = complex(w,nu_omg * w)
         _w = w
 
         x = (_w - n*wc) / (kPar * vTh)
         x0 = _w / (kPar * vTh)
 
         Z = (kj_zfunction(x, Zp=Zp))[0]
-        
-        print, z, zp
 
+        ;print, x, Z, Zp
+        
         Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
         Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
         Psum += beselI(lambda,n,/double) * exp(-lambda) * (x0 * x * Zp )
@@ -233,11 +232,18 @@ for alp = 0,nS-1 do begin
         if keyword_set(epsilon_swan) or arg_present(epsilon_swan_ND) then begin
 
             wc_swan = abs(wc)
-            x = (w + n*wc_swan) / (kPar * vTh) ; Note the difference in sign here to Brambilla
+
+            ; Note the difference in sign here to that in the textbook. 
+            ; I cannot seem to resolve the use of the +ve sign that Swanson
+            ; has with all other references to this topic. As such I've 
+            ; switched to -ve sign, but this also then requires switching the sign
+            ; of the K2 term to give a match to Brambilla. 
+
+            x = (w - n*wc_swan) / (kPar * vTh) 
 
             Z = (kj_zfunction(x, Zp=Zp))[0]
-
-            print, z, zp
+            
+            ;print, x, Z, Zp
 
             v0 = 0
             T_eV_Per = T_eV
@@ -309,7 +315,7 @@ for alp = 0,nS-1 do begin
     if arg_present(epsilon_swan_ND) then begin
         K0_ND += 2 * _g1 * K0_HarmSum_ND
         K1_ND += _g1 * K1_HarmSum_ND
-        K2_ND += _ii * _eps * _g1 * K2_HarmSum_ND
+        K2_ND -= _ii * _eps * _g1 * K2_HarmSum_ND
         K3_ND -= _g1 * K3_HarmSum_ND
         K4_ND += _g2 * K4_HarmSum_ND
         K5_ND += _ii * _eps * _g2 * K5_HarmSum_ND
@@ -412,6 +418,60 @@ if arg_present(epsilon_swan_ND) then begin
     epsilon_swan_ND[2,0,*] = swan_ND_ezx
     epsilon_swan_ND[2,1,*] = swan_ND_ezy
     epsilon_swan_ND[2,2,*] = swan_ND_ezz
+
+    ;; ------------------------------------------------------
+    ;; Check to see if the Brambilla and Swansons dielectrics
+    ;; match.
+
+    ;AA = epsilon_swan_ND
+    ;BB = epsilon
+
+    ;diff_re = (real_part(AA) - real_part(BB))/abs(real_part(AA))
+    ;iiZero = where(AA lt 1.0,iiCnt)
+    ;diff_re[iiZero] = 0
+    ;iiZero = where(imaginary(AA) lt 1.0,iiCnt)
+    ;diff_re[iiZero] = 0
+
+    ;diff_im = (imaginary(AA) - imaginary(BB))/abs(imaginary(AA))
+    ;iiZero = where(AA lt 1.0,iiCnt)
+    ;diff_im[iiZero] = 0
+    ;iiZero = where(imaginary(AA) lt 1.0,iiCnt)
+    ;diff_im[iiZero] = 0
+
+    ;iiInf = where(diff_re*0 ne 0,iiCntInf)
+    ;if iiCntInf gt 0 then diff_re[iiInf] = 0
+    ;
+    ;iiInf = where(diff_im*0 ne 0,iiCntInf)
+    ;if iiCntInf gt 0 then diff_im[iiInf] = 0
+
+    ;iiBad_re = where(total(total(diff_re,1),1) gt 1,iiBadCnt_re)
+    ;iiBad_im = where(total(total(diff_im,1),1) gt 1,iiBadCnt_im)
+
+    ;if iiBadCnt_re gt 0 or iiBadCnt_im gt 0 then begin
+
+    ;    print, iiBadCnt_re, iiBadCnt_im
+    ;    print, ''
+    ;    print, '-------------'
+    ;    print, atomicZ, kPar
+
+    ;    print, AA[*,*,iiBad_re[0]]
+    ;    print, ''
+    ;    print, BB[*,*,iiBad_re[0]]
+
+    ;    print, ''
+    ;    print, AA[*,*,iiBad_im[0]]
+    ;    print, ''
+    ;    print, BB[*,*,iiBad_im[0]]
+
+    ;    print, iiBad_re[0], iiBad_im[0]
+
+    ;    print, ''
+    ;    print, -_ii*Dhat[iiBad_re[0]]
+    ;    print, K2_ND[iiBad_re[0]]
+    ;    stop
+    ;endif
+    ;
+    ; ----------------------------------------------------------
 
 endif
 
