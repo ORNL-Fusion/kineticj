@@ -136,10 +136,10 @@ if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
 
 NK = n_elements(kPer)
 
-_kPer = kPer>1e-5
+_kPer = kPer
 
 w = 2 * !Pi * f
-m = amu * _amu * complex( 1, nu_omg) 
+m = amu * _amu; * complex( 1, nu_omg) 
 q = atomicZ * _e
 nPar = _c * kPar / w
 nPer = _c * _kPer / w
@@ -189,21 +189,21 @@ for alp = 0,nS-1 do begin
     eps_sum = dcomplexArr(NK)
 
     if keyword_set(epsilon_swan) then begin
-        K0_HarmSum = dComplex(0,0)
-        K1_HarmSum = dComplex(0,0)
-        K2_HarmSum = dComplex(0,0)
-        K3_HarmSum = dComplex(0,0)
-        K4_HarmSum = dComplex(0,0)
-        K5_HarmSum = dComplex(0,0)
+        K0_HarmSum = dComplexArr(NK)
+        K1_HarmSum = dComplexArr(NK)
+        K2_HarmSum = dComplexArr(NK)
+        K3_HarmSum = dComplexArr(NK)
+        K4_HarmSum = dComplexArr(NK)
+        K5_HarmSum = dComplexArr(NK)
     endif
 
     if arg_present(epsilon_swan_ND) then begin
-        K0_HarmSum_ND = dComplex(0,0)
-        K1_HarmSum_ND = dComplex(0,0)
-        K2_HarmSum_ND = dComplex(0,0)
-        K3_HarmSum_ND = dComplex(0,0)
-        K4_HarmSum_ND = dComplex(0,0)
-        K5_HarmSum_ND = dComplex(0,0)
+        K0_HarmSum_ND = dComplexArr(NK)
+        K1_HarmSum_ND = dComplexArr(NK)
+        K2_HarmSum_ND = dComplexArr(NK)
+        K3_HarmSum_ND = dComplexArr(NK)
+        K4_HarmSum_ND = dComplexArr(NK)
+        K5_HarmSum_ND = dComplexArr(NK)
     endif
 
     for n = -harmonicNumber,harmonicNumber do begin
@@ -216,16 +216,20 @@ for alp = 0,nS-1 do begin
         x0 = _w / (kPar * vTh)
 
         Z = (kj_zfunction(x, Zp=Zp))[0]
+        Zp = Zp[0]
 
         ;print, x, Z, Zp
-        
-        Ssum += n^2 / lambda * beselI(lambda, n, /double) * exp( -lambda ) * (-x0 * Z )
-        Dsum += n * ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
-        Psum += beselI(lambda,n,/double) * exp(-lambda) * (x0 * x * Zp )
+       
+        In = beselI(lambda, n, /double)
+        Inp = kj_IPrime(lambda, n)
 
-        eta_sum += n/lambda * beselI(lambda,n,/double) * exp(-lambda) * (x0^2 * Zp )
-        tau_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (-x0 * Z )
-        eps_sum += ( kj_IPrime(lambda, n) - beselI(lambda,n,/double) ) * exp(-lambda) * (x0^2 * Zp )
+        Ssum += n^2 / lambda * In * exp( -lambda ) * (-x0 * Z )
+        Dsum += n * ( Inp - In ) * exp(-lambda) * (-x0 * Z )
+        Psum += In * exp(-lambda) * (x0 * x * Zp )
+
+        eta_sum += n/lambda * In * exp(-lambda) * (x0^2 * Zp )
+        tau_sum += ( Inp - In ) * exp(-lambda) * (-x0 * Z )
+        eps_sum += ( Inp - In ) * exp(-lambda) * (x0^2 * Zp )
 
         ; Swanson expressions, pg 175-176
 
@@ -233,15 +237,10 @@ for alp = 0,nS-1 do begin
 
             wc_swan = abs(wc)
 
-            ; Note the difference in sign here to that in the textbook. 
-            ; I cannot seem to resolve the use of the +ve sign that Swanson
-            ; has with all other references to this topic. As such I've 
-            ; switched to -ve sign, but this also then requires switching the sign
-            ; of the K2 term to give a match to Brambilla. 
+            x = (w + n*wc_swan) / (kPar * vTh) 
 
-            x = (w - n*wc_swan) / (kPar * vTh) 
-
-            Z = (kj_zfunction(x, Zp=Zp))[0]
+            Z_swan = (kj_zfunction(x, Zp=Zp_swan))[0]
+            Zp_swan = Zp_swan[0]
             
             ;print, x, Z, Zp
 
@@ -249,12 +248,9 @@ for alp = 0,nS-1 do begin
             T_eV_Per = T_eV
             T_eV_Par = T_eV
             kz = kPar
-            In = beselI(lambda, n, /double)
-            Inp = kj_IPrime(lambda, n)
-
             _f1 = ( 1.0 - kz * v0 / w )
             _f2 = kz * vTh / w * ( 1 - T_eV_Per / T_eV_Par )
-            _f3 = _f1 * Z  + _f2 * Zp / 2.0
+            _f3 = _f1 * Z_swan  + _f2 * Zp_swan / 2.0
 
             _f4 = ( w + n * wc_swan ) / ( kz * vTh ) 
             _f5 = 1d0 + n * wc_swan / w * ( 1 - T_eV_Par / T_eV_Per ) 
@@ -270,19 +266,19 @@ for alp = 0,nS-1 do begin
             K0_HarmSum += lambda * ( In - Inp ) * _f3
             K1_HarmSum += n^2 * In / lambda * _f3
             K2_HarmSum += n * ( In - Inp ) * _f3
-            K3_HarmSum += In * _f4 * ( _f5 * Zp + _f6 * ( Z + _f7 ) ) 
-            K4_HarmSum += n * In / lambda * ( _f9 * Z + _f10 * Zp / 2.0 ) 
-            K5_HarmSum += ( In - Inp ) * ( _f9 * Z + _f10 * Zp / 2.0 )
+            K3_HarmSum += In * _f4 * ( _f5 * Zp_swan + _f6 * ( Z_swan + _f7 ) ) 
+            K4_HarmSum += n * In / lambda * ( _f9 * Z_swan + _f10 * Zp_swan / 2.0 ) 
+            K5_HarmSum += ( In - Inp ) * ( _f9 * Z_swan + _f10 * Zp_swan / 2.0 )
         endif
 
         ; Swanson No Drift (ND) Case, pg 176
         if arg_present(epsilon_swan_ND) then begin
-            K0_HarmSum_ND += lambda * ( In - Inp ) * Z
-            K1_HarmSum_ND += n^2 * In / lambda * Z
-            K2_HarmSum_ND += n * ( In - Inp ) * Z
-            K3_HarmSum_ND += In * x * Zp 
-            K4_HarmSum_ND += n * In / lambda * Zp  
-            K5_HarmSum_ND += ( In - Inp ) * Zp 
+            K0_HarmSum_ND += lambda * ( In - Inp ) * Z_swan
+            K1_HarmSum_ND += n^2 * In / lambda * Z_swan
+            K2_HarmSum_ND += n * ( In - Inp ) * Z_swan
+            K3_HarmSum_ND += In * x * Zp_swan 
+            K4_HarmSum_ND += n * In / lambda * Zp_swan  
+            K5_HarmSum_ND += ( In - Inp ) * Zp_swan 
         endif
     endfor 
 
@@ -306,7 +302,7 @@ for alp = 0,nS-1 do begin
     if keyword_set(epsilon_swan) then begin
         K0 += 2 * _g1 * K0_HarmSum 
         K1 += _g1 * K1_HarmSum
-        K2 += _ii * _eps * _g1 * K2_HarmSum
+        K2 += _ii * _eps * _g1 * K2_HarmSum 
         K3 -= _g1 * K3_HarmSum
         K4 += _g2 * K4_HarmSum
         K5 += _ii * _eps * _g2 * K5_HarmSum
@@ -315,7 +311,7 @@ for alp = 0,nS-1 do begin
     if arg_present(epsilon_swan_ND) then begin
         K0_ND += 2 * _g1 * K0_HarmSum_ND
         K1_ND += _g1 * K1_HarmSum_ND
-        K2_ND -= _ii * _eps * _g1 * K2_HarmSum_ND
+        K2_ND += _ii * _eps * _g1 * K2_HarmSum_ND 
         K3_ND -= _g1 * K3_HarmSum_ND
         K4_ND += _g2 * K4_HarmSum_ND
         K5_ND += _ii * _eps * _g2 * K5_HarmSum_ND
@@ -471,7 +467,7 @@ if arg_present(epsilon_swan_ND) then begin
     ;    stop
     ;endif
     ;
-    ; ----------------------------------------------------------
+    ;; ----------------------------------------------------------
 
 endif
 

@@ -22,6 +22,7 @@ nX = n_elements(arP.br)
 density = arP.densitySpec
 temp = arP.tempSpec
 nuOmg = arP.nuOmg
+kz = 0
 
 ar2 = ar2_read_ar2input('./')
 
@@ -52,7 +53,6 @@ endelse
 
 ; For each species
 
-kx = 0
 kPar = nPhi / r
 harmonicNumber = 10 
 
@@ -65,6 +65,9 @@ jz = complexArr(nX,nS)
 run = 1
 
 if run then begin
+
+kxArr = fltArr(nX,windowWidth+1)
+sig2 = complexArr(3,3,nX,windowWidth+1,nS)
 
 for s=0,nS-1 do begin
 for i=windowWidth/2,nX-windowWidth/2-1 do begin
@@ -79,21 +82,25 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
     
     N = n_elements(solution.E_r[iL:iR])
 
-    Er = solution.E_r[iL:iR] * hanning(N)
-    Et = solution.E_t[iL:iR] * hanning(N)
-    Ez = solution.E_z[iL:iR] * hanning(N)
+    er = solution.e_r[il:ir] * hanning(n)
+    et = solution.e_t[il:ir] * hanning(n)
+    ez = solution.e_z[il:ir] * hanning(n)
     
-    ; Forward FFT
+    ; forward fft
     
-    Ekr = fft(Er,/center)
-    Ekt = fft(Et,/center)
-    Ekz = fft(Ez,/center)
+    ekr = fft(er,/center)
+    ekt = fft(et,/center)
+    ekz = fft(ez,/center)
     
-    dX = r[1]-r[0]
-    kxAxis = fIndGen(N) / ( dX * N ) * 2*!Pi 
-    dk = kxAxis[1]-kxAxis[0]
-    kxAxis = kxAxis - kxAxis[-1]/2 - dk/2
-    
+    dx = r[1]-r[0]
+    kxaxis = findgen(n) / ( dx * n ) * 2*!pi 
+    dk = kxaxis[1]-kxaxis[0]
+    kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
+   
+    kxArr[i,*] = kxAxis
+
+    kPer = sqrt(kxAxis^2+kz^2)
+
     xRange = [-1,1]*600
     
     ;p=plot(kxAxis,abs(Ekr)^2,layout=[1,3,1],xRange=xRange)
@@ -109,8 +116,8 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
     ;for k=0,N-1 do begin
 
         epsilon_bram = kj_hot_epsilon( f, amu[s], atomicZ[s], B[i], $
-                density[i,0,s], harmonicNumber, kPar[i], kxAxis, temp[i,0,s], $
-                kx = kx, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
+                density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
+                kx = 0, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
                 epsilon_swan_ND = epsilon_swan_ND );
 
         epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
@@ -123,9 +130,11 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
 
         _sigma = sigma_cold
         if hot then begin
-            ;_sigma = sigma_swan_ND
-            _sigma = sigma_bram
+            _sigma = sigma_swan_ND
+            ;_sigma = sigma_bram
         endif
+
+        sig2[*,*,i,*,s] = _sigma
 
         ; Calculate k-space plasma current
         ; This would have to be generalize for non magnetically aligned coordinates.
@@ -151,7 +160,7 @@ for i=windowWidth/2,nX-windowWidth/2-1 do begin
 endfor
 endfor
 
-    save, jr, jt, jz, fileName='kj_sc.sav', /variables
+    save, jr, jt, jz, sig2, fileName='kj_sc.sav', /variables
 
 endif else begin
 
@@ -198,6 +207,85 @@ for s=0,nS-1 do begin
     endif
 
 endfor
+
+; Compare the global spectrum and sigmas for that spectrum
+
+xrange = [-200,800]
+
+ekr = -fft(solution.e_r,/center)
+ekt = fft(solution.e_t,/center)
+ekz = fft(solution.e_z,/center)
+N = n_elements(solution.e_r)
+
+dx = r[1]-r[0]
+kxaxis = findgen(n) / ( dx * N ) * 2*!pi 
+dk = kxaxis[1]-kxaxis[0]
+kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
+
+p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
+p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
+p=plot(kxaxis,ekr,/over,thick=3,transparency=50)
+p=plot(kxaxis,imaginary(ekr),color='r',/over,thick=3,transparency=50)
+
+p=plot(solution.kr,solution.ebetk,layout=[1,3,2],/current,xrange=xrange)
+p=plot(solution.kr,imaginary(solution.ebetk),color='r',/over)
+p=plot(kxaxis,ekz,/over,thick=3,transparency=50)
+p=plot(kxaxis,imaginary(ekz),color='r',/over,thick=3,transparency=50)
+
+p=plot(solution.kr,solution.eprlk,layout=[1,3,3],/current,xrange=xrange)
+p=plot(solution.kr,imaginary(solution.eprlk),color='r',/over)
+p=plot(kxaxis,ekt,thick=3,transparency=50,/over)
+p=plot(kxaxis,imaginary(ekt),color='r',/over,thick=3,transparency=50)
+
+s = 2
+iX = nX/3
+p=plot(solution.kr,solution.sig[0,0,ix,*,s],layout=[3,3,1])
+p=plot(solution.kr,imaginary(solution.sig[0,0,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[0,0,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[0,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[0,1,ix,*,s],layout=[3,3,2],/current)
+p=plot(solution.kr,imaginary(solution.sig[0,1,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[0,1,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[0,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[0,2,ix,*,s],layout=[3,3,3],/current)
+p=plot(solution.kr,imaginary(solution.sig[0,2,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[0,2,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[0,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+
+p=plot(solution.kr,solution.sig[1,0,ix,*,s],layout=[3,3,4],/current)
+p=plot(solution.kr,imaginary(solution.sig[1,0,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[1,0,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[1,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[1,1,ix,*,s],layout=[3,3,5],/current)
+p=plot(solution.kr,imaginary(solution.sig[1,1,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[1,1,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[1,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[1,2,ix,*,s],layout=[3,3,6],/current)
+p=plot(solution.kr,imaginary(solution.sig[1,2,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[1,2,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[1,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+
+p=plot(solution.kr,solution.sig[2,0,ix,*,s],layout=[3,3,7],/current)
+p=plot(solution.kr,imaginary(solution.sig[2,0,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[2,0,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[2,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[2,1,ix,*,s],layout=[3,3,8],/current)
+p=plot(solution.kr,imaginary(solution.sig[2,1,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[2,1,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[2,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+
+p=plot(solution.kr,solution.sig[2,2,ix,*,s],layout=[3,3,9],/current)
+p=plot(solution.kr,imaginary(solution.sig[2,2,ix,*,s]),color='r',/over)
+p=plot(kxArr[iX,*],sig2[2,2,ix,*,s],/over,thick=3,trans=50)
+p=plot(kxArr[iX,*],imaginary(sig2[2,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+
 
 stop
 end
