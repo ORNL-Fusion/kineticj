@@ -136,7 +136,9 @@ if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
 
 NK = n_elements(kPer)
 
-_kPer = kPer
+iiNeg = where( kPer lt 0, iiNegCnt)
+if iiNegCnt gt 0 then stop
+_kPer = kPer>1e-5
 
 w = 2 * !Pi * f
 m = amu * _amu; * complex( 1, nu_omg) 
