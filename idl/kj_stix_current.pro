@@ -87,13 +87,16 @@ for i=1,nX-2 do begin
 
     if thisWindowWidth gt windowWidth+1 then stop
 
-    iR = iL + thisWindowWidth - 1
+    iL = i - (thisWindowWidth-1)/2
+    iR = i + (thisWindowWidth-1)/2
 
     _iL = 0 
     _iR = thisWindowWidth - 1
 
-    print, iL, iR
-    print, _iL, _iR
+    print, ''
+    print, 'Full index range: ', iL, iR
+    print, ' Sub index range: ',_iL, _iR
+    print, '          thisWW: ', thisWindowWidth
 
     ; Extract and window the E field
     
@@ -239,7 +242,7 @@ dk = kxaxis[1]-kxaxis[0]
 kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
 
 s = 0
-iX = nX/6
+iX = nX/2
 
 p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
 p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
