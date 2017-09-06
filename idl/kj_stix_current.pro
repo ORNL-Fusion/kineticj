@@ -102,9 +102,15 @@ for i=1,nX-2 do begin
     
     N = n_elements(solution.E_r[iL:iR])
 
-    er = +solution.e_r[iL:iR] ;* hanning(n)
-    et = -solution.e_t[iL:iR] ;* hanning(n)
-    ez = +solution.e_z[iL:iR] ;* hanning(n)
+    if useRS then begin
+        er = +solution.e_r[iL:iR] ;* hanning(n)
+        et = +solution.e_t[iL:iR] ;* hanning(n)
+        ez = +solution.e_z[iL:iR] ;* hanning(n)
+    endif else begin
+        er = +solution.e_r[iL:iR] ;* hanning(n)
+        et = -solution.e_t[iL:iR] ;* hanning(n)
+        ez = +solution.e_z[iL:iR] ;* hanning(n)
+    endelse
     
     ; forward fft
     
@@ -133,22 +139,32 @@ for i=1,nX-2 do begin
 
     ;for k=0,N-1 do begin
 
-        epsilon_bram = kj_hot_epsilon( f, amu[s], atomicZ[s], B[i], $
+        epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
                 density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
                 kx = 0, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
-                epsilon_swan_ND = epsilon_swan_ND );
+                epsilon_swan_ND = epsilon_swan );
 
         epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
 
         sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-        sigma_swan_ND =  ( epsilon_swan_ND - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
         sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+
+        ; Rotate sigma from ABP to RTZ
+
+        thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
+
+        for k=0,N-1 do begin
+	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec )
+	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec )
+	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec )
+        endfor
 
         ; Choose hot or cold sigma 
 
         _sigma = sigma_cold
         if hot then begin
-            _sigma = sigma_swan_ND
+            _sigma = sigma_swan
             ;_sigma = sigma_bram
         endif
 
@@ -160,10 +176,15 @@ for i=1,nX-2 do begin
 
         ; Try flipping the indexing order also.
 
-        jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-        jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-        jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
-
+        if useRS then begin
+            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
+            jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
+            jkt = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+        endif else begin
+            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
+            jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
+            jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+        endelse
     ;endfor
     
     ; Inverse FFT for configuration-space plasma current
@@ -227,119 +248,121 @@ for s=0,nS-1 do begin
 
 endfor
 
-; Compare the global spectrum and sigmas for that spectrum
 
-xrange = [-200,800]
+if not useRS then begin
 
-ekr = -fft(solution.e_r,/center)
-ekt = fft(solution.e_t,/center)
-ekz = fft(solution.e_z,/center)
-N = n_elements(solution.e_r)
+    ; Compare the global spectrum and sigmas for that spectrum
+    
+    xrange = [-200,800]
+    
+    ekr = -fft(solution.e_r,/center)
+    ekt = fft(solution.e_t,/center)
+    ekz = fft(solution.e_z,/center)
+    N = n_elements(solution.e_r)
+    
+    dx = r[1]-r[0]
+    kxaxis = findgen(n) / ( dx * N ) * 2*!pi 
+    dk = kxaxis[1]-kxaxis[0]
+    kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
+    
+    s = 2
+    iX = nX/2
+    
+    p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
+    p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
+    p=plot(kxaxis,ekr,/over,thick=3,transparency=50)
+    p=plot(kxaxis,imaginary(ekr),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],ekrArr[iX,*],/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(ekrArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    
+    p=plot(solution.kr,solution.ebetk,layout=[1,3,2],/current,xrange=xrange)
+    p=plot(solution.kr,imaginary(solution.ebetk),color='r',/over)
+    p=plot(kxaxis,ekz,/over,thick=3,transparency=50)
+    p=plot(kxaxis,imaginary(ekz),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],ekzArr[iX,*],/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(ekzArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    
+    p=plot(solution.kr,solution.eprlk,layout=[1,3,3],/current,xrange=xrange)
+    p=plot(solution.kr,imaginary(solution.eprlk),color='r',/over)
+    p=plot(kxaxis,ekt,thick=3,transparency=50,/over)
+    p=plot(kxaxis,imaginary(ekt),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],ektArr[iX,*],/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(ektArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    
+    
+    
+    p=plot(solution.kr,solution.sig[0,0,ix,*,s],layout=[3,3,1])
+    p=plot(solution.kr,imaginary(solution.sig[0,0,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[0,0,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[0,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[0,0,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[0,0,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[0,1,ix,*,s],layout=[3,3,2],/current)
+    p=plot(solution.kr,imaginary(solution.sig[0,1,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[0,1,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[0,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[0,1,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[0,1,ix,*,s]),color='b',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[0,2,ix,*,s],layout=[3,3,3],/current)
+    p=plot(solution.kr,imaginary(solution.sig[0,2,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[0,2,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[0,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[0,2,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[0,2,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[1,0,ix,*,s],layout=[3,3,4],/current)
+    p=plot(solution.kr,imaginary(solution.sig[1,0,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[1,0,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[1,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[1,0,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[1,0,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[1,1,ix,*,s],layout=[3,3,5],/current)
+    p=plot(solution.kr,imaginary(solution.sig[1,1,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[1,1,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[1,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[1,1,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[1,1,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[1,2,ix,*,s],layout=[3,3,6],/current)
+    p=plot(solution.kr,imaginary(solution.sig[1,2,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[1,2,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[1,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[1,2,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[1,2,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[2,0,ix,*,s],layout=[3,3,7],/current)
+    p=plot(solution.kr,imaginary(solution.sig[2,0,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[2,0,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[2,0,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[2,0,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[2,0,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[2,1,ix,*,s],layout=[3,3,8],/current)
+    p=plot(solution.kr,imaginary(solution.sig[2,1,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[2,1,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[2,1,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[2,1,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[2,1,ix,*,s]),color='m',/over,thick=3,trans=50)
+    
+    
+    p=plot(solution.kr,solution.sig[2,2,ix,*,s],layout=[3,3,9],/current)
+    p=plot(solution.kr,imaginary(solution.sig[2,2,ix,*,s]),color='r',/over)
+    p=plot(kxArr[iX,*],sig2[2,2,ix,*,s],/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],imaginary(sig2[2,2,ix,*,s]),color='r',/over,thick=3,trans=50)
+    p=plot(kxArr[iX,*],sigc[2,2,ix,*,s],/over,thick=3,trans=50,color='b')
+    p=plot(kxArr[iX,*],imaginary(sigc[2,2,ix,*,s]),color='m',/over,thick=3,trans=50)
 
-dx = r[1]-r[0]
-kxaxis = findgen(n) / ( dx * N ) * 2*!pi 
-dk = kxaxis[1]-kxaxis[0]
-kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
-
-s = 0
-iX = nX/2
-
-p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
-p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
-p=plot(kxaxis,ekr,/over,thick=3,transparency=50)
-p=plot(kxaxis,imaginary(ekr),color='r',/over,thick=3,transparency=50)
-p=plot(kxArr[iX,*],ekrArr[iX,*],/over,color='b',thick=4,trans=50)
-p=plot(kxArr[iX,*],imaginary(ekrArr[iX,*]),/over,color='magenta',thick=4,trans=50)
-
-p=plot(solution.kr,solution.ebetk,layout=[1,3,2],/current,xrange=xrange)
-p=plot(solution.kr,imaginary(solution.ebetk),color='r',/over)
-p=plot(kxaxis,ekz,/over,thick=3,transparency=50)
-p=plot(kxaxis,imaginary(ekz),color='r',/over,thick=3,transparency=50)
-p=plot(kxArr[iX,*],ekzArr[iX,*],/over,color='b',thick=4,trans=50)
-p=plot(kxArr[iX,*],imaginary(ekzArr[iX,*]),/over,color='magenta',thick=4,trans=50)
-
-p=plot(solution.kr,solution.eprlk,layout=[1,3,3],/current,xrange=xrange)
-p=plot(solution.kr,imaginary(solution.eprlk),color='r',/over)
-p=plot(kxaxis,ekt,thick=3,transparency=50,/over)
-p=plot(kxaxis,imaginary(ekt),color='r',/over,thick=3,transparency=50)
-p=plot(kxArr[iX,*],ektArr[iX,*],/over,color='b',thick=4,trans=50)
-p=plot(kxArr[iX,*],imaginary(ektArr[iX,*]),/over,color='magenta',thick=4,trans=50)
-
-
-
-p=plot(solution.kr,solution.sig[0,0,ix,*,s],layout=[3,3,1])
-p=plot(solution.kr,imaginary(solution.sig[0,0,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[0,0,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[0,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[0,0,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[0,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[0,1,ix,*,s],layout=[3,3,2],/current)
-p=plot(solution.kr,imaginary(solution.sig[0,1,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[0,1,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[0,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[0,1,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[0,1,ix,*,s]),color='b',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[0,2,ix,*,s],layout=[3,3,3],/current)
-p=plot(solution.kr,imaginary(solution.sig[0,2,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[0,2,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[0,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[0,2,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[0,2,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[1,0,ix,*,s],layout=[3,3,4],/current)
-p=plot(solution.kr,imaginary(solution.sig[1,0,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[1,0,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[1,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[1,0,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[1,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[1,1,ix,*,s],layout=[3,3,5],/current)
-p=plot(solution.kr,imaginary(solution.sig[1,1,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[1,1,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[1,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[1,1,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[1,1,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[1,2,ix,*,s],layout=[3,3,6],/current)
-p=plot(solution.kr,imaginary(solution.sig[1,2,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[1,2,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[1,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[1,2,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[1,2,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[2,0,ix,*,s],layout=[3,3,7],/current)
-p=plot(solution.kr,imaginary(solution.sig[2,0,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[2,0,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[2,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[2,0,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[2,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[2,1,ix,*,s],layout=[3,3,8],/current)
-p=plot(solution.kr,imaginary(solution.sig[2,1,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[2,1,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[2,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[2,1,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[2,1,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-p=plot(solution.kr,solution.sig[2,2,ix,*,s],layout=[3,3,9],/current)
-p=plot(solution.kr,imaginary(solution.sig[2,2,ix,*,s]),color='r',/over)
-p=plot(kxArr[iX,*],sig2[2,2,ix,*,s],/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],imaginary(sig2[2,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-p=plot(kxArr[iX,*],sigc[2,2,ix,*,s],/over,thick=3,trans=50,color='b')
-p=plot(kxArr[iX,*],imaginary(sigc[2,2,ix,*,s]),color='m',/over,thick=3,trans=50)
-
-
-
+endif
 
 stop
 end

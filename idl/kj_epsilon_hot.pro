@@ -1,20 +1,3 @@
-function kj_dn, n
-
-    d = dblArr(n+1)
-    d[0] = 1
-
-    if n eq 0 then begin
-        return, d[0]
-    endif else begin
-       
-        for _n=1,n do begin
-            d[_n] = (2d0*_n+1d0)/2d0 * d[_n-1]
-        endfor
-
-    endelse
-    return, d[n]
-
-end
 
 function kj_IPrime, zeta, n
 
@@ -26,111 +9,14 @@ function kj_IPrime, zeta, n
 
 end
 
-function kj_zFun, x
 
-    @constants
-
-    Z = dComplexArr(n_elements(x))
-
-    ; Plasma dispersion function Z(x) is a scaled Faddeeva function w(x)
-    ;
-    ; Z(x) = i*sqrt(pi)*w(x)
-    ;
-    ; see Faddeeva_function on wikipedia
-    ;
-    ; w(x) = exp(-x^2) * erfc(-i*x)
-    ;
-    ; and for the special case of im(x) < 0 we have to use ...
-    ;
-    ; w(-z) = w(z*)*
-
-    nMax = 40
-
-    for i=0,n_elements(x)-1 do begin
-
-        if abs(x[i]) gt 5.5 then begin
-
-                ;sum = 0
-                ;for n=0,nMax do begin
-                ;    sum += x[i]^(2*n) / ( factorial(n) * (2*n+1) )
-                ;endfor
-                ;Z[i] = exp(-x[i]^2) * (_ii * sqrt(!dpi) - x[i] * sum  ) 
-
-                sum = 0
-                for n=0,nMax do begin
-                    sum += kj_dn(n) / (x[i]^(2*n))
-                endfor
-                sig = 1
-                if imaginary(x[i]) gt 0 then sig = 0
-                if imaginary(x[i]) lt 0 then sig = 2
-
-                Z[i] = _ii * sig * sqrt(!dpi) * exp(-x[i]^2) - sum / x[i]
-
-        endif else begin
-
-            if imaginary(x[i]) lt 0 then begin
-
-                print, 'Z function problem'
-                print, 'NOT tested or really even implemented'
-                stop
-                Z[i] = conj(kj_zFun(conj(-x[i]))) 
-
-            endif else begin
-
-                if real_part(x[i]) lt 0 then begin
-                    Z[i] = -conj(kj_zFun(-x[i]))
-                endif else begin
-                    ;Z[i] =  _ii * sqrt(!pi) * exp(-x[i]*x[i]) * erfc ( -_ii * x[i] )
-                    Z[i] =  _ii * sqrt(!dpi) * exp(-x[i]^2d0) * (1d0 + erf ( _ii * x[i] ) )
-
-                    ;; Power series for x<<1
-
-                    ;sum = 0
-                    ;for n=0,nMax do begin
-                    ;    sum += x[i]^(2*n) / ( factorial(n) * (2*n+1) )
-                    ;endfor
-                    ;_z = exp(-x[i]^2) * (_ii * sqrt(!dpi) - x[i] * sum  ) 
-                    ;_z = dcomplex(2*real_part(_z),imaginary(_z)) ; Not sure where this factor of 2 comes from.
-
-                    ;; Asymptotic series for x >> 1
-
-                    ;sum = 0
-                    ;for n=0,nMax do begin
-                    ;    sum += kj_dn(n) / (x[i]^(2*n))
-                    ;endfor
-                    ;sig = 1
-                    ;if imaginary(x[i]) gt 0 then sig = 0
-                    ;if imaginary(x[i]) lt 0 then sig = 2
-
-                    ;__z = _ii * sig * sqrt(!dpi) * exp(-x[i]^2) - sum / x[i]
-
-                    ;print, x[i], _z, __z, Z[i]
-
-                endelse
-
-            endelse
-
-        endelse
-
-    endfor
-
-    return, Z
-
-end
-
-function kj_zFunPrime, zeta
-
-    return, -2d0 * ( 1d0 + zeta * kj_zFun(zeta) )
-
-end
-
-function kj_hot_epsilon, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
+function kj_epsilon_hot, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
     epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
     kx = kx, nuOmg = _nu_omg
 
-if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
+; Vectorized over kPer
 
-; Now vectorized over kPer
+if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
 
 @constants
 
@@ -477,25 +363,11 @@ endif
 
 if arg_present(epsilon_cold) then begin
 
-    P = 1-wp^2/( w*w )
-    R = 1-wp^2 /( w*(w+wc) )
-    L = 1-wp^2 /( w*(w-wc) )
-    S = 0.5*(R+L)
-    D = 0.5*(R-L)
+    epsilon_cold = dComplexArr(3,3,NK)
 
-    epsilon_cold = dComplexArr(3,3)
-    
-    epsilon_cold[0,0] = S
-    epsilon_cold[1,0] = _II * D
-    epsilon_cold[2,0] = 0
-    
-    epsilon_cold[0,1] = -_II*D 
-    epsilon_cold[1,1] = S
-    epsilon_cold[2,1] = 0
-    
-    epsilon_cold[0,2] = 0 
-    epsilon_cold[1,2] = 0
-    epsilon_cold[2,2] = P
+    for i=0,NK-1 do begin
+        epsilon_cold[*,*,i] = kj_epsilon_cold( f, amu, atomicZ, B, density, nu_omg )
+    endfor
 
 endif
 
