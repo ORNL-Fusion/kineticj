@@ -1,59 +1,89 @@
 ; Iterate kj with rsfwc with file based communiction
 
-pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, useAR2=useAR2
+pro kj_iterate, $
+        kjDeltaFile=kjDeltaFile, $
+        continueFromLastMPE=_continueFromLastMPE, $
+        nIterations=nIterations, $
+        useAR2=useAR2, $
+        useKJStix = _useKJStix
+
+    kjIterationStateFileName = 'kj-iteration-state.sav'
 
     if keyword_set(useAR2) then useAORSA = 1 else useAORSA = 0
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
+    if keyword_set(_useKJStix) then useKJStix = _useKJStix else useKJStix = 1
+    if keyword_set(_continueFromLastMPE) then begin
+        restore, kjIterationStateFileName
+        itStart = it+1 
+    endif else begin
+        itStart = 0
+    endelse
+
+    useKJFull = 0
+    if not useKJStix then useKJFull = 1
 
     cartesian_offset = 0.0
 
     KJ_BINARY = '~/code/kineticj/bin/kineticj'
     KJ_BINARY_GC = '~/code/kineticj/bin/kineticj'
  
-	cd, current=RootRunDir
-    RootRunDir = RootRunDir+'/'
+	cd, current=RootPath
+    RootPath = RootPath+'/'
     RunDir0 = 'mpe_0/k_0/'
 
     if useAORSA then begin
         ar2Dir = 'ar2/'
-        ar2RunDir0 = RootRunDir+RunDir0+ar2Dir
+        ar2RunDir0 = RootPath+RunDir0+ar2Dir
         ar2nml = ar2_read_namelist(ar2RunDir0)
         ar2_read_ar2input, ar2RunDir0+'input/ar2Input.nc', ar2=ar2input
         ar2_FileName = 'ar2_kj.nc'
     endif else begin
-        RsDir = 'rsfwc/'
-        RsRunDir0 = RootRunDir+RunDir0+RsDir
+        RsDir = 'rs/'
+        RsRunDir0 = RootPath+RunDir0+RsDir
 	    RsCfg = kj_read_rsfwc_cfg(RsRunDir0)
-        rs_FileName = 'rsfwc_1d.nc'
+        rs_FileName = 'rs_solution.nc'
     endelse
 
-    kj_jP_FileName = 'kj-jp-on-rs-grid.nc'
+    kjDeltaFileName = 'kj-delta.nc'
 
-    kjSpecies = ['spec_D','spec_H','spec_e'] 
-    ; The order here MUST match the RSFWC spec order (i.e., electrons last)
+    if useKJFull then begin
 
-    ElectronSpecStr = kjSpecies[2]
+        kjSpecies = ['spec_D','spec_H','spec_e'] 
+        ; The order here MUST match the RSFWC spec order (i.e., electrons last)
 
-    kjConfigs = []
-    nS = n_elements(kjSpecies)
-    for s=0,nS-1 do begin
-	    kjCfg = kj_read_cfg(RunDir0+kjSpecies[s]+'/')
-        kjConfigs = [kjConfigs,kjCfg]
-    endfor
+        ElectronSpecStr = kjSpecies[2]
+
+        kjConfigs = []
+        nS = n_elements(kjSpecies)
+        for s=0,nS-1 do begin
+	        kjCfg = kj_read_cfg(RunDir0+kjSpecies[s]+'/')
+            kjConfigs = [kjConfigs,kjCfg]
+        endfor
+
+    endif
 
 	jAmpMax = 1.0
 	jAmpStep = 1.0 
 
 	nk = 4 
-	jGuessFileList = strArr(nk)
+	picardDeltaFileList = strArr(nk)
 
     if nk gt 10 then stop ; Filenames cannot handle this
     if nIt+itStart gt 10 then stop ; Filenames cannot handle this either
 
-    ThisRunFolder = ''
+    ThisMPEPath = ''
+    ThisPicardPath = ''
 
 	for it=itStart,itStart+nIt-1 do begin
+
+        LastMPEPath = ThisMPEPath 
+        ThisMPEDir  = 'mpe_'+string(it,format='(i1.1)')+'/'
+        ThisMPEPath = RootPath+ThisMPEDir
+
+        if it gt 0 then begin
+            file_copy, LastMPEPath, ThisMPEPath, /recursive 
+        endif
 
 		for k=0,nk-1 do begin
 
@@ -61,103 +91,118 @@ pro kj_iterate, jPFile=jPFile, itStartNo=itStartNo, nIterations=nIterations, use
 					string(itStart+nIt-1,format='(i3.3)'), ' and Picard iteration: ', $
 					string(k,format='(i3.3)'), ' of ', string(nk-1,format='(i3.3)')
 
-            LastRunFolder = ThisRunFolder
-            ThisMPEDir = 'mpe_'+string(it,format='(i1.1)')+'/'
+            LastPicardPath = ThisPicardPath
             ThisPicardDir = 'k_'+string(k,format='(i1.1)')+'/'
-            ThisRunFolder = RootRunDir+ThisMPEDir+ThisPicardDir
-            ThisRsRunFolder = ThisRunFolder+RsDir
+            ThisPicardPath = ThisMPEPath+ThisPicardDir
+            ThisRSPath = ThisPicardPath+RsDir
 
             if k gt 0 then begin
-                stop 
-                file_delete, ThisRunFolder, /recursive, /allow_nonexistent
-                file_copy, LastRunFolder, ThisRunFolder, /recursive 
-                file_copy, jGuessFileList[k-1], ThisRsRunFolder, /overWrite
+                file_delete, ThisPicardPath, /recursive, /allow_nonexistent
+                file_copy, LastPicardPath, ThisPicardPath, /recursive 
+                file_copy, picardDeltaFileList[k-1], ThisRSPath, /overWrite
             endif
 
-            ;if not useAORSA then RsCfg['jAmp'] = ((k+1)*jAmpStep)<jAmpMax
-
-			if(k eq 0 and not keyword_set(jPFile) ) then begin
+			if(k eq 0 and not keyword_set(kjDeltaFile) ) then begin
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=0 
-				    RsCfg['kj_jP_fileName'] = ''
+				    RsCfg['kjDeltaFileName'] = ''
                 endelse
-			endif else if(k eq 0 and keyword_set(jPFile) ) then begin
-				print, 'Continuing with file ... ', jPFile
+			endif else if(k eq 0 and keyword_set(kjDeltaFile) ) then begin
+				print, 'Continuing with file ... ', kjDeltaFile
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=1 
-				    RsCfg['kj_jP_fileName'] = jPFile
+				    RsCfg['kjDeltaFileName'] = kjDeltaFile
                 endelse
 			endif else begin
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=1
-				    RsCfg['kj_jP_fileName'] = kj_jP_fileName
+				    RsCfg['kjDeltaFileName'] = kjDeltaFileName
                 endelse
 			endelse
 
             if useAORSA then begin
             endif else begin
-			    kj_write_rsfwc_cfg, RsCfg, ThisRsRunFolder
+			    kj_write_rsfwc_cfg, RsCfg, ThisRSPath
             endelse
 
-			cd, ThisRsRunFolder
-			spawn, 'idl -quiet run_rsfwc'
-			cd, RootRunDir
+			cd, ThisRSPath
+			spawn, 'idl -quiet run_rs'
+			cd, RootPath
 
-            for s=0,nS-1 do begin
 
-                kjCfg = kjConfigs[s]        
-                ThisKJRunFolder = ThisRunFolder+kjSpecies[s]+'/'
+            if UseKJStix then begin
 
-			    kjCfg['input_fName'] = 'data/'+rs_FileName
+                ; Evaluate kinetic-j using the stix method
 
-			    kj_write_kj_cfg, kjCfg, ThisKJRunFolder 
+                cd, ThisRSPath
 
-                file_copy, ThisRsRunFolder+rs_FileName, ThisKJRunFolder+'data/', /overwrite
+                kj_stix_current, overPlotSolution = 1, useRS=1, hot=1, $
+                        jr = this_jr, jt = this_jt, jz = this_jz, $
+                        kjDeltaFileName = kjDeltaFileName, $
+                        referenceSolutionDir = rsRunDir0
+                
+                file_copy, kjDeltaFileName, ThisPicardPath, /overWrite
 
-                cd, ThisKJRunFolder
-                if StrCmp(kjSpecies[s],ElectronSpecStr) then begin
-			        spawn, KJ_BINARY_GC
-                endif else begin
-			        spawn, KJ_BINARY
-                endelse
-			    spawn, 'idl -quiet run_kj_plot_current'
-            endfor
+                cd, RootPath
 
-            cd, RootRunDir+ThisMPEDir+ThisPicardDir
+            endif else begin
+            
+                ; Evaluate kinetic-j using the numeric integrals
 
-            ; Sum over the kJ species and then create the list below
+                for s=0,nS-1 do begin
 
-            print, kjSpecies+'/output/'+kj_jP_FileName
-            kj_combine_spec_jp, kjSpecies+'/output/'+kj_jP_FileName, SumFileName = kj_jP_FileName, cartesian_offset = cartesian_offset
+                    kjCfg = kjConfigs[s]        
+                    ThisKJRunFolder = ThisPicardPath+kjSpecies[s]+'/'
 
-			jGuessFileList[k] = RootRunDir+ThisMPEDir+ThisPicardDir+kj_jP_FileName 
-stop
+			        kjCfg['input_fName'] = 'data/'+rs_FileName
+
+			        kj_write_kj_cfg, kjCfg, ThisKJRunFolder 
+
+                    file_copy, ThisRSPath+rs_FileName, ThisKJRunFolder+'data/', /overwrite
+
+                    cd, ThisKJRunFolder
+                    if StrCmp(kjSpecies[s],ElectronSpecStr) then begin
+			            spawn, KJ_BINARY_GC
+                    endif else begin
+			            spawn, KJ_BINARY
+                    endelse
+			        spawn, 'idl -quiet run_kj_plot_current'
+                endfor
+
+                cd, RootPath+ThisMPEDir+ThisPicardDir
+
+                ; Sum over the kJ species and then create the list below
+
+                print, kjSpecies+'/output/'+kjDeltaFileName
+                kj_combine_spec_jp, kjSpecies+'/output/'+kjDeltaFileName, SumFileName = kjDeltaFileName, cartesian_offset = cartesian_offset
+
+            endelse
+
+			picardDeltaFileList[k] = RootPath+ThisMPEDir+ThisPicardDir+kjDeltaFileName 
+
 		endfor
 
 		; Read the previous n guesses and apply vector extrapolation
 
-		mpe_it_dir = 'output/mpe_it_'+string(it,format='(i3.3)')
-		spawn, 'mkdir  ' + mpe_it_dir
-
-		jGuess = !null
+		jrDelta_picard = !null
+        jtDelta_picard = !null
+        jzDelta_picard = !null
 
 		for k=0,nk-1 do begin
 
-			cdfId = ncdf_open(jGuessFileList[k])
+			cdfId = ncdf_open(picardDeltaFileList[k])
 
-				print, jGuessFileList[k]
-				spawn, 'cp '+jGuessFileList[k]+' '+mpe_it_dir+'/'
+				print, picardDeltaFileList[k]
 
 				ncdf_varget, cdfId, 'r', r 
-				ncdf_varget, cdfId, 'r_', r_ 
 
 				ncdf_varget, cdfId, 'jP_r_re', jP_r_re
 				ncdf_varget, cdfId, 'jP_r_im', jP_r_im
-				ncdf_varget, cdfId, 'jP_p_re', jP_p_re
-				ncdf_varget, cdfId, 'jP_p_im', jP_p_im
+				ncdf_varget, cdfId, 'jP_t_re', jP_t_re
+				ncdf_varget, cdfId, 'jP_t_im', jP_t_im
 				ncdf_varget, cdfId, 'jP_z_re', jP_z_re
 				ncdf_varget, cdfId, 'jP_z_im', jP_z_im
 
@@ -165,57 +210,79 @@ stop
 
 			nX = n_elements(r)
 
-			jGuess = [[jGuess],[complex(jP_r_re,jP_r_im)]]
+			jrDelta_picard = [[jrDelta_picard],[complex(jP_r_re,jP_r_im)]]
+			jtDelta_picard = [[jtDelta_picard],[complex(jP_t_re,jP_t_im)]]
+			jzDelta_picard = [[jzDelta_picard],[complex(jP_z_re,jP_z_im)]]
 
 		endfor
 
-		x = jGuess
-		_k = n_elements(x[0,*])
+		jrDelta_mpe = kj_mpe(jrDelta_picard)
+		jrDelta_mpe_re = real_part(jrDelta_mpe)
+		jrDelta_mpe_im = imaginary(jrDelta_mpe)
 
-		;s_re = kj_mpe(real_part(x))
-		;s_im = kj_mpe(imaginary(x))
+		jtDelta_mpe = kj_mpe(jtDelta_picard)
+		jtDelta_mpe_re = real_part(jtDelta_mpe)
+		jtDelta_mpe_im = imaginary(jtDelta_mpe)
 
-		;s = complex(s_re,s_im)
-	
-		s = kj_mpe(x)
-		s_re = real_part(s)
-		s_im = imaginary(s)
+		jzDelta_mpe = kj_mpe(jzDelta_picard)
+		jzDelta_mpe_re = real_part(jzDelta_mpe)
+		jzDelta_mpe_im = imaginary(jzDelta_mpe)
 
-		spline_sigma = 0.01
-		s_ = complex(spline(r,s_re,r_,spline_sigma),spline(r,s_im,r_,spline_sigma))
-		s_re_ = real_part(s_)
-		s_im_ = imaginary(s_)
+		print, 'Writing vector extrapolated jP to file ... ', picardDeltaFileList[0]
 
-		print, 'Writing vector extrapolated jP to file ... ', jGuessFileList[0]
-		cdfId = ncdf_open(jGuessFileList[0],/write)
+        jP_MPE_FileName = ThisMPEDir + 'kjDelta_mpe.nc'
+
+		cdfId = ncdf_open(picardDeltaFileList[0],/write)
 
 			jP_r_re_id = nCdf_varid(cdfId, 'jP_r_re')
-			jP_r_im_id = nCdf_varid(cdfId, 'jP_r_im')
-			jP_r_re_id_ = nCdf_varid(cdfId, 'jP_r_re_')
-			jP_r_im_id_ = nCdf_varid(cdfId, 'jP_r_im_')
+	        jP_r_im_id = nCdf_varid(cdfId, 'jP_r_im')
+		    jP_t_re_id = nCdf_varid(cdfId, 'jP_t_re')
+			jP_t_im_id = nCdf_varid(cdfId, 'jP_t_im')
+			jP_z_re_id = nCdf_varid(cdfId, 'jP_z_re')
+			jP_z_im_id = nCdf_varid(cdfId, 'jP_z_im')
 	
-			nCdf_varPut, cdfId, jP_r_re_id, s_re
-			nCdf_varPut, cdfId, jP_r_im_id, s_im
-			nCdf_varPut, cdfId, jP_r_re_id_, s_re_
-			nCdf_varPut, cdfId, jP_r_im_id_, s_im_
-	
+			nCdf_varPut, cdfId, jP_r_re_id, jrDelta_mpe_re
+			nCdf_varPut, cdfId, jP_r_im_id, jrDelta_mpe_im
+	    	nCdf_varPut, cdfId, jP_t_re_id, jtDelta_mpe_re
+			nCdf_varPut, cdfId, jP_t_im_id, jtDelta_mpe_im
+		 	nCdf_varPut, cdfId, jP_z_re_id, jzDelta_mpe_re
+			nCdf_varPut, cdfId, jP_z_im_id, jzDelta_mpe_im
+		
 		nCdf_close, cdfId
 
-		spawn, 'cp '+jGuessFileList[0]+' '+mpe_it_dir+'/mpe_extrapolated_jP.nc'
+        file_copy, picardDeltaFileList[0], jP_MPE_FileName, /overWrite
 
-		pr=plot(s_re,color='b',thick=6,buffer=1, dim=[1200,400],transparency=50)
-		for k=0,nk-1 do !null=plot(real_part(jGuess[*,k]),/over,transparency=50)
+        range = max(abs([jrDelta_mpe_re]))
+		pr=plot(jrDelta_mpe_re,color='b',thick=6,buffer=1, dim=[1200,1200],transparency=50,yRange=[-1,1]*range,layout=[1,3,1])
+		for k=0,nk-1 do !null=plot(real_part(jrDelta_Picard[*,k]),/over,transparency=50)
+        range = max(abs([jtDelta_mpe_re]))
+		pr=plot(jtDelta_mpe_re,color='b',thick=6,transparency=50,yRange=[-1,1]*range,layout=[1,3,2],/current)
+		for k=0,nk-1 do !null=plot(real_part(jtDelta_Picard[*,k]),/over,transparency=50)
+        range = max(abs([jzDelta_mpe_re]))
+		pr=plot(jzDelta_mpe_re,color='b',thick=6,transparency=50,yRange=[-1,1]*range,layout=[1,3,3],/current)
+		for k=0,nk-1 do !null=plot(real_part(jzDelta_Picard[*,k]),/over,transparency=50)
 
-		pi=plot(s_im,color='b',thick=6,buffer=1, dim=[1200,400],transparency=50)
-		for k=0,nk-1 do !null=plot(imaginary(jGuess[*,k]),/over,transparency=50)
+        range = max(abs([jrDelta_mpe_im]))
+		pi=plot(jrDelta_mpe_im,color='b',thick=6,buffer=1, dim=[1200,1200],transparency=50,yRange=[-1,1]*range,layout=[1,3,1])
+		for k=0,nk-1 do !null=plot(real_part(jrDelta_Picard[*,k]),/over,transparency=50)
+        range = max(abs([jtDelta_mpe_im]))
+		pi=plot(jtDelta_mpe_im,color='b',thick=6,transparency=50,yRange=[-1,1]*range,layout=[1,3,2],/current)
+		for k=0,nk-1 do !null=plot(real_part(jtDelta_Picard[*,k]),/over,transparency=50)
+        range = max(abs([jzDelta_mpe_im]))
+		pi=plot(jzDelta_mpe_im,color='b',thick=6,transparency=50,yRange=[-1,1]*range,layout=[1,3,3],/current)
+        for k=0,nk-1 do !null=plot(real_part(jzDelta_Picard[*,k]),/over,transparency=50)
 
-		pr.save, 'jPr.png'
-		pi.save, 'jPi.png'
+		pr.save, ThisMPEPath+'jPr.png'
+		pi.save, ThisMPEPath+'jPi.png'
 
-		pr.save, 'jPr.eps'
-		pi.save, 'jPi.eps'
+		pr.save, ThisMPEPath+'jPr.eps'
+		pi.save, ThisMPEPath+'jPi.eps'
 
-		jPFile = file_baseName(jGuessFileList[0])
+		kjDeltaFile = file_baseName(picardDeltaFileList[0])
+
+        cd, RootPath
+
+        save, ThisMPEPath, ThisPicardPath, kjDeltaFile, it, fileName = kjIterationStateFileName
 
 	endfor
 

@@ -1,6 +1,6 @@
 pro kj_write_rsfwc_cfg, cfg, RunDir 
 
-    fName = 'rsfwc_input.pro'
+    fName = 'rs_input.pro'
     file_delete, RunDir+fName
 	openw, lun, RunDir+fName, /get_lun 	
 

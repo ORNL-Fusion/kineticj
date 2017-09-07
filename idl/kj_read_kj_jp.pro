@@ -2,6 +2,8 @@ function kj_read_kj_jp, FileName
 
 ; Read in jP on some grid
 
+    print, fileName
+
     cdfId = ncdf_open(FileName)
 
     nCdf_varGet, cdfId, 'freq', freq

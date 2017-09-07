@@ -1,7 +1,7 @@
 function kj_read_rsfwc_cfg, RunDir
 
     cd, RunDir, current = OldDir
-    RunFile = 'rsfwc_input.pro'
+    RunFile = 'rs_input.pro'
 
 	openr, lun, runFile, /get_lun
 	runFileArray = ''

@@ -1,11 +1,16 @@
-pro kj_stix_current, overPlotAR2 = _overPlotAR2, useRS=_useRS, hot=_hot
+pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
+        jr = jr, jt = jt, jz = jz, kjDeltaFileName = _kjDeltaFileName, $
+        referenceSolutionDir = _referenceSolutionDir
 
-if keyword_set(_overPlotAR2) then overPlotAR2 = 1 else overPlotAR2 = 0
+if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
 if keyword_set(_hot) then hot = _hot else hot = 0
+if keyword_set(_kjDeltaFileName) then kjDeltaFileName = _kjDeltaFileName else kjDeltaFileName = 'kj-stix.nc'
+if keyword_set(_referenceSolutionDir) then referenceSolutionDir = _referenceSolutionDir else referenceSolutionDir = './'
 
 useAR = 1
 if useRS then useAR = 0 
+
 
 @constants
 
@@ -35,14 +40,14 @@ nS = n_elements(amu)
 
 if useAR then begin
     print, 'Reading AR Solution'
-    arS = ar2_read_solution('./',1)
-    solution = arS
+    solution = ar2_read_solution('./',1)
+    solution_ref = ar2_read_solution(referenceSolutionDir,1)
 endif
 
 if useRS then begin
     print, 'Reading RS Solution'
-    rsS = rsfwc_read_solution('./')
-    solution = rsS
+    solution = rsfwc_read_solution('./')
+    solution_ref = rsfwc_read_solution(referenceSolutionDir)
 endif
 
 if hot then begin
@@ -63,6 +68,7 @@ jt = complexArr(nX,nS)
 jz = complexArr(nX,nS)
 
 run = 1
+savFileName = 'kj-stix.sav'
 
 if run then begin
 
@@ -74,11 +80,7 @@ sig2 = complexArr(3,3,nX,windowWidth+1,nS)
 sigc = complexArr(3,3,nX,windowWidth+1,nS)
 
 for s=0,nS-1 do begin
-;for i=windowWidth/2,nX-windowWidth/2-1 do begin
 for i=1,nX-2 do begin
-
-    ;print, 'Spec: ', s
-    ;print, 'iX: ', i
 
     iL = (i-windowWidth/2)>0
     iR = (i+windowWidth/2)<(nX-1)
@@ -92,11 +94,6 @@ for i=1,nX-2 do begin
 
     _iL = 0 
     _iR = thisWindowWidth - 1
-
-    print, ''
-    print, 'Full index range: ', iL, iR
-    print, ' Sub index range: ',_iL, _iR
-    print, '          thisWW: ', thisWindowWidth
 
     ; Extract and window the E field
     
@@ -200,11 +197,11 @@ for i=1,nX-2 do begin
 endfor
 endfor
 
-    save, jr, jt, jz, sig2, fileName='kj_sc.sav', /variables
+    save, jr, jt, jz, sig2, fileName=savFileName, /variables
 
 endif else begin
 
-    restore, 'kj_sc.sav'
+    restore, savFileName
 
 endelse
 
@@ -226,28 +223,27 @@ for s=0,nS-1 do begin
 
     p=plot(r,jr[*,s],layout=[nS,3,1+s],current=current)
     p=plot(r,imaginary(jr[*,s]),color='r',/over)
-    if overPlotAR2 then begin
-        p=plot(solution.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
+    if overPlotSolution then begin
+        p=plot(solution_ref.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
     endif
 
     current = (current + 1)<1
     p=plot(r,jt[*,s],layout=[nS,3,1+1*nS+s],current=current)
     p=plot(r,imaginary(jt[*,s]),color='r',/over)
-    if overPlotAR2 then begin
-        p=plot(solution.r,solution.JP_t[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution.r,imaginary(solution.JP_t[*,0,s]),color='r',thick=4,transparency=80,/over)            
+    if overPlotSolution then begin
+        p=plot(solution_ref.r,solution.JP_t[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref.r,imaginary(solution.JP_t[*,0,s]),color='r',thick=4,transparency=80,/over)            
     endif
 
     p=plot(r,jz[*,s],layout=[nS,3,1+2*nS+s],current=current)
     p=plot(r,imaginary(jz[*,s]),color='r',/over)
-    if overPlotAR2 then begin
-        p=plot(solution.r,solution.JP_z[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution.r,imaginary(solution.JP_z[*,0,s]),color='r',thick=4,transparency=80,/over)            
+    if overPlotSolution then begin
+        p=plot(solution_ref.r,solution.JP_z[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref.r,imaginary(solution.JP_z[*,0,s]),color='r',thick=4,transparency=80,/over)            
     endif
 
 endfor
-
 
 if not useRS then begin
 
@@ -364,5 +360,38 @@ if not useRS then begin
 
 endif
 
-stop
+; Write the kinetic-j update / delta to a file
+
+nc_id = nCdf_create (kjDeltaFileName, /clobber )
+
+	nCdf_control, nc_id, /fill
+	
+	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
+	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
+
+	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
+	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
+
+	jr_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
+	jr_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
+	jt_re_id = nCdf_varDef ( nc_id, 'jP_t_re', nr_id, /float )
+	jt_im_id = nCdf_varDef ( nc_id, 'jP_t_im', nr_id, /float )
+	jz_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
+	jz_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
+
+    nCdf_control, nc_id, /enDef
+
+	nCdf_varPut, nc_id, freq_id, f
+
+	nCdf_varPut, nc_id, r_id, r 
+    
+	nCdf_varPut, nc_id, jr_re_id, real_part( total( reform(solution_ref.jp_r) - jr,2) )
+	nCdf_varPut, nc_id, jr_im_id, imaginary( total( reform(solution_ref.jp_r) - jr,2) )
+	nCdf_varPut, nc_id, jt_re_id, real_part( total( reform(solution_ref.jp_t) - jt,2) )
+	nCdf_varPut, nc_id, jt_im_id, imaginary( total( reform(solution_ref.jp_t) - jt,2) )
+	nCdf_varPut, nc_id, jz_re_id, real_part( total( reform(solution_ref.jp_z) - jz,2) )
+	nCdf_varPut, nc_id, jz_im_id, imaginary( total( reform(solution_ref.jp_z) - jz,2) )
+
+nCdf_close, nc_id
+
 end
