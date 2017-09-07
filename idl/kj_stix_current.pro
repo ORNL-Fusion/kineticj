@@ -177,9 +177,9 @@ for i=1,nX-2 do begin
         ; Try flipping the indexing order also.
 
         if useRS then begin
-            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-            jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-            jkt = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
+            jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
+            jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
         endif else begin
             jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
             jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
