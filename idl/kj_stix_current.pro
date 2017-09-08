@@ -1,6 +1,6 @@
 pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
         jr = jr, jt = jt, jz = jz, kjDeltaFileName = _kjDeltaFileName, $
-        referenceSolutionDir = _referenceSolutionDir
+        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid
 
 if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
@@ -100,13 +100,13 @@ for i=1,nX-2 do begin
     N = n_elements(solution.E_r[iL:iR])
 
     if useRS then begin
-        er = +solution.e_r[iL:iR] ;* hanning(n)
-        et = +solution.e_t[iL:iR] ;* hanning(n)
-        ez = +solution.e_z[iL:iR] ;* hanning(n)
+        er = +solution.e_r[iL:iR] * hanning(n)
+        et = +solution.e_t[iL:iR] * hanning(n)
+        ez = +solution.e_z[iL:iR] * hanning(n)
     endif else begin
-        er = +solution.e_r[iL:iR] ;* hanning(n)
-        et = -solution.e_t[iL:iR] ;* hanning(n)
-        ez = +solution.e_z[iL:iR] ;* hanning(n)
+        er = +solution.e_r[iL:iR] * hanning(n)
+        et = -solution.e_t[iL:iR] * hanning(n)
+        ez = +solution.e_z[iL:iR] * hanning(n)
     endelse
     
     ; forward fft
@@ -226,6 +226,9 @@ for s=0,nS-1 do begin
     if overPlotSolution then begin
         p=plot(solution_ref.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
+
+        p=plot(solution_ref.r,solution.JP_r[*,0,s]-jr[*,s],thick=1,/over,lineStyle='--')            
+        p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]-jr[*,s]),color='r',/over,lineStyle='--')            
     endif
 
     current = (current + 1)<1
@@ -385,13 +388,15 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
     
-	nCdf_varPut, nc_id, jr_re_id, real_part( total( reform(solution_ref.jp_r) - jr,2) )
-	nCdf_varPut, nc_id, jr_im_id, imaginary( total( reform(solution_ref.jp_r) - jr,2) )
-	nCdf_varPut, nc_id, jt_re_id, real_part( total( reform(solution_ref.jp_t) - jt,2) )
-	nCdf_varPut, nc_id, jt_im_id, imaginary( total( reform(solution_ref.jp_t) - jt,2) )
-	nCdf_varPut, nc_id, jz_re_id, real_part( total( reform(solution_ref.jp_z) - jz,2) )
-	nCdf_varPut, nc_id, jz_im_id, imaginary( total( reform(solution_ref.jp_z) - jz,2) )
+	nCdf_varPut, nc_id, jr_re_id, -real_part( total( reform(solution_ref.jp_r) - jr,2) )
+	nCdf_varPut, nc_id, jr_im_id, -imaginary( total( reform(solution_ref.jp_r) - jr,2) )
+	nCdf_varPut, nc_id, jt_re_id, -real_part( total( reform(solution_ref.jp_t) - jt,2) )
+	nCdf_varPut, nc_id, jt_im_id, -imaginary( total( reform(solution_ref.jp_t) - jt,2) )
+	nCdf_varPut, nc_id, jz_re_id, -real_part( total( reform(solution_ref.jp_z) - jz,2) )
+	nCdf_varPut, nc_id, jz_im_id, -imaginary( total( reform(solution_ref.jp_z) - jz,2) )
 
 nCdf_close, nc_id
+
+rgrid = r
 
 end

@@ -2,22 +2,27 @@
 
 pro kj_iterate, $
         kjDeltaFile=kjDeltaFile, $
-        continueFromLastMPE=_continueFromLastMPE, $
+        resume=_resume, $
         nIterations=nIterations, $
         useAR2=useAR2, $
         useKJStix = _useKJStix
 
+	nk = 4 
     kjIterationStateFileName = 'kj-iteration-state.sav'
 
     if keyword_set(useAR2) then useAORSA = 1 else useAORSA = 0
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
 	if keyword_set(nIterations) then nIt=nIterations else nIt=2
     if keyword_set(_useKJStix) then useKJStix = _useKJStix else useKJStix = 1
-    if keyword_set(_continueFromLastMPE) then begin
+    if keyword_set(_resume) then begin
         restore, kjIterationStateFileName
-        itStart = it+1 
+        itStart = it
     endif else begin
         itStart = 0
+        ThisMPEPath = ''
+        ThisPicardPath = ''
+	    picardDeltaFileList = strArr(nk)
+        residual = !null
     endelse
 
     useKJFull = 0
@@ -27,10 +32,14 @@ pro kj_iterate, $
 
     KJ_BINARY = '~/code/kineticj/bin/kineticj'
     KJ_BINARY_GC = '~/code/kineticj/bin/kineticj'
- 
+
+    KnownSolution = ar2_read_solution(expand_path('~/scratch/aorsa2d/colestock-kashuba-reference'),1)    
+    ColdSolution = rsfwc_read_solution(expand_path('~/scratch/rsfwc_1d/colestock-kashuba'))
+    PrevSolution = ColdSolution
+
 	cd, current=RootPath
     RootPath = RootPath+'/'
-    RunDir0 = 'mpe_0/k_0/'
+    RunDir0 = 'mpe_000/k_000/'
 
     if useAORSA then begin
         ar2Dir = 'ar2/'
@@ -66,49 +75,65 @@ pro kj_iterate, $
 	jAmpMax = 1.0
 	jAmpStep = 1.0 
 
-	nk = 4 
-	picardDeltaFileList = strArr(nk)
+    residualPlot = plot([0,0],/noData)
 
-    if nk gt 10 then stop ; Filenames cannot handle this
-    if nIt+itStart gt 10 then stop ; Filenames cannot handle this either
-
-    ThisMPEPath = ''
-    ThisPicardPath = ''
+    cnt = 0
+    MPEPlots_r = !null
+    MPEPlots_t = !null
+    MPEPlots_z = !null
 
 	for it=itStart,itStart+nIt-1 do begin
 
-        LastMPEPath = ThisMPEPath 
-        ThisMPEDir  = 'mpe_'+string(it,format='(i1.1)')+'/'
+        range=max(abs(total(ColdSolution.jp_r,3)))
+        PlotCold_r = plot(ColdSolution.r,real_part(total(ColdSolution.jp_r,3)),layout=[1,3,1],thick=3,transp=50,yrange=[-1,1]*range,$
+                title='MPE Cycle : '+string(it))
+        !null = plot(ColdSolution.r,imaginary(total(ColdSolution.jp_r,3)),color='r',/over,thick=3,transp=50)
+        range=max(abs(total(ColdSolution.jp_t,3)))
+        PlotCold_t = plot(ColdSolution.r,real_part(total(ColdSolution.jp_t,3)),layout=[1,3,2],/current,thick=3,transp=50,yrange=[-1,1]*range)
+        !null = plot(ColdSolution.r,imaginary(total(ColdSolution.jp_t,3)),color='r',/over,thick=3,transp=50)
+        range=max(abs(total(ColdSolution.jp_z,3)))
+        PlotCold_z = plot(ColdSolution.r,real_part(total(ColdSolution.jp_z,3)),layout=[1,3,3],/current,thick=3,transp=50,yrange=[-1,1]*range)
+        !null = plot(ColdSolution.r,imaginary(total(ColdSolution.jp_z,3)),color='r',/over,thick=3,transp=50)
+
+        MPEPlots_r = [MPEPlots_r,PlotCold_r]
+        MPEPlots_t = [MPEPlots_t,PlotCold_t]
+        MPEPlots_z = [MPEPlots_z,PlotCold_z]
+
+        LastMPEDir  = 'mpe_'+string(it-1,format='(i3.3)')+'/'
+        ThisMPEDir  = 'mpe_'+string(it,format='(i3.3)')+'/'
+        LastMPEPath = RootPath+LastMPEDir
         ThisMPEPath = RootPath+ThisMPEDir
 
         if it gt 0 then begin
-            file_copy, LastMPEPath, ThisMPEPath, /recursive 
+            file_delete, ThisMPEPath, /recursive, /allow_nonexistent
+            file_copy, LastMPEPath, ThisMPEPath, /recursive, /overwrite 
         endif
 
-		for k=0,nk-1 do begin
+		for kk=0,nk-1 do begin
 
 			print, 'MPE Iteration: ', string(it,format='(i3.3)'),' of ', $
 					string(itStart+nIt-1,format='(i3.3)'), ' and Picard iteration: ', $
-					string(k,format='(i3.3)'), ' of ', string(nk-1,format='(i3.3)')
+					string(kk,format='(i3.3)'), ' of ', string(nk-1,format='(i3.3)')
 
-            LastPicardPath = ThisPicardPath
-            ThisPicardDir = 'k_'+string(k,format='(i1.1)')+'/'
-            ThisPicardPath = ThisMPEPath+ThisPicardDir
-            ThisRSPath = ThisPicardPath+RsDir
+            LastPicardDir   = 'k_'+string(kk-1,format='(i3.3)')+'/'
+            ThisPicardDir   = 'k_'+string(kk,format='(i3.3)')+'/'
+            LastPicardPath  = ThisMPEPath+LastPicardDir
+            ThisPicardPath  = ThisMPEPath+ThisPicardDir
+            ThisRSPath      = ThisPicardPath+RsDir
 
-            if k gt 0 then begin
+            if kk gt 0 then begin
                 file_delete, ThisPicardPath, /recursive, /allow_nonexistent
                 file_copy, LastPicardPath, ThisPicardPath, /recursive 
-                file_copy, picardDeltaFileList[k-1], ThisRSPath, /overWrite
+                file_copy, picardDeltaFileList[kk-1], ThisRSPath, /overWrite
             endif
 
-			if(k eq 0 and not keyword_set(kjDeltaFile) ) then begin
+			if(kk eq 0 and not keyword_set(kjDeltaFile) ) then begin
                 if useAORSA then begin
                 endif else begin
 				    RsCfg['kjInput']=0 
 				    RsCfg['kjDeltaFileName'] = ''
                 endelse
-			endif else if(k eq 0 and keyword_set(kjDeltaFile) ) then begin
+			endif else if(kk eq 0 and keyword_set(kjDeltaFile) ) then begin
 				print, 'Continuing with file ... ', kjDeltaFile
                 if useAORSA then begin
                 endif else begin
@@ -142,11 +167,36 @@ pro kj_iterate, $
                 kj_stix_current, overPlotSolution = 1, useRS=1, hot=1, $
                         jr = this_jr, jt = this_jt, jz = this_jz, $
                         kjDeltaFileName = kjDeltaFileName, $
-                        referenceSolutionDir = rsRunDir0
+                        referenceSolutionDir = rsRunDir0, rgrid = r
                 
                 file_copy, kjDeltaFileName, ThisPicardPath, /overWrite
 
                 cd, RootPath
+
+                MPEPlots_r[cnt].Select
+                !null = plot(r,real_part(total(this_jr,2)),/over)
+                !null = plot(r,imaginary(total(this_jr,2)),/over,color='r')
+
+                MPEPlots_t[cnt].Select
+                !null = plot(r,real_part(total(this_jt,2)),/over)
+                !null = plot(r,imaginary(total(this_jt,2)),/over,color='r')
+
+                MPEPlots_z[cnt].Select
+                !null = plot(r,real_part(total(this_jz,2)),/over)
+                !null = plot(r,imaginary(total(this_jz,2)),/over,color='r')
+
+                ThisResidual = norm( sqrt( (this_jr - PrevSolution.jP_r)^2 $
+                        + (this_jt - PrevSolution.jP_t)^2 $
+                        + (this_jz - PrevSolution.jP_z)^2 ) )
+
+                residual = [residual,ThisResidual]
+
+                ResidualPlot.Select
+                !null = plot(residual,/yLog,/over,title='Residual')
+
+                PrevSolution.jP_r = this_jr
+                PrevSolution.jP_t = this_jt
+                PrevSolution.jP_z = this_jz
 
             endif else begin
             
@@ -181,7 +231,7 @@ pro kj_iterate, $
 
             endelse
 
-			picardDeltaFileList[k] = RootPath+ThisMPEDir+ThisPicardDir+kjDeltaFileName 
+			picardDeltaFileList[kk] = RootPath+ThisMPEDir+ThisPicardDir+kjDeltaFileName 
 
 		endfor
 
@@ -280,9 +330,19 @@ pro kj_iterate, $
 
 		kjDeltaFile = file_baseName(picardDeltaFileList[0])
 
-        cd, RootPath
+        PrevSolution.jP_r = ColdSolution.jP_r + jrDelta_mpe 
+        PrevSolution.jP_t = ColdSolution.jP_t + jtDelta_mpe
+        PrevSolution.jP_z = ColdSolution.jP_z + jzDelta_mpe
 
-        save, ThisMPEPath, ThisPicardPath, kjDeltaFile, it, fileName = kjIterationStateFileName
+        cd, RootPath
+        
+        save, LastMPEPath, ThisMPEPath, LastPicardPath, ThisPicardPath, $
+                kjDeltaFile, it, kk, $
+                residual, picardDeltaFileList, $
+                MPEPlots_r, MPEPlots_t, MPEPlots_z, $
+                fileName = kjIterationStateFileName
+
+        cnt++
 
 	endfor
 
