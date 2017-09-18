@@ -1,6 +1,9 @@
 pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
         jr = jr, jt = jt, jz = jz, kjDeltaFileName = _kjDeltaFileName, $
-        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid
+        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid, $
+        previousDelta_r = _previousDelta_r, $
+        previousDelta_t = _previousDelta_t, $
+        previousDelta_z = _previousDelta_z
 
 if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
@@ -28,6 +31,10 @@ density = arP.densitySpec
 temp = arP.tempSpec
 nuOmg = arP.nuOmg
 kz = 0
+
+if keyword_set(_previousDelta_r) then previousDelta_r = _previousDelta_r else previousDelta_r = complexArr(nX)
+if keyword_set(_previousDelta_t) then previousDelta_t = _previousDelta_t else previousDelta_t = complexArr(nX)
+if keyword_set(_previousDelta_z) then previousDelta_z = _previousDelta_z else previousDelta_z = complexArr(nX)
 
 ar2 = ar2_read_ar2input('./')
 
@@ -61,7 +68,7 @@ endelse
 kPar = nPhi / r
 harmonicNumber = 10 
 
-windowWidth = 200
+windowWidth = 400
 
 jr = complexArr(nX,nS)
 jt = complexArr(nX,nS)
@@ -80,121 +87,123 @@ sig2 = complexArr(3,3,nX,windowWidth+1,nS)
 sigc = complexArr(3,3,nX,windowWidth+1,nS)
 
 for s=0,nS-1 do begin
-for i=1,nX-2 do begin
 
-    iL = (i-windowWidth/2)>0
-    iR = (i+windowWidth/2)<(nX-1)
-
-    thisWindowWidth = min([i-iL,iR-i])*2+1
-
-    if thisWindowWidth gt windowWidth+1 then stop
-
-    iL = i - (thisWindowWidth-1)/2
-    iR = i + (thisWindowWidth-1)/2
-
-    _iL = 0 
-    _iR = thisWindowWidth - 1
-
-    ; Extract and window the E field
+    for i=1,nX-2 do begin
     
-    N = n_elements(solution.E_r[iL:iR])
-
-    if useRS then begin
-        er = +solution.e_r[iL:iR] * hanning(n)
-        et = +solution.e_t[iL:iR] * hanning(n)
-        ez = +solution.e_z[iL:iR] * hanning(n)
-    endif else begin
-        er = +solution.e_r[iL:iR] * hanning(n)
-        et = -solution.e_t[iL:iR] * hanning(n)
-        ez = +solution.e_z[iL:iR] * hanning(n)
-    endelse
+        iL = (i-windowWidth/2)>0
+        iR = (i+windowWidth/2)<(nX-1)
     
-    ; forward fft
+        thisWindowWidth = min([i-iL,iR-i])*2+1
     
-    ekr = fft(er,/center)
-    ekt = fft(et,/center)
-    ekz = fft(ez,/center)
-   
-    ekrArr[i,_iL:_iR] = ekr
-    ektArr[i,_iL:_iR] = ekt
-    ekzArr[i,_iL:_iR] = ekz
-
-    dx = r[1]-r[0]
-    kxaxis = findgen(n) / ( dx * n ) * 2*!pi 
-    dk = kxaxis[1]-kxaxis[0]
-    kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
-   
-    kxArr[i,_iL:_iR] = kxAxis
-
-    kPer = sqrt(kxAxis^2+kz^2)
-
-    ; Get sigma for each k 
-  
-    jkr = complexArr(N)
-    jkt = complexArr(N)
-    jkz = complexArr(N)
-
-    ;for k=0,N-1 do begin
-
-        epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
-                density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
-                kx = 0, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
-                epsilon_swan_ND = epsilon_swan );
-
-        epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
-
-        sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-        sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-        sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-
-        ; Rotate sigma from ABP to RTZ
-
-        thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
-
-        for k=0,N-1 do begin
-	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec )
-	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec )
-	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec )
-        endfor
-
-        ; Choose hot or cold sigma 
-
-        _sigma = sigma_cold
-        if hot then begin
-            _sigma = sigma_swan
-            ;_sigma = sigma_bram
-        endif
-
-        sig2[*,*,i,_iL:_iR,s] = _sigma
-        sigc[*,*,i,_iL:_iR,s] = sigma_cold
-
-        ; Calculate k-space plasma current
-        ; This would have to be generalize for non magnetically aligned coordinates.
-
-        ; Try flipping the indexing order also.
-
+        if thisWindowWidth gt windowWidth+1 then stop
+    
+        iL = i - (thisWindowWidth-1)/2
+        iR = i + (thisWindowWidth-1)/2
+    
+        _iL = 0 
+        _iR = thisWindowWidth - 1
+    
+        ; Extract and window the E field
+        
+        N = n_elements(solution.E_r[iL:iR])
+    
         if useRS then begin
-            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
-            jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
-            jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+            er = +solution.e_r[iL:iR] * hanning(n)
+            et = +solution.e_t[iL:iR] * hanning(n)
+            ez = +solution.e_z[iL:iR] * hanning(n)
         endif else begin
-            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-            jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-            jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+            er = +solution.e_r[iL:iR] * hanning(n)
+            et = -solution.e_t[iL:iR] * hanning(n)
+            ez = +solution.e_z[iL:iR] * hanning(n)
         endelse
-    ;endfor
+        
+        ; forward fft
+        
+        ekr = fft(er,/center)
+        ekt = fft(et,/center)
+        ekz = fft(ez,/center)
+       
+        ekrArr[i,_iL:_iR] = ekr
+        ektArr[i,_iL:_iR] = ekt
+        ekzArr[i,_iL:_iR] = ekz
     
-    ; Inverse FFT for configuration-space plasma current
+        dx = r[1]-r[0]
+        kxaxis = findgen(n) / ( dx * n ) * 2*!pi 
+        dk = kxaxis[1]-kxaxis[0]
+        kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
+       
+        kxArr[i,_iL:_iR] = kxAxis
     
-    thisjr = fft(jkr,/center,/inverse)
-    thisjt = fft(jkt,/center,/inverse)
-    thisjz = fft(jkz,/center,/inverse)
+        kPer = sqrt(kxAxis^2+kz^2)
+    
+        ; Get sigma for each k 
+      
+        jkr = complexArr(N)
+        jkt = complexArr(N)
+        jkz = complexArr(N)
+    
+        ;for k=0,N-1 do begin
+    
+            epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
+                    density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
+                    kx = 0, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
+                    epsilon_swan_ND = epsilon_swan );
+    
+            epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
+    
+            sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+            sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+            sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+    
+            ; Rotate sigma from ABP to RTZ
+    
+            thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
+    
+            for k=0,N-1 do begin
+    	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec )
+    	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec )
+    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec )
+            endfor
+    
+            ; Choose hot or cold sigma 
+    
+            _sigma = sigma_cold
+            if hot then begin
+                _sigma = sigma_swan
+                ;_sigma = sigma_bram
+            endif
+    
+            sig2[*,*,i,_iL:_iR,s] = _sigma
+            sigc[*,*,i,_iL:_iR,s] = sigma_cold
+    
+            ; Calculate k-space plasma current
+            ; This would have to be generalize for non magnetically aligned coordinates.
+    
+            ; Try flipping the indexing order also.
+    
+            if useRS then begin
+                jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
+                jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
+                jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+            endif else begin
+                jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
+                jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
+                jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+            endelse
+        ;endfor
+        
+        ; Inverse FFT for configuration-space plasma current
+        
+        thisjr = fft(jkr,/center,/inverse)
+        thisjt = fft(jkt,/center,/inverse)
+        thisjz = fft(jkz,/center,/inverse)
+    
+        jr[i,s] = thisjr[N/2]
+        jt[i,s] = thisjt[N/2]
+        jz[i,s] = thisjz[N/2]
+    
+    endfor
 
-    jr[i,s] = thisjr[N/2]
-    jt[i,s] = thisjt[N/2]
-    jz[i,s] = thisjz[N/2]
-
-endfor
 endfor
 
     save, jr, jt, jz, sig2, fileName=savFileName, /variables
@@ -387,13 +396,24 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 	nCdf_varPut, nc_id, freq_id, f
 
 	nCdf_varPut, nc_id, r_id, r 
-    
-	nCdf_varPut, nc_id, jr_re_id, -real_part( total( reform(solution_ref.jp_r) - jr,2) )
-	nCdf_varPut, nc_id, jr_im_id, -imaginary( total( reform(solution_ref.jp_r) - jr,2) )
-	nCdf_varPut, nc_id, jt_re_id, -real_part( total( reform(solution_ref.jp_t) - jt,2) )
-	nCdf_varPut, nc_id, jt_im_id, -imaginary( total( reform(solution_ref.jp_t) - jt,2) )
-	nCdf_varPut, nc_id, jz_re_id, -real_part( total( reform(solution_ref.jp_z) - jz,2) )
-	nCdf_varPut, nc_id, jz_im_id, -imaginary( total( reform(solution_ref.jp_z) - jz,2) )
+   
+    sign = -1
+    relaxTo = 0.1
+
+    delta_r = sign * (total(reform(solution_ref.jp_r) - jr,2))
+    delta_t = sign * (total(reform(solution_ref.jp_t) - jt,2))
+    delta_z = sign * (total(reform(solution_ref.jp_z) - jz,2))
+
+    deltaUR_r = (relaxTo)*delta_r + (1-relaxTo) * previousDelta_r 
+    deltaUR_t = (relaxTo)*delta_t + (1-relaxTo) * previousDelta_t 
+    deltaUR_z = (relaxTo)*delta_z + (1-relaxTo) * previousDelta_z 
+
+	nCdf_varPut, nc_id, jr_re_id, real_part( deltaUR_r )
+	nCdf_varPut, nc_id, jr_im_id, imaginary( deltaUR_r )
+	nCdf_varPut, nc_id, jt_re_id, real_part( deltaUR_t )
+	nCdf_varPut, nc_id, jt_im_id, imaginary( deltaUR_t )
+	nCdf_varPut, nc_id, jz_re_id, real_part( deltaUR_z )
+	nCdf_varPut, nc_id, jz_im_id, imaginary( deltaUR_z )
 
 nCdf_close, nc_id
 

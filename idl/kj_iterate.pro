@@ -7,8 +7,12 @@ pro kj_iterate, $
         useAR2=useAR2, $
         useKJStix = _useKJStix
 
-	nk = 4 
+	nk = 10 
     kjIterationStateFileName = 'kj-iteration-state.sav'
+    KnownSolution = ar2_read_solution(expand_path('~/scratch/aorsa2d/colestock-kashuba-reference'),1)    
+    ColdSolution = rsfwc_read_solution(expand_path('~/scratch/rsfwc_1d/colestock-kashuba'))
+    PrevSolution = ColdSolution
+    nX = n_elements(ColdSolution.r)
 
     if keyword_set(useAR2) then useAORSA = 1 else useAORSA = 0
 	if keyword_set(itStartNo) then itStart=itStartNo else itStart=0
@@ -23,6 +27,9 @@ pro kj_iterate, $
         ThisPicardPath = ''
 	    picardDeltaFileList = strArr(nk)
         residual = !null
+        previousDelta_r = ComplexArr(nX)
+        previousDelta_t = ComplexArr(nX)
+        previousDelta_z = ComplexArr(nX)
     endelse
 
     useKJFull = 0
@@ -32,10 +39,6 @@ pro kj_iterate, $
 
     KJ_BINARY = '~/code/kineticj/bin/kineticj'
     KJ_BINARY_GC = '~/code/kineticj/bin/kineticj'
-
-    KnownSolution = ar2_read_solution(expand_path('~/scratch/aorsa2d/colestock-kashuba-reference'),1)    
-    ColdSolution = rsfwc_read_solution(expand_path('~/scratch/rsfwc_1d/colestock-kashuba'))
-    PrevSolution = ColdSolution
 
 	cd, current=RootPath
     RootPath = RootPath+'/'
@@ -167,8 +170,11 @@ pro kj_iterate, $
                 kj_stix_current, overPlotSolution = 1, useRS=1, hot=1, $
                         jr = this_jr, jt = this_jt, jz = this_jz, $
                         kjDeltaFileName = kjDeltaFileName, $
-                        referenceSolutionDir = rsRunDir0, rgrid = r
-                
+                        referenceSolutionDir = rsRunDir0, rgrid = r, $
+                        previousDelta_r = previousDelta_r, $
+                        previousDelta_t = previousDelta_t, $
+                        previousDelta_z = previousDelta_z
+
                 file_copy, kjDeltaFileName, ThisPicardPath, /overWrite
 
                 cd, RootPath
@@ -258,8 +264,6 @@ pro kj_iterate, $
 
 			ncdf_close, cdfId
 
-			nX = n_elements(r)
-
 			jrDelta_picard = [[jrDelta_picard],[complex(jP_r_re,jP_r_im)]]
 			jtDelta_picard = [[jtDelta_picard],[complex(jP_t_re,jP_t_im)]]
 			jzDelta_picard = [[jzDelta_picard],[complex(jP_z_re,jP_z_im)]]
@@ -277,6 +281,10 @@ pro kj_iterate, $
 		jzDelta_mpe = kj_mpe(jzDelta_picard)
 		jzDelta_mpe_re = real_part(jzDelta_mpe)
 		jzDelta_mpe_im = imaginary(jzDelta_mpe)
+
+        previousDelta_r = jrDelta_mpe
+        previousDelta_t = jtDelta_mpe
+        previousDelta_z = jzDelta_mpe
 
 		print, 'Writing vector extrapolated jP to file ... ', picardDeltaFileList[0]
 
@@ -340,6 +348,7 @@ pro kj_iterate, $
                 kjDeltaFile, it, kk, $
                 residual, picardDeltaFileList, $
                 MPEPlots_r, MPEPlots_t, MPEPlots_z, $
+                previousDelta_r, previousDelta_t, previousDelta_z, $
                 fileName = kjIterationStateFileName
 
         cnt++
