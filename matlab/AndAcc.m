@@ -32,7 +32,7 @@ function [x,iter,res_hist] = AndAcc(g,x,mMax,itmax,atol,rtol,droptol,beta,AAstar
 % Homer Walker (walker@wpi.edu), 10/14/2011.
 % Set the method parameters.
 
-if nargin < 2, error(?AndAcc requires at least two arguments.?); end
+if nargin < 2, error('AndAcc requires at least two arguments.'); end
 if nargin < 3, mMax = min{10, size(x,1)}; end
 if nargin < 4, itmax = 100; end
 if nargin < 5, atol = 1.e-10; end
@@ -45,28 +45,44 @@ res_hist = []; % Storage of residual history.
 DG = []; % Storage of g-value differences.
 % Initialize printing.
 if mMax == 0
-    fprintf(?\n No acceleration.?);
+    fprintf('\n No acceleration.');
 elseif mMax > 0
-    fprintf(?\n Anderson acceleration, mMax = %d \n?,mMax);
+    fprintf('\n Anderson acceleration, mMax = %d \n',mMax);
 else
-    error(?AndAcc.m: mMax must be non-negative.?);
+    error('AndAcc.m: mMax must be non-negative.');
 end
-fprintf(?\n iter res_norm \n?);
+fprintf('\n iter res_norm \n');
 % Initialize the number of stored residuals.
 mAA = 0;
 % Top of the iteration loop.
+
 for iter = 0:itmax
+    
+    % Plot the delta
+    
+    [jr,jt,jz] = kj_x_to_vec(x);
+    idx = 1:size(jr,1);
+    ax1=subplot(3,1,1);
+    hold(ax1,'on');
+    plot(idx',real(jr),'black',idx',imag(jr),'r');
+    ax2=subplot(3,1,2);
+    hold(ax2,'on');
+    plot(idx',real(jt),'black',idx',imag(jt),'r');
+    ax3=subplot(3,1,3);
+    hold(ax3,'on');
+    plot(idx',real(jz),'black',idx',imag(jz),'r');
+    
     % Apply g and compute the current residual norm.
-    gval = g(x);
+    gval = g(x,iter);
     fval = gval - x;
     res_norm = norm(fval);
-    fprintf(? %d %e \n?, iter, res_norm);
+    fprintf(' %d %e \n', iter, res_norm);
     res_hist = [res_hist;[iter,res_norm]];
     % Set the residual tolerance on the initial iteration.
     if iter == 0, tol = max(atol,rtol*res_norm); end
     % Test for stopping.
     if res_norm <= tol,
-        fprintf(?Terminate with residual norm = %e \n\n?, res_norm);
+        fprintf('Terminate with residual norm = %e \n\n', res_norm);
         break;
     end
     if mMax == 0 || iter < AAstart,
@@ -119,7 +135,7 @@ for iter = 0:itmax
                 % Now update the QR decomposition to incorporate the new
                 % column.
                 for j = 1:mAA - 1
-                    R(j,mAA) = Q(:,j)?*df;
+                    R(j,mAA) = Q(:,j)'*df;
                     df = df - R(j,mAA)*Q(:,j);
                 end
                 R(mAA,mAA) = norm(df);
@@ -129,7 +145,7 @@ for iter = 0:itmax
                 % Drop residuals to improve conditioning if necessary.
                 condDF = cond(R);
                 while condDF > droptol && mAA > 1
-                    fprintf(? cond(D) = %e, reducing mAA to %d \n?, condDF, mAA-1);
+                    fprintf(' cond(D) = %e, reducing mAA to %d \n', condDF, mAA-1);
                     [Q,R] = qrdelete(Q,R,1);
                     DG = DG(:,2:mAA);
                     mAA = mAA - 1;
@@ -141,12 +157,12 @@ for iter = 0:itmax
                 end
             end
             % Solve the least-squares problem.
-            gamma = R\(Q?*fval);
+            gamma = R\(Q'*fval);
             % Update the approximate solution.
             x = gval - DG*gamma;
             % Apply damping if beta is a function handle or if beta > 0
             % (and beta ~= 1).
-            if isa(beta,?function_handle?),
+            if isa(beta,'function_handle'),
                 x = x - (1-beta(iter))*(fval - Q*R*gamma);
             else
                 if beta > 0 && beta ~= 1,
@@ -159,8 +175,8 @@ end
 
 % Bottom of the iteration loop.
 if res_norm > tol && iter == itmax,
-    fprintf(?\n Terminate after itmax = %d iterations. \n?, itmax);
-    fprintf(? Residual norm = %e \n\n?, res_norm);
+    fprintf('\n Terminate after itmax = %d iterations. \n', itmax);
+    fprintf(' Residual norm = %e \n\n', res_norm);
 end
 
 end
