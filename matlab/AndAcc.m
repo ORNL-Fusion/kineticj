@@ -62,13 +62,13 @@ for iter = 0:itmax
     
     [jr,jt,jz] = kj_x_to_vec(x);
     idx = 1:size(jr,1);
-    ax1=subplot(3,1,1);
+    ax1=subplot(2,2,1);
     hold(ax1,'on');
     plot(idx',real(jr),'black',idx',imag(jr),'r');
-    ax2=subplot(3,1,2);
+    ax2=subplot(2,2,2);
     hold(ax2,'on');
     plot(idx',real(jt),'black',idx',imag(jt),'r');
-    ax3=subplot(3,1,3);
+    ax3=subplot(2,2,3);
     hold(ax3,'on');
     plot(idx',real(jz),'black',idx',imag(jz),'r');
     
@@ -78,6 +78,11 @@ for iter = 0:itmax
     res_norm = norm(fval);
     fprintf(' %d %e \n', iter, res_norm);
     res_hist = [res_hist;[iter,res_norm]];
+    
+    ax4=subplot(2,2,4);
+    hold(ax4,'on');
+    plot(res_hist);
+    
     % Set the residual tolerance on the initial iteration.
     if iter == 0, tol = max(atol,rtol*res_norm); end
     % Test for stopping.

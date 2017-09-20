@@ -18,6 +18,8 @@ end
 
 function kj_zfunction, arg, Zp=Zp
 
+    common zFunctionTable, Z_re, Z_im, Zp_re, Zp_im, arg_re
+
     ; Plasma dispersion function using  
     ; mathematica created table 
     ; (see zFunction_table_creator.nb in kinetic-j repo)
@@ -28,16 +30,24 @@ function kj_zfunction, arg, Zp=Zp
 
     @constants
 
-    zfunFileName = expand_path('~/code/kineticj/mathematica/zFunction.nc')
-	cdfId = ncdf_open(zFunFileName)
+    ; If first call then read file
 
-		ncdf_varget, cdfId, 'arg_re', arg_re
-		ncdf_varget, cdfId, 'Z_re', Z_re
-		ncdf_varget, cdfId, 'Z_im', Z_im
-		ncdf_varget, cdfId, 'Zp_re', Zp_re
-		ncdf_varget, cdfId, 'Zp_im', Zp_im
+    if size(arg_re,/type) eq 0 then begin
 
-	ncdf_close, cdfId
+        print, 'OPENING ZFUNCTION FILE'
+
+        zfunFileName = expand_path('~/code/kineticj/mathematica/zFunction.nc')
+	    cdfId = ncdf_open(zFunFileName)
+
+	    	ncdf_varget, cdfId, 'arg_re', arg_re
+	    	ncdf_varget, cdfId, 'Z_re', Z_re
+	    	ncdf_varget, cdfId, 'Z_im', Z_im
+	    	ncdf_varget, cdfId, 'Zp_re', Zp_re
+	    	ncdf_varget, cdfId, 'Zp_im', Zp_im
+
+	    ncdf_close, cdfId
+
+    endif
 
     ; First interpolate from table
 

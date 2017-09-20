@@ -23,7 +23,7 @@ x = kj_vec_to_x(jr,jt,jz);
 
 g = @kj_g;
 
-[x,iter,res_hist] = AndAcc(g,x,10,20);
+[x,iter,res_hist] = AndAcc(g,x,10,100,1.0e-10,1.0e-10,1.0e10,0.1);
 
 % for it=1:3
 % 

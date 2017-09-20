@@ -56,20 +56,20 @@ function kj_read_kj_jp, FileName
         jPz_ : jPz_ $
    }
 
-    p=plot(kjIn.r,kjIn.jpr,layout=[1,3,1])
-    p=plot(kjIn.r,imaginary(kjIn.jpr),color='r',/over)
-    p=plot(kjIn.r_,kjIn.jpr_,/over)
-    p=plot(kjIn.r_,imaginary(kjIn.jpr_),color='r',/over)
+    ;p=plot(kjIn.r,kjIn.jpr,layout=[1,3,1])
+    ;p=plot(kjIn.r,imaginary(kjIn.jpr),color='r',/over)
+    ;p=plot(kjIn.r_,kjIn.jpr_,/over)
+    ;p=plot(kjIn.r_,imaginary(kjIn.jpr_),color='r',/over)
 
-    p=plot(kjIn.r,kjIn.jpt,layout=[1,3,2],/current)
-    p=plot(kjIn.r,imaginary(kjIn.jpt),color='r',/over)
-    p=plot(kjIn.r_,kjIn.jpt_,/over)
-    p=plot(kjIn.r_,imaginary(kjIn.jpt_),color='r',/over)
+    ;p=plot(kjIn.r,kjIn.jpt,layout=[1,3,2],/current)
+    ;p=plot(kjIn.r,imaginary(kjIn.jpt),color='r',/over)
+    ;p=plot(kjIn.r_,kjIn.jpt_,/over)
+    ;p=plot(kjIn.r_,imaginary(kjIn.jpt_),color='r',/over)
 
-    p=plot(kjIn.r,kjIn.jpz,layout=[1,3,3],/current)
-    p=plot(kjIn.r,imaginary(kjIn.jpz),color='r',/over)
-    p=plot(kjIn.r_,kjIn.jpz_,/over)
-    p=plot(kjIn.r_,imaginary(kjIn.jpz_),color='r',/over)
+    ;p=plot(kjIn.r,kjIn.jpz,layout=[1,3,3],/current)
+    ;p=plot(kjIn.r,imaginary(kjIn.jpz),color='r',/over)
+    ;p=plot(kjIn.r_,kjIn.jpz_,/over)
+    ;p=plot(kjIn.r_,imaginary(kjIn.jpz_),color='r',/over)
 
     return, kjIn
 

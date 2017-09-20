@@ -86,6 +86,17 @@ ekzArr = complexArr(nX,windowWidth+1)
 sig2 = complexArr(3,3,nX,windowWidth+1,nS)
 sigc = complexArr(3,3,nX,windowWidth+1,nS)
 
+
+; Move the rotation matrix outside of the loop 
+
+R_abp_to_rtz = fltArr(3,3,nX) 
+for i=1,nX-2 do begin
+    thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
+    R_abp_to_rtz[*,*,i] = get_rotmat_abp_to_rtz(thisBUnitVec)
+endfor
+
+; Main loop
+
 for s=0,nS-1 do begin
 
     for i=1,nX-2 do begin
@@ -157,12 +168,12 @@ for s=0,nS-1 do begin
     
             ; Rotate sigma from ABP to RTZ
     
-            thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
+            ;thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
     
             for k=0,N-1 do begin
-    	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec )
-    	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec )
-    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec )
+    	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+    	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
             endfor
     
             ; Choose hot or cold sigma 
@@ -397,8 +408,8 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
    
-    sign = -1
-    relaxTo = 0.1
+    sign = +1
+    relaxTo = 1
 
     delta_r = sign * (total(reform(solution_ref.jp_r) - jr,2))
     delta_t = sign * (total(reform(solution_ref.jp_t) - jt,2))
