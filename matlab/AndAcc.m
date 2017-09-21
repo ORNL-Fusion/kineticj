@@ -1,4 +1,4 @@
-function [x,iter,res_hist] = AndAcc(g,x,mMax,itmax,atol,rtol,droptol,beta,AAstart)
+function [x,iter,res_hist] = AndAcc(g,x,mMax,itmax,atol,rtol,droptol,beta,AAstart,fig,beta_N)
 % This performs fixed-point iteration with or without Anderson
 % acceleration for a given fixed-point map g and initial
 % approximate solution x.
@@ -59,6 +59,8 @@ mAA = 0;
 for iter = 0:itmax
     
     % Plot the delta
+    
+    %figure(fig);
     
     [jr,jt,jz] = kj_x_to_vec(x);
     idx = 1:size(jr,1);
@@ -168,7 +170,7 @@ for iter = 0:itmax
             % Apply damping if beta is a function handle or if beta > 0
             % (and beta ~= 1).
             if isa(beta,'function_handle'),
-                x = x - (1-beta(iter))*(fval - Q*R*gamma);
+                x = x - (1-beta(iter,beta_N))*(fval - Q*R*gamma);
             else
                 if beta > 0 && beta ~= 1,
                     x = x - (1-beta)*(fval - Q*R*gamma);

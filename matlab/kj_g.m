@@ -18,7 +18,7 @@ templateDir = 'template-rs';
 
 % Stage iteration
 
-thisDir = char(strcat('run',string(it)))
+thisDir = char(strcat('run',sprintf('%4.4i',it)));
 
 copyfile( templateDir, thisDir );
 
@@ -41,11 +41,11 @@ ncwrite(deltaFile,'jP_z_im',imag(jz));
 
 % Run RS with IDL
 
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs
+!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
 
 % Run KJ to get the new delta
 
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj
+!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj &> kj.idl.log
 
 % Read new delta from file
 

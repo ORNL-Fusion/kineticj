@@ -66,7 +66,7 @@ endelse
 ; For each species
 
 kPar = nPhi / r
-harmonicNumber = 10 
+harmonicNumber = 3
 
 windowWidth = 400
 
@@ -157,32 +157,41 @@ for s=0,nS-1 do begin
     
             epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
                     density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
-                    kx = 0, nuOmg = nuOmg[i,0,s], epsilon_cold = epsilon_cold, $
-                    epsilon_swan_ND = epsilon_swan );
-    
+                    kx = 0, nuOmg = nuOmg[i,0,s]);, epsilon_cold = epsilon_cold) ;, $
+                    ;epsilon_swan_ND = epsilon_swan );
+   
+            epsilon_cold = kj_epsilon_cold(f, amu[s], atomicZ[s], B[i], $
+                    density[i,0,s], nuOmg[i,0,s])
+
             epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
     
             sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-            sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+            ;sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
             sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
     
             ; Rotate sigma from ABP to RTZ
     
-            ;thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
-    
-            for k=0,N-1 do begin
-    	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-    	        sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-            endfor
-    
             ; Choose hot or cold sigma 
     
-            _sigma = sigma_cold
             if hot then begin
-                _sigma = sigma_swan
-                ;_sigma = sigma_bram
-            endif
+
+                for k=0,N-1 do begin
+    	            sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+    	            ;sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+                endfor
+ 
+                ;_sigma = sigma_swan
+                _sigma = sigma_bram
+
+            endif else begin
+
+                for k=0,N-1 do begin
+    	            sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+                endfor
+
+                _sigma = sigma_cold
+
+            endelse
     
             sig2[*,*,i,_iL:_iR,s] = _sigma
             sigc[*,*,i,_iL:_iR,s] = sigma_cold
@@ -229,6 +238,10 @@ Er = solution.E_r
 Et = solution.E_t
 Ez = solution.E_z
 
+doPlots = 0
+
+if doPlots then begin
+
 p=plot(r,Er,layout=[1,3,1])
 p=plot(r,imaginary(Er),color='r',/over)
 
@@ -267,6 +280,8 @@ for s=0,nS-1 do begin
     endif
 
 endfor
+
+endif
 
 if not useRS then begin
 
@@ -408,7 +423,7 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
    
-    sign = +1
+    sign = -1
     relaxTo = 1
 
     delta_r = sign * (total(reform(solution_ref.jp_r) - jr,2))
