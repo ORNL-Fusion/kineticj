@@ -41,15 +41,17 @@ ncwrite(deltaFile,'jP_z_im',imag(jz));
 
 % Run RS with IDL
 
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
+%!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
+!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs
 
 % Run KJ to get the new delta
 
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj &> kj.idl.log
+%!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj &> kj.idl.log
+!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj
 
 % Read new delta from file
 
-deltaFile = 'kj-stix.nc';
+deltaFile = 'kj-delta.nc';
 
 jr_re = ncread(deltaFile,'jP_r_re');
 jr_im = ncread(deltaFile,'jP_r_im');

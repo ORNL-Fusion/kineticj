@@ -74,6 +74,7 @@ for iter = 0:itmax
     hold(ax3,'on');
     plot(idx',real(jz),'black',idx',imag(jz),'r');
     
+    
     % Apply g and compute the current residual norm.
     gval = g(x,iter);
     fval = gval - x;
@@ -82,8 +83,9 @@ for iter = 0:itmax
     res_hist = [res_hist;[iter,res_norm]];
     
     ax4=subplot(2,2,4);
-    hold(ax4,'on');
-    plot(res_hist);
+    %hold(ax4,'on');
+    semilogy(res_hist(:,1),res_hist(:,2));
+    print('kj','-dpng')
     
     % Set the residual tolerance on the initial iteration.
     if iter == 0, tol = max(atol,rtol*res_norm); end

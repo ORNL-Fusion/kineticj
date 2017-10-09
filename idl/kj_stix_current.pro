@@ -8,7 +8,7 @@ pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_ho
 if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
 if keyword_set(_hot) then hot = _hot else hot = 0
-if keyword_set(_kjDeltaFileName) then kjDeltaFileName = _kjDeltaFileName else kjDeltaFileName = 'kj-stix.nc'
+if keyword_set(_kjDeltaFileName) then kjDeltaFileName = _kjDeltaFileName else kjDeltaFileName = 'kj-delta.nc'
 if keyword_set(_referenceSolutionDir) then referenceSolutionDir = _referenceSolutionDir else referenceSolutionDir = './'
 
 useAR = 1
@@ -55,6 +55,8 @@ if useRS then begin
     print, 'Reading RS Solution'
     solution = rsfwc_read_solution('./')
     solution_ref = rsfwc_read_solution(referenceSolutionDir)
+
+    if size(B,/n_elements) ne size(solution.r,/n_elements) then stop
 endif
 
 if hot then begin
@@ -423,7 +425,7 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
    
-    sign = -1
+    sign = +1
     relaxTo = 1
 
     delta_r = sign * (total(reform(solution_ref.jp_r) - jr,2))
