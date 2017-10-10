@@ -5,7 +5,7 @@ f1 = figure;
 % Get the initial guess at x, either zero (startIteration=0)
 % or resume from startIteration = N. 
 
-startIteration = 38;
+startIteration = 0;
 
 if startIteration == 0
     startRunDir = 'template-rs';

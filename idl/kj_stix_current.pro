@@ -14,7 +14,6 @@ if keyword_set(_referenceSolutionDir) then referenceSolutionDir = _referenceSolu
 useAR = 1
 if useRS then useAR = 0 
 
-
 @constants
 
 ; Get the plasma parameters
@@ -55,7 +54,6 @@ if useRS then begin
     print, 'Reading RS Solution'
     solution = rsfwc_read_solution('./')
     solution_ref = rsfwc_read_solution(referenceSolutionDir)
-
     if size(B,/n_elements) ne size(solution.r,/n_elements) then stop
 endif
 
@@ -70,7 +68,7 @@ endelse
 kPar = nPhi / r
 harmonicNumber = 3
 
-windowWidth = 400
+windowWidth = 512
 
 jr = complexArr(nX,nS)
 jt = complexArr(nX,nS)
@@ -121,15 +119,22 @@ for s=0,nS-1 do begin
         N = n_elements(solution.E_r[iL:iR])
     
         if useRS then begin
-            er = +solution.e_r[iL:iR] * hanning(n)
-            et = +solution.e_t[iL:iR] * hanning(n)
-            ez = +solution.e_z[iL:iR] * hanning(n)
+            er = +solution.e_r[iL:iR] ;* hanning(n)
+            et = +solution.e_t[iL:iR] ;* hanning(n)
+            ez = +solution.e_z[iL:iR] ;* hanning(n)
         endif else begin
-            er = +solution.e_r[iL:iR] * hanning(n)
-            et = -solution.e_t[iL:iR] * hanning(n)
-            ez = +solution.e_z[iL:iR] * hanning(n)
+            ;er = +solution.e_r[iL:iR] * hanning(n)
+            ;et = -solution.e_t[iL:iR] * hanning(n)
+            ;ez = +solution.e_z[iL:iR] * hanning(n)
+            er = -solution.e_r[iL:iR] ;* hanning(n)
+            et = +solution.e_t[iL:iR] ;* hanning(n)
+            ez = +solution.e_z[iL:iR] ;* hanning(n)
         endelse
-        
+
+        ;; Test for FFT
+        ;kk = 200.0  
+        ;er = exp(_ii * kk * r[iL:iR]) 
+       
         ; forward fft
         
         ekr = fft(er,/center)
@@ -139,12 +144,15 @@ for s=0,nS-1 do begin
         ekrArr[i,_iL:_iR] = ekr
         ektArr[i,_iL:_iR] = ekt
         ekzArr[i,_iL:_iR] = ekz
-    
+  
         dx = r[1]-r[0]
         kxaxis = findgen(n) / ( dx * n ) * 2*!pi 
         dk = kxaxis[1]-kxaxis[0]
-        kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
-       
+        kxaxis = kxaxis - kxaxis[-1]/2 
+        if (n_elements(kxaxis) mod 2) eq 0 then begin
+            kxaxis = kxaxis - dk/2
+        endif
+      
         kxArr[i,_iL:_iR] = kxAxis
     
         kPer = sqrt(kxAxis^2+kz^2)
@@ -208,9 +216,12 @@ for s=0,nS-1 do begin
                 jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
                 jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
             endif else begin
-                jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-                jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-                jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+                ;jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
+                ;jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
+                ;jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+                jkr = -(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
+                jkt = -(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
+                jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
             endelse
         ;endfor
         
@@ -240,7 +251,7 @@ Er = solution.E_r
 Et = solution.E_t
 Ez = solution.E_z
 
-doPlots = 0
+doPlots = 1
 
 if doPlots then begin
 
@@ -261,9 +272,8 @@ for s=0,nS-1 do begin
     if overPlotSolution then begin
         p=plot(solution_ref.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
-
-        p=plot(solution_ref.r,solution.JP_r[*,0,s]-jr[*,s],thick=1,/over,lineStyle='--')            
-        p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]-jr[*,s]),color='r',/over,lineStyle='--')            
+        ;p=plot(solution_ref.r,solution.JP_r[*,0,s]-jr[*,s],thick=1,/over,lineStyle='--')            
+        ;p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]-jr[*,s]),color='r',/over,lineStyle='--')            
     endif
 
     current = (current + 1)<1
@@ -285,6 +295,9 @@ endfor
 
 endif
 
+plotSpectra = 1
+
+if plotSpectra then begin
 if not useRS then begin
 
     ; Compare the global spectrum and sigmas for that spectrum
@@ -299,10 +312,13 @@ if not useRS then begin
     dx = r[1]-r[0]
     kxaxis = findgen(n) / ( dx * N ) * 2*!pi 
     dk = kxaxis[1]-kxaxis[0]
-    kxaxis = kxaxis - kxaxis[-1]/2 - dk/2
-    
+    kxaxis = kxaxis - kxaxis[-1]/2
+    if (n_elements(kxaxis) mod 2) eq 0 then begin
+        kxaxis = kxaxis - dk/2
+    endif
+
     s = 2
-    iX = nX/2
+    iX = nX/2 ; This should be about the same as the AR window. 
     
     p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
     p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
@@ -398,6 +414,7 @@ if not useRS then begin
     p=plot(kxArr[iX,*],sigc[2,2,ix,*,s],/over,thick=3,trans=50,color='b')
     p=plot(kxArr[iX,*],imaginary(sigc[2,2,ix,*,s]),color='m',/over,thick=3,trans=50)
 
+endif
 endif
 
 ; Write the kinetic-j update / delta to a file
