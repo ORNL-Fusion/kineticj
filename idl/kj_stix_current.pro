@@ -80,6 +80,7 @@ savFileName = 'kj-stix.sav'
 if run then begin
 
 kxArr = fltArr(nX,windowWidth+1)
+NArr = fltArr(nX)
 ekrArr = complexArr(nX,windowWidth+1)
 ektArr = complexArr(nX,windowWidth+1)
 ekzArr = complexArr(nX,windowWidth+1)
@@ -154,6 +155,7 @@ for s=0,nS-1 do begin
         endif
       
         kxArr[i,_iL:_iR] = kxAxis
+        nArr[i] = n_elements(kxAxis)
     
         kPer = sqrt(kxAxis^2+kz^2)
     
@@ -317,7 +319,7 @@ if not useRS then begin
         kxaxis = kxaxis - dk/2
     endif
 
-    s = 2
+    s = 0
     iX = nX/2 ; This should be about the same as the AR window. 
     
     p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
@@ -341,79 +343,20 @@ if not useRS then begin
     p=plot(kxArr[iX,*],ektArr[iX,*],/over,color='b',thick=4,trans=50)
     p=plot(kxArr[iX,*],imaginary(ektArr[iX,*]),/over,color='magenta',thick=4,trans=50)
     
-    
-    
-    p=plot(solution.kr,solution.sig[0,0,ix,*,s],layout=[3,3,1])
-    p=plot(solution.kr,imaginary(solution.sig[0,0,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[0,0,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[0,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[0,0,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[0,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[0,1,ix,*,s],layout=[3,3,2],/current)
-    p=plot(solution.kr,imaginary(solution.sig[0,1,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[0,1,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[0,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[0,1,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[0,1,ix,*,s]),color='b',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[0,2,ix,*,s],layout=[3,3,3],/current)
-    p=plot(solution.kr,imaginary(solution.sig[0,2,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[0,2,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[0,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[0,2,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[0,2,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[1,0,ix,*,s],layout=[3,3,4],/current)
-    p=plot(solution.kr,imaginary(solution.sig[1,0,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[1,0,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[1,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[1,0,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[1,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[1,1,ix,*,s],layout=[3,3,5],/current)
-    p=plot(solution.kr,imaginary(solution.sig[1,1,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[1,1,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[1,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[1,1,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[1,1,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[1,2,ix,*,s],layout=[3,3,6],/current)
-    p=plot(solution.kr,imaginary(solution.sig[1,2,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[1,2,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[1,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[1,2,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[1,2,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[2,0,ix,*,s],layout=[3,3,7],/current)
-    p=plot(solution.kr,imaginary(solution.sig[2,0,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[2,0,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[2,0,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[2,0,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[2,0,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[2,1,ix,*,s],layout=[3,3,8],/current)
-    p=plot(solution.kr,imaginary(solution.sig[2,1,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[2,1,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[2,1,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[2,1,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[2,1,ix,*,s]),color='m',/over,thick=3,trans=50)
-    
-    
-    p=plot(solution.kr,solution.sig[2,2,ix,*,s],layout=[3,3,9],/current)
-    p=plot(solution.kr,imaginary(solution.sig[2,2,ix,*,s]),color='r',/over)
-    p=plot(kxArr[iX,*],sig2[2,2,ix,*,s],/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],imaginary(sig2[2,2,ix,*,s]),color='r',/over,thick=3,trans=50)
-    p=plot(kxArr[iX,*],sigc[2,2,ix,*,s],/over,thick=3,trans=50,color='b')
-    p=plot(kxArr[iX,*],imaginary(sigc[2,2,ix,*,s]),color='m',/over,thick=3,trans=50)
+    current = 0 
+    for ii=0,2 do begin
+    for jj=0,2 do begin
+        p=plot(solution.kr,solution.sig[ii,jj,ix,*,s],layout=[3,3,ii*3+jj+1],current=current)
+        p=plot(solution.kr,imaginary(solution.sig[ii,jj,ix,*,s]),color='r',/over)
+        p=plot(kxArr[iX,0:nArr[iX]-1],sig2[ii,jj,ix,0:nArr[iX]-1,s],/over,thick=3,trans=50,linestyle='--')
+        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sig2[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,thick=3,trans=50,linestyle='--')
+        p=plot(kxArr[iX,0:nArr[iX]-1],sigc[ii,jj,ix,0:nArr[iX]-1,s],/over,linestyle=':',thick=2)
+        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sigc[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,linestyle=':',thick=2)
+        current = (current + 1)<1
+    endfor
+    endfor 
 
+   stop 
 endif
 endif
 
