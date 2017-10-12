@@ -1,5 +1,7 @@
 function [x] = kj_g (x,it)
 
+useAR = 1;
+
 if ~exist('it','var') || isempty(it)
   it=1;
 end
@@ -14,7 +16,11 @@ rootDir = pwd();
 
 % Set the template directory
 
-templateDir = 'template-rs';
+if useAR
+    templateDir = 'template-ar';
+else
+    templateDir = 'template-rs';
+end
 
 % Stage iteration
 
@@ -39,15 +45,26 @@ ncwrite(deltaFile,'jP_t_im',imag(jt));
 ncwrite(deltaFile,'jP_z_re',real(jz));
 ncwrite(deltaFile,'jP_z_im',imag(jz));
 
-% Run RS with IDL
+if useAR
 
-%!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs
+    % Run AR 
+
+    %!/opt/local/bin/mpirun -n 24 ~/code/aorsa2d/xaorsa2d &> ar.log
+    !/opt/local/bin/mpirun -n 24 ~/code/aorsa2d/xaorsa2d
+    
+else
+    % Run RS
+
+    %!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
+    !IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs
+    
+end
 
 % Run KJ to get the new delta
 
 %!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj &> kj.idl.log
 !IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj
+
 
 % Read new delta from file
 

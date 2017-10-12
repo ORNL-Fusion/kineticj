@@ -1,9 +1,9 @@
 pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
         jr = jr, jt = jt, jz = jz, kjDeltaFileName = _kjDeltaFileName, $
-        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid, $
-        previousDelta_r = _previousDelta_r, $
-        previousDelta_t = _previousDelta_t, $
-        previousDelta_z = _previousDelta_z
+        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid;, $
+        ;previousDelta_r = _previousDelta_r, $
+        ;previousDelta_t = _previousDelta_t, $
+        ;previousDelta_z = _previousDelta_z
 
 if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
@@ -259,6 +259,12 @@ Er = solution.E_r
 Et = solution.E_t
 Ez = solution.E_z
 
+sign = +1
+
+delta_r = sign * (reform(solution_ref.jp_r) - jr)
+delta_t = sign * (reform(solution_ref.jp_t) - jt)
+delta_z = sign * (reform(solution_ref.jp_z) - jz)
+
 doPlots = 1
 
 if doPlots then begin
@@ -280,8 +286,8 @@ for s=0,nS-1 do begin
     if overPlotSolution then begin
         p=plot(solution_ref.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
-        ;p=plot(solution_ref.r,solution.JP_r[*,0,s]-jr[*,s],thick=1,/over,lineStyle='--')            
-        ;p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]-jr[*,s]),color='r',/over,lineStyle='--')            
+        p=plot(solution_ref.r,delta_r[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref.r,imaginary(delta_r[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
     current = (current + 1)<1
@@ -290,6 +296,8 @@ for s=0,nS-1 do begin
     if overPlotSolution then begin
         p=plot(solution_ref.r,solution.JP_t[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution_ref.r,imaginary(solution.JP_t[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref.r,delta_t[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref.r,imaginary(delta_t[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
     p=plot(r,jz[*,s],layout=[nS,3,1+2*nS+s],current=current)
@@ -297,13 +305,15 @@ for s=0,nS-1 do begin
     if overPlotSolution then begin
         p=plot(solution_ref.r,solution.JP_z[*,0,s],thick=4,transparency=80,/over)            
         p=plot(solution_ref.r,imaginary(solution.JP_z[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref.r,delta_z[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref.r,imaginary(delta_z[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
 endfor
 
 endif
 
-plotSpectra = 1
+plotSpectra = 0
 
 if plotSpectra then begin
 if not useRS then begin
@@ -410,23 +420,12 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
    
-    sign = +1
-    relaxTo = 1
-
-    delta_r = sign * (total(reform(solution_ref.jp_r) - jr,2))
-    delta_t = sign * (total(reform(solution_ref.jp_t) - jt,2))
-    delta_z = sign * (total(reform(solution_ref.jp_z) - jz,2))
-
-    deltaUR_r = (relaxTo)*delta_r + (1-relaxTo) * previousDelta_r 
-    deltaUR_t = (relaxTo)*delta_t + (1-relaxTo) * previousDelta_t 
-    deltaUR_z = (relaxTo)*delta_z + (1-relaxTo) * previousDelta_z 
-
-	nCdf_varPut, nc_id, jr_re_id, real_part( deltaUR_r )
-	nCdf_varPut, nc_id, jr_im_id, imaginary( deltaUR_r )
-	nCdf_varPut, nc_id, jt_re_id, real_part( deltaUR_t )
-	nCdf_varPut, nc_id, jt_im_id, imaginary( deltaUR_t )
-	nCdf_varPut, nc_id, jz_re_id, real_part( deltaUR_z )
-	nCdf_varPut, nc_id, jz_im_id, imaginary( deltaUR_z )
+	nCdf_varPut, nc_id, jr_re_id, real_part( total(delta_r,2) )
+	nCdf_varPut, nc_id, jr_im_id, imaginary( total(delta_r,2) )
+	nCdf_varPut, nc_id, jt_re_id, real_part( total(delta_t,2) )
+	nCdf_varPut, nc_id, jt_im_id, imaginary( total(delta_t,2) )
+	nCdf_varPut, nc_id, jz_re_id, real_part( total(delta_z,2) )
+	nCdf_varPut, nc_id, jz_im_id, imaginary( total(delta_z,2) )
 
 nCdf_close, nc_id
 

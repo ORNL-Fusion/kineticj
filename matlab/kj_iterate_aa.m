@@ -2,13 +2,19 @@ function kj_iterate_aa ()
 
 f1 = figure;
 
+useAR = 1;
+
 % Get the initial guess at x, either zero (startIteration=0)
 % or resume from startIteration = N. 
 
 startIteration = 0;
 
 if startIteration == 0
-    startRunDir = 'template-rs';
+    if useAR
+        startRunDir = 'template-ar';
+    else
+        startRunDir = 'template-rs';
+    end
 else
     startRunDir = char(strcat('run',sprintf('%4.4i',startIteration)));
 end
