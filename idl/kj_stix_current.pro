@@ -86,7 +86,8 @@ ektArr = complexArr(nX,windowWidth+1)
 ekzArr = complexArr(nX,windowWidth+1)
 sig2 = complexArr(3,3,nX,windowWidth+1,nS)
 sigc = complexArr(3,3,nX,windowWidth+1,nS)
-
+sig2_abp = complexArr(3,3,nX,windowWidth+1,nS)
+sigc_abp = complexArr(3,3,nX,windowWidth+1,nS)
 
 ; Move the rotation matrix outside of the loop 
 
@@ -119,18 +120,18 @@ for s=0,nS-1 do begin
         
         N = n_elements(solution.E_r[iL:iR])
     
-        if useRS then begin
+        ;if useRS then begin
             er = +solution.e_r[iL:iR] ;* hanning(n)
             et = +solution.e_t[iL:iR] ;* hanning(n)
             ez = +solution.e_z[iL:iR] ;* hanning(n)
-        endif else begin
-            ;er = +solution.e_r[iL:iR] * hanning(n)
-            ;et = -solution.e_t[iL:iR] * hanning(n)
-            ;ez = +solution.e_z[iL:iR] * hanning(n)
-            er = -solution.e_r[iL:iR] ;* hanning(n)
-            et = +solution.e_t[iL:iR] ;* hanning(n)
-            ez = +solution.e_z[iL:iR] ;* hanning(n)
-        endelse
+        ;endif else begin
+        ;    ;er = +solution.e_r[iL:iR] * hanning(n)
+        ;    ;et = -solution.e_t[iL:iR] * hanning(n)
+        ;    ;ez = +solution.e_z[iL:iR] * hanning(n)
+        ;    er = +solution.e_r[iL:iR] ;* hanning(n)
+        ;    et = +solution.e_t[iL:iR] ;* hanning(n)
+        ;    ez = +solution.e_z[iL:iR] ;* hanning(n)
+        ;endelse
 
         ;; Test for FFT
         ;kk = 200.0  
@@ -182,7 +183,10 @@ for s=0,nS-1 do begin
             sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
     
             ; Rotate sigma from ABP to RTZ
-    
+
+            sigma_abp_bram = sigma_bram
+            sigma_abp_cold = sigma_cold
+   
             ; Choose hot or cold sigma 
     
             if hot then begin
@@ -207,24 +211,26 @@ for s=0,nS-1 do begin
     
             sig2[*,*,i,_iL:_iR,s] = _sigma
             sigc[*,*,i,_iL:_iR,s] = sigma_cold
+            sig2_abp[*,*,i,_iL:_iR,s] = sigma_abp_bram
+            sigc_abp[*,*,i,_iL:_iR,s] = sigma_abp_cold
     
             ; Calculate k-space plasma current
             ; This would have to be generalize for non magnetically aligned coordinates.
     
             ; Try flipping the indexing order also.
     
-            if useRS then begin
+            ;if useRS then begin
                 jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
                 jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
                 jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
-            endif else begin
-                ;jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-                ;jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-                ;jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
-                jkr = -(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
-                jkt = -(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
-                jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
-            endelse
+            ;endif else begin
+            ;    ;jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
+            ;    ;jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
+            ;    ;jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
+            ;    jkr = +(_sigma[0,0,*] * Ekr + _sigma[0,1,*] * Ekt + _sigma[0,2,*] * Ekz)[*]
+            ;    jkt = +(_sigma[1,0,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[1,2,*] * Ekz)[*]
+            ;    jkz = +(_sigma[2,0,*] * Ekr + _sigma[2,1,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+            ;endelse
         ;endfor
         
         ; Inverse FFT for configuration-space plasma current
@@ -257,13 +263,13 @@ doPlots = 1
 
 if doPlots then begin
 
-p=plot(r,Er,layout=[1,3,1])
+p=plot(r,Er,layout=[1,3,1],title='Er')
 p=plot(r,imaginary(Er),color='r',/over)
 
-p=plot(r,Et,layout=[1,3,2],/current)
+p=plot(r,Et,layout=[1,3,2],/current,title='Et')
 p=plot(r,imaginary(Et),color='r',/over)
 
-p=plot(r,Ez,layout=[1,3,3],/current)
+p=plot(r,Ez,layout=[1,3,3],/current,title='Ez')
 p=plot(r,imaginary(Ez),color='r',/over)
 
 current=0
@@ -306,10 +312,10 @@ if not useRS then begin
     
     xrange = [-200,800]
     
-    ekr = -fft(solution.e_r,/center)
-    ekt = fft(solution.e_t,/center)
-    ekz = fft(solution.e_z,/center)
-    N = n_elements(solution.e_r)
+    eka = fft(solution.ealp,/center)
+    ekb = fft(solution.ebet,/center)
+    ekp = fft(solution.eprl,/center)
+    N = n_elements(solution.eprl)
     
     dx = r[1]-r[0]
     kxaxis = findgen(n) / ( dx * N ) * 2*!pi 
@@ -319,39 +325,58 @@ if not useRS then begin
         kxaxis = kxaxis - dk/2
     endif
 
-    s = 0
+    s = 1
     iX = nX/2 ; This should be about the same as the AR window. 
     
+    thiskr = ekrArr[iX,*]
+    thiskt = ektArr[iX,*]
+    thiskz = ekzArr[iX,*]
+
+    thiska = thiskr*0
+    thiskb = thiskt*0
+    thiskp = thiskz*0
+
+    for i=0,n_elements(thiskr)-1 do begin
+
+        thisk_rtz = [thiskr[i],thiskt[i],thiskz[i]]
+        thisk_abp = transpose(R_abp_to_rtz[*,*,iX]) # thisk_rtz
+        
+        thiska[i] = thisk_abp[0]
+        thiskb[i] = thisk_abp[1]
+        thiskp[i] = thisk_abp[2]
+
+    endfor
+
     p=plot(solution.kr,solution.ealpk,layout=[1,3,1],xrange=xrange)
     p=plot(solution.kr,imaginary(solution.ealpk),color='r',/over)
-    p=plot(kxaxis,ekr,/over,thick=3,transparency=50)
-    p=plot(kxaxis,imaginary(ekr),color='r',/over,thick=3,transparency=50)
-    p=plot(kxArr[iX,*],ekrArr[iX,*],/over,color='b',thick=4,trans=50)
-    p=plot(kxArr[iX,*],imaginary(ekrArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    p=plot(kxaxis,eka,/over,thick=3,transparency=50)
+    p=plot(kxaxis,imaginary(eka),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],thiska,/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(thiska),/over,color='magenta',thick=4,trans=50)
     
     p=plot(solution.kr,solution.ebetk,layout=[1,3,2],/current,xrange=xrange)
     p=plot(solution.kr,imaginary(solution.ebetk),color='r',/over)
-    p=plot(kxaxis,ekz,/over,thick=3,transparency=50)
-    p=plot(kxaxis,imaginary(ekz),color='r',/over,thick=3,transparency=50)
-    p=plot(kxArr[iX,*],ekzArr[iX,*],/over,color='b',thick=4,trans=50)
-    p=plot(kxArr[iX,*],imaginary(ekzArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    p=plot(kxaxis,ekb,/over,thick=3,transparency=50)
+    p=plot(kxaxis,imaginary(ekb),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],thiskb,/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(thiskb),/over,color='magenta',thick=4,trans=50)
     
     p=plot(solution.kr,solution.eprlk,layout=[1,3,3],/current,xrange=xrange)
     p=plot(solution.kr,imaginary(solution.eprlk),color='r',/over)
-    p=plot(kxaxis,ekt,thick=3,transparency=50,/over)
-    p=plot(kxaxis,imaginary(ekt),color='r',/over,thick=3,transparency=50)
-    p=plot(kxArr[iX,*],ektArr[iX,*],/over,color='b',thick=4,trans=50)
-    p=plot(kxArr[iX,*],imaginary(ektArr[iX,*]),/over,color='magenta',thick=4,trans=50)
+    p=plot(kxaxis,ekp,thick=3,transparency=50,/over)
+    p=plot(kxaxis,imaginary(ekp),color='r',/over,thick=3,transparency=50)
+    p=plot(kxArr[iX,*],thiskp,/over,color='b',thick=4,trans=50)
+    p=plot(kxArr[iX,*],imaginary(thiskp),/over,color='magenta',thick=4,trans=50)
     
     current = 0 
     for ii=0,2 do begin
     for jj=0,2 do begin
         p=plot(solution.kr,solution.sig[ii,jj,ix,*,s],layout=[3,3,ii*3+jj+1],current=current)
         p=plot(solution.kr,imaginary(solution.sig[ii,jj,ix,*,s]),color='r',/over)
-        p=plot(kxArr[iX,0:nArr[iX]-1],sig2[ii,jj,ix,0:nArr[iX]-1,s],/over,thick=3,trans=50,linestyle='--')
-        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sig2[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,thick=3,trans=50,linestyle='--')
-        p=plot(kxArr[iX,0:nArr[iX]-1],sigc[ii,jj,ix,0:nArr[iX]-1,s],/over,linestyle=':',thick=2)
-        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sigc[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,linestyle=':',thick=2)
+        p=plot(kxArr[iX,0:nArr[iX]-1],sig2_abp[ii,jj,ix,0:nArr[iX]-1,s],/over,thick=3,trans=50,linestyle='--')
+        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sig2_abp[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,thick=3,trans=50,linestyle='--')
+        p=plot(kxArr[iX,0:nArr[iX]-1],sigc_abp[ii,jj,ix,0:nArr[iX]-1,s],/over,linestyle=':',thick=2)
+        p=plot(kxArr[iX,0:nArr[iX]-1],imaginary(sigc_abp[ii,jj,ix,0:nArr[iX]-1,s]),color='r',/over,linestyle=':',thick=2)
         current = (current + 1)<1
     endfor
     endfor 
