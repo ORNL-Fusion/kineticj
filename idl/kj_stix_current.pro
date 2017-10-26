@@ -1,14 +1,14 @@
 pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
-        jr = jr, jt = jt, jz = jz, kjDeltaFileName = _kjDeltaFileName, $
-        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid;, $
-        ;previousDelta_r = _previousDelta_r, $
-        ;previousDelta_t = _previousDelta_t, $
-        ;previousDelta_z = _previousDelta_z
+        jr = jr, jt = jt, jz = jz, $
+        kjDeltaFileName_in = _kjDeltaFileName_in, $
+        kjDeltaFileName_out = _kjDeltaFileName_out, $
+        referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid
 
 if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
 if keyword_set(_hot) then hot = _hot else hot = 0
-if keyword_set(_kjDeltaFileName) then kjDeltaFileName = _kjDeltaFileName else kjDeltaFileName = 'kj-delta.nc'
+if keyword_set(_kjDeltaFileName_in) then kjDeltaFileName_in = _kjDeltaFileName_in else kjDeltaFileName_in = 'kj-delta-in.nc'
+if keyword_set(_kjDeltaFileName_out) then kjDeltaFileName_out = _kjDeltaFileName_out else kjDeltaFileName_out = 'kj-delta-out.nc'
 if keyword_set(_referenceSolutionDir) then referenceSolutionDir = _referenceSolutionDir else referenceSolutionDir = './'
 
 useAR = 1
@@ -18,44 +18,70 @@ if useRS then useAR = 0
 
 ; Get the plasma parameters
 
-arP = ar2_read_runData('./',1)
-
-f = arP.freq
-w = 2 * !pi * f
-B = sqrt( arP.br^2 + arP.bt^2 + arP.bz^2 )
-r = arP.r
-nPhi = arP.nPhi
-nX = n_elements(arP.br)
-density = arP.densitySpec
-temp = arP.tempSpec
-nuOmg = arP.nuOmg
-kz = 0
-
-if keyword_set(_previousDelta_r) then previousDelta_r = _previousDelta_r else previousDelta_r = complexArr(nX)
-if keyword_set(_previousDelta_t) then previousDelta_t = _previousDelta_t else previousDelta_t = complexArr(nX)
-if keyword_set(_previousDelta_z) then previousDelta_z = _previousDelta_z else previousDelta_z = complexArr(nX)
-
 ar2 = ar2_read_ar2input('./')
-
 amu = ar2.amu
 atomicZ = ar2.atomicZ
-
 nS = n_elements(amu)
 
 ; Get the E field
 
 if useAR then begin
-    print, 'Reading AR Solution'
+
+    arP = ar2_read_runData('./',1)
+
+    f = arP.freq
+    br = arP.br
+    bt = arP.bt
+    bz = arP.bz
+    B = sqrt( br^2 + bt^2 + bz^2 )
+    r = arP.r
+    nPhi = arP.nPhi
+    density = reform(arP.densitySpec)
+    temp = reform(arP.tempSpec) 
+    nu_omg = reform(arP.nu_omg)
+
     solution = ar2_read_solution('./',1)
     solution_ref = ar2_read_solution(referenceSolutionDir,1)
+
 endif
 
 if useRS then begin
-    print, 'Reading RS Solution'
+
+    rs = rs_read_runData('./')
+
+    f = rs['freq']
+    br = rs['br']
+    bt = rs['bt']
+    bz = rs['bz']
+    B = sqrt( br^2 + bt^2 + bz^2 )
+    r = rs['r']
+    nPhi = rs['nphi']
+    density = rs['densityspec']
+    temp = density*0 
+
+    ; Since RS doesn't have temperature, we import from ar2Import.nc
+    ; ----------
+    nS = n_elements(density[0,*])
+    nR_ar2 = n_elements(ar2.temp_eV[*,0,0])
+    nZ_ar2 = n_elements(ar2.temp_eV[0,*,0])
+    z = r*0
+    for s=0,nS-1 do begin
+        temp[*,s] = reform(interpolate( ar2.temp_eV[*,*,s], $
+            (r-ar2.rMin) / (ar2.rMax-ar2.rMin) * (nR_ar2-1), $
+            (z-ar2.zMin) / (ar2.zMax-ar2.zMin) * (nZ_ar2-1), cubic=-0.5))
+    endfor 
+    ; ----------
+
+    nu_omg = rs['nuomg']
+
     solution = rsfwc_read_solution('./')
     solution_ref = rsfwc_read_solution(referenceSolutionDir)
-    if size(B,/n_elements) ne size(solution.r,/n_elements) then stop
+    
 endif
+
+kz = 0
+w = 2 * !pi * f
+nX = n_elements(r)
 
 if hot then begin
     print, 'Using HOT dielectric'
@@ -93,7 +119,7 @@ sigc_abp = complexArr(3,3,nX,windowWidth+1,nS)
 
 R_abp_to_rtz = fltArr(3,3,nX) 
 for i=1,nX-2 do begin
-    thisBUnitVec = [arp.br[i],arp.bt[i],arp.bz[i]]/B[i]
+    thisBUnitVec = [br[i],bt[i],bz[i]]/B[i]
     R_abp_to_rtz[*,*,i] = get_rotmat_abp_to_rtz(thisBUnitVec)
 endfor
 
@@ -169,12 +195,12 @@ for s=0,nS-1 do begin
         ;for k=0,N-1 do begin
     
             epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
-                    density[i,0,s], harmonicNumber, kPar[i], kPer, temp[i,0,s], $
-                    kx = 0, nuOmg = nuOmg[i,0,s]);, epsilon_cold = epsilon_cold) ;, $
+                    density[i,s], harmonicNumber, kPar[i], kPer, temp[i,s], $
+                    kx = 0, nu_omg = nu_omg[i,s]);, epsilon_cold = epsilon_cold) ;, $
                     ;epsilon_swan_ND = epsilon_swan );
    
             epsilon_cold = kj_epsilon_cold(f, amu[s], atomicZ[s], B[i], $
-                    density[i,0,s], nuOmg[i,0,s])
+                    density[i,s], nu_omg[i,s])
 
             epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
     
@@ -259,7 +285,7 @@ Er = solution.E_r
 Et = solution.E_t
 Ez = solution.E_z
 
-sign = +1
+sign = -1
 
 delta_r = sign * (reform(solution_ref.jp_r) - jr)
 delta_t = sign * (reform(solution_ref.jp_t) - jt)
@@ -395,9 +421,23 @@ if not useRS then begin
 endif
 endif
 
-; Write the kinetic-j update / delta to a file
+; Update the kj-delta-out file by adding the new delta to the 
+; kj-delta-in file
 
-nc_id = nCdf_create (kjDeltaFileName, /clobber )
+kj_in = ncdf_parse(kjDeltaFileName_in,/read)
+
+jP_r_re_in = kj_in['jP_r_re','_DATA']
+jP_r_im_in = kj_in['jP_r_im','_DATA']
+jP_t_re_in = kj_in['jP_t_re','_DATA']
+jP_t_im_in = kj_in['jP_t_im','_DATA']
+jP_z_re_in = kj_in['jP_z_re','_DATA']
+jP_z_im_in = kj_in['jP_z_im','_DATA']
+
+jP_r_in = complex(jP_r_re_in,jP_r_im_in)
+jP_t_in = complex(jP_t_re_in,jP_t_im_in)
+jP_z_in = complex(jP_z_re_in,jP_z_im_in)
+
+nc_id = nCdf_create (kjDeltaFileName_out, /clobber )
 
 	nCdf_control, nc_id, /fill
 	
@@ -420,12 +460,12 @@ nc_id = nCdf_create (kjDeltaFileName, /clobber )
 
 	nCdf_varPut, nc_id, r_id, r 
    
-	nCdf_varPut, nc_id, jr_re_id, real_part( total(delta_r,2) )
-	nCdf_varPut, nc_id, jr_im_id, imaginary( total(delta_r,2) )
-	nCdf_varPut, nc_id, jt_re_id, real_part( total(delta_t,2) )
-	nCdf_varPut, nc_id, jt_im_id, imaginary( total(delta_t,2) )
-	nCdf_varPut, nc_id, jz_re_id, real_part( total(delta_z,2) )
-	nCdf_varPut, nc_id, jz_im_id, imaginary( total(delta_z,2) )
+	nCdf_varPut, nc_id, jr_re_id, real_part( jP_r_in + total(delta_r,2) )
+	nCdf_varPut, nc_id, jr_im_id, imaginary( jP_r_in + total(delta_r,2) )
+	nCdf_varPut, nc_id, jt_re_id, real_part( jP_t_in + total(delta_t,2) )
+	nCdf_varPut, nc_id, jt_im_id, imaginary( jP_t_in + total(delta_t,2) )
+	nCdf_varPut, nc_id, jz_re_id, real_part( jP_z_in + total(delta_z,2) )
+	nCdf_varPut, nc_id, jz_im_id, imaginary( jP_z_in + total(delta_z,2) )
 
 nCdf_close, nc_id
 

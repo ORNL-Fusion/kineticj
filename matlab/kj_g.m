@@ -1,6 +1,6 @@
 function [x] = kj_g (x,it)
 
-useAR = 1;
+useAR = 0;
 
 if ~exist('it','var') || isempty(it)
   it=1;
@@ -34,7 +34,7 @@ cd(thisDir);
 
 % Update the delta file with the new x values
 
-deltaFile = 'kj-delta.nc';
+deltaFile = 'kj-delta-in.nc';
 
 [jr,jt,jz] = kj_x_to_vec(x);
 
@@ -45,12 +45,25 @@ ncwrite(deltaFile,'jP_t_im',imag(jt));
 ncwrite(deltaFile,'jP_z_re',real(jz));
 ncwrite(deltaFile,'jP_z_im',imag(jz));
 
+% Setup machine specific mpirun string commands
+
+[~, name] = system('hostname');
+name = strip(name);
+
+if strcmp('dlg-macbookpro2',name)
+    mpiString = 'TMPDIR=~/ /usr/local/bin/mpirun ';
+else
+    mpiString = '/opt/local/bin/mpirun ';
+end
+
 if useAR
 
     % Run AR 
-
-    %!/opt/local/bin/mpirun -n 24 ~/code/aorsa2d/xaorsa2d &> ar.log
-    !/opt/local/bin/mpirun -n 24 ~/code/aorsa2d/xaorsa2d
+    
+    %arString = ' -n 24 ~/code/aorsa2d/xaorsa2d &> ar.log';
+    arString = ' -n 24 ~/code/aorsa2d/xaorsa2d';
+    command = strcat(mpiString,arString);
+    status = system(command);
     
 else
     % Run RS
@@ -68,7 +81,7 @@ end
 
 % Read new delta from file
 
-deltaFile = 'kj-delta.nc';
+deltaFile = 'kj-delta-out.nc';
 
 jr_re = ncread(deltaFile,'jP_r_re');
 jr_im = ncread(deltaFile,'jP_r_im');

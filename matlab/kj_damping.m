@@ -1,6 +1,6 @@
 function [fac] = kj_damping(it,N)
 
-    maxFac = 0.1;
+    maxFac = 0.9;
     
     th = it / N * pi;
     th(th>pi) = pi;

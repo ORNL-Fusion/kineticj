@@ -2,7 +2,7 @@ function kj_iterate_aa ()
 
 f1 = figure;
 
-useAR = 1;
+useAR = 0;
 
 % Get the initial guess at x, either zero (startIteration=0)
 % or resume from startIteration = N. 
@@ -19,7 +19,7 @@ else
     startRunDir = char(strcat('run',sprintf('%4.4i',startIteration)));
 end
 
-deltaFile = strcat(startRunDir,'/kj-delta.nc');
+deltaFile = strcat(startRunDir,'/kj-delta-in.nc');
 
 jr_re = ncread(deltaFile,'jP_r_re');
 jr_im = ncread(deltaFile,'jP_r_im');
@@ -45,7 +45,7 @@ x = kj_vec_to_x(jr,jt,jz);
 
 g = @kj_g;
 beta = @kj_damping;
-beta_N = 30;
+beta_N = 5;
 maxIterations = 1000;
 atol = 1.0e-10;
 rtol = 1.0e-10;

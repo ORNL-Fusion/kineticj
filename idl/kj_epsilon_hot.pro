@@ -12,7 +12,7 @@ end
 
 function kj_epsilon_hot, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
     epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
-    kx = kx, nuOmg = _nu_omg
+    kx = kx, nu_omg = _nu_omg
 
 ; Vectorized over kPer
 
@@ -27,7 +27,7 @@ if iiNegCnt gt 0 then stop
 _kPer = kPer>1e-5
 
 w = 2 * !Pi * f
-m = amu * _amu; * complex( 1, nu_omg) 
+m = amu * _amu
 q = atomicZ * _e
 nPar = _c * kPar / w
 nPer = _c * _kPer / w
@@ -103,11 +103,10 @@ for alp = 0,nS-1 do begin
         x = (_w - n*wc) / (kPar * vTh)
         x0 = _w / (kPar * vTh)
 
-        Z = (kj_zfunction(x, Zp=Zp))[0]
+        ZetaC = (nu_omg * w) / (kPar * vTh) ; Smithe modification
+        Z = (kj_zfunction(x, Zp=Zp, ZetaC=ZetaC))[0]
         Zp = Zp[0]
 
-        ;print, x, Z, Zp
-       
         In = beselI(lambda, n, /double)
         Inp = kj_IPrime(lambda, n)
 
@@ -127,11 +126,10 @@ for alp = 0,nS-1 do begin
 
             x = (w + n*wc_swan) / (kPar * vTh) 
 
-            Z_swan = (kj_zfunction(x, Zp=Zp_swan))[0]
+            ZetaC = (nu_omg * w) / (kPar * vTh) ; Smithe modification
+            Z_swan = (kj_zfunction(x, Zp=Zp_swan, ZetaC=ZetaC))[0]
             Zp_swan = Zp_swan[0]
             
-            ;print, x, Z, Zp
-
             v0 = 0
             T_eV_Per = T_eV
             T_eV_Par = T_eV

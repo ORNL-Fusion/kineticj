@@ -16,30 +16,35 @@ function kj_dn, n ; Used in asymptotic series for arg >> 1
 
 end
 
-function kj_zfunction, arg, Zp=Zp
+function kj_zfunction, zeta, Zp=Zp, zetaC=_zetaC
 
-    common zFunctionTable, Z_re, Z_im, Zp_re, Zp_im, arg_re
+    ; zeta  = (w +/- wc) /(|kparalllel|*vThermal)
+    ; zetaC = nuCollision/(|kparalllel|*vThermal)
+
+    if keyword_set(_zetaC) then zetaC = _zetaC else zetaC = 0
+
+    common zFunctionTable, Z_re, Z_im, Zp_re, Zp_im, zeta_re
 
     ; Plasma dispersion function using  
     ; mathematica created table 
     ; (see zFunction_table_creator.nb in kinetic-j repo)
     ; Don't use the asymptoptic expansion anymore, since 
-    ; we have the table out to +/- 1e5 in the Re(arg) and
-    ; could even go larger with the non-uniform (log10)
+    ; we have the table out to +/- 1e5 in the Re(zeta) and
+    ; could even go lzetaer with the non-uniform (log10)
     ; spacing of table. 
 
     @constants
 
     ; If first call then read file
 
-    if size(arg_re,/type) eq 0 then begin
+    if size(zeta_re,/type) eq 0 then begin
 
         print, 'OPENING ZFUNCTION FILE'
 
         zfunFileName = expand_path('~/code/kineticj/mathematica/zFunction.nc')
 	    cdfId = ncdf_open(zFunFileName)
 
-	    	ncdf_varget, cdfId, 'arg_re', arg_re
+	    	ncdf_varget, cdfId, 'arg_re', zeta_re
 	    	ncdf_varget, cdfId, 'Z_re', Z_re
 	    	ncdf_varget, cdfId, 'Z_im', Z_im
 	    	ncdf_varget, cdfId, 'Zp_re', Zp_re
@@ -51,13 +56,21 @@ function kj_zfunction, arg, Zp=Zp
 
     ; First interpolate from table
 
-	this_Z_re = interpol(Z_re,arg_re,real_part(arg),/spline)
-	this_Z_im = interpol(Z_im,arg_re,real_part(arg),/spline)
-	this_Zp_re = interpol(Zp_re,arg_re,real_part(arg),/spline)
-	this_Zp_im = interpol(Zp_im,arg_re,real_part(arg),/spline)
+	this_Z_re = interpol(Z_re,zeta_re,real_part(zeta),/spline)
+	this_Z_im = interpol(Z_im,zeta_re,real_part(zeta),/spline)
+	this_Zp_re = interpol(Zp_re,zeta_re,real_part(zeta),/spline)
+	this_Zp_im = interpol(Zp_im,zeta_re,real_part(zeta),/spline)
 
-	Z = complex(this_Z_re,this_Z_im)
+	Z  = complex(this_Z_re,this_Z_im)
 	Zp = complex(this_Zp_re,this_Zp_im)
+
+    ; From David Smithe
+
+    ; zetaC = nuCollision/(|kparalllel|*vThermal)
+
+    factor = complex(1.0,0.0)-complex(0.0,zetaC)*Z
+    Z  = Z / factor
+    Zp = Zp/ (factor*factor) 
 
 	return, Z
 
