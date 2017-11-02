@@ -72,6 +72,8 @@ if useRS then begin
     endfor 
     ; ----------
 
+    temp = temp * 0.0001
+
     nu_omg = rs['nuomg']
 
     solution = rsfwc_read_solution('./')
@@ -99,6 +101,10 @@ windowWidth = 512
 jr = complexArr(nX,nS)
 jt = complexArr(nX,nS)
 jz = complexArr(nX,nS)
+
+jrAll = complexArr(nX,nX,nS)
+jtAll = complexArr(nX,nX,nS)
+jzAll = complexArr(nX,nX,nS)
 
 run = 1
 savFileName = 'kj-stix.sav'
@@ -146,18 +152,9 @@ for s=0,nS-1 do begin
         
         N = n_elements(solution.E_r[iL:iR])
     
-        ;if useRS then begin
-            er = +solution.e_r[iL:iR] * hanning(n)
-            et = +solution.e_t[iL:iR] * hanning(n)
-            ez = +solution.e_z[iL:iR] * hanning(n)
-        ;endif else begin
-        ;    ;er = +solution.e_r[iL:iR] * hanning(n)
-        ;    ;et = -solution.e_t[iL:iR] * hanning(n)
-        ;    ;ez = +solution.e_z[iL:iR] * hanning(n)
-        ;    er = +solution.e_r[iL:iR] ;* hanning(n)
-        ;    et = +solution.e_t[iL:iR] ;* hanning(n)
-        ;    ez = +solution.e_z[iL:iR] ;* hanning(n)
-        ;endelse
+        er = +solution.e_r[iL:iR] * hanning(n)
+        et = +solution.e_t[iL:iR] * hanning(n)
+        ez = +solution.e_z[iL:iR] * hanning(n)
 
         ;; Test for FFT
         ;kk = 200.0  
@@ -234,29 +231,23 @@ for s=0,nS-1 do begin
                 _sigma = sigma_cold
 
             endelse
-    
+
+            for k=0,N-1 do begin
+    	            sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+            endfor
+
+
             sig2[*,*,i,_iL:_iR,s] = _sigma
             sigc[*,*,i,_iL:_iR,s] = sigma_cold
             sig2_abp[*,*,i,_iL:_iR,s] = sigma_abp_bram
             sigc_abp[*,*,i,_iL:_iR,s] = sigma_abp_cold
     
             ; Calculate k-space plasma current
-            ; This would have to be generalize for non magnetically aligned coordinates.
     
-            ; Try flipping the indexing order also.
-    
-            ;if useRS then begin
-                jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
-                jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
-                jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
-            ;endif else begin
-            ;    ;jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekz + _sigma[2,0,*] * Ekt)[*]
-            ;    ;jkz = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekz + _sigma[2,1,*] * Ekt)[*]
-            ;    ;jkt = -(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekz + _sigma[2,2,*] * Ekt)[*]
-            ;    jkr = +(_sigma[0,0,*] * Ekr + _sigma[0,1,*] * Ekt + _sigma[0,2,*] * Ekz)[*]
-            ;    jkt = +(_sigma[1,0,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[1,2,*] * Ekz)[*]
-            ;    jkz = +(_sigma[2,0,*] * Ekr + _sigma[2,1,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
-            ;endelse
+            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
+            jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
+            jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+
         ;endfor
         
         ; Inverse FFT for configuration-space plasma current
@@ -264,11 +255,59 @@ for s=0,nS-1 do begin
         thisjr = fft(jkr,/center,/inverse)
         thisjt = fft(jkt,/center,/inverse)
         thisjz = fft(jkz,/center,/inverse)
-    
+
+        ; Extract the central point from the FFT
+
         jr[i,s] = thisjr[N/2]
         jt[i,s] = thisjt[N/2]
         jz[i,s] = thisjz[N/2]
+   
+        ; Store all the j(x) such that we can average later. 
+
+        jrAll[i,iL:iR,s] = thisjr
+        jtAll[i,iL:iR,s] = thisjt
+        jzAll[i,iL:iR,s] = thisjz
+
+        if i eq 350 then stop
+    endfor
+
+    ; Now do the windowed average over spatial points
+   
+    windowWidth2 = 10 
+    for i=1,nX-2 do begin
+
+        iL = (i-windowWidth2/2)>0
+        iR = (i+windowWidth2/2)<(nX-1)
     
+        thisWindowWidth = min([i-iL,iR-i])*2+1
+    
+        if thisWindowWidth gt windowWidth+1 then stop
+    
+        iL = i - (thisWindowWidth-1)/2
+        iR = i + (thisWindowWidth-1)/2
+ 
+        N = n_elements(jrAll[iL:iR,0,0])
+        win = kj_hanning(N,/sym)
+        
+        win = win/total(win)
+        win2D = rebin(win,N,n_elements(jrAll[0,*,0]))
+
+        thisJr = total(reform(jrAll[iL:iR,*,s]) * win2D,1)
+        thisJt = total(reform(jtAll[iL:iR,*,s]) * win2D,1)
+        thisJz = total(reform(jzAll[iL:iR,*,s]) * win2D,1)
+
+        jr[i,s] = thisjr[N/2]
+        jt[i,s] = thisjt[N/2]
+        jz[i,s] = thisjz[N/2]
+
+        if i eq 350 then begin
+        for j=0,N-1 do begin
+            p=plot(jtAll[iL+j,*,s],/over)
+        endfor
+        p=plot(jtAll[iL+N/2,*,s],/over,color='b')
+        p=plot(thisJt,/over,color='r')
+        stop
+        endif
     endfor
 
 endfor

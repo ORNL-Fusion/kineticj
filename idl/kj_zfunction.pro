@@ -54,18 +54,28 @@ function kj_zfunction, zeta, Zp=Zp, zetaC=_zetaC
 
     endif
 
-    ; First interpolate from table
+    if zeta lt min(zeta_re) or zeta gt max(zeta_re) then begin
+     
+        ; Analytic limits off the end of the table
 
-	this_Z_re = interpol(Z_re,zeta_re,real_part(zeta),/spline)
-	this_Z_im = interpol(Z_im,zeta_re,real_part(zeta),/spline)
-	this_Zp_re = interpol(Zp_re,zeta_re,real_part(zeta),/spline)
-	this_Zp_im = interpol(Zp_im,zeta_re,real_part(zeta),/spline)
+        Z  = complex(-1/zeta,0)
+        Zp = complex(1/zeta^2,0)
 
-	Z  = complex(this_Z_re,this_Z_im)
-	Zp = complex(this_Zp_re,this_Zp_im)
+    endif else begin
 
-    ; From David Smithe
+        ; First interpolate from table
 
+	    this_Z_re = interpol(Z_re,zeta_re,real_part(zeta),/spline)
+	    this_Z_im = interpol(Z_im,zeta_re,real_part(zeta),/spline)
+	    this_Zp_re = interpol(Zp_re,zeta_re,real_part(zeta),/spline)
+	    this_Zp_im = interpol(Zp_im,zeta_re,real_part(zeta),/spline)
+
+	    Z  = complex(this_Z_re,this_Z_im)
+	    Zp = complex(this_Zp_re,this_Zp_im)
+
+    endelse
+
+    ; From David Smithe to add collisional damping.
     ; zetaC = nuCollision/(|kparalllel|*vThermal)
 
     factor = complex(1.0,0.0)-complex(0.0,zetaC)*Z
