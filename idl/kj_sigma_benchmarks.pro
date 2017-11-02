@@ -76,7 +76,7 @@ endif else if benchmark eq 2 then begin
 
     f = 13d6
     Z = 1d0
-    amu =  2.0;_me_amu
+    amu =  2.0
     BUnit = [0,0,1]
     density = 2d19
     harmonicNumber = 4
@@ -298,7 +298,7 @@ for j=0,nB-1 do begin
 
     thisTeV = T_eV[i]
     thisB = B_T[j]
-    this_eps = kj_hot_epsilon(f, amu, Z, thisB, density, $
+    this_eps = kj_epsilon_hot(f, amu, Z, thisB, density, $
             harmonicNumber, kPar, kPer, thisTeV, $
             epsilon_cold = this_eps_cold, kx = kx, $
             epsilon_swan_WD = this_eps_swan, $
@@ -539,6 +539,12 @@ if benchmark eq 1 or benchmark eq 2 then begin
     x_kj = alog10(T_eV_kj)
 endif
 
+if benchmark eq 2 then begin
+
+    plotThis = sig_swan
+
+endif
+
 if benchmark eq 3 then begin
     xTitle ='$\omega/\omega_{c}$'
 
@@ -587,148 +593,29 @@ if benchmark eq 5 then begin
 
 endif
 
-p=plot(x,plotThis[0,0,*],layout=[[layout],pos],$
-        title='$\sigma_{xx}$',yRange=[-1,1]*max(abs(plotThis[0,0,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{xx} [S/m]$', margin=margin, $
-        xRange=xRange )
-p=plot(x,imaginary(plotThis[0,0,*]),color='r',/over)
-p=plot(x,plotThis_cold[0,0,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[0,0,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
+label=['x','y','z']
+pos = 1
+for i=0,2 do begin
+for j=0,2 do begin
 
-p=plot(x_kj, sig_kj[0,0,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[0,0,*]), color=kj_color2, /over, thick=3, transparency=transparency)
+    subscript = label[i]+label[j]
+    p=plot(x,plotThis[i,j,*],layout=[[layout],pos],$
+            title='$\sigma_{'+subscript+'}$',yRange=[-1,1]*max(abs(plotThis[i,j,*])),/buffer,$
+            font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
+            xMinor = 0, axis_style=1, yTitle='$\sigma_{'+subscript+'} [S/m]$', margin=margin, $
+            xRange=xRange, /current )
+    p=plot(x,imaginary(plotThis[i,j,*]),color='r',/over)
 
-p=plot(x, sig_swan[0,0,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,0,*]), color='r', /over, thick=1, lineStyle='--')
+    p=plot(x,plotThis_cold[i,j,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
+    p=plot(x,imaginary(plotThis_cold[i,j,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
+    
+    p=plot(x_kj, sig_kj[i,j,*], /over, thick=3, color=kj_color1, transparency=transparency)
+    p=plot(x_kj, imaginary(sig_kj[i,j,*]), color=kj_color2, /over, thick=3, transparency=transparency)
+    
+    pos++
 
-++pos 
-p=plot(x,plotThis[0,1,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{xy}$',yRange=[-1,1]*max(abs(plotThis[0,1,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{xy} [S/m]$', margin=margin, xRange=xRange )
-p=plot(x,imaginary(plotThis[0,1,*]),color='r',/over)
-p=plot(x,plotThis_cold[0,1,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[0,1,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[0,1,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[0,1,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[0,1,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,1,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos 
-p=plot(x,plotThis[0,2,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{xz}$',yRange=[-1,1]*max(abs(plotThis[0,2,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{xz} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[0,2,*]),color='r',/over)
-p=plot(x,plotThis_cold[0,2,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[0,2,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[0,2,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[0,2,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[0,2,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[0,2,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos
-p=plot(x,plotThis[1,0,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{yx}$',yRange=[-1,1]*max(abs(plotThis[1,0,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{yx} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[1,0,*]),color='r',/over)
-p=plot(x,plotThis_cold[1,0,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[1,0,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[1,0,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[1,0,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[1,0,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,0,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos 
-p=plot(x,plotThis[1,1,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{yy}$',yRange=[-1,1]*max(abs(plotThis[1,1,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{yy} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[1,1,*]),color='r',/over)
-p=plot(x,plotThis_cold[1,1,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[1,1,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[1,1,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[1,1,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[1,1,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,1,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos 
-p=plot(x,plotThis[1,2,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{yz}$',yRange=[-1,1]*max(abs(plotThis[1,2,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{yz} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[1,2,*]),color='r',/over)
-p=plot(x,plotThis_cold[1,2,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[1,2,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[1,2,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[1,2,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[1,2,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[1,2,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos
-p=plot(x,plotThis[2,0,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{zx}$',yRange=[-1,1]*max(abs(plotThis[2,0,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{zx} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[2,0,*]),color='r',/over)
-p=plot(x,plotThis_cold[2,0,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[2,0,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[2,0,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[2,0,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[2,0,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,0,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos 
-p=plot(x,plotThis[2,1,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{zy}$',yRange=[-1,1]*max(abs(plotThis[2,1,*])),/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{zy} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[2,1,*]),color='r',/over)
-p=plot(x,plotThis_cold[2,1,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[2,1,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[2,1,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[2,1,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[2,1,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,1,*]), color='r', /over, thick=1, lineStyle='--')
-
-++pos 
-
-p=plot(x,plotThis[2,2,*],layout=[[layout],pos],/current, $
-        title='$\sigma_{zz}$',/buffer,$
-        font_size=12, xTitle=xTitle, xTickFont_size=xFS, yTickFont_size=yFS, $
-        xMinor = 0, axis_style=1, yTitle='$\sigma_{zz} [S/m]$', margin=margin, xRange=xRange )
-
-p=plot(x,imaginary(plotThis[2,2,*]),color='r',/over)
-p=plot(x,plotThis_cold[2,2,*],/over,thick=thick,transparency=transparencyC,LineStyle=style)
-p=plot(x,imaginary(plotThis_cold[2,2,*]),color='r',/over,thick=thick,transparency=transparencyC,LineStyle=style)
-
-p=plot(x_kj, sig_kj[2,2,*], /over, thick=3, color=kj_color1, transparency=transparency)
-p=plot(x_kj, imaginary(sig_kj[2,2,*]), color=kj_color2, /over, thick=3,transparency=transparency)
-
-p=plot(x, sig_swan[2,2,*], /over, thick=1, lineStyle='--')
-p=plot(x, imaginary(sig_swan[2,2,*]), color='r', /over, thick=1, lineStyle='--')
+endfor
+endfor
 
 p.save, benchmarkDirString+'.png', resolution=300, /transparent
 p.save, benchmarkDirString+'.pdf'

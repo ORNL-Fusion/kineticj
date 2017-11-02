@@ -147,9 +147,9 @@ for s=0,nS-1 do begin
         N = n_elements(solution.E_r[iL:iR])
     
         ;if useRS then begin
-            er = +solution.e_r[iL:iR] ;* hanning(n)
-            et = +solution.e_t[iL:iR] ;* hanning(n)
-            ez = +solution.e_z[iL:iR] ;* hanning(n)
+            er = +solution.e_r[iL:iR] * hanning(n)
+            et = +solution.e_t[iL:iR] * hanning(n)
+            ez = +solution.e_z[iL:iR] * hanning(n)
         ;endif else begin
         ;    ;er = +solution.e_r[iL:iR] * hanning(n)
         ;    ;et = -solution.e_t[iL:iR] * hanning(n)

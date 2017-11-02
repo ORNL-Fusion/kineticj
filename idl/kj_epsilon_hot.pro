@@ -11,8 +11,8 @@ end
 
 
 function kj_epsilon_hot, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
-    epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
-    kx = kx, nu_omg = _nu_omg
+    epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan_WD, epsilon_swan_ND = epsilon_swan_ND, $
+    kx = kx, nuOmg = _nu_omg
 
 ; Vectorized over kPer
 
@@ -42,7 +42,7 @@ etahat = dComplexArr(NK) + dcomplex(0,0)
 tauhat = dComplexArr(NK) + dcomplex(0,0)
 epshat = dComplexArr(NK) + dcomplex(0,0)
 
-if keyword_set(epsilon_swan) then begin
+if arg_present(epsilon_swan_WD) then begin
     K0 = dComplex(0,0)
     K1 = dComplex(1,0)
     K2 = dComplex(0,0)
@@ -76,7 +76,7 @@ for alp = 0,nS-1 do begin
     tau_sum = dcomplexArr(NK)
     eps_sum = dcomplexArr(NK)
 
-    if keyword_set(epsilon_swan) then begin
+    if arg_present(epsilon_swan_WD) then begin
         K0_HarmSum = dComplexArr(NK)
         K1_HarmSum = dComplexArr(NK)
         K2_HarmSum = dComplexArr(NK)
@@ -120,7 +120,7 @@ for alp = 0,nS-1 do begin
 
         ; Swanson expressions, pg 175-176
 
-        if keyword_set(epsilon_swan) or arg_present(epsilon_swan_ND) then begin
+        if arg_present(epsilon_swan_WD) or arg_present(epsilon_swan_ND) then begin
 
             wc_swan = abs(wc)
 
@@ -148,7 +148,7 @@ for alp = 0,nS-1 do begin
 
         endif
 
-        if keyword_set(epsilon_swan) then begin
+        if arg_present(epsilon_swan_WD) then begin
             K0_HarmSum += lambda * ( In - Inp ) * _f3
             K1_HarmSum += n^2 * In / lambda * _f3
             K2_HarmSum += n * ( In - Inp ) * _f3
@@ -179,13 +179,13 @@ for alp = 0,nS-1 do begin
     epsHat += wp^2/(_w*wc) * vTh^2/_c^2 * eps_sum
 
     ; Swanson
-    if keyword_set(epsilon_swan) or arg_present(epsilon_swan_ND) then begin
+    if arg_present(epsilon_swan_WD) or arg_present(epsilon_swan_ND) then begin
         _eps = atomicZ / abs(atomicZ) 
         _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
         _g2 = _kPer * wp^2 * exp(-lambda) / ( 2 * kz * w * wc_swan )
     endif
 
-    if keyword_set(epsilon_swan) then begin
+    if arg_present(epsilon_swan_WD) then begin
         K0 += 2 * _g1 * K0_HarmSum 
         K1 += _g1 * K1_HarmSum
         K2 += _ii * _eps * _g1 * K2_HarmSum 
@@ -239,9 +239,9 @@ epsilon[2,2,*] = ezz
 
 ; Swamson
 
-if keyword_set(epsilon_swan) then begin
+if arg_present(epsilon_swan_WD) then begin
 
-    epsilon_swan = dComplexArr(3,3,NK)
+    epsilon_swan_WD = dComplexArr(3,3,NK)
     
     psi = acos ( kx / _kPer )
     
@@ -257,17 +257,17 @@ if keyword_set(epsilon_swan) then begin
     swan_ezy = sin(psi) * K4 + cos(psi) * K5
     swan_ezz = K3
     
-    epsilon_swan[0,0,*] = swan_exx
-    epsilon_swan[0,1,*] = swan_exy
-    epsilon_swan[0,2,*] = swan_exz
+    epsilon_swan_WD[0,0,*] = swan_exx
+    epsilon_swan_WD[0,1,*] = swan_exy
+    epsilon_swan_WD[0,2,*] = swan_exz
     
-    epsilon_swan[1,0,*] = swan_eyx
-    epsilon_swan[1,1,*] = swan_eyy
-    epsilon_swan[1,2,*] = swan_eyz
+    epsilon_swan_WD[1,0,*] = swan_eyx
+    epsilon_swan_WD[1,1,*] = swan_eyy
+    epsilon_swan_WD[1,2,*] = swan_eyz
     
-    epsilon_swan[2,0,*] = swan_ezx
-    epsilon_swan[2,1,*] = swan_ezy
-    epsilon_swan[2,2,*] = swan_ezz
+    epsilon_swan_WD[2,0,*] = swan_ezx
+    epsilon_swan_WD[2,1,*] = swan_ezy
+    epsilon_swan_WD[2,2,*] = swan_ezz
 
 endif
 
