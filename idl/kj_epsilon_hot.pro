@@ -179,13 +179,14 @@ for alp = 0,nS-1 do begin
     epsHat += wp^2/(_w*wc) * vTh^2/_c^2 * eps_sum
 
     ; Swanson
-    if arg_present(epsilon_swan_WD) or arg_present(epsilon_swan_ND) then begin
-        _eps = atomicZ / abs(atomicZ) 
-        _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
-        _g2 = _kPer * wp^2 * exp(-lambda) / ( 2 * kz * w * wc_swan )
-    endif
 
     if arg_present(epsilon_swan_WD) then begin
+
+        _eps = atomicZ / abs(atomicZ) 
+        _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
+        ; The factor of 2 is within the harmonic sum for _WD.
+        _g2 = _kPer * wp^2 * exp(-lambda) / ( kz * w * wc_swan ) 
+ 
         K0 += 2 * _g1 * K0_HarmSum 
         K1 += _g1 * K1_HarmSum
         K2 += _ii * _eps * _g1 * K2_HarmSum 
@@ -195,6 +196,11 @@ for alp = 0,nS-1 do begin
     endif
 
     if arg_present(epsilon_swan_ND) then begin
+
+        _eps = atomicZ / abs(atomicZ) 
+        _g1 = wp^2 * exp(-lambda) / ( w * kz * vTh )
+        _g2 = _kPer * wp^2 * exp(-lambda) / ( 2 * kz * w * wc_swan ) 
+ 
         K0_ND += 2 * _g1 * K0_HarmSum_ND
         K1_ND += _g1 * K1_HarmSum_ND
         K2_ND += _ii * _eps * _g1 * K2_HarmSum_ND 
@@ -313,11 +319,15 @@ if arg_present(epsilon_swan_ND) then begin
     diff_re = abs((real_part(AA) - real_part(BB)))/abs(real_part(AA))
     iiZero = where(diff_re lt tol,iiCnt)
     diff_re[iiZero] = 0
-
+    iiZero = where(abs((real_part(AA) - real_part(BB))) lt tol, iiCnt)
+    diff_re[iiZero] = 0
+    
     diff_im = abs((imaginary(AA) - imaginary(BB)))/abs(imaginary(AA))
     iiZero = where(diff_im lt tol,iiCnt)
     diff_im[iiZero] = 0
-
+    iiZero = where(abs((imaginary(AA) - imaginary(BB))) lt tol, iiCnt)
+    diff_im[iiZero] = 0
+    
     iiInf = where(diff_re*0 ne 0,iiCntInf)
     if iiCntInf gt 0 then diff_re[iiInf] = 0
     
@@ -345,9 +355,6 @@ if arg_present(epsilon_swan_ND) then begin
 
         print, iiBad_re[0], iiBad_im[0]
 
-        print, ''
-        print, -_ii*Dhat[iiBad_re[0]]
-        print, K2_ND[iiBad_re[0]]
         stop
     endif
     
