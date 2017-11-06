@@ -252,7 +252,7 @@ if arg_present(epsilon_swan_WD) then begin
     swan_eyx = -K2 - cos(psi) * sin(psi) * K0
     swan_eyy = K1 + cos(psi)^2 * K0
     swan_eyz = sin(psi) * K4 - cos(psi) * K5
-    
+   
     swan_ezx = cos(psi) * K4 - sin(psi) * K5
     swan_ezy = sin(psi) * K4 + cos(psi) * K5
     swan_ezz = K3
@@ -264,7 +264,7 @@ if arg_present(epsilon_swan_WD) then begin
     epsilon_swan_WD[1,0,*] = swan_eyx
     epsilon_swan_WD[1,1,*] = swan_eyy
     epsilon_swan_WD[1,2,*] = swan_eyz
-    
+  
     epsilon_swan_WD[2,0,*] = swan_ezx
     epsilon_swan_WD[2,1,*] = swan_ezy
     epsilon_swan_WD[2,2,*] = swan_ezz
@@ -301,59 +301,57 @@ if arg_present(epsilon_swan_ND) then begin
     epsilon_swan_ND[2,1,*] = swan_ND_ezy
     epsilon_swan_ND[2,2,*] = swan_ND_ezz
 
-    ;; ------------------------------------------------------
-    ;; Check to see if the Brambilla and Swansons dielectrics
-    ;; match.
+    ; ------------------------------------------------------
+    ; Check to see if the Brambilla and Swansons dielectrics
+    ; match.
 
-    ;AA = epsilon_swan_ND
-    ;BB = epsilon
+    AA = epsilon_swan_ND
+    BB = epsilon
 
-    ;diff_re = (real_part(AA) - real_part(BB))/abs(real_part(AA))
-    ;iiZero = where(AA lt 1.0,iiCnt)
-    ;diff_re[iiZero] = 0
-    ;iiZero = where(imaginary(AA) lt 1.0,iiCnt)
-    ;diff_re[iiZero] = 0
+    tol = 1e-8
 
-    ;diff_im = (imaginary(AA) - imaginary(BB))/abs(imaginary(AA))
-    ;iiZero = where(AA lt 1.0,iiCnt)
-    ;diff_im[iiZero] = 0
-    ;iiZero = where(imaginary(AA) lt 1.0,iiCnt)
-    ;diff_im[iiZero] = 0
+    diff_re = abs((real_part(AA) - real_part(BB)))/abs(real_part(AA))
+    iiZero = where(diff_re lt tol,iiCnt)
+    diff_re[iiZero] = 0
 
-    ;iiInf = where(diff_re*0 ne 0,iiCntInf)
-    ;if iiCntInf gt 0 then diff_re[iiInf] = 0
-    ;
-    ;iiInf = where(diff_im*0 ne 0,iiCntInf)
-    ;if iiCntInf gt 0 then diff_im[iiInf] = 0
+    diff_im = abs((imaginary(AA) - imaginary(BB)))/abs(imaginary(AA))
+    iiZero = where(diff_im lt tol,iiCnt)
+    diff_im[iiZero] = 0
 
-    ;iiBad_re = where(total(total(diff_re,1),1) gt 1,iiBadCnt_re)
-    ;iiBad_im = where(total(total(diff_im,1),1) gt 1,iiBadCnt_im)
+    iiInf = where(diff_re*0 ne 0,iiCntInf)
+    if iiCntInf gt 0 then diff_re[iiInf] = 0
+    
+    iiInf = where(diff_im*0 ne 0,iiCntInf)
+    if iiCntInf gt 0 then diff_im[iiInf] = 0
 
-    ;if iiBadCnt_re gt 0 or iiBadCnt_im gt 0 then begin
+    iiBad_re = where(total(total(diff_re,1),1) ge tol,iiBadCnt_re)
+    iiBad_im = where(total(total(diff_im,1),1) ge tol,iiBadCnt_im)
 
-    ;    print, iiBadCnt_re, iiBadCnt_im
-    ;    print, ''
-    ;    print, '-------------'
-    ;    print, atomicZ, kPar
+    if iiBadCnt_re gt 0 or iiBadCnt_im gt 0 then begin
 
-    ;    print, AA[*,*,iiBad_re[0]]
-    ;    print, ''
-    ;    print, BB[*,*,iiBad_re[0]]
+        print, iiBadCnt_re, iiBadCnt_im
+        print, ''
+        print, '-------------'
+        print, atomicZ, kPar
 
-    ;    print, ''
-    ;    print, AA[*,*,iiBad_im[0]]
-    ;    print, ''
-    ;    print, BB[*,*,iiBad_im[0]]
+        print, AA[*,*,iiBad_re[0]]
+        print, ''
+        print, BB[*,*,iiBad_re[0]]
 
-    ;    print, iiBad_re[0], iiBad_im[0]
+        print, ''
+        print, AA[*,*,iiBad_im[0]]
+        print, ''
+        print, BB[*,*,iiBad_im[0]]
 
-    ;    print, ''
-    ;    print, -_ii*Dhat[iiBad_re[0]]
-    ;    print, K2_ND[iiBad_re[0]]
-    ;    stop
-    ;endif
-    ;
-    ;; ----------------------------------------------------------
+        print, iiBad_re[0], iiBad_im[0]
+
+        print, ''
+        print, -_ii*Dhat[iiBad_re[0]]
+        print, K2_ND[iiBad_re[0]]
+        stop
+    endif
+    
+    ; ----------------------------------------------------------
 
 endif
 
