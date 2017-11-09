@@ -1,14 +1,11 @@
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cu
 
-USECUDA:=1
+# Select only one.
 
-THRUST_POLICY:=
-ifeq ($(USECUDA),1)
-#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
-#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CPP
-THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
-endif
+USE_SERIAL:= 0
+USE_CUDA  := 0
+USE_OPENMP:= 1
 
 NAME := bin/kineticj
 
@@ -18,19 +15,10 @@ INCLUDEFLAGS :=
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
 
-GCCDIR :=  
-PGIDIR := 
-
-VENDOR := GCC_
 CC := gcc
 CPP := g++
-#NVCC := nvcc -g -G -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY}
-NVCC := nvcc -O3 -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY}
-
-
-#VENDOR := PGI_
-#CC := pgcc
-#CPP := pgcpp
+GCC := gcc
+VENDOR := GCC_
 
 ThisMachine := $(shell uname -n)
 
@@ -40,6 +28,27 @@ endif
 
 include machine-makefiles/Makefile.$(ThisMachine)
 include Makefile.flags
+
+ifeq ($(USE_SERIAL),1)
+THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CPP
+NVCC := ${CPP} -O3 -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY} 
+NVCCFLAGS:= -x c++ 
+endif
+
+ifeq ($(USE_CUDA),1)
+THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
+NVCC := nvcc -O3 -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY} 
+NVCCFLAGS:= -dc --expt-relaxed-constexpr -Xcompiler 
+endif
+
+
+ifeq ($(USE_OPENMP),1)
+THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
+NVCC := ${CPP} -O3  -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY} -I ${CUDA_LIBDIR}/thrust
+NVCCFLAGS := -x c++ -fopenmp
+LFLAGS += -lgomp -fopenmp
+endif
+
 
 MODULES := src include
 
@@ -78,7 +87,6 @@ CPPFLAGS += -DDEBUG_INTVECARRAY=0
 CPPFLAGS += -DDEBUG_READ_E_FIELD=0
 CPPFLAGS += -DCYLINDRICAL_INPUT_FIELDS=1
 
-NVCCFLAGS := -dc --expt-relaxed-constexpr -Xcompiler -fopenmp
 
 # You shouldn't have to go below here
 #
@@ -86,8 +94,7 @@ NVCCFLAGS := -dc --expt-relaxed-constexpr -Xcompiler -fopenmp
 # 		the .cu files will work too :)
 
 DIRNAME = `dirname $1`
-MAKEDEPS = gcc -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
-#MAKEDEPS = ${CC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
+MAKEDEPS = ${GCC} -MM -MG $2 -x c $3 | sed -e "s@^\(.*\)\.o:@.dep/$1/\1.d obj/$1/\1.o:@"
 
 .PHONY : all
 
@@ -104,11 +111,7 @@ NVCCFLAGS += $(INCLUDEFLAGS)
 SRCTYPES := c cpp cu 
 LINK := $(CPP) $(CXXFLAGS) $(LFLAGS) 
 
-ifeq ($(USECUDA),1)
-LINK := $(NVCC) $(LFLAGS) -lcuda -Xcompiler -fopenmp 
-else
-NVCCFLAGS += --x c++
-endif
+LINK := $(NVCC) $(LFLAGS)  
 
 OBJ := $(foreach srctype, $(SRCTYPES), $(patsubst %.$(srctype), obj/%.o, $(wildcard $(patsubst %, %/*.$(srctype), $(MODULES)))))
 

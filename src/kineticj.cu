@@ -18,7 +18,7 @@
 #include <libconfig.h++>
 #include <netcdf>
 #include <new> // for stl::bad_alloc
-#include <omp.h>
+//#include <omp.h>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -34,7 +34,7 @@
 #endif
 
 #if defined(_OPENMP)
-#include <omp.h>
+//#include <omp.h>
 #endif
 
 #if CLOCK >= 1
@@ -76,12 +76,11 @@ int main(int argc, char** argv)
 
     if (num_gpus < 1)
     {
-        printf("no CUDA capable devices were detected\n");
-        return 1;
+        printf("no CUDA capable devices were detected, I'll presume you're compiling with THRUST_DEVICE_SYSTEM_CPP or THRUST_DEVICE_SYSTEM_OMP\n");
     }
 
     // display CPU and GPU configuration
-    printf("number of host CPUs:\t%d\n", omp_get_num_procs());
+    //printf("number of host CPUs:\t%d\n", omp_get_num_procs());
     printf("number of CUDA devices:\t%d\n", num_gpus);
 
     for (int i = 0; i < num_gpus; i++)
@@ -109,7 +108,7 @@ int main(int argc, char** argv)
 
 #if CLOCK >= 1
 #if defined(_OPENMP)
-    double start_time = omp_get_wtime();
+    //double start_time = omp_get_wtime();
 #endif
     clock_t ProgramTime = clock();
 #else
@@ -607,8 +606,8 @@ int main(int argc, char** argv)
 
 #if CLOCK >= 1
 #if defined(_OPENMP)
-        double time = omp_get_wtime() - start_time;
-        std::cout << "THRUST: Time for work: " << time << std::endl;
+        //double time = omp_get_wtime() - start_time;
+        //std::cout << "THRUST: Time for work: " << time << std::endl;
 #else
         double timeInSecondsFunctor = (timeMove0 - clock() ) / (double)CLOCKS_PER_SEC;
         std::cout << "THRUST: Time for work: " << timeInSecondsFunctor << std::endl;

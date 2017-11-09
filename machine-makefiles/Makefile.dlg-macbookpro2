@@ -1,25 +1,30 @@
 
-GCCDIR :=  
-ALGLIBDIR := ${HOME}/code/alglib/cpp/src
+NETCDF_DIR := ${HOME}/code/netcdf-cxx4/gcc-7
+NETCDF_LIBDIR := ${NETCDF_DIR}/lib
+NETCDF_INCDIR := ${NETCDF_DIR}/include 
+INCLUDEFLAGS += -I$(NETCDF_INCDIR)
+LIBS += -lnetcdf_c++ 
+LFLAGS += -L $(NETCDF_LIBDIR)
 
-NETCDF_DIR := /opt/local/lib
-NETCDFINCDIR := /opt/local/include 
-INCLUDEFLAGS += -I$(NETCDFINCDIR)
-LIBS += -lnetcdf_c++4 
-LFLAGS += -L $(NETCDF_DIR)
+NETCDFCXX4_DIR := ${HOME}/code/netcdf-cxx4/gcc-7
+NETCDFCXX4_LIBDIR := ${NETCDFCXX4_DIR}/lib
+NETCDFCXX4_INCDIR := ${NETCDFCXX4_DIR}/include
+INCLUDEFLAGS += -I$(NETCDFCXX4_INCDIR)
+LIBS += -lnetcdf-cxx4 
+LFLAGS += -L $(NETCDFCXX4_LIBDIR)
 
-CUDADIR := ${HOME}/code/cuda/4.1/cuda
-CUDALIBDIR = ${CUDADIR}/lib64
-CUDA_ARCH := sm_13
-CUDA_SDK_DIR := ${HOME}/cuda/NVIDIA_GPU_Computing_SDK
-GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
-PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
+CUDA_DIR := /Developer/NVIDIA/CUDA-9.0
+CUDA_LIBDIR := ${CUDA_DIR}/lib
+CUDA_ARCH := 
+LFLAGS += -L${CUDA_LIBDIR}
 
-LIBCONFIGDIR := ${HOME}/code/libconfig/gcc49
+LIBCONFIGDIR := ${HOME}/code/libconfig/gcc-7
 INCLUDEFLAGS += -I${LIBCONFIGDIR}/include
 LFLAGS += -L${LIBCONFIGDIR}/lib
 LIBS += -lconfig++
 
-CUDA_SDK_INC := $(CUDA_SDK_DIR)/C/common/inc
+CC := gcc-7
+CPP := g++-7
+GCC := gcc-7
 
 

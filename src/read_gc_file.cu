@@ -7,7 +7,7 @@
 #include <vector>
 
 using namespace netCDF;
-using namespace exceptions;
+using namespace netCDF::exceptions;
 
 int read_gc_file(std::string fName,
     std::vector<float>& r_gc, std::vector<C3<float> >& curv_CYL, std::vector<C3<float> >& grad_CYL,
@@ -30,7 +30,7 @@ int read_gc_file(std::string fName,
     NcDim gc_nc_nR(dataFile.getDim("nR"));
     NcDim gc_nc_scalar(dataFile.getDim("scalar"));
     if (!dataFile.getVar("z").isNull())
-        throw NcException("NcException", "This is a 2D GC terms file", __FILE__, __LINE__);
+        throw NcException("This is a 2D GC terms file", __FILE__, __LINE__);
 
     int nR_gc = gc_nc_nR.getSize();
     std::cout << "nR_gc: " << nR_gc << std::endl;
