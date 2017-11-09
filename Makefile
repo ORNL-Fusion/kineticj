@@ -46,7 +46,7 @@ ifeq ($(USE_OPENMP),1)
 THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
 NVCC := ${CPP} -O3  -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY} -I ${CUDA_LIBDIR}/thrust
 NVCCFLAGS := -x c++ -fopenmp
-LFLAGS += -lgomp -fopenmp
+LFLAGS += -fopenmp -lgomp
 endif
 
 
