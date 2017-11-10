@@ -9,11 +9,11 @@
 #include <algorithm> // for std::max_element
 #include "cparticle.hpp"
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #include <thrust/complex.h>
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) 
 #define HOST __host__ 
 #define DEVICE __device__
 #else
@@ -21,7 +21,7 @@
 #define DEVICE
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) 
 #define PRAGMA #pragma hd_warning_disable 
 #else
 #define PRAGMA
@@ -141,7 +141,7 @@ struct doDotProduct
     }
 };
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 struct doDotProduct_device
 {
     HOST DEVICE

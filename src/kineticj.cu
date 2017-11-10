@@ -25,7 +25,7 @@
 #include <vector>
 #include <numeric>
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <thrust/complex.h>
@@ -64,12 +64,13 @@ using namespace exceptions;
 int main(int argc, char** argv)
 {
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 
     int num_gpus = 0;   // number of CUDA GPUs
 
     printf("%s Starting...\n\n", argv[0]);
 
+#ifdef __CUDACC__
     // determine the number of CUDA capable GPUs
     cudaGetDeviceCount(&num_gpus);
 
@@ -88,7 +89,7 @@ int main(int argc, char** argv)
         cudaGetDeviceProperties(&dprop, i);
         printf("   %d: %s\n", i, dprop.name);
     }
-
+#endif
 #endif
 
     // Make sure the "output/" directory exists
@@ -339,7 +340,7 @@ int main(int argc, char** argv)
         particleWorkList.insert( particleWorkList.end(), moreWork.begin(), moreWork.end() );
     }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #if CLOCK >= 1
         clock_t timeCUDACopy0 = clock();
 #endif
@@ -383,7 +384,7 @@ int main(int argc, char** argv)
     vector<complex<float> > vyf1(nWork,0);
     vector<complex<float> > vzf1(nWork,0);
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #if CLOCK >= 1
         clock_t timeCUDACopy2_0 = clock();
 #endif
@@ -451,7 +452,7 @@ int main(int argc, char** argv)
 
         dtIntFac = dtMin / 2.0 * dtIntFac;
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         // Move particle
         thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
                         moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
@@ -525,7 +526,7 @@ int main(int argc, char** argv)
         for_each( particleWorkList.begin(), particleWorkList.end(), 
                         moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
 #endif
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"move CPU: "<<particleWorkList[0].c1<<particleWorkList[0].c2<<particleWorkList[0].c3
                 <<" GPU: "<<p_host[0].c1<<p_host[0].c2<<p_host[0].c3<<std::endl;
 #endif
@@ -533,48 +534,48 @@ int main(int argc, char** argv)
         transform( particleWorkList.begin(), particleWorkList.end(), df0_dv_XYZ.begin(), 
                         get_df0_dv() ); 
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
        std::cout<<"df0_dv_XYZ CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<std::endl;
 #endif
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
                         getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
         
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<std::endl;
 #endif
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
                         getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<std::endl;
 #endif
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), 
                         vCross<std::complex<float> >() );
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"vCross CPU: "<<vCrossB[0]<<" GPU: "<<vCrossB_host[0]<<std::endl;
 #endif
         // E1 + v x B1
         transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), 
                         std::plus<C3<std::complex<float> > >() );
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"vCrosB_E1 CPU: "<<vCrossB_E1[0]<<" GPU: "<<vCrossB_E1_host[0]<<std::endl;
 #endif
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), 
                         doDotProduct() );
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"forceDotGradf0 CPU: "<<forceDotGradf0[0]<<" GPU: "<<forceDotGradf0_host[0]<<std::endl;
 #endif
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), 
                         runningIntegral<std::complex<float> >(dtIntFac) );
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"dtIntegral CPU: "<<dtIntegral[0]<<" GPU: "<<dtIntegral_host[0]<<std::endl;
 #endif
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
@@ -589,7 +590,7 @@ int main(int argc, char** argv)
         transform( f1.begin(), f1.end(), vx.begin(), vxf1.begin(), 
                         std::multiplies< complex<float> >() ); 
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
         std::cout<<"CPU: "<<vxf1[0]<<" GPU: "<<vxf1_host[0]<<std::endl;
 #endif
         // q . vy . f1(v) 
@@ -624,7 +625,7 @@ int main(int argc, char** argv)
     }
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #if CLOCK >= 1
         clock_t timeCUDACopy3_0 = clock();
 #endif
@@ -695,7 +696,7 @@ int main(int argc, char** argv)
 #if CLOCK >= 1
 #if not defined(_OPENMP)
         clock_t endTimeFunctor = clock();
-        double timeInSecondsFunctor = (endTimeFunctor - startTimeFunctor) / (double)CLOCKS_PER_SEC;
+        timeInSecondsFunctor = (endTimeFunctor - startTimeFunctor) / (double)CLOCKS_PER_SEC;
         std::cout << "Time for this spatial point: " << timeInSecondsFunctor << std::endl;
         std::cout << "Time per particle: " << timeInSecondsFunctor / nWork << std::endl;
 #endif

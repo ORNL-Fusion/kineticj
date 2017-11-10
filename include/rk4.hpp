@@ -6,7 +6,7 @@
 #include "getFields.hpp"
 #include "gcTerms.hpp"
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) 
 #define HOST __host__ 
 #define DEVICE __device__
 #else

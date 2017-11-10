@@ -209,7 +209,7 @@ C3<std::complex<float> > operator*(const C3<float>& rhs, const std::complex<floa
     return tmp;
 }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 PRAGMA
 inline
 HOST DEVICE
@@ -280,7 +280,7 @@ std::complex<float> dot(const C3<std::complex<float> >& Y, const C3<float>& X)
     return Y.c1 * X.c1 + Y.c2 * X.c2 + Y.c3 * X.c3;
 }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 inline
 HOST DEVICE 
 thrust::complex<float> dot(const C3<thrust::complex<float> >& Y, const C3<float>& X)

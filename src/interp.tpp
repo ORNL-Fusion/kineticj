@@ -69,7 +69,7 @@ T kj_interp1D ( float &x, const float *xVec, const T *yVec, int n, int &status )
 		T y1 = yVec[x1];
 #if DEBUG_INTERP >=1
         if(x0>n-1||x0<0||x1>n-1||x1<1) {
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
                 printf("ERROR: interpolation point off the end of array\n");
                 printf("x.front: %f\n",xVec[0]);
                 printf("x.back: %f\n",xVec[n-1]);

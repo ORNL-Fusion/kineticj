@@ -6,7 +6,7 @@
 #include "interp.hpp"
 #include "rotation.hpp"
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) 
 #define HOST __host__ 
 #define DEVICE __device__
 #else
@@ -14,19 +14,19 @@
 #define DEVICE
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) 
 #define PRAGMA #pragma hd_warning_disable 
 #else
 #define PRAGMA
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 #include <thrust/complex.h>
 #endif
 
 using namespace std;
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 HOST DEVICE
 C3<thrust::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi);
 #endif
@@ -34,7 +34,7 @@ C3<thrust::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec,
 HOST
 C3<std::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3<std::complex<float> > *E1Vec_CYL, int nR, int nPhi);
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 HOST DEVICE
 C3<thrust::complex<float> > getE1orB1_XYZ_fromXYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, float ky, float kz);
 #endif
@@ -47,7 +47,7 @@ C3<std::complex<float> > getE1orB1_XYZ_fromXYZ(CParticle& p_XYZ, float *rVec, C3
 
 // Functor to wrap these 
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 struct getPerturbedField_device 
 {
 

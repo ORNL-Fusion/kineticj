@@ -1,7 +1,7 @@
 #include "getFields.hpp"
 #include <iomanip>
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 HOST DEVICE
 C3<thrust::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, int nPhi)
 {
@@ -43,7 +43,7 @@ C3<std::complex<float> > getE1orB1_XYZ_fromCYL(CParticle& p_XYZ, float *rVec, C3
     return E1_XYZ;
 }
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__THRUST)
 HOST DEVICE
 C3<thrust::complex<float> > getE1orB1_XYZ_fromXYZ(CParticle& p_XYZ, float *rVec, C3<thrust::complex<float> > *E1Vec_CYL, int nR, float ky, float kz)
 {

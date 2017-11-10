@@ -325,7 +325,7 @@ endif else begin
     sig_kj = ComplexArr(3,3,n_kj)
 endelse
 
-TemplateRunDir = 'template'
+TemplateRunDir = '../template'
 cd, current = RootDir
 print, 'RootDir: ', RootDir
 
