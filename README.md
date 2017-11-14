@@ -21,11 +21,14 @@ The program is organized into C++ and IDL files. The C++ are the buildable progr
 ### Libconfig (https://github.com/hyperrealm/libconfig)
 The human readable input files are of the format defined by the libconfig API. Libconfig can be found at the above location on github.
 
-### NetCDF-CXX4 (https://github.com/Unidata/netcdf-cxx4)
-We utilize the netcdf file format for both inputs and outputs. We further utilize the more recent CXX4 components of the NetCDF API, which meand a netcdf installation built with the --enable-cxx4 flag. The above official netcdf-cxx4 github provides further information.  
+### NetCDF-C (https://github.com/Unidata/netcdf-c)
+We utilize the netcdf file format for both inputs and outputs.
 
-### CUDA (https://developer.nvidia.com/cuda-downloads)
-To enable the GPU capability the CUDA API is required. This will likely be already available on appropriate machines, if not, see the link above. Note that the code is designed to be compiled using the THRUST API wihtin the CUDA SDK, so even if you do not have a GPU, you will still need the CUDA API, just using the CPU or OPENMP THRUST targets. 
+### NetCDF-CXX4 (https://github.com/Unidata/netcdf-cxx4)
+We further utilize the more recent CXX-4 components of the NetCDF API (note that the --enable-cxx4 flag is not required as suggested in the netcdf-cxx4 github readme file).  
+
+### THRUST (https://github.com/thrust/thrust) or CUDA (https://developer.nvidia.com/cuda-downloads)
+The THRUST headers are required and are available either standalone from the THRUST repo (for building on systems without GPUs), or from within the CUDA SDK (for building on systems with GPUs). So if you do not have an nvidia compute GPU, you will still need the THRUST library (unbuilt).
 
 ## Installation
 We utilize a simple machine specific makefile to specify the locations of the above dependencies. To build Kinetic-j on a new machine you will need to create a copy of an existing file (e.g., `machine-makefiles/Makefile.dlg-macpro`) with the name of your machine as the extension. This can be done via 
@@ -39,14 +42,14 @@ make clean
 make
 ```
 ### Build Options
-Note: The code is designed to be built using CUDA, even if you do not have a GPU, i.e., the THRUST API within the CUDA SDK provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy.
-
-Within the top level `Makefile` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
+The THRUST API provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy. Within the top level `Makefile` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
 
 ```
-THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CUDA
-#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_CPP
-#THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
+# Select only one.
+
+USE_SERIAL:= 0
+USE_CUDA  := 0
+USE_OPENMP:= 1
  ```
 Also, various code features and debugging levels can be enabled at build time by enabling any of the following within the top level `Makefile`. 
 
@@ -87,6 +90,13 @@ CPPFLAGS += -DF1_WRITE=0
 ```
 
 ## Specific Machine Build Notes
+
+### edison.nersc.go
+```
+source env-edison.sh
+make clean
+make
+```
 
 ### gpufusion.ornl.gov
 
