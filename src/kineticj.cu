@@ -48,8 +48,6 @@
 #include <papi.h>
 #endif
 
-//#include <google/profiler.h>
-
 #ifdef __CUDA_ARCH__
 #define PRINT cuPrintf
 #else
@@ -188,6 +186,7 @@ int main(int argc, char** argv)
 
 #endif
 
+
     float wrf = freq * 2 * physConstants::pi;
     float xGridMin = cfg.lookup("xGridMin");
     float xGridMax = cfg.lookup("xGridMax");
@@ -223,7 +222,7 @@ int main(int argc, char** argv)
             exit(1);
         }
         bMag_kjGrid[iX] = mag(this_b0);
-        T_keV[iX] = T_keV_cfg; // kj_interp1D(xGrid[iX],r,n_m3);
+        T_keV[iX] = T_keV_cfg; 
     }
 
     float MaxB0 = *max_element(bMag_kjGrid.begin(), bMag_kjGrid.end());
@@ -258,8 +257,6 @@ int main(int argc, char** argv)
 
     int SanityCheck = 0;
 
-    //if (std::isinf(cyclotronPeriod)) ++SanityCheck;
-
     if (SanityCheck > 0) {
         std::cout<<"SanityCheck Failure"<<std::endl;
         exit(SanityCheck);
@@ -270,8 +267,6 @@ int main(int argc, char** argv)
     for (int iX = 0; iX < nXGrid; iX++) {
         float this_wc = Z * physConstants::e * bMag_kjGrid[iX] / (amu * physConstants::amu);
         wrf_wc[iX] = wrf / this_wc;
-        //std::cout<<"mass: "<<amu*physConstants::mi<<std::endl;
-        //std::cout<<"wrf_wc[iX]: "<<wrf_wc[iX]<<std::endl;
     }
 
 #if PRINT_INFO >= 1
@@ -303,14 +298,11 @@ int main(int argc, char** argv)
         // linearWeight[i]=thisT[i]*1.0/(tRF*nRFCycles)+1.0;
         hanningWeight[i] = 0.5 * (1 - cos(2 * physConstants::pi * i / (nSteps - 1))); // Regular
         // hanningWeight[i]=0.5*(1-cos(2*physConstants::pi*i/(nSteps*0.25-1))); //Sharper
-        // hanningWeight[i] = linearWeight[i];
         if (i < nSteps / 2)
             hanningWeight[i] = 1; // Regular
-        // if(i<nSteps*7.0/8.0) hanningWeight[i]=1; //Sharper
         // complex<float> _i (0.0,1.0);
         // complex<float> wrf_c (wrf,wrf*0.0025);
         // expWeight[i] = 1.0;//std::abs(exp(-_i*wrf_c*thisT[i]));
-        // hanningWeight[i] = hanningWeight[i] * expWeight[i];
     }
 
     vector<vector<float> > j1x(nXGrid), j1y(nXGrid), j1z(nXGrid);
@@ -329,6 +321,8 @@ int main(int argc, char** argv)
     // Create worklist of nX * nP particles
 
     long int nWork = nXGrid * nP;
+
+    std::cout<<"nWork: "<<nWork<<std::endl;
 
     vector<CParticle> particleWorkList;
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -456,47 +450,47 @@ int main(int argc, char** argv)
         // Move particle
         thrust::for_each( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), 
                         moveParticle(dtMin, r_dPtr_raw, b0_dPtr_raw, r.size()) ); 
-        //thrust::copy( thrust::device, particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
+        thrust::copy( thrust::device, particleWorkList_device.begin(),particleWorkList_device.end(),p_host.begin());
 
         // df0(v)/dv 
         thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), df0_dv_XYZ_device.begin(), 
                         get_df0_dv() ); 
-        //thrust::copy( thrust::device, df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
+        thrust::copy( thrust::device, df0_dv_XYZ_device.begin(),df0_dv_XYZ_device.end(),df0_dv_XYZ_host.begin());
 
         // E1(x) 
         thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), E1_device.begin(), 
                         getPerturbedField_device(r_dPtr_raw,e1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
-        //thrust::copy( thrust::device, E1_device.begin(),E1_device.end(),E1_host.begin());
+        thrust::copy( thrust::device, E1_device.begin(),E1_device.end(),E1_host.begin());
 
         // B1(x) 
         thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), 
                         getPerturbedField_device(r_dPtr_raw,b1_dPtr_raw,r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
-        //thrust::copy( thrust::device, B1_device.begin(),B1_device.end(),B1_host.begin());
+        thrust::copy( thrust::device, B1_device.begin(),B1_device.end(),B1_host.begin());
 
         // v x B1 
         thrust::transform( thrust::device, particleWorkList_device.begin(), particleWorkList_device.end(), B1_device.begin(), vCrossB_device.begin(), 
                         vCross<thrust::complex<float> >() );
-        //thrust::copy( thrust::device, vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
+        thrust::copy( thrust::device, vCrossB_device.begin(),vCrossB_device.end(),vCrossB_host.begin());
 
         // E1 + v x B1
         thrust::transform( thrust::device, E1_device.begin(), E1_device.end(), vCrossB_device.begin(), vCrossB_E1_device.begin(), 
                         thrust::plus<C3<thrust::complex<float> > >() );
-        //thrust::copy( thrust::device, vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
+        thrust::copy( thrust::device, vCrossB_E1_device.begin(),vCrossB_E1_device.end(),vCrossB_E1_host.begin());
 
         //  (E1 + v x B1) . grad_v(f0(v))
         thrust::transform( thrust::device, vCrossB_E1_device.begin(), vCrossB_E1_device.end(), df0_dv_XYZ_device.begin(), forceDotGradf0_device.begin(), 
                         doDotProduct_device() );
-        //thrust::copy( thrust::device, forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
+        thrust::copy( thrust::device, forceDotGradf0_device.begin(),forceDotGradf0_device.end(),forceDotGradf0_host.begin());
 
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), forceDotGradf0_device.begin(), dtIntegral_device.begin(), 
                         runningIntegral<thrust::complex<float> >(dtIntFac) );
-        //thrust::copy( thrust::device, dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
+        thrust::copy( thrust::device, dtIntegral_device.begin(),dtIntegral_device.end(),dtIntegral_host.begin());
 
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         thrust::transform( thrust::device, dtIntegral_device.begin(), dtIntegral_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
                         multiplyByChargeOverMass<thrust::complex<float> >() ); 
-        //thrust::copy( thrust::device, f1_device.begin(),f1_device.end(),f1_host.begin());
+        thrust::copy( thrust::device, f1_device.begin(),f1_device.end(),f1_host.begin());
 
         // q . f1(v) // first step in velocity momemnt for current calculation 
         thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), particleWorkList_device.begin(), f1_device.begin(), 
@@ -504,15 +498,17 @@ int main(int argc, char** argv)
         // q . vx . f1(v) 
         thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vx_device.begin(), vxf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
-
-        //thrust::copy( thrust::device, vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
+        thrust::copy( thrust::device, vxf1_device.begin(),vxf1_device.end(),vxf1_host.begin());
 
         // q . vy . f1(v) 
         thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vy_device.begin(), vyf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
+        thrust::copy( thrust::device, vyf1_device.begin(),vyf1_device.end(),vyf1_host.begin());
+
         // q . vz . f1(v) 
         thrust::transform( thrust::device, f1_device.begin(), f1_device.end(), vz_device.begin(), vzf1_device.begin(), 
                         thrust::multiplies<thrust::complex<float> >() ); 
+        thrust::copy( thrust::device, vzf1_device.begin(),vzf1_device.end(),vzf1_host.begin());
 
 #endif 
 
@@ -527,7 +523,7 @@ int main(int argc, char** argv)
                         moveParticle(dtMin, &r[0], &b0_CYL[0], r.size() ) ); 
 #endif
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"move CPU: "<<particleWorkList[0].c1<<particleWorkList[0].c2<<particleWorkList[0].c3
+        std::cout<<"move[0] CPU: "<<particleWorkList[0].c1<<particleWorkList[0].c2<<particleWorkList[0].c3
                 <<" GPU: "<<p_host[0].c1<<p_host[0].c2<<p_host[0].c3<<std::endl;
 #endif
         // df0(v)/dv 
@@ -535,53 +531,56 @@ int main(int argc, char** argv)
                         get_df0_dv() ); 
 
 #if defined(__CUDACC__) || defined(__THRUST)
-       std::cout<<"df0_dv_XYZ CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<std::endl;
+       std::cout<<"df0_dv_XYZ[0] CPU: "<<df0_dv_XYZ[0]<<" GPU: "<<df0_dv_XYZ_host[0]<<std::endl;
 #endif
         // E1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), E1.begin(), 
                         getPerturbedField(&r[0],&e1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
         
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"E1 CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<std::endl;
+        std::cout<<"E1[0] CPU: "<<E1[0]<<" GPU: "<<E1_host[0]<<std::endl;
 #endif
         // B1(x) 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), 
                         getPerturbedField(&r[0],&b1_CYL[0],r.size(),nPhi,ky,kz,hanningWeight[i],wrf,thisT[i]) ); 
 
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"B1 CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<std::endl;
+        std::cout<<"B1[0] CPU: "<<B1[0]<<" GPU: "<<B1_host[0]<<std::endl;
 #endif
         // v x B1 
         transform( particleWorkList.begin(), particleWorkList.end(), B1.begin(), vCrossB.begin(), 
                         vCross<std::complex<float> >() );
 
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"vCross CPU: "<<vCrossB[0]<<" GPU: "<<vCrossB_host[0]<<std::endl;
+        std::cout<<"vCross CPU[0]: "<<vCrossB[0]<<" GPU: "<<vCrossB_host[0]<<std::endl;
 #endif
         // E1 + v x B1
         transform( E1.begin(), E1.end(), vCrossB.begin(), vCrossB_E1.begin(), 
                         std::plus<C3<std::complex<float> > >() );
 
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"vCrosB_E1 CPU: "<<vCrossB_E1[0]<<" GPU: "<<vCrossB_E1_host[0]<<std::endl;
+        std::cout<<"vCrosB_E1[0] CPU: "<<vCrossB_E1[0]<<" GPU: "<<vCrossB_E1_host[0]<<std::endl;
 #endif
         //  (E1 + v x B1) . grad_v(f0(v))
         transform( vCrossB_E1.begin(), vCrossB_E1.end(), df0_dv_XYZ.begin(), forceDotGradf0.begin(), 
                         doDotProduct() );
 
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"forceDotGradf0 CPU: "<<forceDotGradf0[0]<<" GPU: "<<forceDotGradf0_host[0]<<std::endl;
+        std::cout<<"forceDotGradf0[0] CPU: "<<forceDotGradf0[0]<<" GPU: "<<forceDotGradf0_host[0]<<std::endl;
 #endif
         // int( (E1 + v x B1) . grad_v(f0(v)), dt ) via running dt integral
         transform( dtIntegral.begin(), dtIntegral.end(), forceDotGradf0.begin(), dtIntegral.begin(), 
                         runningIntegral<std::complex<float> >(dtIntFac) );
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"dtIntegral CPU: "<<dtIntegral[0]<<" GPU: "<<dtIntegral_host[0]<<std::endl;
+        std::cout<<"dtIntegral[0] CPU: "<<dtIntegral[0]<<" GPU: "<<dtIntegral_host[0]<<std::endl;
 #endif
         // f1(v) = -q/m * int( (E1 + v x B1) . grad_v(f0(v)), dt )
         transform( dtIntegral.begin(), dtIntegral.end(), particleWorkList.begin(), f1.begin(), 
                         multiplyByChargeOverMass<std::complex<float> >() ); 
-
+#if defined(__CUDACC__) || defined(__THRUST)
+        std::cout<<"f1[0] CPU: "<<f1[0]<<" GPU: "<<f1_host[0]<<std::endl;
+#endif
+ 
         // q . f1(v) // first step in velocity momemnt for current calculation 
         transform( f1.begin(), f1.end(), particleWorkList.begin(), f1.begin(), 
                         multiplyByCharge<std::complex<float> >() ); 
@@ -589,17 +588,26 @@ int main(int argc, char** argv)
         // q . vx . f1(v) 
         transform( f1.begin(), f1.end(), vx.begin(), vxf1.begin(), 
                         std::multiplies< complex<float> >() ); 
-
 #if defined(__CUDACC__) || defined(__THRUST)
-        std::cout<<"CPU: "<<vxf1[0]<<" GPU: "<<vxf1_host[0]<<std::endl;
+        std::cout<<"vxf1[0] CPU: "<<vxf1[0]<<" GPU: "<<vxf1_host[0]<<std::endl;
 #endif
+
         // q . vy . f1(v) 
         transform( f1.begin(), f1.end(), vy.begin(), vyf1.begin(), 
                         std::multiplies< complex<float> >() ); 
+#if defined(__CUDACC__) || defined(__THRUST)
+        std::cout<<"vyf1[0] CPU: "<<vyf1[0]<<" GPU: "<<vyf1_host[0]<<std::endl;
+#endif
 
         // q . vz . f1(v) 
         transform( f1.begin(), f1.end(), vz.begin(), vzf1.begin(), 
                         std::multiplies< complex<float> >() ); 
+#if defined(__CUDACC__) || defined(__THRUST)
+        std::cout<<"vzf1[0] CPU: "<<vzf1[0]<<" GPU: "<<vzf1_host[0]<<std::endl;
+        std::cout<<std::endl;
+#endif
+
+
 #endif
 
     }
@@ -607,7 +615,7 @@ int main(int argc, char** argv)
 #if CLOCK >= 1
 #if defined(_OPENMP)
         double time = omp_get_wtime() - start_time;
-        //std::cout << "THRUST: Time for work: " << time << std::endl;
+        std::cout << "THRUST: Time for work: " << time << std::endl;
 #else
         double timeInSecondsFunctor = (timeMove0 - clock() ) / (double)CLOCKS_PER_SEC;
         std::cout << "THRUST: Time for work: " << timeInSecondsFunctor << std::endl;
@@ -621,7 +629,9 @@ int main(int argc, char** argv)
         j1xc[i] = dv * accumulate( vxf1.begin()+nP*i, vxf1.begin()+nP*i+nP, complex<float>(0) );
         j1yc[i] = dv * accumulate( vyf1.begin()+nP*i, vyf1.begin()+nP*i+nP, complex<float>(0) );
         j1zc[i] = dv * accumulate( vzf1.begin()+nP*i, vzf1.begin()+nP*i+nP, complex<float>(0) );
-        //std::cout << j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
+        std::cout << "CPU_ITERATOR Jx : "<<j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
+        std::cout << "CPU_ITERATOR Jy : "<<j1yc[i].real() << "  " << j1yc[i].imag() << std::endl;
+        std::cout << "CPU_ITERATOR Jz : "<<j1zc[i].real() << "  " << j1zc[i].imag() << std::endl;
     }
 #endif
 
@@ -644,51 +654,13 @@ int main(int argc, char** argv)
         j1xc[i] = dv * accumulate( vxf1_host.begin()+nP*i, vxf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
         j1yc[i] = dv * accumulate( vyf1_host.begin()+nP*i, vyf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
         j1zc[i] = dv * accumulate( vzf1_host.begin()+nP*i, vzf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
-        std::cout << j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
+        std::cout << "GPU_ITERATOR Jx : "<<j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
+        std::cout << "GPU_ITERATOR Jy : "<<j1yc[i].real() << "  " << j1yc[i].imag() << std::endl;
+        std::cout << "GPU_ITERATOR Jz : "<<j1zc[i].real() << "  " << j1zc[i].imag() << std::endl;
     }
 #endif
 
-    stringstream ncjPFileName2("output/jP2.nc");
-
-    NcFile ncjPFile(ncjPFileName2.str().c_str(), NcFile::replace);
-
-    NcDim nc_nX = ncjPFile.addDim("nJp", nXGrid);
-
-    NcVar nc_x = ncjPFile.addVar("x", ncFloat, nc_nX);
-
-    NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re", ncFloat, nc_nX);
-    NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im", ncFloat, nc_nX);
-
-    NcVar nc_j1yc_re = ncjPFile.addVar("j1yc_re", ncFloat, nc_nX);
-    NcVar nc_j1yc_im = ncjPFile.addVar("j1yc_im", ncFloat, nc_nX);
-
-    NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re", ncFloat, nc_nX);
-    NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im", ncFloat, nc_nX);
-
-    vector<float> JxRe(nXGrid,0);
-    vector<float> JxIm(nXGrid,0);
-    vector<float> JyRe(nXGrid,0);
-    vector<float> JyIm(nXGrid,0);
-    vector<float> JzRe(nXGrid,0);
-    vector<float> JzIm(nXGrid,0);
-
-    for (int i=0;i<nXGrid;i++) {
-       JxRe[i] = j1xc[i].real(); 
-       JxIm[i] = j1xc[i].imag(); 
-       JyRe[i] = j1yc[i].real(); 
-       JyIm[i] = j1yc[i].imag(); 
-       JzRe[i] = j1zc[i].real(); 
-       JzIm[i] = j1zc[i].imag(); 
-    }
-    nc_x.putVar(&xGrid[0]);
-    nc_j1xc_re.putVar(&JxRe[0]);
-    nc_j1xc_im.putVar(&JxIm[0]);
-    nc_j1yc_re.putVar(&JyRe[0]);
-    nc_j1yc_im.putVar(&JyIm[0]);
-    nc_j1zc_re.putVar(&JzRe[0]);
-    nc_j1zc_im.putVar(&JzIm[0]);
-
-    std::cout << "DONE" << std::endl;
+std::cout << "DONE" << std::endl;
 
 
 #if DO_CPU_APPROACH > 0
@@ -705,7 +677,7 @@ int main(int argc, char** argv)
 std::cout << "Continuing with non functor approach ..." << std::endl;
 
 int write_iX = 0;//31;//15;
-int write_iP = 180;//52;//33;
+int write_iP = 0;//52;//33;
 
 #pragma omp parallel for private(istat, tid, spoken)
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -845,38 +817,6 @@ int write_iP = 180;//52;//33;
                 C3<float> this_gradv_f0_GC = ( maxwellian_df0_dv(this_v, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
                 float this_gradv_f0_GC_dot_par = dot(this_gradv_f0_GC,par);
  
-                //// Prove that gradv_f0_par is independent of gyrophase
-                //std::vector< C3<float> > gradv_f0_XYZ_GC;
-                //int nTh = 12;
-                //float dTh = 360.0 / nTh;
-                //for(int iTh=0; iTh<nTh; iTh++){
-                //        float th = iTh*dTh;
-                //        C3<float> thisPer = rot_axis_angle(per,par,th); 
-                //        C3<float> this_v_2 = par * thisParticle_XYZ.vPar + thisPer * thisParticle_XYZ.vPer;
-
-                //        gradv_f0_XYZ_GC.push_back( maxwellian_df0_dv(this_v_2, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
-                //        if(thisParticle_XYZ.status>0) gradv_f0_XYZ_GC[iTh] = 0; // To account for the / 0 above.
-
-                //        std::cout<<"iTh: "<<iTh<<std::endl;
-                //        std::cout<<"th: "<<th<<std::endl;
-                //        std::cout<<"thisPer: "<<thisPer<<std::endl;
-                //        std::cout<<"mag(thisPer): "<<mag(thisPer)<<std::endl;
-                //        std::cout<<"mag(thisVel): "<<mag(this_v_2)<<std::endl;
-                //        std::cout<<"mag(v): "<<std::sqrt(std::pow(thisParticle_XYZ.vPar,2)+std::pow(thisParticle_XYZ.vPer,2))<<std::endl;
-                //        std::cout<<"this_v_2: "<<this_v_2<<std::endl;
-                //        std::cout<<"grad_f0: "<<gradv_f0_XYZ_GC[iTh]<<std::endl;
-                //        std::cout<<"grad_f0: "<<maxwellian_df0_dv(this_v_2, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z)<<std::endl;
-                //        std::cout<<"grad_f0.par: "<<dot(gradv_f0_XYZ_GC[iTh],par)<<std::endl;
-
-                //        C3<float> this_v_2_above = par * thisParticle_XYZ.vPar + per * thisParticle_XYZ.vPer;
-                //        C3<float> this_gradv_f0_GC_above = ( maxwellian_df0_dv(this_v_2_above, T_keV[iX], density_m3[iX], thisParticle_XYZ.amu, thisParticle_XYZ.Z) );
-                //        float this_gradv_f0_GC_dot_par = dot(this_gradv_f0_GC_above,par);
-                //        std::cout<<"grad_f0.par (actual): "<<this_gradv_f0_GC_dot_par<<std::endl;
-
-                //}
-
-                //exit(1);
-
 #if DEBUG_MOVE >= 2
                 std::cout << "vPar: " << thisParticle_XYZ.vPar << " vPer: " << thisParticle_XYZ.vPer << std::endl;
                 std::cout << "status: " << thisParticle_XYZ.status << std::endl;
@@ -913,11 +853,6 @@ int write_iP = 180;//52;//33;
 #endif
                 thisB1c_XYZ[i] = B1_XYZ * (1 - thisParticle_XYZ.status);
 
-                //if (iX == write_iX && iP == write_iP) {
-                //    std::cout<<"E1_XYZ: "<<E1_XYZ<<std::endl;
-                //    std::cout<<"status: "<<thisParticle_XYZ.status<<std::endl;
-                //    std::cout<<"hanningWeight: "<<hanningWeight[i]<<std::endl;
-                //}
 
 #if DEBUG_MOVE >= 2
                 std::cout << "thisE1c[i].c1: " << thisE1c_XYZ[i].c1 << std::endl;
@@ -970,6 +905,15 @@ int write_iP = 180;//52;//33;
 
                 this_e1_dot_gradvf0_perOnly[i] = dot(per_force, per_gradf);
                 this_e1_dot_gradvf0_parOnly[i] = dot(par_force, par_gradf);
+
+                //if (iX == write_iX && iP == write_iP) {
+                //    std::cout<<"x[iX,iP]: "<<thisParticle_XYZ.c1<<std::endl;
+                //    std::cout<<"E1_XYZ[iX,iP]: "<<E1_XYZ<<std::endl;
+                //    std::cout<<"forceDotGradf0[iX,iP]: "<<this_e1_dot_gradvf0[i]<<std::endl;
+                //    std::cout<<"status: "<<thisParticle_XYZ.status<<std::endl;
+                //    std::cout<<"hanningWeight: "<<hanningWeight[i]<<std::endl;
+                //    std::cout<<std::endl;
+                //}
 
 #endif
 
@@ -1032,6 +976,9 @@ int write_iP = 180;//52;//33;
 #endif
 
             complex<float> this_f1c = -qOverm * intVecArray(thisT, this_e1_dot_gradvf0);
+            if (iX == write_iX && iP == write_iP) {
+                std::cout<<"f1[iX,iP]: "<<this_f1c<<std::endl;
+            }
 
 #if GC_ORBITS >= 1
 
@@ -1179,16 +1126,15 @@ int write_iP = 180;//52;//33;
 #endif
             }
 
-            if (iX == write_iX && iP == write_iP) {
-                std::cout<<"iX: "<<iX<<std::endl;
-                std::cout<<"iP: "<<iP<<std::endl;
-                std::cout<<"h: "<<h<<std::endl;
-                std::cout<<"dv: "<<dv<<std::endl;
-                std::cout<<"f1c[iP]: "<<f1c[iP]<<std::endl;
-                std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
-                std::cout<<"j1yc[iX]: "<<j1yc[iX]<<std::endl;
-                std::cout<<"j1zc[iX]: "<<j1zc[iX]<<std::endl;
-            }
+            //if (iX == write_iX && iP == write_iP) {
+            //    std::cout<<"OUTPUT FOR iX == write_iX:"<<std::endl;
+            //    std::cout<<"iX: "<<iX<<std::endl;
+            //    std::cout<<"iP: "<<iP<<std::endl;
+            //    std::cout<<"h: "<<h<<std::endl;
+            //    std::cout<<"dv: "<<dv<<std::endl;
+            //    std::cout<<"f1c[iP]: "<<f1c[iP]<<std::endl;
+            //    std::cout<<"DONE"<<std::endl;
+            //}
 
 #if F1_WRITE >= 1
             if (iX == f1_write_iX) {
@@ -1199,6 +1145,16 @@ int write_iP = 180;//52;//33;
             }
 #endif
         }
+
+        //if (iX == write_iX) {
+        //    std::cout<<"OUTPUT FOR iX == write_iX:"<<std::endl;
+        //    std::cout<<"iX: "<<iX<<std::endl;
+        //    std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
+        //    std::cout<<"j1yc[iX]: "<<j1yc[iX]<<std::endl;
+        //    std::cout<<"j1zc[iX]: "<<j1zc[iX]<<std::endl;
+        //    std::cout<<"DONE"<<std::endl;
+        //}
+
 
 #if CLOCK >= 1
 #if not defined(_OPENMP)
@@ -1243,74 +1199,6 @@ int write_iP = 180;//52;//33;
 
     } // End of xGrid loop
 
-    // Write current(s) to file
-
-    // std::cout << "Writing jP to file ... ";
-
-    for (int iX = 0; iX < nXGrid; iX++) {
-
-        stringstream ncjPFileName;
-        ncjPFileName << "output/";
-        // check directory exists
-        struct stat st;
-        if (stat(ncjPFileName.str().c_str(), &st) != 1) {
-            int mkDirStat = mkdir(ncjPFileName.str().c_str(),
-                S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        }
-        ncjPFileName << "/jP_";
-        ncjPFileName << setw(3) << setfill('0') << iX;
-        ncjPFileName << ".nc";
-#if DEBUGLEVEL >= 1
-        std::cout << ncjPFileName.str().c_str() << std::endl;
-#endif
-
-        NcFile ncjPFile(ncjPFileName.str().c_str(), NcFile::replace);
-
-        NcDim nc_scalar = ncjPFile.addDim("scalar", 1);
-
-        NcVar nc_x = ncjPFile.addVar("x", ncFloat, nc_scalar);
-        NcVar nc_freq = ncjPFile.addVar("freq", ncFloat, nc_scalar);
-
-        NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re", ncFloat, nc_scalar);
-        NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im", ncFloat, nc_scalar);
-
-        NcVar nc_j1yc_re = ncjPFile.addVar("j1yc_re", ncFloat, nc_scalar);
-        NcVar nc_j1yc_im = ncjPFile.addVar("j1yc_im", ncFloat, nc_scalar);
-
-        NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re", ncFloat, nc_scalar);
-        NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im", ncFloat, nc_scalar);
-
-        nc_x.putVar(&xGrid[iX]);
-        nc_freq.putVar(&freq);
-
-        vector<size_t> startp(1, 0);
-
-        float tmpJxRe = real(j1xc[iX]);
-        float tmpJxIm = imag(j1xc[iX]);
-        nc_j1xc_re.putVar(&tmpJxRe);
-        nc_j1xc_im.putVar(&tmpJxIm);
-
-        float tmpJyRe = real(j1yc[iX]);
-        float tmpJyIm = imag(j1yc[iX]);
-        nc_j1yc_re.putVar(&tmpJyRe);
-        nc_j1yc_im.putVar(&tmpJyIm);
-
-        float tmpJzRe = real(j1zc[iX]);
-        float tmpJzIm = imag(j1zc[iX]);
-        nc_j1zc_re.putVar(&tmpJzRe);
-        nc_j1zc_im.putVar(&tmpJzIm);
-
-        if (iX == write_iX) {
-            std::cout<<"write_iX"<<std::endl;
-        }
-
-        std::cout<<"j1xc[iX]: "<<j1xc[iX]<<std::endl;
-        std::cout<<"j1yc[iX]: "<<j1yc[iX]<<std::endl;
-        std::cout<<"j1zc[iX]: "<<j1zc[iX]<<std::endl;
-
-    }
-
-    // ProfilerStop();
 
     std::cout << "DONE" << std::endl;
 
@@ -1327,5 +1215,51 @@ int write_iP = 180;//52;//33;
 #endif
 
 #endif
+
+    // Write current(s) to file
+
+    std::cout << "Writing jP to file ... ";
+
+    stringstream ncjPFileName2("output/jP2.nc");
+    NcFile ncjPFile(ncjPFileName2.str().c_str(), NcFile::replace);
+
+    NcDim nc_nX = ncjPFile.addDim("nJp", nXGrid);
+
+    NcVar nc_x = ncjPFile.addVar("x", ncFloat, nc_nX);
+
+    NcVar nc_j1xc_re = ncjPFile.addVar("j1xc_re", ncFloat, nc_nX);
+    NcVar nc_j1xc_im = ncjPFile.addVar("j1xc_im", ncFloat, nc_nX);
+
+    NcVar nc_j1yc_re = ncjPFile.addVar("j1yc_re", ncFloat, nc_nX);
+    NcVar nc_j1yc_im = ncjPFile.addVar("j1yc_im", ncFloat, nc_nX);
+
+    NcVar nc_j1zc_re = ncjPFile.addVar("j1zc_re", ncFloat, nc_nX);
+    NcVar nc_j1zc_im = ncjPFile.addVar("j1zc_im", ncFloat, nc_nX);
+
+    vector<float> JxRe(nXGrid,0);
+    vector<float> JxIm(nXGrid,0);
+    vector<float> JyRe(nXGrid,0);
+    vector<float> JyIm(nXGrid,0);
+    vector<float> JzRe(nXGrid,0);
+    vector<float> JzIm(nXGrid,0);
+
+    for (int i=0;i<nXGrid;i++) {
+       JxRe[i] = j1xc[i].real(); 
+       JxIm[i] = j1xc[i].imag(); 
+       JyRe[i] = j1yc[i].real(); 
+       JyIm[i] = j1yc[i].imag(); 
+       JzRe[i] = j1zc[i].real(); 
+       JzIm[i] = j1zc[i].imag(); 
+    }
+    nc_x.putVar(&xGrid[0]);
+    nc_j1xc_re.putVar(&JxRe[0]);
+    nc_j1xc_im.putVar(&JxIm[0]);
+    nc_j1yc_re.putVar(&JyRe[0]);
+    nc_j1yc_im.putVar(&JyIm[0]);
+    nc_j1zc_re.putVar(&JzRe[0]);
+    nc_j1zc_im.putVar(&JzIm[0]);
+
+    std::cout << "DONE" << std::endl;
+
     return EXIT_SUCCESS;
 }

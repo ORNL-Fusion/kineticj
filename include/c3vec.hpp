@@ -44,13 +44,22 @@ class C3 {
                 HOST DEVICE
 				C3 ( T _c1, T _c2, T _c3 ) {c1=_c1;c2=_c2;c3=_c3;};
 
+                PRAGMA
+                HOST DEVICE
+				C3 ( const C3 &C3_2 ) {c1=C3_2.c1;c2=C3_2.c2;c3=C3_2.c3;};
+
+                PRAGMA
+                template <typename T2>
+                HOST DEVICE
+				C3 ( const C3<T2> &C3_2 ) {c1=C3_2.c1;c2=C3_2.c2;c3=C3_2.c3;};
+
                 // These assignment operators are implemented here because
                 // I was unable to get them to work when the implementation
                 // was in the c3vec.tpp file.
 
                 PRAGMA
                 HOST DEVICE
-                C3<T>& operator=(const C3<T>& rhs)
+                C3& operator=(const C3& rhs)
                 {
                     if (this != &rhs) {
                         c1 = rhs.c1;
@@ -65,7 +74,7 @@ class C3 {
                 PRAGMA
                 template <typename T2>
                 HOST DEVICE
-                C3<T>& operator=(const C3<T2>& rhs)
+                C3& operator=(const C3<T2>& rhs)
                 {
                     //if (this != &rhs) {
                         c1 = rhs.c1;

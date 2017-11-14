@@ -15,7 +15,7 @@ cd, benchmarkDirString
 @constants
 
 n = 300
-n_kj = 20 
+n_kj = 15
 
 kj_nPts_grid = 301
 kj_nPts_eval = 1
@@ -50,14 +50,14 @@ if benchmark eq 1 then begin
    
     kx = 10.0
     ky = 0.0 
-    kz = 200.0
+    kz = 100.0
 
     ; KJ config parameters
 
     kj_nPx = 11
     kj_nPy = 11
-    kj_nPz = 155 
-    kj_nStepsPerCyclotronPeriod = 100.0
+    kj_nPz = 85
+    kj_nStepsPerCyclotronPeriod = 600.0
     kj_nRFCycles = 10.0 
 
     ; Diagnose the scenario
