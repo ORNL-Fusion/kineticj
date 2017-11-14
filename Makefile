@@ -28,6 +28,10 @@ ifneq (,$(findstring titan,$(ThisMachine)))
 ThisMachine := titan
 endif
 
+ifneq (,$(findstring edison,$(ThisMachine)))
+ThisMachine := edison 
+endif
+
 include machine-makefiles/Makefile.$(ThisMachine)
 include Makefile.flags
 

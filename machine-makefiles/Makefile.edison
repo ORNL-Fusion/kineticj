@@ -1,0 +1,33 @@
+
+DLGHOME:=/global/homes/g/greendl1
+
+#NETCDF_DIR :=
+NETCDF_LIBDIR := ${NETCDF_DIR}/lib
+NETCDF_INCDIR := ${NETCDF_DIR}/include 
+INCLUDEFLAGS += -I$(NETCDF_INCDIR)
+LIBS += -lnetcdf
+LFLAGS += -L $(NETCDF_LIBDIR)
+
+NETCDFCXX4_DIR := ${DLGHOME}/code/netcdf-cxx4/gnu
+NETCDFCXX4_LIBDIR := ${NETCDFCXX4_DIR}/lib
+NETCDFCXX4_INCDIR := ${NETCDFCXX4_DIR}/include
+INCLUDEFLAGS += -I$(NETCDFCXX4_INCDIR)
+LIBS += -lnetcdf-cxx4 
+LFLAGS += -L $(NETCDFCXX4_LIBDIR)
+
+CUDA_DIR := ${DLGHOME}/code/thrust
+CUDA_LIBDIR := ${CUDA_DIR}/lib
+CUDA_INCDIR := ${CUDA_DIR}
+CUDA_ARCH := 
+LFLAGS += -L${CUDA_LIBDIR}
+
+LIBCONFIGDIR := ${DLGHOME}/code/libconfig/gnu
+INCLUDEFLAGS += -I${LIBCONFIGDIR}/include
+LFLAGS += -L${LIBCONFIGDIR}/lib
+LIBS += -lconfig++
+
+CC := cc
+CPP := CC
+GCC := gcc
+
+
