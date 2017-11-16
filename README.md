@@ -118,6 +118,7 @@ make
     ```
     cd $KINETICJ
     cd benchmarks
+    ./cleanBenchmarks.sh
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
     ```
@@ -129,6 +130,7 @@ make
     mkdir kineticj
     cp -r $KINETICJ/benchmarks .
     cd benchmarks
+    ./cleanBenchmarks.sh
     salloc -N 1 -p debug
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
