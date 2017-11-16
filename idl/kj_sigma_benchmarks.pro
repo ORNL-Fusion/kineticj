@@ -344,7 +344,7 @@ for b=0,nB_kj-1 do begin
 
     endif
 
-    print, ThisRunDir
+    print, ThisRunDir, ' of ', strTrim(string((nT_kj*nB_kj)),2)
     cd, ThisRunDir
 
     for row=0,2 do begin
@@ -354,18 +354,21 @@ for b=0,nB_kj-1 do begin
         This_jP2_FileName = 'output/jP2_' + RowString + '.nc'
 
         if row eq 0 then begin
+            print, 'Ex!=0'
             E1=1
             E2=0
             E3=0
         endif
 
         if row eq 1 then begin
+            print, 'Ey!=0'
             E1=0
             E2=1
             E3=0
         endif
 
         if row eq 2 then begin
+            print, 'Ez!=0'
             E1=0
             E2=0
             E3=1
@@ -415,9 +418,9 @@ for b=0,nB_kj-1 do begin
             nvTh = 3
             vThMax = nvTh * sqrt( 2.0 * T_eV_kj[t] * _e / ( amu * _amu ) )
             parSamples = ( 2 * !pi / kPar ) / ( 1 / f / kj_nStepsPerCyclotronPeriod * vThMax )
-            print, 'T_eV: ', T_eV_kj[t], '  parSamples: ', parSamples
+            ;print, 'T_eV: ', T_eV_kj[t], '  parSamples: ', parSamples
             perSamples = ( 2 * !pi / kPer ) / ( 1 / f / kj_nStepsPerCyclotronPeriod * vThMax )
-            print, 'T_eV: ', T_eV_kj[t], '  perSamples: ', perSamples
+            ;print, 'T_eV: ', T_eV_kj[t], '  perSamples: ', perSamples
 
             nMinSamples = 5
             par_dt = ( 2 * !pi / kPar ) / nMinSamples / vThMax 
@@ -428,8 +431,8 @@ for b=0,nB_kj-1 do begin
             par_nStepsPerCyclotronPeriod = 1 / ( wc / 2 * !pi ) / par_dt 
             per_nStepsPerCyclotronPeriod = 1 / ( wc / 2 * !pi ) / per_dt 
 
-            print, 'par_nStepsPerCyclotronPeriod: ', par_nStepsPerCyclotronPeriod
-            print, 'per_nStepsPerCyclotronPeriod: ', per_nStepsPerCyclotronPeriod
+            ;print, 'par_nStepsPerCyclotronPeriod: ', par_nStepsPerCyclotronPeriod
+            ;print, 'per_nStepsPerCyclotronPeriod: ', per_nStepsPerCyclotronPeriod
 
             vPhsPer = w / kPer
             vPhsPar = w / kPar
@@ -438,7 +441,7 @@ for b=0,nB_kj-1 do begin
 
             ; Run kj
 
-            RunCommand = '~/code/kineticj/bin/kineticj'
+            RunCommand = 'DYLD_LIBRARY_PATH=/Users/dg6/code/netcdf-cxx4/lib ~/code/kineticj/bin/kineticj'
             spawn, RunCommand, StdOut, StdErr
             print, StdOut
             print, StdErr

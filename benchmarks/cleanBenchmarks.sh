@@ -1,1 +1,1 @@
-rm -r benchmark*/0*
+rm -r benchmark*/0* benchmark*/*.png benchmark*/*.pdf

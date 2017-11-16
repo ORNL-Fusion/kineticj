@@ -28,11 +28,11 @@ xRange = lambda*nCycles
 dx = xRange / (nPts-1)
 x = fIndGen(nPts)*dx+xOffSet
 
-print, 'Parallel k: ', kx
-print, 'Parallel Wavelength: ', lambda
-print, 'nPhi to use: ', 2*!pi*xOffset/lambda
-print, 'xGridMin: ', x[0]
-print, 'xGridMax: ', x[-1]
+;print, 'Parallel k: ', kx
+;print, 'Parallel Wavelength: ', lambda
+;print, 'nPhi to use: ', 2*!pi*xOffset/lambda
+;print, 'xGridMin: ', x[0]
+;print, 'xGridMax: ', x[-1]
 
 EmagR = 1.0
 EmagT = 1.0 
