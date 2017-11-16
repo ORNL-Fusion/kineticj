@@ -121,7 +121,7 @@ make
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
     ```
-    or at NERSC
+    or at NERSC (Edison - takes a few minutes for each benchmark)
     ```
     cd $KINETICJ
     source env-edison.sh
