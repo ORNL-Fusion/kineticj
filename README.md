@@ -110,16 +110,29 @@ make
 ### Using IDL to run the sigma benchmarks
 
 1. Clone https://github.com/dlg0/lib_dlg
-2. Add kineticj and lib_dlg idl folders to the IDL path, i.e., edit the `export $IDL_STARTUP=~/idlStartup.pro` file, e.g., 
-```
-!PATH=EXPAND_PATH('+~/code/kineticj/idl:+~/code/lib_dlg/idl:<IDL_DEFAULT>')
-```
+2. Add `kineticj` and `lib_dlg` idl folders to the IDL path, i.e., edit the `export $IDL_STARTUP=~/idlStartup.pro` file, e.g., 
+    ```
+    !PATH=EXPAND_PATH('+~/code/kineticj/idl:+~/code/lib_dlg/idl:<IDL_DEFAULT>')
+    ```
 3. Change to the benchmarks folder, start IDL, run one of the 3 benchmarks.
-```
-cd kineticj/benchmarks
-idl
-IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
-```
+    ```
+    cd $KINETICJ
+    cd benchmarks
+    idl
+    IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
+    ```
+    or at NERSC
+    ```
+    cd $KINETICJ
+    source env-edison.sh
+    cd $SCRATCH
+    mkdir kineticj
+    cp -r $KINETICJ/benchmarks .
+    cd benchmarks
+    salloc -N 1 -p debug
+    idl
+    IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
+    ```
 4. Examine the `kineticj/benchmarks/benchmark1/benchmark.png` file for output. 
 
 ### Using Python to run the test case
