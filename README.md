@@ -1,4 +1,5 @@
 # Kinetic-j
+NOTE: This file is best viewed at https://github.com/ORNL-Fusion/kineticj/
 
 ## Description
 The Kinetic-j program takes a time harmonic electric wave field, and calculates the kinetic plasma current. This calculation is done in configuration-space, as opposed to the more traditional Fourier-space evaluation forms provided in the standard plasma wave physics texts. 
@@ -7,13 +8,17 @@ The Kinetic-j program takes a time harmonic electric wave field, and calculates 
 The program is organized into C++ and IDL files. The C++ are the buildable program (located in src and include directories), with the IDL scripts (located in the idl directory) being used to generate inputs, run benchmarks, and post process outputs. The bin and obj directories are empty, being only placeholders for build locations. The mathematica directory contains some relevant analysis and derivations of the equations upon which the program is based. 
 ```
 . (Makefile etc)
+├── benchmarks (template and output for the sigma benchmarking)
 ├── bin (empty)
 ├── idl (IDL scripts)
 ├── include (C++ header files)
 ├── machine-makefiles (machine specific makefile setting files)
 ├── mathematica (mathematica scripts)
+├── matlab (matlab scripts)
 ├── obj (empty)
-└── src (C++ source files)
+├── python (python scripts)
+├── src (C++ source files)
+└── template (test case)
 ```
 
 ## Dependencies 
@@ -131,6 +136,31 @@ $KINETICJ/bin/kineticj
 exit
 python $KINETICJ/python/kj_plot.py
 ```
+<img src="/template/template.png" width="300">
+
+Changing the variables in `template/kj.cfg` will allow experimenting with running the code. 
+
+```
+  1 xGridMin = 1.0;
+  2 xGridMax = 5.0;
+  3 nXGrid = 200
+  4 nRFCycles = 50.0;
+  5 species_number = 0;
+  6 species_amu = 1.0;
+  7 species_Z = 1.0;
+  8 runIdent = "template";
+  9 nP_Vx = 5;
+ 10 nP_Vy = 5;
+ 11 nP_Vz = 5;
+ 12 nThermal = 3;
+ 13 nPhi = 0;
+ 14 ky = 0.0;
+ 15 T_keV = 5.0;
+ 16 input_fName = "input/input-data.nc";
+ 17 kz = 0.0;
+ 18 nStepsPerCyclotronPeriod = 30.0;
+```
+
 ### Using IDL to run the sigma benchmarks
 
 1. Clone https://github.com/dlg0/lib_dlg
