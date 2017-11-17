@@ -107,6 +107,30 @@ make
 ```
 
 ## Running Kinetic-J
+### Run the test case
+A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
+
+```
+cd $KINETICJ
+cd template
+./bin/kineticj
+python ../python/kj_plot.py
+```
+
+or for NERSC (Edison with a single node using OpenMP)
+
+```
+cd $KINETICJ
+source env-edison.sh
+cd $SCRATCH
+mkdir kineticj
+cp -r $KINETICJ/template .
+cd template
+salloc -N 1 -p debug
+$KINETICJ/bin/kineticj
+exit
+python $KINETICJ/python/kj_plot.py
+```
 ### Using IDL to run the sigma benchmarks
 
 1. Clone https://github.com/dlg0/lib_dlg
@@ -136,31 +160,6 @@ make
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
     ```
 4. Examine the `kineticj/benchmarks/benchmark1/benchmark.png` file for output. 
-
-### Using Python to run the test case
-A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
-
-```
-cd $KINETICJ
-cd template
-./bin/kineticj
-python ../python/kj_plot.py
-```
-
-or for NERSC (Edison with a single node using OpenMP)
-
-```
-cd $KINETICJ
-source env-edison.sh
-cd $SCRATCH
-mkdir kineticj
-cp -r $KINETICJ/template .
-cd template
-salloc -N 1 -p debug
-$KINETICJ/bin/kineticj
-exit
-python $KINETICJ/python/kj_plot.py
-```
 
 ## Other Information
 
