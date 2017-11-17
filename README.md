@@ -131,6 +131,8 @@ $KINETICJ/bin/kineticj
 exit
 python $KINETICJ/python/kj_plot.py
 ```
+<img src="/template/template.png" width="300">
+
 ### Using IDL to run the sigma benchmarks
 
 1. Clone https://github.com/dlg0/lib_dlg
