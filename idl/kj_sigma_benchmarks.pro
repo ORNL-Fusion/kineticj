@@ -381,7 +381,7 @@ for b=0,nB_kj-1 do begin
         endelse
 
         kj_create_single_k_input, b0=this_b0, bUnit=bUnit, kx=kx, f_Hz=f, n_m3=density, $
-                Er=Er, Et=Et, Ez=Ez, x=x_kjGrid, writeOutput=runKJ, $
+                Er=Er, Et=Et, Ez=Ez, writeOutput=runKJ, $
                 E1Multiplier=E1, E2Multiplier=E2, E3Multiplier=E3, fileName=this_inputFileName, $
                 nPts = kj_nPts_grid
 

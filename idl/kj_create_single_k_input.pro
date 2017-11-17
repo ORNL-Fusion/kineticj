@@ -1,6 +1,6 @@
 pro kj_create_single_k_input, $
         b0=_b0, bUnit=_bUnit, kx=_kx, f_Hz=_f_Hz, n_m3=_n_m3, $
-        Er=Er, Et=Et, Ez=Ez, x=x, writeOutput=writeOutput, $
+        Er=Er, Et=Et, Ez=Ez, x=_x, writeOutput=writeOutput, $
         E1Multiplier=_E1Multiplier, $
         E2Multiplier=_E2Multiplier, $
         E3Multiplier=_E3Multiplier, $
@@ -20,13 +20,14 @@ if keyword_set(_E2Multiplier) then E2Multiplier = _E2Multiplier else E2Multiplie
 if keyword_set(_E3Multiplier) then E3Multiplier = _E3Multiplier else E3Multiplier = 0 
 if keyword_set(_fileName) then fileName = _fileName else fileName = 'input/input-data.nc' 
 
-lambda = 2*!Pi/kx
-
-xOffset = 0 
-nCycles = 5 
-xRange = lambda*nCycles
-dx = xRange / (nPts-1)
-x = fIndGen(nPts)*dx+xOffSet
+if keyword_set(_x) then x = _x else begin
+    lambda = 2*!Pi/kx
+    xOffset = 0 
+    nCycles = 5 
+    xRange = lambda*nCycles
+    dx = xRange / (nPts-1)
+    x = fIndGen(nPts)*dx+xOffSet
+endelse
 
 ;print, 'Parallel k: ', kx
 ;print, 'Parallel Wavelength: ', lambda

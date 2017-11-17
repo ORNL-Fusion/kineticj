@@ -13,6 +13,7 @@ NAME := bin/kineticj
 
 LIBS :=  
 INCLUDEFLAGS :=  
+LFLAGS :=
 
 GOOGLE_PERF_DIR := ${HOME}/code/google-perftools
 PAPI_DIR := ${HOME}/code/papi/gnu_${GNUVER}
@@ -53,7 +54,7 @@ ifeq ($(USE_OPENMP),1)
 THRUST_POLICY:=THRUST_DEVICE_SYSTEM_OMP
 NVCC := ${CPP} -O3  -DTHRUST_DEVICE_SYSTEM=${THRUST_POLICY} -I ${CUDA_INCDIR}
 NVCCFLAGS := -x c++ -fopenmp
-LFLAGS += -fopenmp -lgomp
+LFLAGS += -fopenmp -lgomp  
 CPPFLAGS+= -D__THRUST
 endif
 
