@@ -122,7 +122,7 @@ make
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
     ```
-    or at NERSC (Edison - takes a few minutes for each benchmark)
+    or at NERSC (Edison with a single node using OpenMP)
     ```
     cd $KINETICJ
     source env-edison.sh
@@ -138,23 +138,28 @@ make
 4. Examine the `kineticj/benchmarks/benchmark1/benchmark.png` file for output. 
 
 ### Using Python to run the test case
-The appropriate method for running the code will depend on the system, and if you are using a GPU or not. An example for the gpufusion.ornl.gov machine, to run the benchmark cases is as follows. 
+A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
 
 ```
-qsub -I
-idl
-IDL>kj_sigma_benchmarks, runKJ=1
+cd $KINETICJ
+cd template
+./bin/kineticj
+python ../python/kj_plot.py
 ```
-This will (provided the `idl` subdirectory is in the IDL path) generate a series of Kinetic-J runs in different directories. Each of those directories serves as a template, where the non-scripted, standalone version of the code could be run as an example. i.e., after executing the above, the below can be run.
+
+or for NERSC (Edison with a single node using OpenMP)
 
 ```
-cd benchmark1/00000
-/path/to/cloned/source/bin/kineticj
-```
-This will produce files in `output/` which can be viewed by running the various IDL scripts, i.e.,g 
-
-```
-IDL>kj_plot_current
+cd $KINETICJ
+source env-edison.sh
+cd $SCRATCH
+mkdir kineticj
+cp -r $KINETICJ/template .
+cd template
+salloc -N 1 -p debug
+$KINETICJ/bin/kineticj
+exit
+python $KINETICJ/python/kj_plot.py
 ```
 
 ## Other Information
