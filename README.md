@@ -112,11 +112,30 @@ make
 ```
 
 ## Running Kinetic-J
+Set a `KINETICJ` environment variable to be the location of the cloned source ...
+```
+cd ~/code
+git clone https://github.com/ORNL-Fusion/kineticj.git
+export KINETICJ=~/code/kineticj
+```
+
 ### Run the regression tests
 To aid development testing we include some simple regression testing. This is run as follows ...
 ```
 cd $KINETICJ/tests
 python ../python/kj_test.py
+```
+or at NERSC ...
+```
+cd $KINETICJ
+source env-edison.sh
+cd $SCRATCH
+mkdir kineticj
+cp -r $KINETICJ/tests .
+cd tests
+salloc -N 1 -p debug
+python $KINETICJ/python/kj_plot.py
+exit
 ```
 with the expected output being ...
 ```
