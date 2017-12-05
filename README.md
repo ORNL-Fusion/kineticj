@@ -10,15 +10,16 @@ The program is organized into C++ and IDL files. The C++ are the buildable progr
 . (Makefile etc)
 ├── benchmarks (template and output for the sigma benchmarking)
 ├── bin (empty)
-├── idl (IDL scripts)
+├── idl (IDL utility scripts)
 ├── include (C++ header files)
 ├── machine-makefiles (machine specific makefile setting files)
 ├── mathematica (mathematica scripts)
-├── matlab (matlab scripts)
+├── matlab (matlab utility scripts)
 ├── obj (empty)
 ├── python (python scripts)
 ├── src (C++ source files)
-└── template (test case)
+├── template (single test case)
+└── tests (regression test files)
 ```
 
 ## Dependencies 
