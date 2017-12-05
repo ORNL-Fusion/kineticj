@@ -112,6 +112,21 @@ make
 ```
 
 ## Running Kinetic-J
+### Run the regression tests
+To aid development testing we include some simple regression testing. This is run as follows ...
+```
+cd $KINETICJ/tests
+python ../python/kj_test.py
+```
+with the expected output being ...
+```
+dlg-macbookpro2:tests dg6$ python ../python/kj_test.py
+benchmark1-00007    PASS
+benchmark2-00013    PASS
+benchmark3-00004    PASS
+test4               PASS
+```
+
 ### Run the test case
 A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
 
