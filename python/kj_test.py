@@ -7,7 +7,9 @@ tests = ["benchmark1-00007","benchmark2-00013","benchmark3-00004","test4"]
 
 rtol = 1e-5
 
-cmd = "../../bin/kineticj"
+KJPATH = os.environ['KINETICJ']
+cmd = os.path.expanduser(KJPATH+"/bin/kineticj")
+print cmd
 args = ""
 cwd = os.getcwd()
 
