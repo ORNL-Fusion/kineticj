@@ -443,8 +443,8 @@ for b=0,nB_kj-1 do begin
 
             RunCommand = 'DYLD_LIBRARY_PATH=/Users/dg6/code/netcdf-cxx4/lib ~/code/kineticj/bin/kineticj'
             spawn, RunCommand, StdOut, StdErr
-            print, StdOut
-            print, StdErr
+            ;print, StdOut
+            ;print, StdErr
 
             file_move, 'output/jP2.nc', This_jP2_FileName 
 

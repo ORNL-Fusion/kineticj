@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
     int num_gpus = 0;   // number of CUDA GPUs
 
-    printf("%s Starting...\n\n", argv[0]);
+    //printf("%s Starting...\n\n", argv[0]);
 
 #ifdef __CUDACC__
     // determine the number of CUDA capable GPUs
@@ -191,8 +191,9 @@ int main(int argc, char** argv)
     float xGridMin = cfg.lookup("xGridMin");
     float xGridMax = cfg.lookup("xGridMax");
     int nXGrid = cfg.lookup("nXGrid");
+#if DEBUGLEVEL > 0
     std::cout << "nXGrid: " << nXGrid << std::endl;
-
+#endif
     vector<float> xGrid(nXGrid);
     vector<float> density_m3(nXGrid);
     vector<float> T_keV(nXGrid);
@@ -322,7 +323,9 @@ int main(int argc, char** argv)
 
     long int nWork = nXGrid * nP;
 
+#if DEBUGLEVEL > 0
     std::cout<<"nWork: "<<nWork<<std::endl;
+#endif
 
     vector<CParticle> particleWorkList;
     for (int iX = 0; iX < nXGrid; iX++) {
@@ -338,7 +341,9 @@ int main(int argc, char** argv)
 #if CLOCK >= 1
         clock_t timeCUDACopy0 = clock();
 #endif
+#if DEBUGLEVEL > 0
     std::cout<<"Copying particle worklist to device ..."<<std::endl;
+#endif
     thrust::device_vector<CParticle> particleWorkList_device = particleWorkList;
 
     thrust::device_vector<float> vx_device(nWork,0);
@@ -349,10 +354,15 @@ int main(int argc, char** argv)
     thrust::transform( thrust::device, vy_device.begin(), vy_device.end(), particleWorkList_device.begin(), vy_device.begin(), set_vy() );
     thrust::transform( thrust::device, vz_device.begin(), vz_device.end(), particleWorkList_device.begin(), vz_device.begin(), set_vz() );
 
+#if DEBUGLEVEL > 0
     std::cout<<"DONE"<<std::endl;
+#endif
+
 #if CLOCK >= 1
         double timeCUDACopy = ( clock() - timeCUDACopy0 ) / (double)CLOCKS_PER_SEC;
+#if DEBUGLEVEL > 0
         std::cout << "THRUST: Time for Copy 1: " << timeCUDACopy << std::endl;
+#endif
 #endif
 #endif
 
@@ -426,12 +436,16 @@ int main(int argc, char** argv)
     C3<thrust::complex<float> > *b1_dPtr_raw = thrust::raw_pointer_cast(b1_CYL_device.data());
 #if CLOCK >= 1
         double timeCUDACopy2 = ( clock() - timeCUDACopy2_0 ) / (double)CLOCKS_PER_SEC;
+#if DEBUGLEVEL > 0
         std::cout << "THRUST: Time for Copy 2: " << timeCUDACopy2 << std::endl;
+#endif
 #endif
 #endif
 
     // Move particles
+#if DEBUGLEVEL > 0
     std::cout << "Moving particles with for_each ..." << std::endl;
+#endif
 
 #if CLOCK >= 1
         clock_t timeMove0 = clock();
@@ -615,10 +629,14 @@ int main(int argc, char** argv)
 #if CLOCK >= 1
 #if defined(_OPENMP)
         double time = omp_get_wtime() - start_time;
+#if DEBUGLEVEL > 0
         std::cout << "THRUST: Time for work: " << time << std::endl;
+#endif
 #else
         double timeInSecondsFunctor = (timeMove0 - clock() ) / (double)CLOCKS_PER_SEC;
+#if DEBUGLEVEL > 0
         std::cout << "THRUST: Time for work: " << timeInSecondsFunctor << std::endl;
+#endif
 #endif
 #endif
 
@@ -647,20 +665,26 @@ int main(int argc, char** argv)
 
 #if CLOCK >= 1
         double timeCUDACopy3 = ( clock() - timeCUDACopy3_0 ) / (double)CLOCKS_PER_SEC;
+#if DEBUGLEVEL > 0
         std::cout << "THRUST: Time for Copy 3: " << timeCUDACopy3 << std::endl;
+#endif
 #endif
 
     for (int i=0;i<nXGrid;i++) {
         j1xc[i] = dv * accumulate( vxf1_host.begin()+nP*i, vxf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
         j1yc[i] = dv * accumulate( vyf1_host.begin()+nP*i, vyf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
         j1zc[i] = dv * accumulate( vzf1_host.begin()+nP*i, vzf1_host.begin()+nP*i+nP, thrust::complex<float>(0) );
+#if DEBUGLEVEL > 0
         std::cout << "GPU_ITERATOR Jx : "<<j1xc[i].real() << "  " << j1xc[i].imag() << std::endl;
         std::cout << "GPU_ITERATOR Jy : "<<j1yc[i].real() << "  " << j1yc[i].imag() << std::endl;
         std::cout << "GPU_ITERATOR Jz : "<<j1zc[i].real() << "  " << j1zc[i].imag() << std::endl;
+#endif
     }
 #endif
 
+#if DEBUGLEVEL > 0
 std::cout << "DONE" << std::endl;
+#endif
 
 
 #if DO_CPU_APPROACH > 0
@@ -1199,8 +1223,9 @@ int write_iP = 0;//52;//33;
 
     } // End of xGrid loop
 
-
+#if DEBUGLEVEL > 0
     std::cout << "DONE" << std::endl;
+#endif
 
 #if CLOCK >= 1
     clock_t ProgramTime_ = clock();
@@ -1217,8 +1242,9 @@ int write_iP = 0;//52;//33;
 #endif
 
     // Write current(s) to file
-
+#if DEBUGLEVEL > 0
     std::cout << "Writing jP to file ... ";
+#endif
 
     stringstream ncjPFileName2("output/jP2.nc");
     NcFile ncjPFile(ncjPFileName2.str().c_str(), NcFile::replace);
@@ -1259,7 +1285,9 @@ int write_iP = 0;//52;//33;
     nc_j1zc_re.putVar(&JzRe[0]);
     nc_j1zc_im.putVar(&JzIm[0]);
 
+#if DEBUGLEVEL > 0
     std::cout << "DONE" << std::endl;
+#endif
 
     return EXIT_SUCCESS;
 }

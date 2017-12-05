@@ -18,7 +18,9 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
     std::vector<C3<float> >& b0_CYL)
 {
 
+#if DEBUG_READ_E_FIELD >= 1
     std::cout << "Reading eField data file " << eField_fName << std::endl;
+#endif
 
     // Here we are using the cxx-4 netcdf interface by Lynton Appel
     // This needs netCDF 4.1.1 or later build with
@@ -42,8 +44,8 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
     try {
 #if DEBUG_READ_E_FIELD >= 1
         std::cout<<"Message: DEBUG_READ_E_FIELD enabled"<<std::endl;
-#endif
         std::cout << "Reading E field data file ... " << eField_fName << std::endl;
+#endif
         NcFile dataFile(eField_fName.c_str(), NcFile::read);
 
 #if DEBUG_READ_E_FIELD >= 1
@@ -66,8 +68,8 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         }
 #if DEBUG_READ_E_FIELD >= 1
         std::cout<<"Post spec num check "<<std::endl;
-#endif
         std::cout << "\tnR: " << nR << std::endl;
+#endif
 
 #if DEBUG_READ_E_FIELD >= 1
         std::cout<<"Pre getVar "<<std::endl;
@@ -150,13 +152,11 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
 #endif
  
 #if DEBUG_READ_E_FIELD >= 1
-        std::cout<<"nR: "<<nR<<std::endl;
         for (int i = 0; i < nR; i++) {
             std::cout<<"density: "<<n_m3[i]<<std::endl;
         }
 #endif
         try {
-            std::cout << "nR : " << nR << std::endl;
             b0_CYL.resize(nR);
         } catch (const std::bad_alloc& error) {
             std::cout << "Allocation error at " << __FILE__ << __LINE__ << std::endl;
@@ -227,6 +227,8 @@ int read_e_field(std::string eField_fName, int& species_number, float& freq,
         b1_CYL[i].c3 = b_z[i];
     }
 
+#if DEBUG_READ_E_FIELD >= 1
     std::cout << "End of " << __FILE__ << std::endl;
+#endif
     return (0);
 }
