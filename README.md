@@ -24,16 +24,16 @@ The program is organized into C++ and IDL files. The C++ are the buildable progr
 
 ## Dependencies 
 
-### Libconfig (https://github.com/hyperrealm/libconfig)
+### Libconfig (https://github.com/hyperrealm/libconfig) [v1.7.1 tested]
 The human readable input files are of the format defined by the libconfig API. Libconfig can be found at the above location on github.
 
-### NetCDF-C (https://github.com/Unidata/netcdf-c)
+### NetCDF-C (https://github.com/Unidata/netcdf-c) [v4.5.0 tested]
 We utilize the netcdf file format for both inputs and outputs.
 
-### NetCDF-CXX4 (https://github.com/Unidata/netcdf-cxx4)
+### NetCDF-CXX4 (https://github.com/Unidata/netcdf-cxx4) [v4.3.0 tested]
 We further utilize the more recent CXX-4 components of the NetCDF API (note that the --enable-cxx4 flag is not required as suggested in the netcdf-cxx4 github readme file).  
 
-### THRUST (https://github.com/thrust/thrust) or CUDA (https://developer.nvidia.com/cuda-downloads)
+### THRUST (https://github.com/thrust/thrust) [1.8.2 tested] or CUDA (https://developer.nvidia.com/cuda-downloads) [Cuda 8 tested]
 The THRUST headers are required and are available either standalone from the THRUST repo (for building on systems without GPUs), or from within the CUDA SDK (for building on systems with GPUs). So if you do not have an nvidia compute GPU, you will still need the THRUST library (unbuilt).
 
 ## Installation
