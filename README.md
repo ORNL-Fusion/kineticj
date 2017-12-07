@@ -46,6 +46,7 @@ and then editing the resulting file appropriately. Then just
 ```
 make clean
 make
+make test
 ```
 ### Build Options
 The THRUST API provides for single thread CPU (CPP), multi thread OpenMP (OMP), and CUDA (CUDA) targets via the appropriate choice of THRUST policy. Within the top level `Makefile` the THRUST policy (which selects either CPU, OPENMP, or GPU) is selected by uncommenting the desired choice as 
@@ -113,29 +114,29 @@ make
 ```
 
 ## Running Kinetic-J
-Set a `KINETICJ` environment variable to be the location of the cloned source ...
+Set a `KINETICJ_ROOT` environment variable to be the location of the cloned source ...
 ```
 cd ~/code
 git clone https://github.com/ORNL-Fusion/kineticj.git
-export KINETICJ=~/code/kineticj
+export KINETICJ_ROOT=~/code/kineticj
 ```
 
 ### Run the regression tests
 To aid development testing we include some simple regression testing. This is run as follows ...
 ```
-cd $KINETICJ/tests
+cd $KINETICJ_ROOT/tests
 python ../python/kj_test.py
 ```
 or at NERSC ...
 ```
-cd $KINETICJ
+cd $KINETICJ_ROOT
 source env-edison.sh
 cd $SCRATCH
 mkdir kineticj
-cp -r $KINETICJ/tests .
+cp -r $KINETICJ_ROOT/tests .
 cd tests
 salloc -N 1 -p debug
-python $KINETICJ/python/kj_plot.py
+python $KINETICJ_ROOT/python/kj_plot.py
 exit
 ```
 with the expected output being ...
@@ -151,7 +152,7 @@ test4               PASS
 A standalone test case is also availble where we demonstrate the current response for a variable magnetic field (1/r) where the fundamental and 2nd harmonic ion cyclotron resonances are in the domain (at x=1.75 and x=3.5 respectively). We have provided an input file `template/input/input-data.nc` with an electric field with `kx=pi/(2*rho_L)` where `rho_L` is the Lamor radius at the location of the 2nd harmonic resonance, i.e., the finite Lamor radius interaction is captured per pg.270-271 of Stix. This case is run via the following commands ...
 
 ```
-cd $KINETICJ
+cd $KINETICJ_ROOT
 cd template
 ./bin/kineticj
 python ../python/kj_plot.py
@@ -160,16 +161,16 @@ python ../python/kj_plot.py
 or for NERSC (Edison with a single node using OpenMP)
 
 ```
-cd $KINETICJ
+cd $KINETICJ_ROOT
 source env-edison.sh
 cd $SCRATCH
 mkdir kineticj
-cp -r $KINETICJ/template .
+cp -r $KINETICJ_ROOT/template .
 cd template
 salloc -N 1 -p debug
-$KINETICJ/bin/kineticj
+$KINETICJ_ROOT/bin/kineticj
 exit
-python $KINETICJ/python/kj_plot.py
+python $KINETICJ_ROOT/python/kj_plot.py
 ```
 <img src="/template/template.png" width="300">
 
@@ -205,7 +206,7 @@ Changing the variables in `template/kj.cfg` will allow experimenting with runnin
     ```
 3. Change to the benchmarks folder, start IDL, run one of the 3 benchmarks.
     ```
-    cd $KINETICJ
+    cd $KINETICJ_ROOT
     cd benchmarks
     ./cleanBenchmarks.sh
     idl
@@ -213,11 +214,11 @@ Changing the variables in `template/kj.cfg` will allow experimenting with runnin
     ```
     or at NERSC (Edison with a single node using OpenMP)
     ```
-    cd $KINETICJ
+    cd $KINETICJ_ROOT
     source env-edison.sh
     cd $SCRATCH
     mkdir kineticj
-    cp -r $KINETICJ/benchmarks .
+    cp -r $KINETICJ_ROOT/benchmarks .
     cd benchmarks
     ./cleanBenchmarks.sh
     salloc -N 1 -p debug
