@@ -163,3 +163,8 @@ endif
 clean:
 	-@rm $(NAME) $(OBJ) $(DEP) .dep/src/*
 
+test:
+	@cd tests; \
+	./clean.sh; \
+	python2 ../python/kj_test.py; \
+	cd ../; 

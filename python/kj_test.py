@@ -9,7 +9,6 @@ rtol = 1e-5
 
 KJPATH = os.environ['KINETICJ']
 cmd = os.path.expanduser(KJPATH+"/bin/kineticj")
-print cmd
 args = ""
 cwd = os.getcwd()
 
