@@ -2,12 +2,23 @@ from netCDF4 import Dataset
 import numpy as np
 from subprocess import call
 import os
+import sys
 
 tests = ["benchmark1-00007","benchmark2-00013","benchmark3-00004","test4"]
 
 rtol = 1e-5
 
-KJPATH = os.environ['KINETICJ']
+try:
+    KJPATH = os.environ['KINETICJ_ROOT']
+except KeyError:
+    print("ERROR: Please set KINETICJ_ROOT environment variable to point to the top level of the Kinetic-j cloned source, i.e., ...")
+    print("")
+    print(" cd ~/code")
+    print(" git clone https://github.com/ORNL-Fusion/kineticj.git")
+    print(' export KINETICJ_ROOT="~/code/kineticj')
+    print("")
+    sys.exit(0)
+
 cmd = os.path.expanduser(KJPATH+"/bin/kineticj")
 args = ""
 cwd = os.getcwd()
