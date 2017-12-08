@@ -8,18 +8,18 @@ The Kinetic-j program takes a time harmonic electric wave field, and calculates 
 The program is organized into C++ and IDL files. The C++ are the buildable program (located in src and include directories), with the IDL scripts (located in the idl directory) being used to generate inputs, run benchmarks, and post process outputs. The bin and obj directories are empty, being only placeholders for build locations. The mathematica directory contains some relevant analysis and derivations of the equations upon which the program is based. 
 ```
 . (Makefile etc)
-├── benchmarks (template and output for the sigma benchmarking)
-├── bin (empty)
+├── benchmarks (template and output for the IDL based sigma benchmarking)
+├── bin (empty, but where the binary ends up)
 ├── idl (IDL utility scripts)
 ├── include (C++ header files)
 ├── machine-makefiles (machine specific makefile setting files)
-├── mathematica (mathematica scripts)
+├── mathematica (mathematica scripts for proof of principle and Z-function table creation)
 ├── matlab (matlab utility scripts)
 ├── obj (empty)
-├── python (python scripts)
+├── python (python scripts for plotting and testing)
 ├── src (C++ source files)
 ├── template (single test case)
-└── tests (regression test files)
+└── tests (regression test cases with reference solutions)
 ```
 
 ## Dependencies 
