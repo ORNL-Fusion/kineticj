@@ -143,11 +143,12 @@ exit
 ```
 with the expected output being ...
 ```
-dlg-macbookpro2:tests dg6$ python ../python/kj_test.py
-benchmark1-00007    PASS
-benchmark2-00013    PASS
-benchmark3-00004    PASS
-test4               PASS
+python $KINETICJ_ROOT/python/kj_test.py
+
+benchmark1-00007    PASS [2.9 seconds]
+benchmark2-00013    PASS [2.5 seconds]
+benchmark3-00004    PASS [4.2 seconds]
+test4               PASS [3.4 seconds]
 ```
 
 ### Run the test case
