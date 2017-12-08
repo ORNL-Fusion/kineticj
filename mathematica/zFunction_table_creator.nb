@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[    122901,       2122]
-NotebookOptionsPosition[    121608,       2095]
-NotebookOutlinePosition[    121969,       2111]
-CellTagsIndexPosition[    121926,       2108]
+NotebookDataLength[    122393,       2124]
+NotebookOptionsPosition[    121653,       2096]
+NotebookOutlinePosition[    122009,       2112]
+CellTagsIndexPosition[    121966,       2109]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -194,8 +194,9 @@ Cell[BoxData[
    "\[IndentingNewLine]", "\[IndentingNewLine]", 
    RowBox[{"(*", 
     RowBox[{"Output", " ", "file"}], "*)"}], "\[IndentingNewLine]", 
-   RowBox[{"SetDirectory", "[", "\"\<~/code/kineticj/mathematica\>\"", "]"}], 
-   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"SetDirectory", "[", "\"\<~/code/kineticj/mathematica\>\"", "]"}],
+     ";"}], "\[IndentingNewLine]", 
    RowBox[{
     RowBox[{"Export", "[", 
      RowBox[{"\"\<zFunction.nc\>\"", ",", 
@@ -259,9 +260,9 @@ Cell[BoxData[
    3.71310281014944*^9, 3.713102860852767*^9}, {3.71310290737486*^9, 
    3.713102979197528*^9}, {3.7131030118641777`*^9, 3.713103019436697*^9}, {
    3.713103065325959*^9, 3.713103067476862*^9}, {3.713103142117772*^9, 
-   3.713103156070243*^9}, {3.721671319267695*^9, 
-   3.721671449073957*^9}},ExpressionUUID->"ad7f49cd-b55a-41ba-939e-\
-45277f9d311f"],
+   3.713103156070243*^9}, {3.721671319267695*^9, 3.721671449073957*^9}, 
+   3.721729125270142*^9},
+ ExpressionUUID -> "ad7f49cd-b55a-41ba-939e-45277f9d311f"],
 
 Cell[BoxData[
  RowBox[{
@@ -2095,8 +2096,8 @@ d0fffa043411"]
 },
 WindowSize->{1149, 1177},
 WindowMargins->{{Automatic, 188}, {Automatic, 0}},
-FrontEndVersion->"11.2 for Mac OS X x86 (32-bit, 64-bit Kernel) (September \
-10, 2017)",
+FrontEndVersion->"11.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (July 28, \
+2016)",
 StyleDefinitions->"Default.nb"
 ]
 (* End of Notebook Content *)
@@ -2111,17 +2112,18 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[579, 22, 167, 3, 98, "Title",ExpressionUUID->"d00e8d9b-33e2-4f52-b543-56837289f36b"],
-Cell[749, 27, 707, 13, 81, "Text",ExpressionUUID->"17788543-073e-4cb8-8706-76d7267cc3a2"],
+Cell[579, 22, 167, 3, 92, "Title"],
+Cell[749, 27, 707, 13, 68, "Text"],
 Cell[CellGroupData[{
-Cell[1481, 44, 9698, 219, 598, "Input",ExpressionUUID->"ad7f49cd-b55a-41ba-939e-45277f9d311f"],
-Cell[11182, 265, 2335, 35, 34, "Output",ExpressionUUID->"d94f0655-1c66-48bf-b3c3-90579d0cf6e5"],
-Cell[13520, 302, 2332, 35, 34, "Output",ExpressionUUID->"0bcae801-3a7b-40cc-9dd6-e091aea40dc7"],
-Cell[15855, 339, 2318, 34, 34, "Output",ExpressionUUID->"ba3dac0c-cb94-4831-aaf4-56a27f697fbd"],
-Cell[18176, 375, 2319, 34, 34, "Output",ExpressionUUID->"e59ac486-26e0-4f58-b038-cd0cb0e99337"],
-Cell[20498, 411, 58670, 974, 226, 39793, 669, "CachedBoxData", "BoxData", "Output",ExpressionUUID->"b352a4db-ba05-4995-b3e7-97a90dad1668"],
-Cell[79171, 1387, 40141, 670, 226, "Output",ExpressionUUID->"a041c097-d4f5-4951-8db4-9178363a8431"],
-Cell[119315, 2059, 2265, 32, 34, "Output",ExpressionUUID->"d9a6ea13-dbac-44ab-b58f-d0fffa043411"]
+Cell[1481, 44, 9743, 220, 600, "Input"],
+Cell[11227, 266, 2335, 35, 32, "Output"],
+Cell[13565, 303, 2332, 35, 32, "Output"],
+Cell[15900, 340, 2318, 34, 32, "Output"],
+Cell[18221, 376, 2319, 34, 32, "Output"],
+Cell[20543, 412, 58670, 974, 224, 39793, 669, "CachedBoxData", "BoxData", \
+"Output"],
+Cell[79216, 1388, 40141, 670, 224, "Output"],
+Cell[119360, 2060, 2265, 32, 32, "Output"]
 }, Open  ]]
 }, Open  ]]
 }
