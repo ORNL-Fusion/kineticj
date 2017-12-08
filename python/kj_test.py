@@ -3,6 +3,7 @@ import numpy as np
 from subprocess import call
 import os
 import sys
+import time
 
 tests = ["benchmark1-00007","benchmark2-00013","benchmark3-00004","test4"]
 
@@ -24,7 +25,9 @@ args = ""
 cwd = os.getcwd()
 
 for test in tests:
-   
+
+    startTime = time.time()
+
     os.chdir(test)
     call([cmd,args]) 
 
@@ -54,13 +57,14 @@ for test in tests:
     result.append( np.allclose(j1zre1,j1zre2,rtol=rtol) )
     result.append( np.allclose(j1zim1,j1zim2,rtol=rtol) )
 
+    endTime = time.time()
+
     if not any(result):
-        output = test.ljust(20)+ 'FAIL'
-        #print test+": FAIL"
-    else:
-        output = test.ljust(20)+ 'PASS'
+        output = test.ljust(20)+ 'FAIL [' + '%.1f'%(endTime-startTime) + ' seconds]'
         print output
-        #print test+": PASS"
+    else:
+        output = test.ljust(20)+ 'PASS [' + '%.1f'%(endTime-startTime) + ' seconds]'
+        print output
 
     os.chdir(cwd)
 
