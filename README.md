@@ -103,6 +103,7 @@ CPPFLAGS += -DF1_WRITE=0
 source env-edison.sh
 make clean
 make
+make test
 ```
 
 ### gpufusion.ornl.gov
@@ -111,6 +112,7 @@ make
 source env-gpufusion.sh
 make clean
 make
+make test
 ```
 
 ## Running Kinetic-J
@@ -122,7 +124,7 @@ export KINETICJ_ROOT=~/code/kineticj
 ```
 
 ### Run the regression tests
-To aid development testing we include some simple regression testing. This is run as follows ...
+To aid development testing we include some simple regression testing. This is run as follows (or via `make test`) ...
 ```
 cd $KINETICJ_ROOT/tests
 python ../python/kj_test.py
