@@ -197,7 +197,7 @@ Changing the variables in `template/kj.cfg` will allow experimenting with runnin
  18 nStepsPerCyclotronPeriod = 30.0;
 ```
 
-### Using IDL to run the sigma benchmarks
+### Using IDL to run the sigma benchmarks [tested with IDL version >= 8.3]
 
 1. Clone https://github.com/dlg0/lib_dlg
 2. Add `kineticj` and `lib_dlg` idl folders to the IDL path, i.e., edit the `export $IDL_STARTUP=~/idlStartup.pro` file, e.g., 
