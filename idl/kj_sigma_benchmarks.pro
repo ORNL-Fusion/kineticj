@@ -12,7 +12,7 @@ if not file_test(benchmarkDirString,/directory) then $
 
 cd, benchmarkDirString
 
-@constants
+@dlg_constants
 
 n = 300
 n_kj = 15

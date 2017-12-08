@@ -1,6 +1,6 @@
 pro kj_test_hot_epsilon
 
-    @constants
+    @dlg_constants
 
     ; This input deck is an output of AORSA2D
     ; for the purposes of verifying the sigmas.

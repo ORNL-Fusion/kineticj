@@ -18,7 +18,7 @@ function kj_epsilon_hot, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer
 
 if keyword_set(_nu_omg) then nu_omg = _nu_omg else nu_omg = 0
 
-@constants
+@dlg_constants
 
 NK = n_elements(kPer)
 

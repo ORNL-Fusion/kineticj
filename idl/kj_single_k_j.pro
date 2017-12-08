@@ -1,6 +1,6 @@
 pro kj_single_k_j
 
-@constants
+@dlg_constants
 
 B = 1.0
 amu = [_me_amu, _mi/_amu]

@@ -52,7 +52,7 @@ end
 
 pro kj_read_f1
 
-    @constants
+    @dlg_constants
 
     fileName = 'output/f1.txt'
     nLines = file_lines(fileName)

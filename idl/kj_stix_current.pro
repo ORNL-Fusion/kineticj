@@ -14,7 +14,7 @@ if keyword_set(_referenceSolutionDir) then referenceSolutionDir = _referenceSolu
 useAR = 1
 if useRS then useAR = 0 
 
-@constants
+@dlg_constants
 
 ; Get the plasma parameters
 

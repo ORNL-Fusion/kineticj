@@ -4,7 +4,7 @@
 
 pro kj_create_upshift_input, NoPlot=NoPlot
 
-    @constants    
+    @dlg_constants    
 
     FieldsOutFileName = 'data/kj_upshift.nc'
     f_Hz = 30e6

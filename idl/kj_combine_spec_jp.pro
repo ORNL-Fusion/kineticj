@@ -121,7 +121,7 @@ pro kj_combine_spec_jp, FilesToSum, SumFileName = SumFileName, $
 
     w = kj.freq * 2 * !pi
 
-    @constants
+    @dlg_constants
 
 	; Write kj_jP in file for next iterate
 

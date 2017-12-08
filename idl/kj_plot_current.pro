@@ -15,7 +15,7 @@ pro kj_plot_current, $
     if keyword_set(_doPlots) then doPlots = _doPlots else doPlots = 0
     if keyword_set(_cartesian_offset) then cartesian_offset = _cartesian_offset else cartesian_offset = 0
 
-	@constants
+	@dlg_constants
 
 	cd, current=currentDir
 

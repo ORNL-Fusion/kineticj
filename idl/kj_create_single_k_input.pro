@@ -7,7 +7,7 @@ pro kj_create_single_k_input, $
         fileName=_fileName, $
         nPts = _nPts
 
-@constants
+@dlg_constants
 
 if keyword_set(_nPts) then nPts = _nPts else nPts = 301
 if keyword_set(_b0) then b0 = _b0 else b0 = 1

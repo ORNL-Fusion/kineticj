@@ -1,6 +1,6 @@
 function kj_epsilon_cold, f, amu, atomicZ, B, density, nu_omg, sigma = sigma
 
-    @constants
+    @dlg_constants
 
     if B lt 0 then stop ; B is magnitude of B
    

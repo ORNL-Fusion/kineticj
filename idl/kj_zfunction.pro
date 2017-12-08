@@ -33,7 +33,7 @@ function kj_zfunction, zeta, Zp=Zp, zetaC=_zetaC
     ; could even go lzetaer with the non-uniform (log10)
     ; spacing of table. 
 
-    @constants
+    @dlg_constants
 
     ; If first call then read file
 

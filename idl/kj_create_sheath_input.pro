@@ -1,6 +1,6 @@
 pro kj_create_sheath_input
 
-	@constants
+	@dlg_constants
 
 	freq = 1.15d8
 	e_density_m3 = 1.1d14

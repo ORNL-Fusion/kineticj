@@ -1,6 +1,6 @@
 pro kj_create_python_testcase
 
-@constants
+@dlg_constants
 
 f = 13e6
 q = 1

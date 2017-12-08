@@ -195,7 +195,7 @@ pro kj_read_lowmem_orbit
 	p=plot(t,ez/hanning,layout=[1,3,3],yrange=[-1,1]*rng,/current)
 
 	nPhi = 13
-	@constants
+	@dlg_constants
 	p=plot(t,exp(ii*nPhi*_t))
 	p=plot(t,r,title="r(t)")
 
