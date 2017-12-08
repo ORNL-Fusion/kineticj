@@ -103,7 +103,7 @@ CPPFLAGS += -DF1_WRITE=0
 source env-edison.sh
 make clean
 make
-make test
+make test # (although you're better off running the tests on the compute nodes as described below)
 ```
 
 ### gpufusion.ornl.gov
