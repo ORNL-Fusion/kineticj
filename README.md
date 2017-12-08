@@ -138,7 +138,7 @@ mkdir kineticj
 cp -r $KINETICJ_ROOT/tests .
 cd tests
 salloc -N 1 -p debug
-python $KINETICJ_ROOT/python/kj_plot.py
+python $KINETICJ_ROOT/python/kj_test.py
 exit
 ```
 with the expected output being ...
