@@ -1,7 +1,12 @@
-function [LHS] = kj_LHS (rIn,E)
+function [LHS] = kj_LHS (E,rIn)
 
-% -curl curl E
+[M,N] = size(E);
 
+n = N/3;
+
+Er = E(0*n+1:1*n);
+Et = E(1*n+1:2*n);
+Ez = E(2*n+1:3*n);
 
 nPhi = 13;
 kz = 0;
@@ -16,7 +21,9 @@ eps_0 = 8.854187817e?12;
 for j=1+1:N-1
     
     r = rIn(j);
-    
+
+    % - curl curl E
+    %
     % See the $KINETICJ/mathematica/kj_curl_curl_finite_difference file for the
     % derivation of this code chunk.
         
@@ -37,10 +44,26 @@ for j=1+1:N-1
         -1)+j)+(-2).*Ez(j)+Ez(1+j)));
     
     
-    % +w^2/c^2 * ( E + i/(w*eps_0)*Jp )
+    % + w^2/c^2 * ( E + i/(w*eps_0)*Jp )
+    %
+    % Here we get Jp from a call to kineticj
     
+    [jr,jt,jz] = kj_runkj(Er,Et,Ez);
     
+    term2_r = w^2/c^2 * ( Er(j) + i/(w*eps_0) * jr(j) );
+    term2_t = w^2/c^2 * ( Et(j) + i/(w*eps_0) * jt(j) );
+    term2_z = w^2/c^2 * ( Ez(j) + i/(w*eps_0) * jz(j) );
     
+    % LHS = - curl curl E + w^2/c^2 * ( E + i/(w*eps_0)*Jp )
+    
+    LHS_r = curlcurl_r + term2_r;
+    LHS_t = curlcurl_t + term2_t;
+    LHS_z = curlcurl_z + term2_z;
+
 end
+
+% Return A*x vector for GMRES
+
+LHS = [LHS_r,LHS_t,LHS_z];
 
 end

@@ -508,6 +508,43 @@ nc_id = nCdf_create (kjDeltaFileName_out, /clobber )
 
 nCdf_close, nc_id
 
+; Also write an actual Jp file
+
+kjJpFileName_out = 'kj-jp.nc'
+
+nc_id = nCdf_create (kjJpFileName_out, /clobber )
+
+	nCdf_control, nc_id, /fill
+	
+	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
+	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
+
+	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
+	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
+
+	jr_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
+	jr_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
+	jt_re_id = nCdf_varDef ( nc_id, 'jP_t_re', nr_id, /float )
+	jt_im_id = nCdf_varDef ( nc_id, 'jP_t_im', nr_id, /float )
+	jz_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
+	jz_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
+
+    nCdf_control, nc_id, /enDef
+
+	nCdf_varPut, nc_id, freq_id, f
+
+	nCdf_varPut, nc_id, r_id, r 
+   
+	nCdf_varPut, nc_id, jr_re_id, real_part( total(jr,2) )
+	nCdf_varPut, nc_id, jr_im_id, imaginary( total(jr,2) )
+	nCdf_varPut, nc_id, jt_re_id, real_part( total(jt,2) )
+	nCdf_varPut, nc_id, jt_im_id, imaginary( total(jt,2) )
+	nCdf_varPut, nc_id, jz_re_id, real_part( total(jz,2) )
+	nCdf_varPut, nc_id, jz_im_id, imaginary( total(jz,2) )
+
+nCdf_close, nc_id
+
+
 rgrid = r
 
 end

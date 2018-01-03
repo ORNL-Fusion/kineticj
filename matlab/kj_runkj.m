@@ -1,4 +1,4 @@
-function [Jp] = kj_runkj(E)
+function [jr,jt,jz] = kj_runkj(Er,Et,Ez)
 
 useAR = 0;
 
@@ -32,56 +32,37 @@ copyfile( templateDir, thisDir );
 
 cd(thisDir);
 
-% Update the delta file with the new x values
+% Update the input E field to KJ
 
-deltaFile = 'kj-delta-in.nc';
 
-[jr,jt,jz] = kj_x_to_vec(x);
+files = dir('output/solution*.nc');
 
-ncwrite(deltaFile,'jP_r_re',real(jr));
-ncwrite(deltaFile,'jP_r_im',imag(jr));
-ncwrite(deltaFile,'jP_t_re',real(jt));
-ncwrite(deltaFile,'jP_t_im',imag(jt));
-ncwrite(deltaFile,'jP_z_re',real(jz));
-ncwrite(deltaFile,'jP_z_im',imag(jz));
+[M,N] = size(files);
 
-% Setup machine specific mpirun string commands
-
-[~, name] = system('hostname');
-name = strip(name);
-
-if strcmp('dlg-macbookpro2',name)
-    mpiString = 'TMPDIR=~/ /usr/local/bin/mpirun ';
-else
-    mpiString = '/opt/local/bin/mpirun ';
+if (M > 1)
+    print, 'Too many solution files, please cleanup';
+    exit
 end
 
-if useAR
+eFieldFile = strcat('output/',files(1));
 
-    % Run AR 
-    
-    %arString = ' -n 24 ~/code/aorsa2d/xaorsa2d &> ar.log';
-    arString = ' -n 24 ~/code/aorsa2d/xaorsa2d';
-    command = strcat(mpiString,arString);
-    status = system(command);
-    
-else
-    % Run RS
+ncwrite(eFieldFile,'er_re',real(Er));
+ncwrite(eFieldFile,'er_im',imag(Er));
+ncwrite(eFieldFile,'et_re',real(Et));
+ncwrite(eFieldFile,'et_im',imag(Et));
+ncwrite(eFieldFile,'ez_re',real(Ez));
+ncwrite(eFieldFile,'ez_im',imag(Ez));
 
-    %!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs &> rs.idl.log
-    !IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_rs
-    
-end
-
-% Run KJ to get the new delta
+% Run KJ 
 
 %!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj &> kj.idl.log
 !IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj
 
+% Read Jp from file
 
 % Read new delta from file
 
-deltaFile = 'kj-delta-out.nc';
+kj_JpFile = 'kj-jp.nc';
 
 jr_re = ncread(deltaFile,'jP_r_re');
 jr_im = ncread(deltaFile,'jP_r_im');
@@ -94,9 +75,8 @@ jr = complex(jr_re,jr_im);
 jt = complex(jt_re,jt_im);
 jz = complex(jz_re,jz_im);
 
-x = kj_vec_to_x(jr,jt,jz);
-
 cd(rootDir);
 
+end
 
 end
