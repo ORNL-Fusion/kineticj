@@ -1,10 +1,10 @@
-function [jr,jt,jz] = kj_runkj(Er,Et,Ez)
+function [jP_r,jP_t,jP_z] = kj_runkj(Er,Et,Ez)
 
-useAR = 0;
+useAR = 1;
 
-if ~exist('it','var') || isempty(it)
+%if ~exist('it','var') || isempty(it)
   it=1;
-end
+%end
 
 % Assuming an existing RS run with an existing zeroed delta file
 % and that all the RS runs have a KJ input, just with the first
@@ -44,14 +44,14 @@ if (M > 1)
     exit
 end
 
-eFieldFile = strcat('output/',files(1));
+eFieldFile = strcat('output/',files(1).name());
 
-ncwrite(eFieldFile,'er_re',real(Er));
-ncwrite(eFieldFile,'er_im',imag(Er));
-ncwrite(eFieldFile,'et_re',real(Et));
-ncwrite(eFieldFile,'et_im',imag(Et));
-ncwrite(eFieldFile,'ez_re',real(Ez));
-ncwrite(eFieldFile,'ez_im',imag(Ez));
+ncwrite(eFieldFile,'E_r_re',real(Er));
+ncwrite(eFieldFile,'E_r_im',imag(Er));
+ncwrite(eFieldFile,'E_t_re',real(Et));
+ncwrite(eFieldFile,'E_t_im',imag(Et));
+ncwrite(eFieldFile,'E_z_re',real(Ez));
+ncwrite(eFieldFile,'E_z_im',imag(Ez));
 
 % Run KJ 
 
@@ -60,23 +60,13 @@ ncwrite(eFieldFile,'ez_im',imag(Ez));
 
 % Read Jp from file
 
-% Read new delta from file
+kjFile = 'kj-jp.nc';
+kj = dlg_read_netcdf(kjFile);
 
-kj_JpFile = 'kj-jp.nc';
-
-jr_re = ncread(deltaFile,'jP_r_re');
-jr_im = ncread(deltaFile,'jP_r_im');
-jt_re = ncread(deltaFile,'jP_t_re');
-jt_im = ncread(deltaFile,'jP_t_im');
-jz_re = ncread(deltaFile,'jP_z_re');
-jz_im = ncread(deltaFile,'jP_z_im');
-
-jr = complex(jr_re,jr_im);
-jt = complex(jt_re,jt_im);
-jz = complex(jz_re,jz_im);
+jP_r = kj('jP_r');
+jP_t = kj('jP_t');
+jP_z = kj('jP_z');
 
 cd(rootDir);
-
-end
 
 end

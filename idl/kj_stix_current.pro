@@ -1,10 +1,10 @@
-pro kj_stix_current, overPlotSolution = _overPlotSolution, useRS=_useRS, hot=_hot, $
+pro kj_stix_current, overPlotRefSolution = _overPlotRefSolution, useRS=_useRS, hot=_hot, $
         jr = jr, jt = jt, jz = jz, $
         kjDeltaFileName_in = _kjDeltaFileName_in, $
         kjDeltaFileName_out = _kjDeltaFileName_out, $
         referenceSolutionDir = _referenceSolutionDir, rgrid = rgrid
 
-if keyword_set(_overPlotSolution) then overPlotSolution = 1 else overPlotSolution = 0
+if keyword_set(_overPlotRefSolution) then overPlotRefSolution = 1 else overPlotRefSolution = 0
 if keyword_set(_useRS) then useRS = _useRS else useRS = 0
 if keyword_set(_hot) then hot = _hot else hot = 0
 if keyword_set(_kjDeltaFileName_in) then kjDeltaFileName_in = _kjDeltaFileName_in else kjDeltaFileName_in = 'kj-delta-in.nc'
@@ -27,18 +27,20 @@ nS = n_elements(amu)
 
 if useAR then begin
 
-    arP = ar2_read_runData('./',1)
+    arR = ar2_read_runData('./',1)
 
-    f = arP.freq
-    br = arP.br
-    bt = arP.bt
-    bz = arP.bz
+    f = arR['freq']
+
+    br = arR['brU']*arR['bmod']
+    bt = arR['btU']*arR['bmod']
+    bz = arR['bzU']*arR['bmod']
+
     B = sqrt( br^2 + bt^2 + bz^2 )
-    r = arP.r
-    nPhi = arP.nPhi
-    density = reform(arP.densitySpec)
-    temp = reform(arP.tempSpec) 
-    nu_omg = reform(arP.nu_omg)
+    r = arR['r']
+    nPhi = arR['nPhi']
+    density = reform(arR['densitySpec'])
+    temp = reform(arR['tempSpec']) 
+    nu_omg = reform(arR['nuOmg'])
 
     solution = ar2_read_solution('./',1)
     solution_ref = ar2_read_solution(referenceSolutionDir,1)
@@ -150,11 +152,11 @@ for s=0,nS-1 do begin
     
         ; Extract and window the E field
         
-        N = n_elements(solution.E_r[iL:iR])
+        N = n_elements((solution['E_r'])[iL:iR])
     
-        er = +solution.e_r[iL:iR] * hanning(n)
-        et = +solution.e_t[iL:iR] * hanning(n)
-        ez = +solution.e_z[iL:iR] * hanning(n)
+        er = +(solution['E_r'])[iL:iR] * hanning(n)
+        et = +(solution['E_t'])[iL:iR] * hanning(n)
+        ez = +(solution['E_z'])[iL:iR] * hanning(n)
 
         ;; Test for FFT
         ;kk = 200.0  
@@ -193,7 +195,7 @@ for s=0,nS-1 do begin
     
             epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
                     density[i,s], harmonicNumber, kPar[i], kPer, temp[i,s], $
-                    kx = 0, nu_omg = nu_omg[i,s]);, epsilon_cold = epsilon_cold) ;, $
+                    kx = 0, nuOmg = nu_omg[i,s]);, epsilon_cold = epsilon_cold) ;, $
                     ;epsilon_swan_ND = epsilon_swan );
    
             epsilon_cold = kj_epsilon_cold(f, amu[s], atomicZ[s], B[i], $
@@ -268,47 +270,46 @@ for s=0,nS-1 do begin
         jtAll[i,iL:iR,s] = thisjt
         jzAll[i,iL:iR,s] = thisjz
 
-        if i eq 350 then stop
     endfor
 
-    ; Now do the windowed average over spatial points
+    ;; Now do the windowed average over spatial points
    
-    windowWidth2 = 10 
-    for i=1,nX-2 do begin
+    ;windowWidth2 = 10 
+    ;for i=1,nX-2 do begin
 
-        iL = (i-windowWidth2/2)>0
-        iR = (i+windowWidth2/2)<(nX-1)
-    
-        thisWindowWidth = min([i-iL,iR-i])*2+1
-    
-        if thisWindowWidth gt windowWidth+1 then stop
-    
-        iL = i - (thisWindowWidth-1)/2
-        iR = i + (thisWindowWidth-1)/2
+    ;    iL = (i-windowWidth2/2)>0
+    ;    iR = (i+windowWidth2/2)<(nX-1)
+    ;
+    ;    thisWindowWidth = min([i-iL,iR-i])*2+1
+    ;
+    ;    if thisWindowWidth gt windowWidth+1 then stop
+    ;
+    ;    iL = i - (thisWindowWidth-1)/2
+    ;    iR = i + (thisWindowWidth-1)/2
  
-        N = n_elements(jrAll[iL:iR,0,0])
-        win = kj_hanning(N,/sym)
-        
-        win = win/total(win)
-        win2D = rebin(win,N,n_elements(jrAll[0,*,0]))
+    ;    N = n_elements(jrAll[iL:iR,0,0])
+    ;    win = kj_hanning(N,/sym)
+    ;    
+    ;    win = win/total(win)
+    ;    win2D = rebin(win,N,n_elements(jrAll[0,*,0]))
 
-        thisJr = total(reform(jrAll[iL:iR,*,s]) * win2D,1)
-        thisJt = total(reform(jtAll[iL:iR,*,s]) * win2D,1)
-        thisJz = total(reform(jzAll[iL:iR,*,s]) * win2D,1)
+    ;    thisJr = total(reform(jrAll[iL:iR,*,s]) * win2D,1)
+    ;    thisJt = total(reform(jtAll[iL:iR,*,s]) * win2D,1)
+    ;    thisJz = total(reform(jzAll[iL:iR,*,s]) * win2D,1)
 
-        jr[i,s] = thisjr[N/2]
-        jt[i,s] = thisjt[N/2]
-        jz[i,s] = thisjz[N/2]
+    ;    jr[i,s] = thisjr[N/2]
+    ;    jt[i,s] = thisjt[N/2]
+    ;    jz[i,s] = thisjz[N/2]
 
-        if i eq 350 then begin
-        for j=0,N-1 do begin
-            p=plot(jtAll[iL+j,*,s],/over)
-        endfor
-        p=plot(jtAll[iL+N/2,*,s],/over,color='b')
-        p=plot(thisJt,/over,color='r')
-        stop
-        endif
-    endfor
+    ;    ;if i eq 350 then begin
+    ;    ;for j=0,N-1 do begin
+    ;    ;    p=plot(jtAll[iL+j,*,s],/over)
+    ;    ;endfor
+    ;    ;p=plot(jtAll[iL+N/2,*,s],/over,color='b')
+    ;    ;p=plot(thisJt,/over,color='r')
+    ;    ;;stop
+    ;    ;endif
+    ;endfor
 
 endfor
 
@@ -320,15 +321,15 @@ endif else begin
 
 endelse
 
-Er = solution.E_r
-Et = solution.E_t
-Ez = solution.E_z
+Er = solution['E_r']
+Et = solution['E_t']
+Ez = solution['E_z']
 
 sign = -1
 
-delta_r = sign * (reform(solution_ref.jp_r) - jr)
-delta_t = sign * (reform(solution_ref.jp_t) - jt)
-delta_z = sign * (reform(solution_ref.jp_z) - jz)
+delta_r = sign * (reform(solution_ref['jP_r']) - jr)
+delta_t = sign * (reform(solution_ref['jP_t']) - jt)
+delta_z = sign * (reform(solution_ref['jP_z']) - jz)
 
 doPlots = 1
 
@@ -348,30 +349,30 @@ for s=0,nS-1 do begin
 
     p=plot(r,jr[*,s],layout=[nS,3,1+s],current=current)
     p=plot(r,imaginary(jr[*,s]),color='r',/over)
-    if overPlotSolution then begin
-        p=plot(solution_ref.r,solution.JP_r[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,imaginary(solution.JP_r[*,0,s]),color='r',thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,delta_r[*,s],thick=2,/over,lineStyle='--')            
-        p=plot(solution_ref.r,imaginary(delta_r[*,s]),color='r',/over,lineStyle='--',thick=2)            
+    if overPlotRefSolution then begin
+        p=plot(solution_ref['r'],(solution['jP_r'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_r'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],delta_r[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref['r'],imaginary(delta_r[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
     current = (current + 1)<1
     p=plot(r,jt[*,s],layout=[nS,3,1+1*nS+s],current=current)
     p=plot(r,imaginary(jt[*,s]),color='r',/over)
-    if overPlotSolution then begin
-        p=plot(solution_ref.r,solution.JP_t[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,imaginary(solution.JP_t[*,0,s]),color='r',thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,delta_t[*,s],thick=2,/over,lineStyle='--')            
-        p=plot(solution_ref.r,imaginary(delta_t[*,s]),color='r',/over,lineStyle='--',thick=2)            
+    if overPlotRefSolution then begin
+        p=plot(solution_ref['r'],(solution['jP_t'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_t'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],delta_t[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref['r'],imaginary(delta_t[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
     p=plot(r,jz[*,s],layout=[nS,3,1+2*nS+s],current=current)
     p=plot(r,imaginary(jz[*,s]),color='r',/over)
-    if overPlotSolution then begin
-        p=plot(solution_ref.r,solution.JP_z[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,imaginary(solution.JP_z[*,0,s]),color='r',thick=4,transparency=80,/over)            
-        p=plot(solution_ref.r,delta_z[*,s],thick=2,/over,lineStyle='--')            
-        p=plot(solution_ref.r,imaginary(delta_z[*,s]),color='r',/over,lineStyle='--',thick=2)            
+    if overPlotRefSolution then begin
+        p=plot(solution_ref['r'],(solution['jP_z'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_z'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],delta_z[*,s],thick=2,/over,lineStyle='--')            
+        p=plot(solution_ref['r'],imaginary(delta_z[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
 
 endfor
@@ -460,53 +461,59 @@ if not useRS then begin
 endif
 endif
 
-; Update the kj-delta-out file by adding the new delta to the 
-; kj-delta-in file
+updateDeltaFile = 0
 
-kj_in = ncdf_parse(kjDeltaFileName_in,/read)
+if updateDeltaFile then begin
 
-jP_r_re_in = kj_in['jP_r_re','_DATA']
-jP_r_im_in = kj_in['jP_r_im','_DATA']
-jP_t_re_in = kj_in['jP_t_re','_DATA']
-jP_t_im_in = kj_in['jP_t_im','_DATA']
-jP_z_re_in = kj_in['jP_z_re','_DATA']
-jP_z_im_in = kj_in['jP_z_im','_DATA']
+    ; Update the kj-delta-out file by adding the new delta to the 
+    ; kj-delta-in file
+    
+    kj_in = ncdf_parse(kjDeltaFileName_in,/read)
+    
+    jP_r_re_in = kj_in['jP_r_re','_DATA']
+    jP_r_im_in = kj_in['jP_r_im','_DATA']
+    jP_t_re_in = kj_in['jP_t_re','_DATA']
+    jP_t_im_in = kj_in['jP_t_im','_DATA']
+    jP_z_re_in = kj_in['jP_z_re','_DATA']
+    jP_z_im_in = kj_in['jP_z_im','_DATA']
+    
+    jP_r_in = complex(jP_r_re_in,jP_r_im_in)
+    jP_t_in = complex(jP_t_re_in,jP_t_im_in)
+    jP_z_in = complex(jP_z_re_in,jP_z_im_in)
+    
+    nc_id = nCdf_create (kjDeltaFileName_out, /clobber )
+    
+    	nCdf_control, nc_id, /fill
+    	
+    	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
+    	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
+    
+    	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
+    	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
+    
+    	jr_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
+    	jr_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
+    	jt_re_id = nCdf_varDef ( nc_id, 'jP_t_re', nr_id, /float )
+    	jt_im_id = nCdf_varDef ( nc_id, 'jP_t_im', nr_id, /float )
+    	jz_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
+    	jz_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
+    
+        nCdf_control, nc_id, /enDef
+    
+    	nCdf_varPut, nc_id, freq_id, f
+    
+    	nCdf_varPut, nc_id, r_id, r 
+       
+    	nCdf_varPut, nc_id, jr_re_id, real_part( jP_r_in + total(delta_r,2) )
+    	nCdf_varPut, nc_id, jr_im_id, imaginary( jP_r_in + total(delta_r,2) )
+    	nCdf_varPut, nc_id, jt_re_id, real_part( jP_t_in + total(delta_t,2) )
+    	nCdf_varPut, nc_id, jt_im_id, imaginary( jP_t_in + total(delta_t,2) )
+    	nCdf_varPut, nc_id, jz_re_id, real_part( jP_z_in + total(delta_z,2) )
+    	nCdf_varPut, nc_id, jz_im_id, imaginary( jP_z_in + total(delta_z,2) )
+    
+    nCdf_close, nc_id
 
-jP_r_in = complex(jP_r_re_in,jP_r_im_in)
-jP_t_in = complex(jP_t_re_in,jP_t_im_in)
-jP_z_in = complex(jP_z_re_in,jP_z_im_in)
-
-nc_id = nCdf_create (kjDeltaFileName_out, /clobber )
-
-	nCdf_control, nc_id, /fill
-	
-	nr_id = nCdf_dimDef ( nc_id, 'nR', n_elements(r) )
-	scalar_id = nCdf_dimDef ( nc_id, 'scalar', 1 )
-
-	freq_id = nCdf_varDef ( nc_id, 'freq', scalar_id, /float )
-	r_id = nCdf_varDef ( nc_id, 'r', nr_id, /float )
-
-	jr_re_id = nCdf_varDef ( nc_id, 'jP_r_re', nr_id, /float )
-	jr_im_id = nCdf_varDef ( nc_id, 'jP_r_im', nr_id, /float )
-	jt_re_id = nCdf_varDef ( nc_id, 'jP_t_re', nr_id, /float )
-	jt_im_id = nCdf_varDef ( nc_id, 'jP_t_im', nr_id, /float )
-	jz_re_id = nCdf_varDef ( nc_id, 'jP_z_re', nr_id, /float )
-	jz_im_id = nCdf_varDef ( nc_id, 'jP_z_im', nr_id, /float )
-
-    nCdf_control, nc_id, /enDef
-
-	nCdf_varPut, nc_id, freq_id, f
-
-	nCdf_varPut, nc_id, r_id, r 
-   
-	nCdf_varPut, nc_id, jr_re_id, real_part( jP_r_in + total(delta_r,2) )
-	nCdf_varPut, nc_id, jr_im_id, imaginary( jP_r_in + total(delta_r,2) )
-	nCdf_varPut, nc_id, jt_re_id, real_part( jP_t_in + total(delta_t,2) )
-	nCdf_varPut, nc_id, jt_im_id, imaginary( jP_t_in + total(delta_t,2) )
-	nCdf_varPut, nc_id, jz_re_id, real_part( jP_z_in + total(delta_z,2) )
-	nCdf_varPut, nc_id, jz_im_id, imaginary( jP_z_in + total(delta_z,2) )
-
-nCdf_close, nc_id
+end
 
 ; Also write an actual Jp file
 
