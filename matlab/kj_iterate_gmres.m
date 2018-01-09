@@ -1,10 +1,10 @@
-function [stat] = kj_iterate_gmres()
+function [stat] = kj_iterate_gmes()
 
 phys = dlg_constants();
 
 c = phys('c');
 u0 = phys('u0');
-eps = phys('eps0');
+eps0 = phys('eps0');
 
 % Load initial guess for x (stacked E=[Er,Et,Ez] field)
 
@@ -12,28 +12,49 @@ initialSolutionDir = 'template-ar';
 
 arS = ar2_read_solution(initialSolutionDir);
 
-figure
-ax1 = subplot(3,1,1);
-plot(ax1,arS('r'),real(arS('E_r')))
-hold on
-plot(ax1,arS('r'),imag(arS('E_r')))
-ax2 = subplot(3,1,2);
-plot(ax2,arS('r'),real(arS('E_t')))
-hold on
-plot(ax2,arS('r'),imag(arS('E_t')))
-ax3 = subplot(3,1,3);
-plot(ax3,arS('r'),real(arS('E_z')))
-hold on
-plot(ax3,arS('r'),imag(arS('E_z')))
+rIn = arS('r');
 
-Einit = [arS('E_r')',arS('E_t')',arS('E_z')']';
+E_r_init = arS('E_r')';
+E_t_init = arS('E_t')';
+E_z_init = arS('E_z')';
+
+% % Perturb the correct initial guess by smoothing it to remove some of the
+% % IBW. 
+% 
+% width = 50;
+% smooth = hanning(width)/sum(hanning(width));
+% 
+% E_r_init = conv(E_r_init,smooth,'same');
+% E_t_init = conv(E_t_init,smooth,'same');
+% E_z_init = conv(E_z_init,smooth,'same');
+
+E_init = [E_r_init,E_t_init,E_z_init]';
+
+[M,N] = size(E_init);
+n = M/3;
+
+f1=figure();
+f1.Name = 'E_init';
+ax1 = subplot(3,1,1);
+plot(ax1,rIn,real(E_r_init))
+hold on
+plot(ax1,rIn,imag(E_r_init))
+ax2 = subplot(3,1,2);
+plot(ax2,rIn,real(E_t_init))
+hold on
+plot(ax2,rIn,imag(E_t_init))
+ax3 = subplot(3,1,3);
+plot(ax3,rIn,real(E_z_init))
+hold on
+plot(ax3,rIn,imag(E_z_init))
 
 
 % Load b (RHS for that guess)
 
 arR = ar2_read_rundata(initialSolutionDir);
 
-figure
+f2=figure();
+f2.Name = 'RHS';
 ax1 = subplot(3,1,1);
 plot(ax1,arR('r'),real(arR('jA_r')))
 hold on
@@ -51,11 +72,38 @@ f = arR('freq');
 nPhi = cast(arR('nPhi'),'single');
 kz = arR('kz_1d');
 w = 2 * pi * f;
-rIn = arS('r');
+
 
 jA = [arR('jA_r')',arR('jA_t')',arR('jA_z')']';
 
 RHS = -i * w * u0 * jA;
+
+
+% Test my LHS function by applying it to the AORSA solution and then
+% comparing LHS with RHS.
+
+[myLHS,LHS_t1,LHS_t2] = kj_LHS(E_init);
+
+res = myLHS;% - RHS;
+
+res_r = res(0*n+1:1*n);
+res_t = res(1*n+1:2*n);
+res_z = res(2*n+1:3*n);
+
+f5=figure();
+f5.Name = 'Residual Test';
+ax1 = subplot(3,1,1);
+plot(ax1,rIn,real(res_r))
+hold on
+plot(ax1,rIn,imag(res_r))
+ax2 = subplot(3,1,2);
+plot(ax2,rIn,real(res_t))
+hold on
+plot(ax2,rIn,imag(res_t))
+ax3 = subplot(3,1,3);
+plot(ax3,rIn,real(res_z))
+hold on
+plot(ax3,rIn,imag(res_z))
 
 
 % Call GMRES (using the nested function handle defined below)
@@ -63,21 +111,41 @@ RHS = -i * w * u0 * jA;
 b = RHS;
 restart = [];
 tol = [];
-maxit = [];
+maxit = 5;
 M1 = [];
 M2 = [];
-x0 = Einit;
+x0 = E_init;
 
 [x,flag,relres,ite,resvec] = gmres(@kj_LHS,b,restart,tol,maxit,M1,M2,x0);
 
+f3=figure();
+f3.Name = 'Residual';
+semilogy(0:maxit,resvec/norm(b),'-o');
+
+E_r_final = x(0*n+1:1*n);
+E_t_final = x(1*n+1:2*n);
+E_z_final = x(2*n+1:3*n);
+
+f4=figure();
+f4.Name = 'E_final';
+ax1 = subplot(3,1,1);
+plot(ax1,arS('r'),real(E_r_final))
+hold on
+plot(ax1,arS('r'),imag(E_r_final))
+ax2 = subplot(3,1,2);
+plot(ax2,arS('r'),real(E_t_final))
+hold on
+plot(ax2,arS('r'),imag(E_t_final))
+ax3 = subplot(3,1,3);
+plot(ax3,arS('r'),real(E_z_final))
+hold on
+plot(ax3,arS('r'),imag(E_z_final))
+
+stat = 0;
 
 % Setup A*x = LHS evaluation function handle as nested function
 
-    function [LHS] = kj_LHS (E)
-        
-        [M,N] = size(E);
-        
-        n = M/3;
+    function [LHS,LHS_t1,LHS_t2] = kj_LHS (E)
         
         Er = E(0*n+1:1*n);
         Et = E(1*n+1:2*n);
@@ -87,9 +155,17 @@ x0 = Einit;
         
         LHS = zeros(size(E));
         
-        LHS_r = zeros(n);
-        LHS_t = zeros(n);
-        LHS_z = zeros(n);
+        LHS_r = zeros(1,n);
+        LHS_t = zeros(1,n);
+        LHS_z = zeros(1,n);
+        
+        LHS_t1_r = zeros(1,n);
+        LHS_t1_t = zeros(1,n);
+        LHS_t1_z = zeros(1,n);
+        
+        LHS_t2_r = zeros(1,n);
+        LHS_t2_t = zeros(1,n);
+        LHS_t2_z = zeros(1,n);
         
         % Call to kineticj for this E to get jP
             
@@ -122,6 +198,10 @@ x0 = Einit;
                 nPhi.^2.*Ez(j))+r.*(Ez((-1)+j)+(-1).*Ez(1+j)))+(-2).*(Ez(( ...
                 -1)+j)+(-2).*Ez(j)+Ez(1+j)));
             
+            % - curl curl E (again to check - from my old RS notes)
+            
+            ...
+            
             
             % + w^2/c^2 * ( E + i/(w*eps_0)*Jp )
             
@@ -135,13 +215,30 @@ x0 = Einit;
             LHS_t(j) = curlcurl_t + term2_t;
             LHS_z(j) = curlcurl_z + term2_z;
             
+            LHS_t1_r(j) = curlcurl_r;
+            LHS_t1_t(j) = curlcurl_t;
+            LHS_t1_z(j) = curlcurl_z;
+            
+            LHS_t2_r(j) = term2_r;
+            LHS_t2_t(j) = term2_t;
+            LHS_t2_z(j) = term2_z;
+            
         end
         
         % Return A*x vector for GMRES
         
-        %LHS = [LHS_r,LHS_t,LHS_z]';
+        LHS = [LHS_r,LHS_t,LHS_z]';
+        LHS_t1 = [LHS_t1_r,LHS_t1_t,LHS_t1_z]';
+        LHS_t2 = [LHS_t2_r,LHS_t2_t,LHS_t2_z]';
         
     end
 
+    function [w] = hanning(N)
+        
+        alpha = 0.5;
+        k = linspace(0,N-1,N);
+        w = alpha - (1-alpha)*cos(2*pi*k/N);
+        
+    end
 
 end

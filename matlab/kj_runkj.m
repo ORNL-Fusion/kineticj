@@ -24,7 +24,10 @@ end
 
 % Stage iteration
 
-thisDir = char(strcat('run',sprintf('%4.4i',it)));
+%thisDir = char(strcat('run',sprintf('%4.4i',it)));
+
+now = datetime('now');
+thisDir = datestr(now,'yyyy-mm-dd-HH-MM-SS');
 
 copyfile( templateDir, thisDir );
 
