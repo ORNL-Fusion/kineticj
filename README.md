@@ -211,7 +211,7 @@ Changing the variables in `template/kj.cfg` will allow experimenting with runnin
     ```
     cd $KINETICJ_ROOT
     cd benchmarks
-    ./cleanBenchmarks.sh
+    ./clean.sh
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
     ```
@@ -223,7 +223,7 @@ Changing the variables in `template/kj.cfg` will allow experimenting with runnin
     mkdir kineticj
     cp -r $KINETICJ_ROOT/benchmarks .
     cd benchmarks
-    ./cleanBenchmarks.sh
+    ./clean.sh
     salloc -N 1 -p debug
     idl
     IDL>kj_sigma_benchmarks, runKJ=1, benchmark=1
