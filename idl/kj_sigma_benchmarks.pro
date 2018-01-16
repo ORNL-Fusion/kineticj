@@ -441,10 +441,16 @@ for b=0,nB_kj-1 do begin
 
             ; Run kj
 
-            RunCommand = 'DYLD_LIBRARY_PATH=/Users/dg6/code/netcdf-cxx4/lib ~/code/kineticj/bin/kineticj'
+            ; Just and FYI ... there is a nasty DYLD_LIBRARY_PATH issue with OS X 10.11 and later
+            ; which purges DYLD_LIBRARY_PATH when a shell call is make, c.f., 
+            ; https://stackoverflow.com/questions/35568122/why-isnt-dyld-library-path-being-propagated-here
+            ;
+
+            ;RunCommand = 'DYLD_LIBRARY_PATH=/Users/dg6/code/netcdf-cxx4/lib ~/code/kineticj/bin/kineticj'
+            KINETICJ_ROOT = getEnv('KINETICJ_ROOT')
+            RunCommand = KINETICJ_ROOT+'/bin/kineticj'
+            stop
             spawn, RunCommand, StdOut, StdErr
-            ;print, StdOut
-            ;print, StdErr
 
             file_move, 'output/jP2.nc', This_jP2_FileName 
 
