@@ -6,6 +6,8 @@ c = phys('c');
 u0 = phys('u0');
 eps0 = phys('eps0');
 
+solutionFile = 'gmres-solution.mat';
+
 % Load initial guess for x (stacked E=[Er,Et,Ez] field)
 
 initialSolutionDir = 'template-ar';
@@ -29,6 +31,15 @@ E_z_init = arS('E_z')';
 % E_z_init = conv(E_z_init,smooth,'same');
 
 E_init = [E_r_init,E_t_init,E_z_init]';
+
+loadPreviousSolution = 1;
+
+if loadPreviousSolution
+    
+    load(solutionFile);
+    E_init = E_final;
+    
+end
 
 [M,N] = size(E_init);
 n = M/3;
@@ -136,12 +147,16 @@ plot(ax3,rIn,real(RHS(1+2*n:3*n)))
 b = RHS;
 restart = [];
 tol = [];
-maxit = 5;
+maxit = 250;
 M1 = [];
 M2 = [];
 x0 = E_init;
 
 [x,flag,relres,ite,resvec] = gmres(@kj_LHS,b,restart,tol,maxit,M1,M2,x0);
+
+E_final = x;
+
+save(solutionFile, 'E_final');
 
 f3=figure();
 f3.Name = 'Residual';
