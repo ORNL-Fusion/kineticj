@@ -32,7 +32,7 @@ E_z_init = arS('E_z')';
 
 E_init = [E_r_init,E_t_init,E_z_init]';
 
-loadPreviousSolution = 1;
+loadPreviousSolution = 0;
 
 if loadPreviousSolution
     
@@ -141,6 +141,29 @@ plot(ax3,rIn,real(LHS_t1(1+2*n:3*n)))
 plot(ax3,rIn,real(LHS_t2(1+2*n:3*n)))
 plot(ax3,rIn,real(RHS(1+2*n:3*n)))
 
+% Read the AORSA matrix and try GMRES on that also
+
+aorsaMatrixFile = '/Users/dg6/scratch/aorsa2d/colestock-kashuba-reference/matrix.nc';
+arA = dlg_read_netcdf(aorsaMatrixFile);
+
+ar_A = complex(arA('reA'),arA('imA'));
+
+[T,B] = balance(ar_A);
+
+ar_x = linsolve(ar_A, RHS);
+
+ar_Ek_alp = ar_x(0*n+1:1*n);
+ar_Ek_bet = ar_x(1*n+1:2*n);
+ar_Ek_prl = ar_x(2*n+1:3*n);
+
+ar_Ek_alp_0 = arS('Ek_alp');
+ar_Ek_bet_0 = arS('Ek_bet');
+ar_Ek_prl_0 = arS('Ek_prl');
+
+f7=figure();
+ax1 = subplot(3,1,1);
+hold on
+plot(ar_Ek_alp,ar_Ek_alp_0);
 
 % Call GMRES (using the nested function handle defined below)
 
@@ -193,27 +216,27 @@ stat = 0;
                         
         [M,N] = size(rIn);
         
-        LHS = zeros(size(E));
-        
-        LHS_r = zeros(1,n);
-        LHS_t = zeros(1,n);
-        LHS_z = zeros(1,n);
-        
-        LHS_t1_r = zeros(1,n);
-        LHS_t1_t = zeros(1,n);
-        LHS_t1_z = zeros(1,n);
-        
-        LHS_t1_r_2 = zeros(1,n);
-        LHS_t1_t_2 = zeros(1,n);
-        LHS_t1_z_2 = zeros(1,n);
-        
-        LHS_t1_r_2_h = zeros(1,n-1);
-        LHS_t1_t_2_h = zeros(1,n-1);
-        LHS_t1_z_2_h = zeros(1,n-1);
-        
-        LHS_t2_r = zeros(1,n);
-        LHS_t2_t = zeros(1,n);
-        LHS_t2_z = zeros(1,n);
+%         LHS = zeros(size(E));
+%         
+%         LHS_r = zeros(1,n);
+%         LHS_t = zeros(1,n);
+%         LHS_z = zeros(1,n);
+%         
+%         LHS_t1_r = zeros(1,n);
+%         LHS_t1_t = zeros(1,n);
+%         LHS_t1_z = zeros(1,n);
+%         
+%         LHS_t1_r_2 = zeros(1,n);
+%         LHS_t1_t_2 = zeros(1,n);
+%         LHS_t1_z_2 = zeros(1,n);
+%         
+%         LHS_t1_r_2_h = zeros(1,n-1);
+%         LHS_t1_t_2_h = zeros(1,n-1);
+%         LHS_t1_z_2_h = zeros(1,n-1);
+%         
+%         LHS_t2_r = zeros(1,n);
+%         LHS_t2_t = zeros(1,n);
+%         LHS_t2_z = zeros(1,n);
         
         % Call to kineticj for this E to get jP
             
