@@ -331,7 +331,7 @@ delta_r = sign * (reform(solution_ref['jP_r']) - jr)
 delta_t = sign * (reform(solution_ref['jP_t']) - jt)
 delta_z = sign * (reform(solution_ref['jP_z']) - jz)
 
-doPlots = 1
+doPlots = 0
 
 if doPlots then begin
 

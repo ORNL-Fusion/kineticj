@@ -1,10 +1,11 @@
-function [jP_r,jP_t,jP_z] = kj_runkj(Er,Et,Ez)
+function [jP_r,jP_t,jP_z] = kj_runkj(Er,Et,Ez,uid)
 
 useAR = 1;
 
-%if ~exist('it','var') || isempty(it)
-  it=1;
-%end
+if ~exist('uid','var') || isempty(uid)
+  uid = 0;   
+end
+uidStr = num2str(uid,'%3.3i'); 
 
 % Assuming an existing RS run with an existing zeroed delta file
 % and that all the RS runs have a KJ input, just with the first
@@ -27,7 +28,7 @@ end
 %thisDir = char(strcat('run',sprintf('%4.4i',it)));
 
 now = datetime('now');
-thisDir = datestr(now,'yyyy-mm-dd-HH-MM-SS');
+thisDir = strcat( datestr(now,'yyyy-mm-dd-HH-MM-SS'),'-',uidStr);
 
 copyfile( templateDir, thisDir );
 

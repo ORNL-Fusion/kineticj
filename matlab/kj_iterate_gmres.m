@@ -32,6 +32,83 @@ E_z_init = arS('E_z')';
 
 E_init = [E_r_init,E_t_init,E_z_init]';
 
+[M,N] = size(E_init);
+n = M/3;
+
+
+% Load b (RHS)
+
+arR = ar2_read_rundata(initialSolutionDir);
+
+f = arR('freq');
+nPhi = cast(arR('nPhi'),'single');
+kz = arR('kz_1d');
+w = 2 * pi * f;
+
+jA = [arR('jA_r')',arR('jA_t')',arR('jA_z')']';
+
+RHS = -i * w * u0 * jA;
+
+
+% Evaluate Jacobian (J = dResidual / dE)
+
+J = complex(zeros(M,M))
+
+dE_r = 0.1; dE_t = 0.001; dE_z = 0.1;
+
+[LHS_init] = kj_LHS(E_init);
+
+RES_init = RHS - LHS_init;
+
+f_LHS = @kj_LHS;
+
+parfor ii=1:n
+    
+    t = getCurrentTask();
+    if isempty(t)
+        myId = 0;
+    else
+        myId = t.ID;
+    end
+    
+    for c=1:3
+        
+        dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+        
+        if c==1
+            dE_r = complex(0.1,0.1);
+        end
+        if c==2
+            dE_t = complex(0.001,0.001);
+        end
+        if c==3
+            dE_z = complex(0.1,0.1);
+        end
+        
+        E_r = E_r_init;
+        E_t = E_t_init;
+        E_z = E_z_init;
+        
+        E_r(n) = E_r(n) + dE_r;
+        E_t(n) = E_t(n) + dE_t;
+        E_z(n) = E_z(n) + dE_z;
+        
+        thisE = [E_r,E_t_init,E_z_init]';
+        
+        [thisLHS] = f_LHS(thisE);
+        
+        thisRES = RHS - thisLHS;
+        
+        % Jacobian row
+        % J could be evaluated with a higher order diferencing scheme.
+        
+        dRes_dE = (thisRES - RES_init) / (thisE - E_init); 
+        
+        J(:,ii) = dRes_dE;
+        
+    end
+end
+
 loadPreviousSolution = 0;
 
 if loadPreviousSolution
@@ -41,8 +118,7 @@ if loadPreviousSolution
     
 end
 
-[M,N] = size(E_init);
-n = M/3;
+
 
 f1=figure();
 f1.Name = 'E_init';
@@ -60,9 +136,6 @@ hold on
 plot(ax3,rIn,imag(E_z_init))
 
 
-% Load b (RHS for that guess)
-
-arR = ar2_read_rundata(initialSolutionDir);
 
 f2=figure();
 f2.Name = 'RHS';
@@ -79,15 +152,7 @@ plot(ax3,arR('r'),real(arR('jA_z')))
 hold on
 plot(ax3,arR('r'),imag(arR('jA_z')))
 
-f = arR('freq');
-nPhi = cast(arR('nPhi'),'single');
-kz = arR('kz_1d');
-w = 2 * pi * f;
 
-
-jA = [arR('jA_r')',arR('jA_t')',arR('jA_z')']';
-
-RHS = -i * w * u0 * jA;
 
 
 % Test my LHS function by applying it to the AORSA solution and then
