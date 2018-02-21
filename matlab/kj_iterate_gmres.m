@@ -8,17 +8,34 @@ eps0 = phys('eps0');
 
 solutionFile = 'gmres-solution.mat';
 
+useAorsa = 0;
+
 % Load initial guess for x (stacked E=[Er,Et,Ez] field)
 
 initialSolutionDir = 'template-ar';
 
-arS = ar2_read_solution(initialSolutionDir);
+if (useAorsa)
+    sol = ar2_read_solution(initialSolutionDir);
+    run = ar2_read_rundata(initialSolutionDir);
+else
+    sol = rs_read_solution(initialSolutionDir);
+    run = rs_read_rundata(initialSolutionDir);
+end
 
-rIn = arS('r');
+rIn = sol('r');
 
-E_r_init = arS('E_r')';
-E_t_init = arS('E_t')';
-E_z_init = arS('E_z')';
+f = run('freq');
+nPhi = cast(run('nPhi'),'single');
+kz = run('kz');
+
+E_r_init = sol('E_r')';
+E_t_init = sol('E_t')';
+E_z_init = sol('E_z')';
+
+J_r_init = sol('jP_r')';
+J_t_init = sol('jP_t')';
+J_z_init = sol('jP_z')';
+
 
 % % Perturb the correct initial guess by smoothing it to remove some of the
 % % IBW. 
@@ -31,23 +48,24 @@ E_z_init = arS('E_z')';
 % E_z_init = conv(E_z_init,smooth,'same');
 
 E_init = [E_r_init,E_t_init,E_z_init]';
+J_init = [J_r_init,J_t_init,J_z_init]';
 
 [M,N] = size(E_init);
 n = M/3;
 
 
-% Load b (RHS)
+% RHS
 
-arR = ar2_read_rundata(initialSolutionDir);
-
-f = arR('freq');
-nPhi = cast(arR('nPhi'),'single');
-kz = arR('kz_1d');
 w = 2 * pi * f;
 
-jA = [arR('jA_r')',arR('jA_t')',arR('jA_z')']';
+jA = [run('jA_r')',run('jA_t')',run('jA_z')']';
 
 RHS = -i * w * u0 * jA;
+
+
+% Check to make sure the residual is zero for the initial guess
+
+res0 = kj_residual(E_init, J_init, RHS);
 
 
 % Evaluate Jacobian (J = dResidual / dE)
@@ -273,7 +291,7 @@ stat = 0;
 
 % Setup A*x = LHS evaluation function handle as nested function
 
-    function [LHS,LHS_t1,LHS_t2] = kj_LHS (E)
+    function [LHS] = kj_LHS2 (E)
         
         Er = E(0*n+1:1*n);
         Et = E(1*n+1:2*n);
@@ -281,27 +299,47 @@ stat = 0;
                         
         [M,N] = size(rIn);
         
-%         LHS = zeros(size(E));
-%         
-%         LHS_r = zeros(1,n);
-%         LHS_t = zeros(1,n);
-%         LHS_z = zeros(1,n);
-%         
-%         LHS_t1_r = zeros(1,n);
-%         LHS_t1_t = zeros(1,n);
-%         LHS_t1_z = zeros(1,n);
-%         
-%         LHS_t1_r_2 = zeros(1,n);
-%         LHS_t1_t_2 = zeros(1,n);
-%         LHS_t1_z_2 = zeros(1,n);
-%         
-%         LHS_t1_r_2_h = zeros(1,n-1);
-%         LHS_t1_t_2_h = zeros(1,n-1);
-%         LHS_t1_z_2_h = zeros(1,n-1);
-%         
-%         LHS_t2_r = zeros(1,n);
-%         LHS_t2_t = zeros(1,n);
-%         LHS_t2_z = zeros(1,n);
+        % Update jP(E) via call to kinetic-j
+            
+        [jP_r,jP_t,jP_z] = kj_runkj(Er,Et,Ez);
+        
+        % Update E(jP) via call to full-wave solve
+        
+        
+        h = rIn(2)-rIn(1);
+        
+        % term1 = -curlxcurl(E)
+        
+        t1_r = -(i*nPhi./rIn.^2.*gradient(rIn.*Et,h) + nPhi^2./rIn.^2.*Er + kz^2*Er + i*kz.*gradient(Ez,h));
+        t1_t = -(-kz*nPhi./rIn.*Ez + kz^2.*Et - gradient(gradient(rIn.*Et,h)./rIn,h) + i*nPhi.*gradient(Er./rIn,h));
+        t1_z = -(i*kz./rIn.*gradient(rIn.*Er,h) - 1./rIn.*gradient(rIn.*gradient(Ez,h),h) + nPhi^2./rIn.^2.*Ez - nPhi*kz./rIn.*Et);
+        
+        % term2 = +w^2/c^2 * ( E + i/(w*e0) * jP )
+        
+        t2_r = w^2/c^2 .* ( Er + i/(w*eps0) .* jP_r );
+        t2_t = w^2/c^2 .* ( Et + i/(w*eps0) .* jP_t );
+        t2_z = w^2/c^2 .* ( Ez + i/(w*eps0) .* jP_z );
+        
+        LHS_r = t1_r' + t2_r';
+        LHS_t = t1_t' + t2_t';
+        LHS_z = t1_z' + t2_z';
+        
+        % Return A*x vector for GMRES
+        
+        LHS = [LHS_r,LHS_t,LHS_z]';
+        
+        LHS_t1 = [t1_r',t1_t',t1_z']';
+        LHS_t2 = [t2_r',t2_t',t2_z']';
+        
+    end
+
+    function [LHS,LHS_t1,LHS_t2] = kj_LHS (E)
+        
+        Er = E(0*n+1:1*n);
+        Et = E(1*n+1:2*n);
+        Ez = E(2*n+1:3*n);
+                        
+        [M,N] = size(rIn);
         
         % Call to kineticj for this E to get jP
             
@@ -331,6 +369,81 @@ stat = 0;
         
         LHS_t1 = [t1_r',t1_t',t1_z']';
         LHS_t2 = [t2_r',t2_t',t2_z']';
+        
+    end
+
+    function [J] = kj_update(E)
+        
+        Er = E(0*n+1:1*n);
+        Et = E(1*n+1:2*n);
+        Ez = E(2*n+1:3*n);
+        
+        [jP_r,jP_t,jP_z] = kj_runkj(Er,Et,Ez);
+        
+        J = [jP_r,jP_t,jP_z]';
+        
+    end
+
+    function [res] = kj_residual(E,J,RHS)
+        
+        Er = E(0*n+1:1*n);
+        Et = E(1*n+1:2*n);
+        Ez = E(2*n+1:3*n);
+        
+        jP_r = J(0*n+1:1*n);
+        jP_t = J(1*n+1:2*n);
+        jP_z = J(2*n+1:3*n);
+        
+        RHS_r = RHS(0*n+1:1*n);
+        RHS_t = RHS(1*n+1:2*n);
+        RHS_z = RHS(2*n+1:3*n);
+        
+        h = rIn(2)-rIn(1);
+        
+        % term1 = -curlxcurl(E)
+        
+        t1_r = -(i*nPhi./rIn.^2.*gradient(rIn.*Et,h) + nPhi^2./rIn.^2.*Er + kz^2*Er + i*kz.*gradient(Ez,h));
+        t1_t = -(-kz*nPhi./rIn.*Ez + kz^2.*Et - gradient(gradient(rIn.*Et,h)./rIn,h) + i*nPhi.*gradient(Er./rIn,h));
+        t1_z = -(i*kz./rIn.*gradient(rIn.*Er,h) - 1./rIn.*gradient(rIn.*gradient(Ez,h),h) + nPhi^2./rIn.^2.*Ez - nPhi*kz./rIn.*Et);
+        
+        % term2 = +w^2/c^2 * ( E + i/(w*e0) * jP )
+        
+        t2_r = w^2/c^2 .* ( Er + i/(w*eps0) .* jP_r );
+        t2_t = w^2/c^2 .* ( Et + i/(w*eps0) .* jP_t );
+        t2_z = w^2/c^2 .* ( Ez + i/(w*eps0) .* jP_z );
+        
+        LHS_r = t1_r' + t2_r';
+        LHS_t = t1_t' + t2_t';
+        LHS_z = t1_z' + t2_z';
+        
+        % Return A*x vector for GMRES
+        
+        LHS = [LHS_r,LHS_t,LHS_z]';
+        
+        res = RHS - LHS;
+        
+        f6=figure();
+        f6.Name = 'Residual terms : LHS_t1, LHS_t2, RHS';
+        ax1 = subplot(3,1,1);
+        hold on
+        plot(ax1,rIn,real(t1_r))
+        plot(ax1,rIn,real(t2_r))
+        plot(ax1,rIn,real(RHS_r))
+        plot(ax1,rIn,real(RHS_r - (t1_r+t2_r)),'LineWidth',3)
+        
+        ax2 = subplot(3,1,2);
+        hold on
+        plot(ax2,rIn,real(t1_t))
+        plot(ax2,rIn,real(t2_t))
+        plot(ax2,rIn,real(RHS_t))
+        plot(ax2,rIn,real(RHS_t - (t1_t+t2_t)),'LineWidth',3)
+        
+        ax3 = subplot(3,1,3);
+        hold on
+        plot(ax3,rIn,real(t1_z))
+        plot(ax3,rIn,real(t2_z))
+        plot(ax3,rIn,real(RHS_z))
+        plot(ax3,rIn,real(RHS_z - (t1_z+t2_z)),'LineWidth',3)
         
     end
 
