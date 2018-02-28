@@ -12,7 +12,7 @@ end
 
 function kj_epsilon_hot, f, amu, atomicZ, B, density, harmonicNumber, kPar, kPer, T_eV, $
     epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan_WD, epsilon_swan_ND = epsilon_swan_ND, $
-    kx = kx, nuOmg = _nu_omg
+    kx = kx, nuOmg = _nu_omg, sigma = sigma
 
 ; Vectorized over kPer
 
@@ -355,7 +355,6 @@ if arg_present(epsilon_swan_ND) then begin
 
         print, iiBad_re[0], iiBad_im[0]
 
-        stop
     endif
     
     ; ----------------------------------------------------------
@@ -375,6 +374,13 @@ if arg_present(epsilon_cold) then begin
 endif
 
 if total(epsilon) ne total(epsilon) then stop
+
+if arg_present(sigma) then begin
+
+    sigma =  ( epsilon - identity(3) ) * w * _e0 / _ii
+
+endif
+
 
 return, epsilon
 

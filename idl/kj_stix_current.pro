@@ -38,6 +38,7 @@ if useAR then begin
     B = sqrt( br^2 + bt^2 + bz^2 )
     r = arR['r']
     nPhi = arR['nPhi']
+    kz = rs['kz']
     density = reform(arR['densitySpec'])
     temp = reform(arR['tempSpec']) 
     nu_omg = reform(arR['nuOmg'])
@@ -57,33 +58,29 @@ if useRS then begin
     bz = rs['bz']
     B = sqrt( br^2 + bt^2 + bz^2 )
     r = rs['r']
-    nPhi = rs['nphi']
-    density = rs['densityspec']
+    nPhi = rs['nPhi']
+    kz = rs['kz']
+    density = rs['densitySpec']
     temp = density*0 
 
-    ; Since RS doesn't have temperature, we import from ar2Import.nc
+    ; Since RS doesn't have temperature, we import from ar2Input.nc
     ; ----------
     nS = n_elements(density[0,*])
-    nR_ar2 = n_elements(ar2.temp_eV[*,0,0])
-    nZ_ar2 = n_elements(ar2.temp_eV[0,*,0])
     z = r*0
     for s=0,nS-1 do begin
-        temp[*,s] = reform(interpolate( ar2.temp_eV[*,*,s], $
-            (r-ar2.rMin) / (ar2.rMax-ar2.rMin) * (nR_ar2-1), $
-            (z-ar2.zMin) / (ar2.zMax-ar2.zMin) * (nZ_ar2-1), cubic=-0.5))
+        temp[*,s] = reform(ar2.temp_eV[*,*,s])
     endfor 
     ; ----------
 
-    temp = temp * 0.0001
+    ;temp = temp * 0.0001
 
-    nu_omg = rs['nuomg']
+    nu_omg = rs['nuOmg']
 
     solution = rsfwc_read_solution('./')
     solution_ref = rsfwc_read_solution(referenceSolutionDir)
     
 endif
 
-kz = 0
 w = 2 * !pi * f
 nX = n_elements(r)
 
@@ -327,11 +324,11 @@ Ez = solution['E_z']
 
 sign = -1
 
-delta_r = sign * (reform(solution_ref['jP_r']) - jr)
-delta_t = sign * (reform(solution_ref['jP_t']) - jt)
-delta_z = sign * (reform(solution_ref['jP_z']) - jz)
+delta_r = sign * (reform(solution_ref['jP_r_spec']) - jr)
+delta_t = sign * (reform(solution_ref['jP_t_spec']) - jt)
+delta_z = sign * (reform(solution_ref['jP_z_spec']) - jz)
 
-doPlots = 0
+doPlots = 1
 
 if doPlots then begin
 
@@ -350,8 +347,8 @@ for s=0,nS-1 do begin
     p=plot(r,jr[*,s],layout=[nS,3,1+s],current=current)
     p=plot(r,imaginary(jr[*,s]),color='r',/over)
     if overPlotRefSolution then begin
-        p=plot(solution_ref['r'],(solution['jP_r'])[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref['r'],imaginary((solution['jP_r'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],(solution['jP_r_spec'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_r_spec'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
         p=plot(solution_ref['r'],delta_r[*,s],thick=2,/over,lineStyle='--')            
         p=plot(solution_ref['r'],imaginary(delta_r[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
@@ -360,8 +357,8 @@ for s=0,nS-1 do begin
     p=plot(r,jt[*,s],layout=[nS,3,1+1*nS+s],current=current)
     p=plot(r,imaginary(jt[*,s]),color='r',/over)
     if overPlotRefSolution then begin
-        p=plot(solution_ref['r'],(solution['jP_t'])[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref['r'],imaginary((solution['jP_t'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],(solution['jP_t_spec'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_t_spec'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
         p=plot(solution_ref['r'],delta_t[*,s],thick=2,/over,lineStyle='--')            
         p=plot(solution_ref['r'],imaginary(delta_t[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif
@@ -369,8 +366,8 @@ for s=0,nS-1 do begin
     p=plot(r,jz[*,s],layout=[nS,3,1+2*nS+s],current=current)
     p=plot(r,imaginary(jz[*,s]),color='r',/over)
     if overPlotRefSolution then begin
-        p=plot(solution_ref['r'],(solution['jP_z'])[*,0,s],thick=4,transparency=80,/over)            
-        p=plot(solution_ref['r'],imaginary((solution['jP_z'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],(solution['jP_z_spec'])[*,0,s],thick=4,transparency=80,/over)            
+        p=plot(solution_ref['r'],imaginary((solution['jP_z_spec'])[*,0,s]),color='r',thick=4,transparency=80,/over)            
         p=plot(solution_ref['r'],delta_z[*,s],thick=2,/over,lineStyle='--')            
         p=plot(solution_ref['r'],imaginary(delta_z[*,s]),color='r',/over,lineStyle='--',thick=2)            
     endif

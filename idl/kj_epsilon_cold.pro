@@ -3,9 +3,10 @@ function kj_epsilon_cold, f, amu, atomicZ, B, density, nu_omg, sigma = sigma
     @dlg_constants
 
     if B lt 0 then stop ; B is magnitude of B
-   
-    w = 2 * !Pi * f
-    m = amu * _amu * complex( 1, nu_omg) 
+  
+    w0 = 2 * !pi * f
+    w = w0 * complex( 1, nu_omg)
+    m = amu * _amu 
     q = atomicZ * _e
 
     wp = sqrt( density * q^2 / (m * _e0) ) 
@@ -85,7 +86,7 @@ function kj_epsilon_cold, f, amu, atomicZ, B, density, nu_omg, sigma = sigma
 
         ;sigma_stix =  ( epsilon_stix - identity(3) ) * w * _e0 / _ii
         ;sigma_bram =  ( epsilon_bram - identity(3) ) * w * _e0 / _ii
-        sigma_swan =  ( epsilon_swan - identity(3) ) * w * _e0 / _ii
+        sigma_swan =  ( epsilon_swan - identity(3) ) * w0 * _e0 / _ii
 
         sigma = sigma_swan
 
