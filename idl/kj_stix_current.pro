@@ -548,7 +548,6 @@ nc_id = nCdf_create (kjJpFileName_out, /clobber )
 
 nCdf_close, nc_id
 
-
 rgrid = r
 
 end

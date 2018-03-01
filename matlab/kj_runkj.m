@@ -17,11 +17,7 @@ rootDir = pwd();
 
 % Set the template directory
 
-if useAR
-    templateDir = 'template-ar';
-else
-    templateDir = 'template-rs';
-end
+templateDir = 'template';
 
 % Stage iteration
 
