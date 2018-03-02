@@ -40,6 +40,13 @@ function kj_rs_residual
     solHash = solHash + HASH('res_re',real_part(res1));
     solHash = solHash + HASH('res_im',imaginary(res1));
 
+    solHash = solHash + HASH('res_r_re',real_part(res_r));
+    solHash = solHash + HASH('res_r_im',imaginary(res_r));
+    solHash = solHash + HASH('res_t_re',real_part(res_t));
+    solHash = solHash + HASH('res_t_im',imaginary(res_t));
+    solHash = solHash + HASH('res_z_re',real_part(res_z));
+    solHash = solHash + HASH('res_z_im',imaginary(res_z));
+
     NCDF_PUT, 'output/kj-rs-res.nc', /NEW, VARIABLES=solHash
 
     print, 'norm(residual): ', norm(res1)

@@ -1,9 +1,10 @@
-function [res] = kj_runResidual(Er,Et,Ez,uid)
+function [res] = kj_runResidual(E,uid)
 
 if ~exist('uid','var') || isempty(uid)
-  uid = 0;   
+  uidStr = char(java.util.UUID.randomUUID);   
 end
-uidStr = num2str(uid,'%3.3i'); 
+
+%uidStr = num2str(uid,'%3.3i');
 
 % Get the run directory
 
@@ -28,9 +29,14 @@ cd(thisDir);
 
 % Update the input E field to KJ
 
-file = dir('output/rs-solution.nc');
+[M,N] = size(E);
+n = M/3;
 
-eFieldFile = strcat('output/',file.name());
+Er = E(0*n+1:1*n);
+Et = E(1*n+1:2*n);
+Ez = E(2*n+1:3*n);
+
+eFieldFile = 'output/rs-solution.nc';
 
 ncwrite(eFieldFile,'E_r_re',real(Er));
 ncwrite(eFieldFile,'E_r_im',imag(Er));
@@ -41,16 +47,18 @@ ncwrite(eFieldFile,'E_z_im',imag(Ez));
 
 % Run IDL routine rs_lhs 
 
-!IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl run_kj_rs_residual
+s=system('IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl -quiet run_kj_rs_residual');
 
 % Read LHS from file
 
 resFile = 'output/kj-rs-res.nc';
 res = dlg_read_netcdf(resFile);
 
-jP_r = kj('jP_r');
-jP_t = kj('jP_t');
-jP_z = kj('jP_z');
+res_r = res('res_r');
+res_t = res('res_t');
+res_z = res('res_z');
+
+res = [res_r',res_t',res_z'];
 
 cd(rootDir);
 

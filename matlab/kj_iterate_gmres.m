@@ -12,7 +12,7 @@ useAorsa = 0;
 
 % Load initial guess for x (stacked E=[Er,Et,Ez] field)
 
-initialSolutionDir = 'template-ar';
+initialSolutionDir = 'template';
 
 if (useAorsa)
     sol = ar2_read_solution(initialSolutionDir);
@@ -28,13 +28,13 @@ f = run('freq');
 nPhi = cast(run('nPhi'),'single');
 kz = run('kz');
 
-E_r_init = sol('E_r')';
-E_t_init = sol('E_t')';
-E_z_init = sol('E_z')';
+E0_r = sol('E_r')';
+E0_t = sol('E_t')';
+E0_z = sol('E_z')';
 
-J_r_init = sol('jP_r')';
-J_t_init = sol('jP_t')';
-J_z_init = sol('jP_z')';
+J0_r = sol('jP_r')';
+J0_t = sol('jP_t')';
+J0_z = sol('jP_z')';
 
 
 % % Perturb the correct initial guess by smoothing it to remove some of the
@@ -47,10 +47,10 @@ J_z_init = sol('jP_z')';
 % E_t_init = conv(E_t_init,smooth,'same');
 % E_z_init = conv(E_z_init,smooth,'same');
 
-E_init = [E_r_init,E_t_init,E_z_init]';
-J_init = [J_r_init,J_t_init,J_z_init]';
+E0 = [E0_r,E0_t,E0_z]';
+J0 = [J0_r,J0_t,J0_z]';
 
-[M,N] = size(E_init);
+[M,N] = size(E0);
 n = M/3;
 
 
@@ -65,20 +65,16 @@ RHS = -i * w * u0 * jA;
 
 % Check to make sure the residual is zero for the initial guess
 
-res0 = kj_residual(E_init, J_init, RHS);
+res0 = kj_runResidual(E0);
 
 
 % Evaluate Jacobian (J = dResidual / dE)
 
-J = complex(zeros(M,M))
+J = complex(zeros(M,M));
 
 dE_r = 0.1; dE_t = 0.001; dE_z = 0.1;
 
-[LHS_init] = kj_LHS(E_init);
-
-RES_init = RHS - LHS_init;
-
-f_LHS = @kj_LHS;
+f_RES = @kj_runResidual;
 
 parfor ii=1:n
     
@@ -103,24 +99,25 @@ parfor ii=1:n
             dE_z = complex(0.1,0.1);
         end
         
-        E_r = E_r_init;
-        E_t = E_t_init;
-        E_z = E_z_init;
+        E_r = E0_r;
+        E_t = E0_t;
+        E_z = E0_z;
         
-        E_r(n) = E_r(n) + dE_r;
-        E_t(n) = E_t(n) + dE_t;
-        E_z(n) = E_z(n) + dE_z;
+        E_r(ii) = E_r(ii) + dE_r;
+        E_t(ii) = E_t(ii) + dE_t;
+        E_z(ii) = E_z(ii) + dE_z;
         
-        thisE = [E_r,E_t_init,E_z_init]';
+        E1 = [E_r,E_t,E_z]';
         
-        [thisLHS] = f_LHS(thisE);
+        res1 = f_RES(E1);
         
-        thisRES = RHS - thisLHS;
+        dres = res0 - res1;
+        dE = (E0 - E1)';
         
         % Jacobian row
         % J could be evaluated with a higher order diferencing scheme.
         
-        dRes_dE = (thisRES - RES_init) / (thisE - E_init); 
+        dRes_dE = dres ./ dE; 
         
         J(:,ii) = dRes_dE;
         
@@ -132,7 +129,7 @@ loadPreviousSolution = 0;
 if loadPreviousSolution
     
     load(solutionFile);
-    E_init = E_final;
+    E0 = E_final;
     
 end
 
@@ -141,17 +138,17 @@ end
 f1=figure();
 f1.Name = 'E_init';
 ax1 = subplot(3,1,1);
-plot(ax1,rIn,real(E_r_init))
+plot(ax1,rIn,real(E0_r))
 hold on
-plot(ax1,rIn,imag(E_r_init))
+plot(ax1,rIn,imag(E0_r))
 ax2 = subplot(3,1,2);
-plot(ax2,rIn,real(E_t_init))
+plot(ax2,rIn,real(E0_t))
 hold on
-plot(ax2,rIn,imag(E_t_init))
+plot(ax2,rIn,imag(E0_t))
 ax3 = subplot(3,1,3);
-plot(ax3,rIn,real(E_z_init))
+plot(ax3,rIn,real(E0_z))
 hold on
-plot(ax3,rIn,imag(E_z_init))
+plot(ax3,rIn,imag(E0_z))
 
 
 
@@ -176,11 +173,11 @@ plot(ax3,arR('r'),imag(arR('jA_z')))
 % Test my LHS function by applying it to the AORSA solution and then
 % comparing LHS with RHS.
 
-[myLHS,LHS_t1,LHS_t2] = kj_LHS(E_init);
+[myLHS,LHS_t1,LHS_t2] = kj_LHS(E0);
 
 jP_ar = ([sum(arS('jP_r'),3)',sum(arS('jP_t'),3)',sum(arS('jP_z'),3)']');
 
-LHS_t2_ar = w^2/c^2 .* ( E_init + i/(w*eps0).*jP_ar );
+LHS_t2_ar = w^2/c^2 .* ( E0 + i/(w*eps0).*jP_ar );
 
 res = myLHS;% - RHS;
 
@@ -256,7 +253,7 @@ tol = [];
 maxit = 250;
 M1 = [];
 M2 = [];
-x0 = E_init;
+x0 = E0;
 
 [x,flag,relres,ite,resvec] = gmres(@kj_LHS,b,restart,tol,maxit,M1,M2,x0);
 
