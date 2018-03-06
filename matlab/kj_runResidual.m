@@ -48,7 +48,7 @@ ncwrite(eFieldFile,'E_z_im',imag(Ez));
 
 % Run IDL routine rs_lhs 
 
-s=system('IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl -quiet run_kj_rs_residual &');
+% s=system('IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl -quiet run_kj_rs_residual &');
 
 % %Read LHS from file
 % 

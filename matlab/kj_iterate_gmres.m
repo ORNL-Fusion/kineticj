@@ -1,5 +1,7 @@
 function [stat] = kj_iterate_gmes()
 
+readonly = 0;
+
 phys = dlg_constants();
 
 c = phys('c');
@@ -38,11 +40,11 @@ J0_z = sol('jP_z')';
 
 
 % % Perturb the correct initial guess by smoothing it to remove some of the
-% % IBW. 
-% 
+% % IBW.
+%
 % width = 50;
 % smooth = hanning(width)/sum(hanning(width));
-% 
+%
 % E_r_init = conv(E_r_init,smooth,'same');
 % E_t_init = conv(E_t_init,smooth,'same');
 % E_z_init = conv(E_z_init,smooth,'same');
@@ -63,99 +65,109 @@ jA = [run('jA_r')',run('jA_t')',run('jA_z')']';
 RHS = -i * w * u0 * jA;
 
 
-% Check to make sure the residual is zero for the initial guess
-
-[loc] = kj_runResidual(E0);
-[res0] = kj_readResidual(loc);
-
-
 % Evaluate Jacobian (J = dResidual / dE)
 
 J = complex(zeros(M,M));
 
-dE_r = 0.1; dE_t = 0.001; dE_z = 0.1;
+dE_r_value = complex(1,1);
+dE_t_value = complex(1,1);
+dE_z_value = complex(1,1);
 
-f_launchResidual = @kj_runResidual;
+f_stageResidual = @kj_runResidual;
 f_readResidual = @kj_readResidual;
 
-allDirs = [];
+readonlyFileName = 'kj-rs-readonly.mat';
 
-nParallel = 6;
-
-for ii=1:M
+if readonly
     
-    dE = 0;
-    dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+    load(readonlyFileName,'loc0','loc');
     
-    if (ii > 0*n) && (ii <= 1*n)
-        dE_r = complex(0.1,0.1);
-        dE = dE_r;
-    end
+else
     
-    if (ii > 1*n) && (ii <= 2*n)
-        dE_t = complex(0.001,0.001);
-        dE = dE_t;    
-    end
+    disp('staging residuals ...');
     
-    if (ii > 2*n) && (ii <= 3*n)
-        dE_z = complex(0.1,0.1);
-        dE = dE_z;     
-    end
+    loc = [];
     
-    E_r = E0_r;
-    E_t = E0_t;
-    E_z = E0_z;
-    
-    ix = mod(ii,n);
-    
-    E_r(ix) = E_r(ix) + dE_r;
-    E_t(ix) = E_t(ix) + dE_t;
-    E_z(ix) = E_z(ix) + dE_z;
-    
-    E1 = [E_r,E_t,E_z]';
-    
-    [thisDir] = f_launchResidual(E1); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
-    
-    allDirs = [allDirs;thisDir];
-    
-    % wait for these to finish
-    if mod(ii,nParallel)==0
-    
-        ii
-        checkFileName = [allDirs(ii,:),'/output/kj-rs-res.nc']
+    for ii=1:M
         
-        while exist(checkFileName,'file')==0
-            
-            pause(2);
-            
+        dE = 0;
+        dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+        
+        if (ii > 0*n) && (ii <= 1*n)
+            dE_r = dE_r_value;
+            dE = dE_r;
         end
         
+        if (ii > 1*n) && (ii <= 2*n)
+            dE_t = dE_t_value;
+            dE = dE_t;
+        end
+        
+        if (ii > 2*n) && (ii <= 3*n)
+            dE_z = dE_z_value;
+            dE = dE_z;
+        end
+        
+        E_r = E0_r;
+        E_t = E0_t;
+        E_z = E0_z;
+        
+        ix = mod(ii-1,n)+1;
+        
+        E_r(ix) = E_r(ix) + dE_r;
+        E_t(ix) = E_t(ix) + dE_t;
+        E_z(ix) = E_z(ix) + dE_z;
+        
+        E1 = [E_r,E_t,E_z]';
+        
+        [thisDir] = f_stageResidual(E1); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+        
+        loc = [loc;thisDir];
+        
     end
+    
+    disp('done');
+    
+    % Run all the residual calculations in IDL
+    
+    disp('computing residuals ...');
+    
+    [loc0] = f_stageResidual(E0);
+    
+    [stat] = kj_runResiduals();
+    
+    save(readonlyFileName,'loc0','loc');
+    
+    disp('done');
     
 end
 
+[res0] = f_readResidual(loc0);
+
+disp('reading residuals ...');
+
 for ii=1:M
     
     dE = 0;
     dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
     
     if (ii > 0*n) && (ii <= 1*n)
-        dE_r = complex(0.1,0.1);
+        dE_r = dE_r_value;
         dE = dE_r;
     end
     
     if (ii > 1*n) && (ii <= 2*n)
-        dE_t = complex(0.001,0.001);
+        dE_t = dE_t_value;
         dE = dE_t;    
     end
     
     if (ii > 2*n) && (ii <= 3*n)
-        dE_z = complex(0.1,0.1);
+        dE_z = dE_z_value;
         dE = dE_z;     
     end
-    
-    res1 = f_readResidual(E); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
-    
+        
+    res1 = f_readResidual(loc(ii,:)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+        
     dres = res0 - res1;
     
     % Jacobian row
@@ -167,7 +179,15 @@ for ii=1:M
     
 end
 
+disp('done');
+
 save('kj-rs-jacobian.mat','J');
+
+
+% Solve using Newtons method
+
+E1 = E0 - inv(J) * res0';
+
 
 loadPreviousSolution = 0;
 
