@@ -78,7 +78,7 @@ dE_r = 0.1; dE_t = 0.001; dE_z = 0.1;
 f_launchResidual = @kj_runResidual;
 f_readResidual = @kj_readResidual;
 
-allDirs = char();
+allDirs = [];
 
 nParallel = 6;
 
@@ -116,13 +116,13 @@ for ii=1:M
     
     [thisDir] = f_launchResidual(E1); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
     
-    allDirs = char(allDirs,thisDir);
+    allDirs = [allDirs;thisDir];
     
     % wait for these to finish
     if mod(ii,nParallel)==0
     
         ii
-        checkFileName = [allDirs(ii),'/output/kj-rs-res.nc']
+        checkFileName = [allDirs(ii,:),'/output/kj-rs-res.nc']
         
         while exist(checkFileName,'file')==0
             
