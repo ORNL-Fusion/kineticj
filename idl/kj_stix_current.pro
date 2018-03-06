@@ -310,7 +310,7 @@ for s=0,nS-1 do begin
 
 endfor
 
-    save, jr, jt, jz, sig2, fileName=savFileName, /variables
+    ;save, jr, jt, jz, sig2, fileName=savFileName, /variables
 
 endif else begin
 

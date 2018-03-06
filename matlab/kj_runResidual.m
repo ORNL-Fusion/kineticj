@@ -1,8 +1,9 @@
-function [res] = kj_runResidual(E,uid)
+function [thisDir] = kj_runResidual(E,uid)
 
 if ~exist('uid','var') || isempty(uid)
   uidStr = char(java.util.UUID.randomUUID);   
 end
+
 
 %uidStr = num2str(uid,'%3.3i');
 
@@ -47,18 +48,18 @@ ncwrite(eFieldFile,'E_z_im',imag(Ez));
 
 % Run IDL routine rs_lhs 
 
-s=system('IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl -quiet run_kj_rs_residual');
+s=system('IDL_STARTUP="/Users/dg6/idlStartup.pro" /usr/local/bin/idl -quiet run_kj_rs_residual &');
 
-% Read LHS from file
-
-resFile = 'output/kj-rs-res.nc';
-res = dlg_read_netcdf(resFile);
-
-res_r = res('res_r');
-res_t = res('res_t');
-res_z = res('res_z');
-
-res = [res_r',res_t',res_z'];
+% %Read LHS from file
+% 
+% resFile = 'output/kj-rs-res.nc';
+% res = dlg_read_netcdf(resFile);
+% 
+% res_r = res('res_r');
+% res_t = res('res_t');
+% res_z = res('res_z');
+% 
+% res = [res_r',res_t',res_z'];
 
 cd(rootDir);
 

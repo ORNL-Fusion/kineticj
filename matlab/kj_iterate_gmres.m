@@ -65,7 +65,8 @@ RHS = -i * w * u0 * jA;
 
 % Check to make sure the residual is zero for the initial guess
 
-res0 = kj_runResidual(E0);
+[loc] = kj_runResidual(E0);
+[res0] = kj_readResidual(loc);
 
 
 % Evaluate Jacobian (J = dResidual / dE)
@@ -74,55 +75,99 @@ J = complex(zeros(M,M));
 
 dE_r = 0.1; dE_t = 0.001; dE_z = 0.1;
 
-f_RES = @kj_runResidual;
+f_launchResidual = @kj_runResidual;
+f_readResidual = @kj_readResidual;
 
-parfor ii=1:n
+allDirs = char();
+
+nParallel = 6;
+
+for ii=1:M
     
-    t = getCurrentTask();
-    if isempty(t)
-        myId = 0;
-    else
-        myId = t.ID;
+    dE = 0;
+    dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+    
+    if (ii > 0*n) && (ii <= 1*n)
+        dE_r = complex(0.1,0.1);
+        dE = dE_r;
     end
     
-    for c=1:3
+    if (ii > 1*n) && (ii <= 2*n)
+        dE_t = complex(0.001,0.001);
+        dE = dE_t;    
+    end
+    
+    if (ii > 2*n) && (ii <= 3*n)
+        dE_z = complex(0.1,0.1);
+        dE = dE_z;     
+    end
+    
+    E_r = E0_r;
+    E_t = E0_t;
+    E_z = E0_z;
+    
+    ix = mod(ii,n);
+    
+    E_r(ix) = E_r(ix) + dE_r;
+    E_t(ix) = E_t(ix) + dE_t;
+    E_z(ix) = E_z(ix) + dE_z;
+    
+    E1 = [E_r,E_t,E_z]';
+    
+    [thisDir] = f_launchResidual(E1); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+    
+    allDirs = char(allDirs,thisDir);
+    
+    % wait for these to finish
+    if mod(ii,nParallel)==0
+    
+        ii
+        checkFileName = [allDirs(ii),'/output/kj-rs-res.nc']
         
-        dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
-        
-        if c==1
-            dE_r = complex(0.1,0.1);
+        while exist(checkFileName,'file')==0
+            
+            pause(2);
+            
         end
-        if c==2
-            dE_t = complex(0.001,0.001);
-        end
-        if c==3
-            dE_z = complex(0.1,0.1);
-        end
-        
-        E_r = E0_r;
-        E_t = E0_t;
-        E_z = E0_z;
-        
-        E_r(ii) = E_r(ii) + dE_r;
-        E_t(ii) = E_t(ii) + dE_t;
-        E_z(ii) = E_z(ii) + dE_z;
-        
-        E1 = [E_r,E_t,E_z]';
-        
-        res1 = f_RES(E1);
-        
-        dres = res0 - res1;
-        dE = (E0 - E1)';
-        
-        % Jacobian row
-        % J could be evaluated with a higher order diferencing scheme.
-        
-        dRes_dE = dres ./ dE; 
-        
-        J(:,ii) = dRes_dE;
         
     end
+    
 end
+
+for ii=1:M
+    
+    dE = 0;
+    dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+    
+    if (ii > 0*n) && (ii <= 1*n)
+        dE_r = complex(0.1,0.1);
+        dE = dE_r;
+    end
+    
+    if (ii > 1*n) && (ii <= 2*n)
+        dE_t = complex(0.001,0.001);
+        dE = dE_t;    
+    end
+    
+    if (ii > 2*n) && (ii <= 3*n)
+        dE_z = complex(0.1,0.1);
+        dE = dE_z;     
+    end
+    
+    res1 = f_readResidual(E); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+    
+    dres = res0 - res1;
+    
+    % Jacobian row
+    % J could be evaluated with a higher order diferencing scheme.
+    
+    dRes_dE = dres ./ dE;
+    
+    J(ii,:) = dRes_dE; % for collected components ordering indicated above
+    
+end
+
+save('kj-rs-jacobian.mat','J');
 
 loadPreviousSolution = 0;
 
