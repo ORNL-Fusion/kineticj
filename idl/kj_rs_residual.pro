@@ -30,8 +30,8 @@ function kj_rs_residual
     res_t_im = interpol(imaginary(res_t_),r__,r,/spline)
     res_z_im = interpol(imaginary(res_z_),r__,r,/spline)
 
-    res_t = complex(res_t_re,res_t_im)
-    res_z = complex(res_z_re,res_z_im)
+    res_t = dcomplex(res_t_re,res_t_im)
+    res_z = dcomplex(res_z_re,res_z_im)
 
     res1 = [res_r,res_t,res_z]
 

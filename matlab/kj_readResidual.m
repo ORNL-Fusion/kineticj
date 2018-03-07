@@ -10,6 +10,8 @@ while exist(resFile,'file')==0
     
     % Wait for file to be created
     
+    disp('Waiting for residual file ...');
+    disp(loc);
     pause(1);
     
 end

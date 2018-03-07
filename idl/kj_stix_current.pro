@@ -151,9 +151,9 @@ for s=0,nS-1 do begin
         
         N = n_elements((solution['E_r'])[iL:iR])
     
-        er = +(solution['E_r'])[iL:iR] * hanning(n)
-        et = +(solution['E_t'])[iL:iR] * hanning(n)
-        ez = +(solution['E_z'])[iL:iR] * hanning(n)
+        er = +(solution['E_r'])[iL:iR]; * hanning(n)
+        et = +(solution['E_t'])[iL:iR]; * hanning(n)
+        ez = +(solution['E_z'])[iL:iR]; * hanning(n)
 
         ;; Test for FFT
         ;kk = 200.0  
@@ -188,67 +188,63 @@ for s=0,nS-1 do begin
         jkt = complexArr(N)
         jkz = complexArr(N)
     
-        ;for k=0,N-1 do begin
-    
-            epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
-                    density[i,s], harmonicNumber, kPar[i], kPer, temp[i,s], $
-                    kx = 0, nuOmg = nu_omg[i,s]);, epsilon_cold = epsilon_cold) ;, $
-                    ;epsilon_swan_ND = epsilon_swan );
+        epsilon_bram = kj_epsilon_hot( f, amu[s], atomicZ[s], B[i], $
+                density[i,s], harmonicNumber, kPar[i], kPer, temp[i,s], $
+                kx = 0, nuOmg = nu_omg[i,s]);, epsilon_cold = epsilon_cold) ;, $
+                ;epsilon_swan_ND = epsilon_swan );
    
-            epsilon_cold = kj_epsilon_cold(f, amu[s], atomicZ[s], B[i], $
-                    density[i,s], nu_omg[i,s])
+        epsilon_cold = kj_epsilon_cold(f, amu[s], atomicZ[s], B[i], $
+                density[i,s], nu_omg[i,s])
 
-            epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
+        epsilon_cold = complex(rebin(real_part(epsilon_cold),3,3,N),rebin(imaginary(epsilon_cold),3,3,N))
     
-            sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-            ;sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
-            sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        sigma_bram =  ( epsilon_bram - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        ;sigma_swan =  ( epsilon_swan - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
+        sigma_cold =  ( epsilon_cold - rebin(identity(3),3,3,N) ) * w * _e0 / _ii
     
-            ; Rotate sigma from ABP to RTZ
+        ; Rotate sigma from ABP to RTZ
 
-            sigma_abp_bram = sigma_bram
-            sigma_abp_cold = sigma_cold
+        sigma_abp_bram = sigma_bram
+        sigma_abp_cold = sigma_cold
    
-            ; Choose hot or cold sigma 
+        ; Choose hot or cold sigma 
     
-            if hot then begin
-
-                for k=0,N-1 do begin
-    	            sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-    	            ;sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-                endfor
- 
-                ;_sigma = sigma_swan
-                _sigma = sigma_bram
-
-            endif else begin
-
-                for k=0,N-1 do begin
-    	            sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
-                endfor
-
-                _sigma = sigma_cold
-
-            endelse
+        if hot then begin
 
             for k=0,N-1 do begin
-    	            sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+    	        sigma_bram[*,*,k] = rotateEpsilon ( sigma_bram[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+    	        ;sigma_swan[*,*,k] = rotateEpsilon ( sigma_swan[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+            endfor
+ 
+            ;_sigma = sigma_swan
+            _sigma = sigma_bram
+
+        endif else begin
+
+            for k=0,N-1 do begin
+    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
             endfor
 
+            _sigma = sigma_cold
 
-            sig2[*,*,i,_iL:_iR,s] = _sigma
-            sigc[*,*,i,_iL:_iR,s] = sigma_cold
-            sig2_abp[*,*,i,_iL:_iR,s] = sigma_abp_bram
-            sigc_abp[*,*,i,_iL:_iR,s] = sigma_abp_cold
-    
-            ; Calculate k-space plasma current
-    
-            jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
-            jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
-            jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+        endelse
 
-        ;endfor
-        
+        for k=0,N-1 do begin
+    	        sigma_cold[*,*,k] = rotateEpsilon ( sigma_cold[*,*,k], thisBUnitVec, R = R_abp_to_rtz[*,*,i] )
+        endfor
+
+
+        sig2[*,*,i,_iL:_iR,s] = _sigma
+        sigc[*,*,i,_iL:_iR,s] = sigma_cold
+        sig2_abp[*,*,i,_iL:_iR,s] = sigma_abp_bram
+        sigc_abp[*,*,i,_iL:_iR,s] = sigma_abp_cold
+    
+        ; Calculate k-space plasma current
+    
+        jkr = +(_sigma[0,0,*] * Ekr + _sigma[1,0,*] * Ekt + _sigma[2,0,*] * Ekz)[*]
+        jkt = +(_sigma[0,1,*] * Ekr + _sigma[1,1,*] * Ekt + _sigma[2,1,*] * Ekz)[*]
+        jkz = +(_sigma[0,2,*] * Ekr + _sigma[1,2,*] * Ekt + _sigma[2,2,*] * Ekz)[*]
+
         ; Inverse FFT for configuration-space plasma current
         
         thisjr = fft(jkr,/center,/inverse)
@@ -454,7 +450,6 @@ if not useRS then begin
     endfor
     endfor 
 
-   stop 
 endif
 endif
 

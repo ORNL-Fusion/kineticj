@@ -68,10 +68,7 @@ RHS = -i * w * u0 * jA;
 % Evaluate Jacobian (J = dResidual / dE)
 
 J = complex(zeros(M,M));
-
-dE_r_value = complex(1,1);
-dE_t_value = complex(1,1);
-dE_z_value = complex(1,1);
+dE = complex(zeros(M,1));
 
 f_stageResidual = @kj_runResidual;
 f_readResidual = @kj_readResidual;
@@ -90,30 +87,29 @@ else
     
     for ii=1:M
         
-        dE = 0;
-        dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
-        
-        if (ii > 0*n) && (ii <= 1*n)
-            dE_r = dE_r_value;
-            dE = dE_r;
-        end
-        
-        if (ii > 1*n) && (ii <= 2*n)
-            dE_t = dE_t_value;
-            dE = dE_t;
-        end
-        
-        if (ii > 2*n) && (ii <= 3*n)
-            dE_z = dE_z_value;
-            dE = dE_z;
-        end
-        
         E_r = E0_r;
         E_t = E0_t;
         E_z = E0_z;
         
         ix = mod(ii-1,n)+1;
         
+        dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
+        
+        if (ii > 0*n) && (ii <= 1*n)
+            dE_r = E_r(ix) * 0.1 + complex(1,1)*1e-7;
+            dE(ii) = dE_r;
+        end
+        
+        if (ii > 1*n) && (ii <= 2*n)
+            dE_t = E_t(ix) * 0.1 + complex(1,1)*1e-7;
+            dE(ii) = dE_t;
+        end
+        
+        if (ii > 2*n) && (ii <= 3*n)
+            dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
+            dE(ii) = dE_z;
+        end
+         
         E_r(ix) = E_r(ix) + dE_r;
         E_t(ix) = E_t(ix) + dE_t;
         E_z(ix) = E_z(ix) + dE_z;
@@ -136,7 +132,7 @@ else
     
     [stat] = kj_runResiduals();
     
-    save(readonlyFileName,'loc0','loc');
+    save(readonlyFileName,'loc0','loc','dE');
     
     disp('done');
     
@@ -147,24 +143,6 @@ end
 disp('reading residuals ...');
 
 for ii=1:M
-    
-    dE = 0;
-    dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
-    
-    if (ii > 0*n) && (ii <= 1*n)
-        dE_r = dE_r_value;
-        dE = dE_r;
-    end
-    
-    if (ii > 1*n) && (ii <= 2*n)
-        dE_t = dE_t_value;
-        dE = dE_t;    
-    end
-    
-    if (ii > 2*n) && (ii <= 3*n)
-        dE_z = dE_z_value;
-        dE = dE_z;     
-    end
         
     res1 = f_readResidual(loc(ii,:)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
         
@@ -173,7 +151,7 @@ for ii=1:M
     % Jacobian row
     % J could be evaluated with a higher order diferencing scheme.
     
-    dRes_dE = dres ./ dE;
+    dRes_dE = dres ./ dE(ii);
     
     J(ii,:) = dRes_dE; % for collected components ordering indicated above
     
@@ -188,6 +166,11 @@ save('kj-rs-jacobian.mat','J');
 
 E1 = E0 - inv(J) * res0';
 
+% Check residual of final solution
+
+[loc1] = f_stageResidual(E1);
+
+% *** Need the ability to run a single case, or only run if not run ***
 
 loadPreviousSolution = 0;
 
