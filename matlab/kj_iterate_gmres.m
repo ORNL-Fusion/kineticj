@@ -1,6 +1,6 @@
 function [stat] = kj_iterate_gmes()
 
-readonly = 0;
+readonly = 1;
 
 phys = dlg_constants();
 
@@ -70,14 +70,15 @@ RHS = -i * w * u0 * jA;
 J = complex(zeros(M,M));
 dE = complex(zeros(M,1));
 
-f_stageResidual = @kj_runResidual;
+f_stageResidual = @kj_stageResidual;
 f_readResidual = @kj_readResidual;
+f_runResidual = @kj_runResidual;
 
 readonlyFileName = 'kj-rs-readonly.mat';
 
 if readonly
     
-    load(readonlyFileName,'loc0','loc');
+    load(readonlyFileName);
     
 else
     
@@ -109,7 +110,7 @@ else
             dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
             dE(ii) = dE_z;
         end
-         
+                
         E_r(ix) = E_r(ix) + dE_r;
         E_t(ix) = E_t(ix) + dE_t;
         E_z(ix) = E_z(ix) + dE_z;
@@ -144,7 +145,7 @@ disp('reading residuals ...');
 
 for ii=1:M
         
-    res1 = f_readResidual(loc(ii,:)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+    res1 = f_readResidual(loc(ii)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
         
     dres = res0 - res1;
     
@@ -162,13 +163,31 @@ disp('done');
 save('kj-rs-jacobian.mat','J');
 
 
-% Solve using Newtons method
+% Solve using Newtons method, i.e., instead of doing the inv(J) for
+% E1 = E0 - inv(J) * res0'
+% we instead solve the below linear system for deltaE = E1-E0
+% J * deltaE = -res0';
 
-E1 = E0 - inv(J) * res0';
+ deltaE = -res0' \ J';
+% deltaE = linsolve(J,-res0');
+
+E1 = E0 + deltaE';
+
 
 % Check residual of final solution
 
 [loc1] = f_stageResidual(E1);
+[stat] = f_runResidual(loc1);
+[res1] = f_readResidual(loc1);
+
+kj_plot_cmplx_3vec(E0,E1,deltaE)
+
+kj_plot_cmplx_3vec(res0',res1')
+
+disp('norm(res0):');
+disp(norm(res0));
+disp('norm(res1):');
+disp(norm(res1));
 
 % *** Need the ability to run a single case, or only run if not run ***
 

@@ -2,7 +2,7 @@ function [res] = kj_readResidual(loc)
 
 rootDir = pwd();
 
-cd(loc);
+cd(char(loc));
 
 resFile = 'output/kj-rs-res.nc';
 

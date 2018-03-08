@@ -26,8 +26,9 @@ function kj_rs_residual
     r__ = [r_[0]-dR,r_,r_[-1]+dR]
 
     res_t_re = interpol(real_part(res_t_),r__,r,/spline)
-    res_z_re = interpol(real_part(res_z_),r__,r,/spline)
     res_t_im = interpol(imaginary(res_t_),r__,r,/spline)
+
+    res_z_re = interpol(real_part(res_z_),r__,r,/spline)
     res_z_im = interpol(imaginary(res_z_),r__,r,/spline)
 
     res_t = dcomplex(res_t_re,res_t_im)
@@ -50,7 +51,7 @@ function kj_rs_residual
     NCDF_PUT, 'output/kj-rs-res.nc', /NEW, VARIABLES=solHash
 
     print, 'norm(residual): ', norm(res1)
-
+stop
     return, res1 
 
 end

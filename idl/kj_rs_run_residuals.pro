@@ -1,4 +1,5 @@
 pro kj_rs_run_residuals
+
     compile_opt idl2, logical_predicate
 
     ; Get list of runs to do
