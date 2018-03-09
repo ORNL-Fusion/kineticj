@@ -51,7 +51,7 @@ function kj_rs_residual
     NCDF_PUT, 'output/kj-rs-res.nc', /NEW, VARIABLES=solHash
 
     print, 'norm(residual): ', norm(res1)
-stop
+
     return, res1 
 
 end

@@ -1,6 +1,7 @@
 function [stat] = kj_iterate_gmes()
 
-readonly = 1;
+readonly = 0;
+readJ = 0;
 
 phys = dlg_constants();
 
@@ -97,17 +98,20 @@ else
         dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
         
         if (ii > 0*n) && (ii <= 1*n)
-            dE_r = E_r(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_r = E_r(ix) * 0.1 + complex(1,1)*1e-7;
+            dE_r = 0.01;
             dE(ii) = dE_r;
         end
         
         if (ii > 1*n) && (ii <= 2*n)
-            dE_t = E_t(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_t = E_t(ix) * 0.1 + complex(1,1)*1e-7;
+            dE_t = 0.01;
             dE(ii) = dE_t;
         end
         
         if (ii > 2*n) && (ii <= 3*n)
-            dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
+            dE_z = 0.01;
             dE(ii) = dE_z;
         end
                 
@@ -143,24 +147,81 @@ end
 
 disp('reading residuals ...');
 
-for ii=1:M
+readJFileName = 'kj-rs-jacobian.mat';
+
+if readJ
+    
+    load(readJFileName);
+    
+else
+    
+    for ii=1:M
         
-    res1 = f_readResidual(loc(ii)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
+        res1 = f_readResidual(loc(ii)); % comes out as [resx1,resx2,...resxn,resy1,resy2,...,resyn,etc]
         
-    dres = res0 - res1;
+        dres = res0 - res1;
+        
+        % Jacobian row
+        % J could be evaluated with a higher order diferencing scheme.
+        
+        dRes_dE = dres ./ dE(ii);
+        
+        J(ii,:) = dRes_dE; % for collected components ordering indicated above
+        
+    end
     
-    % Jacobian row
-    % J could be evaluated with a higher order diferencing scheme.
-    
-    dRes_dE = dres ./ dE(ii);
-    
-    J(ii,:) = dRes_dE; % for collected components ordering indicated above
+    save(readJFileName,'J');
     
 end
 
 disp('done');
 
-save('kj-rs-jacobian.mat','J');
+
+% Remove the boundary points
+
+int_n = M/3-2;
+
+int_J = complex(zeros(int_n*3,int_n*3));
+int_res0 = complex(int_n*3);
+int_E0 = complex(int_n*3);
+
+for j=1:3
+    for k=1:3
+    
+        j1 = (j-1)*n+2;
+        j2 = j1+int_n-1;
+        k1 = (k-1)*n+2;
+        k2 = k1+int_n-1;
+        
+        str=sprintf("(%i:%i , %i:%i)",j1,j2,k1,k2);
+        
+        disp(str);
+    
+        tmpBlock = (J(j1:j2,k1:k2));
+        
+        m1 = (j-1)*int_n+1;
+        m2 = m1+int_n-1;
+        n1 = (k-1)*int_n+1;
+        n2 = n1+int_n-1;
+        
+        int_J(m1:m2,n1:n2) = tmpBlock;
+        
+    end
+end
+
+
+for k=1:3
+    
+    k1 = (k-1)*n+2;
+    k2 = k1+int_n-1;
+     
+    n1 = (k-1)*int_n+1;
+    n2 = n1+int_n-1;
+    
+    int_res0(n1:n2) = res0(k1:k2);
+    int_E0(n1:n2) = E0(k1:k2);
+    
+end
 
 
 % Solve using Newtons method, i.e., instead of doing the inv(J) for
@@ -168,10 +229,12 @@ save('kj-rs-jacobian.mat','J');
 % we instead solve the below linear system for deltaE = E1-E0
 % J * deltaE = -res0';
 
- deltaE = -res0' \ J';
+ deltaE = -int_res0' \ int_J';
 % deltaE = linsolve(J,-res0');
 
-E1 = E0 + deltaE';
+int_E1 = int_E0 + deltaE;
+
+kj_plot_cmplx_3vec(int_E0,int_E1,deltaE)
 
 
 % Check residual of final solution
@@ -180,7 +243,7 @@ E1 = E0 + deltaE';
 [stat] = f_runResidual(loc1);
 [res1] = f_readResidual(loc1);
 
-kj_plot_cmplx_3vec(E0,E1,deltaE)
+
 
 kj_plot_cmplx_3vec(res0',res1')
 
