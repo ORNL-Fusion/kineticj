@@ -1,7 +1,7 @@
 function [stat] = kj_iterate_gmes()
 
-readonly = 0;
-readJ = 0;
+readonly = 1;
+readJ = 1;
 
 phys = dlg_constants();
 
@@ -98,20 +98,20 @@ else
         dE_r = 0.0; dE_t = 0.0; dE_z = 0.0;
         
         if (ii > 0*n) && (ii <= 1*n)
-            %dE_r = E_r(ix) * 0.1 + complex(1,1)*1e-7;
-            dE_r = 0.01;
+            dE_r = E_r(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_r = 0.01;
             dE(ii) = dE_r;
         end
         
         if (ii > 1*n) && (ii <= 2*n)
-            %dE_t = E_t(ix) * 0.1 + complex(1,1)*1e-7;
-            dE_t = 0.01;
+            dE_t = E_t(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_t = 0.01;
             dE(ii) = dE_t;
         end
         
         if (ii > 2*n) && (ii <= 3*n)
-            %dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
-            dE_z = 0.01;
+            dE_z = E_z(ix) * 0.1 + complex(1,1)*1e-7;
+            %dE_z = 0.01;
             dE(ii) = dE_z;
         end
                 
@@ -177,7 +177,7 @@ end
 disp('done');
 
 
-% Remove the boundary points
+% Remove the boundary points, otherwise the J matrix is ill-conditioned.
 
 int_n = M/3-2;
 
@@ -229,13 +229,23 @@ end
 % we instead solve the below linear system for deltaE = E1-E0
 % J * deltaE = -res0';
 
- deltaE = -int_res0' \ int_J';
-% deltaE = linsolve(J,-res0');
+% Why does this give a different answer to below?
+% Perhaps the difference between ml and mrdivide?
+% deltaE = -int_res0' \ int_J';
 
-int_E1 = int_E0 + deltaE;
+deltaE = linsolve(int_J',-int_res0');
+
+int_E1 = int_E0 + deltaE';
 
 kj_plot_cmplx_3vec(int_E0,int_E1,deltaE)
 
+% Put the interior int_E1 back into the full E1 
+
+E1 = E0;
+
+E1(n*0+2:n*0+n-1) = int_E1(int_n*0+1:int_n*0+int_n);
+E1(n*1+2:n*1+n-1) = int_E1(int_n*1+1:int_n*1+int_n);
+E1(n*2+2:n*2+n-1) = int_E1(int_n*2+1:int_n*2+int_n);
 
 % Check residual of final solution
 
