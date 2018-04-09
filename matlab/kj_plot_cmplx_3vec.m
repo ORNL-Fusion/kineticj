@@ -4,82 +4,82 @@ M = numel(E0);
 
 n = M/3;
 
-E0_r = E0(0*n+1:1*n);
-E0_t = E0(1*n+1:2*n);
-E0_z = E0(2*n+1:3*n);
+E0_1 = E0(0*n+1:1*n);
+E0_2 = E0(1*n+1:2*n);
+E0_3 = E0(2*n+1:3*n);
 
 if exist('E1')
-    E1_r = E1(0*n+1:1*n);
-    E1_t = E1(1*n+1:2*n);
-    E1_z = E1(2*n+1:3*n);
+    E1_1 = E1(0*n+1:1*n);
+    E1_2 = E1(1*n+1:2*n);
+    E1_3 = E1(2*n+1:3*n);
 end
 
 if exist('E2')
-    E2_r = E2(0*n+1:1*n);
-    E2_t = E2(1*n+1:2*n);
-    E2_z = E2(2*n+1:3*n);
+    E2_1 = E2(0*n+1:1*n);
+    E2_2 = E2(1*n+1:2*n);
+    E2_3 = E2(2*n+1:3*n);
 end
 
 figure();
 
 ax1 = subplot(3,2,1);
-plot(ax1,real(E0_r),'Color','k')
+plot(ax1,real(E0_1),'Color','k')
 hold on
 if exist('E1')
-    plot(ax1,real(E1_r),'Color','b')
+    plot(ax1,real(E1_1),'Color','b')
 end
 if exist('E2')
-    plot(ax1,real(E2_r),'Color','r')
+    plot(ax1,real(E2_1),'Color','r')
 end
 
 ax2 = subplot(3,2,2);
-plot(ax2,imag(E0_r),'Color','k')
+plot(ax2,imag(E0_1),'Color','k')
 hold on
 if exist('E1')
-    plot(ax2,imag(E1_r),'Color','b')
+    plot(ax2,imag(E1_1),'Color','b')
 end
 if exist('E2')
-    plot(ax2,imag(E2_r),'Color','r')
+    plot(ax2,imag(E2_1),'Color','r')
 end
 
 ax3 = subplot(3,2,3);
-plot(ax3,real(E0_t),'Color','k')
+plot(ax3,real(E0_2),'Color','k')
 hold on
 if exist('E1')
-    plot(ax3,real(E1_t),'Color','b')
+    plot(ax3,real(E1_2),'Color','b')
 end
 if exist('E2')
-    plot(ax3,real(E2_t),'Color','r')
+    plot(ax3,real(E2_2),'Color','r')
 end
 
 ax4 = subplot(3,2,4);
-plot(ax4,imag(E0_t),'Color','k')
+plot(ax4,imag(E0_2),'Color','k')
 hold on
 if exist('E1')
-    plot(ax4,imag(E1_t),'Color','b')
+    plot(ax4,imag(E1_2),'Color','b')
 end
 if exist('E2')
-    plot(ax4,imag(E2_t),'Color','r')
+    plot(ax4,imag(E2_2),'Color','r')
 end
 
 ax5 = subplot(3,2,5);
-plot(ax5,real(E0_z),'Color','k')
+plot(ax5,real(E0_3),'Color','k')
 hold on
 if exist('E1') 
-    plot(ax5,real(E1_z),'Color','b')
+    plot(ax5,real(E1_3),'Color','b')
 end
 if exist('E2') 
-    plot(ax5,real(E2_z),'Color','r')
+    plot(ax5,real(E2_3),'Color','r')
 end
 
 ax6 = subplot(3,2,6);
-plot(ax6,imag(E0_z),'Color','k')
+plot(ax6,imag(E0_3),'Color','k')
 hold on
 if exist('E1')
-    plot(ax6,imag(E1_z),'Color','b')
+    plot(ax6,imag(E1_3),'Color','b')
 end
 if exist('E2')
-    plot(ax6,imag(E2_z),'Color','r')
+    plot(ax6,imag(E2_3),'Color','r')
 end
 
 end

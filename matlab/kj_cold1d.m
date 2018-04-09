@@ -9,17 +9,17 @@ eps0 = phys('eps0');
 %%% Inputs
 
 f = 13e6;
-%nPts = 256;
+nPts =4;
 
 n = nPts-1; % for periodic
 
-ky = 0;
-kz = 0;
+ky = 0.0;
+kz = 0.0;
 
 xMin = -1;
 xMax = +1;
 
-h = (xMax-xMin) / (n-1);
+h = (xMax-xMin) / (nPts-1);
 
 x = linspace(xMin,xMax-h,n);
 
@@ -30,6 +30,7 @@ N = n*3;
 
 A = complex(zeros(N,N));
 b = complex(zeros(N,1));
+
 
 % Dielectric tensor
 
@@ -57,6 +58,7 @@ jA_z = complex(zeros(n,1));
 
 [ExA,EyA,EzA] = analyticSolution(x);
 
+
 % Fill matrix with grouping by component
 
 for jj=1:n
@@ -64,8 +66,8 @@ for jj=1:n
     if jj == 1
         
         % With periodic BC's we have to set an offset value
-        % Here we set it to be the analytic solution for 
-        % comparison purposes. 
+        % Here we set it to be the analytic solution for
+        % comparison purposes.
         
         A(jj +0*n,jj +0*n) = 1;
         A(jj +1*n,jj +1*n) = 1;
@@ -77,10 +79,10 @@ for jj=1:n
         
     else
         
-        % Ex
-        
         jm = jj-1;
         jp = jj+1;
+        
+        % Periodic BCs
         
         if jm == 0
             jm = n;
@@ -89,6 +91,8 @@ for jj=1:n
         if jp == n+1
             jp = 1;
         end
+        
+        % Ex
         
         A(jj +0*n,jm +0*n) = 0;
         A(jj +0*n,jj +0*n) = -exx * k0^2 + ky^2 + kz^2;
@@ -131,10 +135,14 @@ for jj=1:n
         A(jj +2*n,jp +2*n) = -1/h^2;
         
         % RHS
+        %
+        %         Sx = -53.5453 * exp(5*1i*pi*x(jj));
+        %         Sy = +168.195 * exp(5*1i*pi*x(jj));
+        %         Sz = 2.71735 * exp(5*1i*pi*x(jj));
         
-%             Sx = +44.8839 * exp(5*1i*pi*x(jj));
-%             Sy = +267.695 * exp(5*1i*pi*x(jj));
-%             Sz = -204.362 * exp(5*1i*pi*x(jj));
+        %         Sx = +44.8839 * exp(5*1i*pi*x(jj));
+        %         Sy = +267.695 * exp(5*1i*pi*x(jj));
+        %         Sz = -204.362 * exp(5*1i*pi*x(jj));
         
         Sx = -0.00551074 * exp(5*1i*pi*x(jj));
         Sy = +246.735 * exp(5*1i*pi*x(jj));
@@ -148,7 +156,8 @@ for jj=1:n
     
 end
 
-E = linsolve(A,b);
+%E = linsolve(A,b);
+E = A\b;
 
 Ex = E(0*n+1:1*n);
 Ey = E(1*n+1:2*n);
@@ -156,17 +165,19 @@ Ez = E(2*n+1:3*n);
 
 EA = [ExA,EyA,EzA]';
 
-err_L2 = norm(E-EA)/N;
+err_L2 = sqrt(mean((E-EA).^2));
 err_max = max(abs(E-EA));
 
-% kj_plot_cmplx_3vec(E,EA)
+kj_plot_cmplx_3vec(E,EA)
 
 end
 
 function [Ex,Ey,Ez] = analyticSolution(x)
 
-Ex = 1.00*exp(5*1i*pi*x);
-Ey = 1.00*exp(5*1i*pi*x);
-Ez = 0.01*exp(5*1i*pi*x);
+ExpVar = exp(5*1i*pi*x);
+
+Ex = 1.00*ExpVar;
+Ey = 1.00*ExpVar;
+Ez = 0.01*ExpVar;
 
 end
