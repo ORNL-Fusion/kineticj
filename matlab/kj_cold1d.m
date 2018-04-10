@@ -9,12 +9,12 @@ eps0 = phys('eps0');
 %%% Inputs
 
 f = 13e6;
-nPts =4;
+%    nPts = 512;
 
 n = nPts-1; % for periodic
 
-ky = 0.0;
-kz = 0.0;
+ky = 5;
+kz = 10;
 
 xMin = -1;
 xMax = +1;
@@ -24,11 +24,12 @@ h = (xMax-xMin) / (nPts-1);
 x = linspace(xMin,xMax-h,n);
 
 w = 2*pi*f;
-k0 = w^2/c^2;
+k0 = w/c;
 
 N = n*3;
 
-A = complex(zeros(N,N));
+% A = complex(zeros(N,N));
+A = sparse(N,N);
 b = complex(zeros(N,1));
 
 
@@ -73,9 +74,9 @@ for jj=1:n
         A(jj +1*n,jj +1*n) = 1;
         A(jj +2*n,jj +2*n) = 1;
         
-        b(jj +0*n) = ExA(1);
-        b(jj +1*n) = EyA(1);
-        b(jj +2*n) = EzA(1);
+        b(jj +0*n) = ExA(jj);
+        b(jj +1*n) = EyA(jj);
+        b(jj +2*n) = EzA(jj);
         
     else
         
@@ -136,17 +137,33 @@ for jj=1:n
         
         % RHS
         %
-        %         Sx = -53.5453 * exp(5*1i*pi*x(jj));
-        %         Sy = +168.195 * exp(5*1i*pi*x(jj));
-        %         Sz = 2.71735 * exp(5*1i*pi*x(jj));
+        %                 Sx = -53.6141 * exp(5*1i*pi*x(jj));
+        %                 Sy = +168.126 * exp(5*1i*pi*x(jj));
+        %                 Sz = 2.71666 * exp(5*1i*pi*x(jj));
         
         %         Sx = +44.8839 * exp(5*1i*pi*x(jj));
         %         Sy = +267.695 * exp(5*1i*pi*x(jj));
         %         Sz = -204.362 * exp(5*1i*pi*x(jj));
         
-        Sx = -0.00551074 * exp(5*1i*pi*x(jj));
-        Sy = +246.735 * exp(5*1i*pi*x(jj));
-        Sz = +2.46735 * exp(5*1i*pi*x(jj));
+%         Sx = -0.0742344 * exp(5*1i*pi*x(jj));
+%         Sy = +246.666 * exp(5*1i*pi*x(jj));
+%         Sz = +2.46666 * exp(5*1i*pi*x(jj));
+        
+%         Sx = -1.63609264311 * exp(5*1i*pi*x(jj));
+%         Sy = +245.117429329 * exp(5*1i*pi*x(jj));
+%         Sz = +0.0955642663658 * exp(5*1i*pi*x(jj));
+        
+%         Sx = -4.6976852967 * exp(5*1i*pi*x(jj));
+%         Sy = 241.975536675 * exp(5*1i*pi*x(jj));
+%         Sz = +0.0663642663658 * exp(5*1i*pi*x(jj));
+
+        Sx = 44.815152962 * exp(5*1i*pi*x(jj));
+        Sy = 267.626059316 * exp(5*1i*pi*x(jj));
+        Sz = -204.362973923 * exp(5*1i*pi*x(jj));
+        
+        %         Sx = 24.9258*cos(5*pi*x(jj)) - 1i*78.5398*sin(5*pi*x(jj));
+        %         Sy = 246.666*cos(5*pi*x(jj)) - 1i*78.5398*sin(5*pi*x(jj));
+        %         Sz = 2.71666*cos(5*pi*x(jj));
         
         b(jj +0*n) = 1i*w*u0*jA_x(jj) + Sx;
         b(jj +1*n) = 1i*w*u0*jA_y(jj) + Sy;
@@ -163,12 +180,12 @@ Ex = E(0*n+1:1*n);
 Ey = E(1*n+1:2*n);
 Ez = E(2*n+1:3*n);
 
-EA = [ExA,EyA,EzA]';
+EA = [ExA,EyA,EzA].';
 
-err_L2 = sqrt(mean((E-EA).^2));
+err_L2 = abs(sqrt(mean((E-EA).^2)))
 err_max = max(abs(E-EA));
 
-kj_plot_cmplx_3vec(E,EA)
+%    kj_plot_cmplx_3vec(E,EA)
 
 end
 

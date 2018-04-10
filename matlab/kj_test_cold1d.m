@@ -1,7 +1,7 @@
 function [] = kj_test_cold1d()
 
 n1 = 3;
-n2 = 9;
+n2 = 14;
 
 n=fix(2.^linspace(n1,n2,n2-n1+1));
 
@@ -19,12 +19,10 @@ for ii=1:N
     
 end
 
-y0 = all_err(1);
-x0 = sqrt(y0)-n(1);
 
 loglog(n,all_err)
 hold on
-loglog(n,all_err_max)
+% loglog(n,all_err_max)
 loglog(n,(1./n).^2)
 
 end
