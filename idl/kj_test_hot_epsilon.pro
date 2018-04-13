@@ -18,7 +18,7 @@ pro kj_test_hot_epsilon
 
     w = 2*!pi*f
 
-    epsilon_bram = kj_hot_epsilon( f, amu, Z, B, density, harm, kPar, kPer, T_eV, $
+    epsilon_bram = kj_epsilon_hot( f, amu, Z, B, density, harm, kPar, kPer, T_eV, $
         epsilon_cold = epsilon_cold, epsilon_swan_WD = epsilon_swan, epsilon_swan_ND = epsilon_swan_ND, $
         kx = 0, nuOmg = nuOmg )
 
@@ -32,5 +32,9 @@ pro kj_test_hot_epsilon
     print, 'Swan: '
     print, sigma_swan
 
+    print, 'Cold: '
+    print, sigma_cold
+
+stop
 
 end
