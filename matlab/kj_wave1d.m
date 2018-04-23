@@ -1,4 +1,27 @@
-function [E,err_L2,err_max] = kj_cold1d(f,xMin,xMax,nPts,ky,kz,MMSSourceFunction,MMSAnalyticFunction)
+function [E,err_L2] = kj_wave1d(f,xMin,xMax,N,ky,kz,jA,eps,S,EA)
+% KJ_WAVE1D  1D cold plasma wave solver.
+%   [E] = KJ_WAVE1D(f,xMin,xMax,nPts) takes a frequency in Hz (f), domain
+%   extents (xMin,xMax), number of points (nPts) and returns a 1D vector of
+%   length nPtsx3 with the Ex,Ey,Ez components of the solution. This
+%   assumes ky=kz=0, vacuum, and zero source current.
+%
+%   [E] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz) specifies the wavenumber in the y
+%   and z directions.
+%
+%   [E] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz,jA,eps) specifies the driving
+%   antenna current (jA) and the background magnetic field strength. Here
+%   [jA_x,jA_y,jA_z]=jA(x) and
+%   [[exx,exy,exz],[eyx,eyy,eyz],[ezx,ezy,ezz]]=eps(x) are function handles
+%   which accept the location and returns the 3 components of jA and the
+%   dielectric tensor.
+%
+%   [E,err] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz,jA,S,EA) returns the L2 error
+%   (err) between the solution and an analytic solution, used for testing
+%   with the Method of Manufactured Solutions with both [S_x,S_y,S_z]=S(x)
+%   and [ExA,EyA,EzA]=EA(x) being function handles which accept position x
+%   and return the 3 components of the source and analytic solution
+%   respectively.
+
 
 if ~exist('xMin','var')     || isempty(xMin)
     xMin = -1;
@@ -9,22 +32,33 @@ end
 if ~exist('f','var')        || isempty(f)
     f = 13e6;
 end
-if ~exist('nPts','var')     || isempty(nPts)
-    nPts = 512;
+if ~exist('nPts','var')     || isempty(N)
+    N = 512;
 end
 if ~exist('ky','var')       || isempty(ky)
-    ky = 0;
+    ky = 0.0;
 end
 if ~exist('kz','var')       || isempty(kz)
-    kz = 0;
+    kz = 0.0;
+end
+if ~exist('eps','var')      || isempty(eps)
+    [eps] = @(x) eye(3);
+end
+if ~exist('jA','var')       || isempty(jA)
+    [jA_x,jA_y,jA_z] = @(x) 0;
+end
+if ~exist('S','var')        || isempty(S)
+    [S_x,S_y,S_z] = @(x) 0;
+end
+if ~exist('S','var')        || isempty(S)
+    [S_x,S_y,S_z] = @(x) 0;
 end
 
 % Boundary conditions
 
-% lbc = 'periodic';
-% rbc = 'periodic';
-lbc = 'dirichlet';
-rbc = 'dirichlet';
+lbc = 'periodic';
+rbc = 'periodic';
+%lbc = 'dirichlet'; rbc = 'dirichlet';
 
 ExL = 0;
 EyL = 0;
@@ -35,14 +69,14 @@ EyR = 0;
 EzR = 0;
 
 periodic = 0;
-ldirichlet = 1;
-rdirichlet = 1;
+ldirichlet = 0;
+rdirichlet = 0;
 
 if strcmp(lbc,'periodic') || strcmp(rbc,'periodic')
-    n = nPts-1;
+    n = N-1;
     periodic = 1;
 else
-    n = nPts;
+    n = N;
 end
 
 if strcmp(lbc,'dirichlet')
@@ -65,7 +99,7 @@ amu0 = phys('amu');
 
 % Parameters
 
-h = (xMax-xMin) / (nPts-1);
+h = (xMax-xMin) / (N-1);
 
 x = linspace(xMin,xMax-h,n);
 
@@ -84,9 +118,8 @@ epsc = eye(3); % Vacuum
 
 amu=[me_amu,2];
 Z=[-1,1];
-dens=[1,1]*4e19;
+dens=[1,1]*2e18;
 nu_omg=0;
-B=0.5;
 
 epsc = zeros(3,3);
 sigc = zeros(3,3);
@@ -99,6 +132,7 @@ for s=1:numel(amu)
     sigc = sigc + this_sigc;
     
 end
+
 
 exx = epsc(1,1);
 exy = epsc(1,2);
@@ -115,28 +149,18 @@ ezz = epsc(3,3);
 
 % Current source
 
-jA_x = complex(zeros(n,1));
-jA_y = complex(zeros(n,1));
-jA_z = complex(zeros(n,1));
+[jA_x,jA_y,jA_z] = jA(x);
 
-loc = (xMax-xMin)/2+xMin;
-sig = (xMax-xMin)/10;
 
-jA_x = 1*exp(-(x-loc).^2/sig^2)*(1+1i);
-jA_y = 1*exp(-(x-loc).^2/sig^2)*(1+1i);
-jA_z = 1*exp(-(x-loc).^2/sig^2)*(1+1i);
 
 % Get analytic solution
 
-[ExA,EyA,EzA] = analyticSolutionCP(x);
+[ExA,EyA,EzA] = analyticSolution(x);
 
-ExA = ExA*0;
-EyA = EyA*0;
-EzA = EzA*0;
 
 % Fill matrix with grouping by component
 
-for jj=1:nPts
+for jj=1:N
     
     if jj == 1
         
@@ -162,7 +186,8 @@ for jj=1:nPts
             
         end
         
-    elseif jj == nPts
+    elseif jj == N
+        
         
         if periodic
             
@@ -231,15 +256,7 @@ for jj=1:nPts
         
         % RHS
         
-        %         Sx = -1.64038467985 * exp(5*1i*pi*x(jj));
-        %         Sy = +245.097529329 * exp(5*1i*pi*x(jj));
-        %         Sz = +1.67636059316 * exp(5*1i*pi*x(jj));
-        
-        %         Sx = complex(-302.689,-446.826) * exp(1i*10*x(jj));
-        %         Sy = complex(-202.689,+446.826) * exp(1i*10*x(jj));
-        %         Sz = 4.57071 * exp(1i*10*x(jj));
-        
-        Sx=0;Sy=0;Sz=0;
+        [Sx,Sy,Sz] = source(x(jj));
         
         b(jj +0*n) = 1i*w*u0*jA_x(jj) + Sx;
         b(jj +1*n) = 1i*w*u0*jA_y(jj) + Sy;
@@ -257,33 +274,65 @@ Ex = E(0*n+1:1*n);
 Ey = E(1*n+1:2*n);
 Ez = E(2*n+1:3*n);
 
-EA = [ExA,EyA,EzA].';
-
-err_L2 = abs(sqrt(mean((E-EA).^2)));
-err_max = max(abs(E-EA));
-
-
-kj_plot_cmplx_3vec(E,EA)
-
-
+if
+    
+    EA = [ExA,EyA,EzA].';
+    
+    err_L2 = abs(sqrt(mean((E-EA).^2)));
+    
+    doPlots = 0;
+    if doPlots
+        
+        kj_plot_cmplx_3vec(E,EA)
+        
+        figure()
+        ax1 = subplot(3,1,1);
+        plot(ax1,x,real(Ex))
+        hold on
+        plot(ax1,x,imag(Ey))
+        
+        ax2 = subplot(3,1,2);
+        plot(ax2,x,real(Ey))
+        hold on
+        plot(ax2,x,imag(Ex))
+        
+        ax3 = subplot(3,1,3);
+        plot(ax3,x,real(Ez))
+        hold on
+        plot(ax3,x,imag(Ez))
+        
+    end
+    
+    if periodic
+        Ex = [Ex.',Ex(1)];
+        Ey = [Ey.',Ey(1)];
+        Ez = [Ez.',Ez(1)];
+    end
+    
 end
 
-function [Ex,Ey,Ez] = analyticSolution(x)
 
-ExpVar = exp(5*1i*pi*x);
+    function [Ex,Ey,Ez] = analyticSolution(x)
+        
+        Ex = 0;
+        Ey = 0;
+        Ez = 0;
+        
+    end
 
-Ex = 1.00*ExpVar;
-Ey = 1.00*ExpVar;
-Ez = 0.01*ExpVar;
+    function [jA_x,jA_y,jA_z] = jA(x)
+        
+        jA_x = x*0;
+        jA_y = x*0;
+        jA_z = x*0;
+        
+        
+    end
 
-end
-
-function [Ex,Ey,Ez] = analyticSolutionCP(x)
-
-ExpVar = exp(1i*10*x);
-
-Ex = 1.00*ExpVar;
-Ey = 1.00*ExpVar;
-Ez = 0.01*ExpVar;
-
-end
+    function [Sx,Sy,Sz] = source(x)
+        
+        Sx = 0;
+        Sy = 0;
+        Sz = 0;
+        
+    end
