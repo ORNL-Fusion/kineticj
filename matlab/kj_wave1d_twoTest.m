@@ -1,4 +1,4 @@
-function [] = kj_cold1d_twoTest()
+function [] = kj_wave1d_twoTest()
 
 f = 13e6;
 xMin = -1;

@@ -1,27 +1,33 @@
-function [E,err_L2] = kj_wave1d(f,xMin,xMax,N,ky,kz,jA,eps,S,EA)
+function [E,err_L2] = kj_wave1d(f,xMin,xMax,N,lBC,rBC,ky,kz,jA,eps,S,EAnalytic)
 % KJ_WAVE1D  1D cold plasma wave solver.
-%   [E] = KJ_WAVE1D(f,xMin,xMax,nPts) takes a frequency in Hz (f), domain
-%   extents (xMin,xMax), number of points (nPts) and returns a 1D vector of
-%   length nPtsx3 with the Ex,Ey,Ez components of the solution. This
-%   assumes ky=kz=0, vacuum, and zero source current.
+%   [E] = KJ_WAVE1D(f,xMin,xMax,nPts,lbc,rbc) takes a frequency in Hz (f),
+%   domain extents (xMin,xMax), number of points (nPts) and returns a 1D
+%   vector of length nPtsx3 with the Ex,Ey,Ez components of the solution.
+%   This assumes ky=kz=0, vacuum, and zero source current. The boundary
+%   conditions are specified on the left (lbc) and right (rbc) using key
+%   value pairs of the type and value, e.g.,
+%       lBC = {'periodic',[Ex,Ey,Ez]} 
+%       rBC = {'dirichlet',[Ex,Ey,Ez]}
 %
-%   [E] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz) specifies the wavenumber in the y
-%   and z directions.
+%   [E] = KJ_WAVE1D(xMin,xMax,nPts,lbc,rbc,ky,kz) specifies the wavenumber
+%   in the y and z directions.
 %
-%   [E] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz,jA,eps) specifies the driving
-%   antenna current (jA) and the background magnetic field strength. Here
-%   [jA_x,jA_y,jA_z]=jA(x) and
+%   [E] = KJ_WAVE1D(xMin,xMax,nPts,lbc,rbc,ky,kz,jA,eps) specifies the
+%   driving antenna current (jA) and the background magnetic field
+%   strength. Here [jA_x,jA_y,jA_z]=jA(x) and
 %   [[exx,exy,exz],[eyx,eyy,eyz],[ezx,ezy,ezz]]=eps(x) are function handles
 %   which accept the location and returns the 3 components of jA and the
 %   dielectric tensor.
 %
-%   [E,err] = KJ_WAVE1D(xMin,xMax,nPts,ky,kz,jA,S,EA) returns the L2 error
-%   (err) between the solution and an analytic solution, used for testing
-%   with the Method of Manufactured Solutions with both [S_x,S_y,S_z]=S(x)
-%   and [ExA,EyA,EzA]=EA(x) being function handles which accept position x
-%   and return the 3 components of the source and analytic solution
-%   respectively.
+%   [E,err] = KJ_WAVE1D(xMin,xMax,nPts,lbc,rbc,ky,kz,jA,S,EAnalytic) returns the
+%   L2 error (err) between the solution and an analytic solution, used for
+%   testing with the Method of Manufactured Solutions with both
+%   [S_x,S_y,S_z]=S(x) and [ExA,EyA,EzA]=EAnalytic(x) being function handles which
+%   accept position x and return the 3 components of the source and
+%   analytic solution respectively.
 
+
+compareWithAnalytic = 0;
 
 if ~exist('xMin','var')     || isempty(xMin)
     xMin = -1;
@@ -32,7 +38,7 @@ end
 if ~exist('f','var')        || isempty(f)
     f = 13e6;
 end
-if ~exist('nPts','var')     || isempty(N)
+if ~exist('N','var')     || isempty(N)
     N = 512;
 end
 if ~exist('ky','var')       || isempty(ky)
@@ -42,49 +48,73 @@ if ~exist('kz','var')       || isempty(kz)
     kz = 0.0;
 end
 if ~exist('eps','var')      || isempty(eps)
-    [eps] = @(x) eye(3);
+    eps = @(x) eye(3);
 end
 if ~exist('jA','var')       || isempty(jA)
-    [jA_x,jA_y,jA_z] = @(x) 0;
+    jA = @(x) deal(0,0,0);
 end
 if ~exist('S','var')        || isempty(S)
-    [S_x,S_y,S_z] = @(x) 0;
+    S = @(x) deal(0,0,0);
 end
-if ~exist('S','var')        || isempty(S)
-    [S_x,S_y,S_z] = @(x) 0;
+if ~exist('EAnalytic','var')        || isempty(EAnalytic)
+    EAnalytic = @(x) deal(0,0,0);
+else
+    compareWithAnalytic = 1;
+end
+if ~exist('lBC','var')        || isempty(lBC)
+    lBC = {'dirichlet',[0,0,0]};
+end
+if ~exist('rBC','var')        || isempty(rBC)
+    rBC = {'dirichlet',[0,0,0]};
 end
 
-% Boundary conditions
 
-lbc = 'periodic';
-rbc = 'periodic';
-%lbc = 'dirichlet'; rbc = 'dirichlet';
+% Setup BC logic
 
-ExL = 0;
-EyL = 0;
-EzL = 0;
+periodic = NaN;
+ldirichlet = NaN;
+rdirichlet = NaN;
 
-ExR = 0;
-EyR = 0;
-EzR = 0;
-
-periodic = 0;
-ldirichlet = 0;
-rdirichlet = 0;
-
-if strcmp(lbc,'periodic') || strcmp(rbc,'periodic')
+if strcmp(lBC{1},'periodic') || strcmp(rBC{1},'periodic')
     n = N-1;
     periodic = 1;
+    ldirichlet = 0;
+    rdirichlet = 0;
 else
     n = N;
 end
 
-if strcmp(lbc,'dirichlet')
+if strcmp(lBC{1},'dirichlet')
     ldirichlet = 1;
+    periodic = 0;
 end
-if strcmp(rbc,'dirichlet')
+if strcmp(rBC{1},'dirichlet')
     rdirichlet = 1;
+    periodic = 0;
 end
+
+ExL = lBC{2}(1);
+EyL = lBC{2}(2);
+EzL = lBC{2}(3);
+
+if rdirichlet
+    
+ExR = rBC{2}(1);
+EyR = rBC{2}(2);
+EzR = rBC{2}(3);
+
+end
+
+assert(periodic==periodic,'Error setting BC (periodic)');
+assert(ldirichlet==ldirichlet,'Error setting BC (ldirichlet)');
+assert(rdirichlet==rdirichlet,'Error setting BC (rdirichlet)');
+
+% disp('Boundary Conditions:');
+% lBCStr = sprintf("lBC: %s, [%f,%f,%f]",lBC{1},lBC{2}(1),lBC{2}(2),lBC{2}(3));
+% rBCStr = sprintf("rBC: %s, [%f,%f,%f]",rBC{1},rBC{2}(1),rBC{2}(2),rBC{2}(3));
+% disp(lBCStr)
+% disp(rBCStr)
+
 
 % Physical constants
 
@@ -101,66 +131,34 @@ amu0 = phys('amu');
 
 h = (xMax-xMin) / (N-1);
 
-x = linspace(xMin,xMax-h,n);
+x = linspace(xMin,xMax,N);
 
 w = 2*pi*f;
 k0 = w/c;
 
-N = n*3;
+NDOF = n*3;
 
-A = sparse(N,N);
-b = complex(zeros(N,1));
-
-
-% Dielectric tensor
-
-epsc = eye(3); % Vacuum
-
-amu=[me_amu,2];
-Z=[-1,1];
-dens=[1,1]*2e18;
-nu_omg=0;
-
-epsc = zeros(3,3);
-sigc = zeros(3,3);
-
-for s=1:numel(amu)
-    
-    [this_epsc,this_sigc] = kj_epsilon_cold(f, amu(s), Z(s), B, dens(s), nu_omg); % Cold plasma
-    
-    epsc = epsc + this_epsc;
-    sigc = sigc + this_sigc;
-    
-end
-
-
-exx = epsc(1,1);
-exy = epsc(1,2);
-exz = epsc(1,3);
-
-eyx = epsc(2,1);
-eyy = epsc(2,2);
-eyz = epsc(2,3);
-
-ezx = epsc(3,1);
-ezy = epsc(3,2);
-ezz = epsc(3,3);
-
-
-% Current source
-
-[jA_x,jA_y,jA_z] = jA(x);
-
-
-
-% Get analytic solution
-
-[ExA,EyA,EzA] = analyticSolution(x);
+A = sparse(NDOF,NDOF);
+b = complex(zeros(NDOF,1));
 
 
 % Fill matrix with grouping by component
 
 for jj=1:N
+    
+    this_eps = eps(x(jj));
+    
+    exx = this_eps(1,1);
+    exy = this_eps(1,2);
+    exz = this_eps(1,3);
+    
+    eyx = this_eps(2,1);
+    eyy = this_eps(2,2);
+    eyz = this_eps(2,3);
+    
+    ezx = this_eps(3,1);
+    ezy = this_eps(3,2);
+    ezz = this_eps(3,3);
     
     if jj == 1
         
@@ -170,9 +168,9 @@ for jj=1:N
             A(jj +1*n,jj +1*n) = 1;
             A(jj +2*n,jj +2*n) = 1;
             
-            b(jj +0*n) = ExA(jj);
-            b(jj +1*n) = EyA(jj);
-            b(jj +2*n) = EzA(jj);
+            b(jj +0*n) = ExL;
+            b(jj +1*n) = EyL;
+            b(jj +2*n) = EzL;
             
         elseif ldirichlet
             
@@ -256,11 +254,13 @@ for jj=1:N
         
         % RHS
         
-        [Sx,Sy,Sz] = source(x(jj));
+        [jA_x,jA_y,jA_z] = jA(x(jj));
         
-        b(jj +0*n) = 1i*w*u0*jA_x(jj) + Sx;
-        b(jj +1*n) = 1i*w*u0*jA_y(jj) + Sy;
-        b(jj +2*n) = 1i*w*u0*jA_z(jj) + Sz;
+        [Sx,Sy,Sz] = S(x(jj));
+        
+        b(jj +0*n) = 1i*w*u0*jA_x + Sx;
+        b(jj +1*n) = 1i*w*u0*jA_y + Sy;
+        b(jj +2*n) = 1i*w*u0*jA_z + Sz;
         
     end
     
@@ -274,7 +274,16 @@ Ex = E(0*n+1:1*n);
 Ey = E(1*n+1:2*n);
 Ez = E(2*n+1:3*n);
 
-if
+if periodic
+    Ex = [Ex.',Ex(1)];
+    Ey = [Ey.',Ey(1)];
+    Ez = [Ez.',Ez(1)];
+    E  = [Ex,Ey,Ez].';
+end
+
+if compareWithAnalytic
+    
+    [ExA,EyA,EzA] = EAnalytic(x);
     
     EA = [ExA,EyA,EzA].';
     
@@ -303,36 +312,7 @@ if
         
     end
     
-    if periodic
-        Ex = [Ex.',Ex(1)];
-        Ey = [Ey.',Ey(1)];
-        Ez = [Ez.',Ez(1)];
-    end
-    
 end
 
 
-    function [Ex,Ey,Ez] = analyticSolution(x)
-        
-        Ex = 0;
-        Ey = 0;
-        Ez = 0;
-        
-    end
-
-    function [jA_x,jA_y,jA_z] = jA(x)
-        
-        jA_x = x*0;
-        jA_y = x*0;
-        jA_z = x*0;
-        
-        
-    end
-
-    function [Sx,Sy,Sz] = source(x)
-        
-        Sx = 0;
-        Sy = 0;
-        Sz = 0;
-        
-    end
+end
