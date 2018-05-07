@@ -16,7 +16,8 @@ kxaxis = linspace(1,nPts,nPts) / ( dx * nPts ) * 2*pi;
 
 for b=1:numel(B)
     
-    E = kj_cold1d(f,xMin,xMax,nPts,ky,kz,B(b));
+    E = kj_wave1d(f,xMin,xMax,nPts,lBC,rBC,ky,kz,jA,eps,S,EAnalytic)
+    E = kj_wave1d(f,xMin,xMax,nPts,ky,kz,'',eps,S,EAnalytic);
     Ex = E(1:nPts);
     power(:,b) = abs(fft(Ex)).^2;
     power(:,b) = power(:,b)/sum(power(:,b));
