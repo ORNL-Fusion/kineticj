@@ -1,6 +1,9 @@
 # Notes on `kj_wave1d.m`
 This is a 1D, finite-difference, frequency-domain (FD-FD) solver for both vacuum and cold plasma problems. 
 
+## Dependencies
+You will need the matlab folder within https://github.com/dlg0/dlg_utils repo added to your matlab path for the below to work.
+
 ## Run the tests
 Several test cases are implemented and run via ...
 ```
