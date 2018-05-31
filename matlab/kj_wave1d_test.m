@@ -132,7 +132,7 @@ end
 
 %% Test 3: Compare kx actual with dispersion
 
-function [] = kj_wave1d_cold_plasma_dispersion_test(testCase)
+function [stat] = kj_wave1d_cold_plasma_dispersion_test(testCase)
 
 disp('Test 3: Compare kx actual with dispersion');
 
