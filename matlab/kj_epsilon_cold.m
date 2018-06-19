@@ -2,11 +2,11 @@ function [eps,sigma] = kj_epsilon_cold (f, amu, Z, B, n, nu_omg)
 
 phys = dlg_constants();
 
-c = phys('c');
-u0 = phys('u0');
-eps0 = phys('eps0');
-e = phys('e');
-amu0 = phys('amu');
+c = phys.('c');
+u0 = phys.('u0');
+eps0 = phys.('eps0');
+e = phys.('e');
+amu0 = phys.('amu');
 
 validateattributes(B,{'numeric'},{'nonnegative'});
 

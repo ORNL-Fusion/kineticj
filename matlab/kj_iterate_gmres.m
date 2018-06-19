@@ -5,9 +5,9 @@ readJ = 1;
 
 phys = dlg_constants();
 
-c = phys('c');
-u0 = phys('u0');
-eps0 = phys('eps0');
+c = phys.('c');
+u0 = phys.('u0');
+eps0 = phys.('eps0');
 
 solutionFile = 'gmres-solution.mat';
 

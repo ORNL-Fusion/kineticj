@@ -139,7 +139,7 @@ disp('Test 3: Compare kx actual with dispersion');
 global f
 
 phys = dlg_constants();
-me_amu = phys('me_amu');
+me_amu = phys.('me_amu');
 
 f = 13e6;
 xMin = -1;
@@ -268,7 +268,7 @@ global f
 % Cold plasma dielectric for a two species plasma
 
 phys = dlg_constants();
-me_amu = phys('me_amu');
+me_amu = phys.('me_amu');
 
 amu=[me_amu,2];
 Z=[-1,1];
@@ -298,7 +298,7 @@ global f
 % Cold plasma dielectric for a two species plasma
 
 phys = dlg_constants();
-me_amu = phys('me_amu');
+me_amu = phys.('me_amu');
 
 amu=[me_amu,2];
 Z=[-1,1];

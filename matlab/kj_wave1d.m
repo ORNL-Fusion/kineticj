@@ -120,11 +120,11 @@ assert(rdirichlet==rdirichlet,'Error setting BC (rdirichlet)');
 
 phys = dlg_constants();
 
-c = phys('c');
-u0 = phys('u0');
-eps0 = phys('eps0');
-me_amu = phys('me_amu');
-amu0 = phys('amu');
+c = phys.('c');
+u0 = phys.('u0');
+eps0 = phys.('eps0');
+me_amu = phys.('me_amu');
+amu0 = phys.('amu');
 
 
 % Parameters

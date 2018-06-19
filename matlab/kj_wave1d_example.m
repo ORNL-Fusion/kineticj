@@ -46,7 +46,7 @@ global f
 % Cold plasma dielectric for a two species (e,D) plasma
 
 phys = dlg_constants();
-me_amu = phys('me_amu');
+me_amu = phys.('me_amu');
 
 amu=[me_amu,2];
 Z=[-1,1];
