@@ -2,7 +2,7 @@
 % script to test  preconditioners such as laplacian
 % ------------------------------------------------- 
 testCase = 1;
-Amat = kj_wave1d_vacuum_test(testCase);
+Amat = kj_wave1d_cold_plasma_test(testCase);
 
 mval = 30;
 maxit = 30;
@@ -12,13 +12,9 @@ use_diagonal = 0;
 clf;
 
 ncase = numel(Amat);
-ncol = 1;
-for nrow=ceil(sqrt(ncase)):-1:1,
-   if (mod(ncase,nrow) == 0),
-      ncol = ncase/nrow;
-      break;
-   end;
-end;
+nrow = ceil( sqrt(ncase) );
+ncol = nrow;
+
 
 for icase=1:ncase,
   A = Amat{icase}.A;
