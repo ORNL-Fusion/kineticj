@@ -28,9 +28,19 @@ for icase=1:ncase,
   % ---------------------
   % 2nd derivative matrix
   % ---------------------
-  C = spdiag( 2*ones(n,1),0) + ...
-      spdiag(-1*ones(n-1,1),1) + ...
-      spdiag(-1*ones(n-1,1),-1);
+  n3 = n/3;
+  h = (1 - (-1))/n3;
+
+  C = spdiag( 2*ones(n3,1),0) + ...
+      spdiag(-1*ones(n3-1,1),1) + ...
+      spdiag(-1*ones(n3-1,1),-1);
+  C = C * (1/(h*h));
+
+  [ii,jj,cij] = find(C);
+  C = sparse( [ii(:); n3+ii(:); 2*n3+ii(:)], ...
+              [jj(:); n3+jj(:); 2*n3+jj(:)], ...
+              [cij(:); cij(:); cij(:) ],
+              n,n );
 
   L = chol(C)';
 
