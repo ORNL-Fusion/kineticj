@@ -7,10 +7,10 @@ phys = dlg_constants();
 Amat = kj_wave1d_vacuum_test(testCase);
 
 mval = 30;
-maxit = 30;
+maxit = 2;
 rtol = 1e-6;
 
-use_diagonal = 0;
+use_diagonal = 1;
 clf;
 
 ncase = numel(Amat);
