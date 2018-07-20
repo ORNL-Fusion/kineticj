@@ -37,6 +37,8 @@ for ii=1:N
     
     all_err(ii) = err_l2;
     
+    ii
+    
 end
 
 ideal_err = (1./n).^2;
