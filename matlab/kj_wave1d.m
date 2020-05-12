@@ -1,4 +1,4 @@
-function [E,err_L2] = kj_wave1d(f,xMin,xMax,N,lBC,rBC,ky,kz,jA,eps,S,EAnalytic)
+function [E,err_L2,x] = kj_wave1d(f,xMin,xMax,N,lBC,rBC,ky,kz,jA,eps,S,EAnalytic)
 % KJ_WAVE1D  1D cold plasma wave solver.
 %   [E] = KJ_WAVE1D(f,xMin,xMax,nPts,lbc,rbc) takes a frequency in Hz (f),
 %   domain extents (xMin,xMax), number of points (nPts) and returns a 1D
@@ -281,6 +281,7 @@ if periodic
     E  = [Ex,Ey,Ez].';
 end
 
+err_L2 = NaN;
 if compareWithAnalytic
     
     [ExA,EyA,EzA] = EAnalytic(x);

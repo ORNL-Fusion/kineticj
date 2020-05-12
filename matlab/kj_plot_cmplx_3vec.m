@@ -1,4 +1,4 @@
-function [] = kj_plot_cmplx_3vec(E0,E1,E2)
+function [] = kj_plot_cmplx_3vec(x,E0,E1,E2)
 
 M = numel(E0);
 
@@ -23,63 +23,63 @@ end
 figure();
 
 ax1 = subplot(3,2,1);
-plot(ax1,real(E0_1),'Color','k')
+plot(ax1,x,real(E0_1),'Color','k')
 hold on
 if exist('E1')
-    plot(ax1,real(E1_1),'Color','b')
+    plot(ax1,x,real(E1_1),'Color','b')
 end
 if exist('E2')
-    plot(ax1,real(E2_1),'Color','r')
+    plot(ax1,x,real(E2_1),'Color','r')
 end
 
 ax2 = subplot(3,2,2);
-plot(ax2,imag(E0_1),'Color','k')
+plot(ax2,x,imag(E0_1),'Color','k')
 hold on
 if exist('E1')
-    plot(ax2,imag(E1_1),'Color','b')
+    plot(ax2,x,imag(E1_1),'Color','b')
 end
 if exist('E2')
-    plot(ax2,imag(E2_1),'Color','r')
+    plot(ax2,x,imag(E2_1),'Color','r')
 end
 
 ax3 = subplot(3,2,3);
-plot(ax3,real(E0_2),'Color','k')
+plot(ax3,x,real(E0_2),'Color','k')
 hold on
 if exist('E1')
-    plot(ax3,real(E1_2),'Color','b')
+    plot(ax3,x,real(E1_2),'Color','b')
 end
 if exist('E2')
-    plot(ax3,real(E2_2),'Color','r')
+    plot(ax3,x,real(E2_2),'Color','r')
 end
 
 ax4 = subplot(3,2,4);
-plot(ax4,imag(E0_2),'Color','k')
+plot(ax4,x,imag(E0_2),'Color','k')
 hold on
 if exist('E1')
-    plot(ax4,imag(E1_2),'Color','b')
+    plot(ax4,x,imag(E1_2),'Color','b')
 end
 if exist('E2')
-    plot(ax4,imag(E2_2),'Color','r')
+    plot(ax4,x,imag(E2_2),'Color','r')
 end
 
 ax5 = subplot(3,2,5);
-plot(ax5,real(E0_3),'Color','k')
+plot(ax5,x,real(E0_3),'Color','k')
 hold on
 if exist('E1') 
-    plot(ax5,real(E1_3),'Color','b')
+    plot(ax5,x,real(E1_3),'Color','b')
 end
 if exist('E2') 
-    plot(ax5,real(E2_3),'Color','r')
+    plot(ax5,x,real(E2_3),'Color','r')
 end
 
 ax6 = subplot(3,2,6);
-plot(ax6,imag(E0_3),'Color','k')
+plot(ax6,x,imag(E0_3),'Color','k')
 hold on
 if exist('E1')
-    plot(ax6,imag(E1_3),'Color','b')
+    plot(ax6,x,imag(E1_3),'Color','b')
 end
 if exist('E2')
-    plot(ax6,imag(E2_3),'Color','r')
+    plot(ax6,x,imag(E2_3),'Color','r')
 end
 
 end

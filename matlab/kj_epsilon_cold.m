@@ -11,8 +11,8 @@ amu0 = phys('amu');
 validateattributes(B,{'numeric'},{'nonnegative'});
 
 w0 = 2 * pi * f;
-w = w0 * complex( 1, nu_omg);
-m = amu * amu0;
+w = w0;% * complex( 1, nu_omg);
+m = amu * amu0 * complex( 1, nu_omg);
 q = Z * e;
 
 wp = sqrt( n * q^2 / (m * eps0) );
