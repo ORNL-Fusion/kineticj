@@ -5,18 +5,18 @@ function [stat] = kj_wave1d_example()
 global f
 
 % Number of grid points
-n = 256;
+n = 1024;
 
 % Frequency [Hz]
-f = 13e6;
+f = 2.52e6;
 
 % Domain Range [m]
-xMin = -pi/2;
-xMax = +pi/2;
+xMin = -4;
+xMax = +4;
 
 % Ignorable direction k values [1/m]
 ky=0.0;
-kz=0.0;
+kz=20.0i;
 
 % Set the function that returns the current source (see below)
 S = @source2;
@@ -50,10 +50,10 @@ me_amu = phys('me_amu');
 
 amu=[me_amu,2];
 Z=[-1,1];
-dens=[1,1]*4e19;
+dens=[1,1]*1e17;
 nu_omg=damping2(x);
-%nu_omg=0;
-B=0.8;
+% nu_omg=0;
+B=0.1;
 
 eps = zeros(3,3);
 sig = zeros(3,3);
@@ -81,13 +81,13 @@ function [Sx,Sy,Sz] = source2(x)
 % kx = 40; ky = 0; kz = 0;
 
 offset = 0;
-width = 0.01;
+width = 0.06;
 
 ExpVar = exp(-(x-offset).^2./(width).^2);
 
-Sx = 1 * ExpVar;
+Sx = 0.0;
 Sy = 1 * ExpVar;
-Sz = 1 * ExpVar;
+Sz = 0.0;
 
 end
 
@@ -97,8 +97,8 @@ function [result] = damping2(x)
 
 amplitude = 2;
 
-xMax = +pi/2;
-xMin = -pi/2;
+xMax = +4.;
+xMin = -4.;
 damping_width = (xMax-xMin)/5;
 lSide = amplitude * exp(-(x-xMax).^2./(damping_width).^2);
 rSide = amplitude * exp(-(x-xMin).^2./(damping_width).^2);
