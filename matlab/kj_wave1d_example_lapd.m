@@ -8,7 +8,7 @@ global f
 n = 1024;
 
 % Frequency [Hz]
-f = 13e6;
+f = 3e6;
 
 % Domain Range [m]
 xMin = -4;
@@ -125,7 +125,7 @@ end
 
 function [kz1] = kz2(x)
 
-kz0 = 0;
+kz0 = 20i;
 
 xMax = +4.;
 xMin = -4.;
@@ -159,10 +159,10 @@ me_amu = phys('me_amu');
 
 amu=[me_amu,2];
 Z=[-1,1];
-dens=[1,1]*1e19;
+dens=[1,1]*1e17;
 nu_omg=damping2(x);
 % nu_omg=0;
-B=1.0;
+B=0.1;
 
 eps = zeros(3,3);
 sig = zeros(3,3);
@@ -194,9 +194,9 @@ width = 0.06;
 
 ExpVar = exp(-(x-offset).^2./(width).^2);
 
-Sx = 1 * ExpVar;
+Sx = 0.0;
 Sy = 1 * ExpVar;
-Sz = 1 * ExpVar;
+Sz = 0.0;
 
 end
 
@@ -204,7 +204,7 @@ end
 
 function [result] = damping2(x)
 
-amplitude = 1e0;
+amplitude = 4e3;
 
 xMax = +4.;
 xMin = -4.;

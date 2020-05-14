@@ -1,4 +1,4 @@
-function [E,err_L2,x] = kj_wave1d(f,xMin,xMax,N,lBC,rBC,ky,kz,jA,eps,S,EAnalytic)
+function [E,err_L2,x,eps_out] = kj_wave1d(f,xMin,xMax,N,lBC,rBC,ky,kz,jA,eps,S,EAnalytic,damping)
 % KJ_WAVE1D  1D cold plasma wave solver.
 %   [E] = KJ_WAVE1D(f,xMin,xMax,nPts,lbc,rbc) takes a frequency in Hz (f),
 %   domain extents (xMin,xMax), number of points (nPts) and returns a 1D
@@ -146,7 +146,11 @@ b = complex(zeros(NDOF,1));
 
 for jj=1:N
     
+    this_damping = damping(x(jj));
+    this_w = 2 * pi * f;% * complex( 1, this_damping*50);
     this_eps = eps(x(jj));
+    this_kz = kz(x(jj));
+    this_k0 = this_w / c;
     
     exx = this_eps(1,1);
     exy = this_eps(1,2);
@@ -159,6 +163,35 @@ for jj=1:N
     ezx = this_eps(3,1);
     ezy = this_eps(3,2);
     ezz = this_eps(3,3);
+    
+    % apply damping
+    
+    exx = exx + complex(0,this_damping);
+    exy = exy + complex(0,this_damping);
+    exz = exz + complex(0,this_damping);
+    
+    eyx = eyx + complex(0,this_damping);
+    eyy = eyy + complex(0,this_damping);
+    eyz = eyz + complex(0,this_damping);
+    
+    ezx = ezx + complex(0,this_damping);
+    ezy = ezy + complex(0,this_damping);
+    ezz = ezz + complex(0,this_damping);    
+    
+    exx_out(jj) = exx;
+    exy_out(jj) = exy;
+    exz_out(jj) = exz;
+    
+    eyx_out(jj) = eyx;
+    eyy_out(jj) = eyy;
+    eyz_out(jj) = eyz;
+    
+    ezx_out(jj) = ezx;
+    ezy_out(jj) = ezy;
+    ezz_out(jj) = ezz;
+    
+    kz_out(jj) = this_kz;
+    w_out(jj) = this_w;
     
     if jj == 1
         
@@ -213,43 +246,43 @@ for jj=1:N
         % Ex
         
         A(jj +0*n,jm +0*n) = 0;
-        A(jj +0*n,jj +0*n) = -exx * k0^2 + ky^2 + kz^2;
+        A(jj +0*n,jj +0*n) = -exx * this_k0^2 + ky^2 + this_kz^2;
         A(jj +0*n,jp +0*n) = 0;
         
         A(jj +0*n,jm +1*n) = -1i * ky / (2*h);
-        A(jj +0*n,jj +1*n) = -exy * k0^2;
+        A(jj +0*n,jj +1*n) = -exy * this_k0^2;
         A(jj +0*n,jp +1*n) = +1i * ky / (2*h);
         
-        A(jj +0*n,jm +2*n) = -1i * kz / (2*h);
-        A(jj +0*n,jj +2*n) = -exz * k0^2;
-        A(jj +0*n,jp +2*n) = +1i * kz / (2*h);
+        A(jj +0*n,jm +2*n) = -1i * this_kz / (2*h);
+        A(jj +0*n,jj +2*n) = -exz * this_k0^2;
+        A(jj +0*n,jp +2*n) = +1i * this_kz / (2*h);
         
         % Ey
         
         A(jj +1*n,jm +0*n) = -1i * ky / (2*h);
-        A(jj +1*n,jj +0*n) = -eyx * k0^2;
+        A(jj +1*n,jj +0*n) = -eyx * this_k0^2;
         A(jj +1*n,jp +0*n) = +1i * ky / (2*h);
         
         A(jj +1*n,jm +1*n) = -1/h^2;
-        A(jj +1*n,jj +1*n) = +2/h^2 - eyy * k0^2 + kz^2;
+        A(jj +1*n,jj +1*n) = +2/h^2 - eyy * this_k0^2 + this_kz^2;
         A(jj +1*n,jp +1*n) = -1/h^2;
         
         A(jj +1*n,jm +2*n) = 0;
-        A(jj +1*n,jj +2*n) = -eyz * k0^2 - ky * kz;
+        A(jj +1*n,jj +2*n) = -eyz * this_k0^2 - ky * this_kz;
         A(jj +1*n,jp +2*n) = 0;
         
         % Ez
         
-        A(jj +2*n,jm +0*n) = -1i * kz / (2*h);
-        A(jj +2*n,jj +0*n) = -ezx * k0^2;
-        A(jj +2*n,jp +0*n) = +1i * kz / (2*h);
+        A(jj +2*n,jm +0*n) = -1i * this_kz / (2*h);
+        A(jj +2*n,jj +0*n) = -ezx * this_k0^2;
+        A(jj +2*n,jp +0*n) = +1i * this_kz / (2*h);
         
         A(jj +2*n,jm +1*n) = 0;
-        A(jj +2*n,jj +1*n) = -ezy * k0^2 - ky * kz;
+        A(jj +2*n,jj +1*n) = -ezy * this_k0^2 - ky * this_kz;
         A(jj +2*n,jp +1*n) = 0;
         
         A(jj +2*n,jm +2*n) = -1/h^2;
-        A(jj +2*n,jj +2*n) = +2/h^2 - ezz * k0^2 + ky^2;
+        A(jj +2*n,jj +2*n) = +2/h^2 - ezz * this_k0^2 + ky^2;
         A(jj +2*n,jp +2*n) = -1/h^2;
         
         % RHS
@@ -258,9 +291,9 @@ for jj=1:N
         
         [Sx,Sy,Sz] = S(x(jj));
         
-        b(jj +0*n) = 1i*w*u0*jA_x + Sx;
-        b(jj +1*n) = 1i*w*u0*jA_y + Sy;
-        b(jj +2*n) = 1i*w*u0*jA_z + Sz;
+        b(jj +0*n) = 1i*this_w*u0*jA_x + Sx;
+        b(jj +1*n) = 1i*this_w*u0*jA_y + Sy;
+        b(jj +2*n) = 1i*this_w*u0*jA_z + Sz;
         
     end
     
@@ -314,6 +347,21 @@ if compareWithAnalytic
     end
     
 end
+
+eps_out.exx = exx_out;
+eps_out.exy = exy_out;
+eps_out.exz = exz_out;
+
+eps_out.eyx = eyx_out;
+eps_out.eyy = eyy_out;
+eps_out.eyz = eyz_out;
+
+eps_out.ezx = ezx_out;
+eps_out.ezy = ezy_out;
+eps_out.ezz = ezz_out;
+
+eps_out.kz = kz_out;
+eps_out.w = w_out;
 
 
 end
